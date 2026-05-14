@@ -1,0 +1,19 @@
+spring:
+  application:
+    name:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/cnkart_schema
+    username: root
+    password: spring@
+    jpa:
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.MySQLDialect
+          hbm2ddl:
+            auto: update
+  session:
+    jdbc:
+      table-name: SPRING_SESSION
+      initialize-schema: always
+server:
+  port: 8090
