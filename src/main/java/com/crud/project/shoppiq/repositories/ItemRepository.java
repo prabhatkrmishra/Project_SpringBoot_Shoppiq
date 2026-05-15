@@ -29,7 +29,7 @@ public class ItemRepository implements RepositoryInterface<Item> {
     }
 
     @Override
-    public Optional<Item> findById(int id) {
+    public Optional<Item> findById(long id) {
         Session session = entityManager.unwrap(Session.class);
 
         Optional<Item> optionalItem = Optional.ofNullable(session.find(Item.class, id));
@@ -42,7 +42,7 @@ public class ItemRepository implements RepositoryInterface<Item> {
     }
 
     @Override
-    public boolean existsById(int id) {
+    public boolean existsById(long id) {
         return false;
     }
 
@@ -57,7 +57,7 @@ public class ItemRepository implements RepositoryInterface<Item> {
     }
 
     @Override
-    public Optional<Item> updateById(int id, Item entity) {
+    public Optional<Item> updateById(long id, Item entity) {
         Session session = entityManager.unwrap(Session.class);
 
         Optional<Item> optionalItem = Optional.ofNullable(session.find(Item.class, id));
@@ -77,7 +77,7 @@ public class ItemRepository implements RepositoryInterface<Item> {
     }
 
     @Override
-    public void deleteById(int id) {
+    public void deleteById(long id) {
 
         Session session = entityManager.unwrap(Session.class);
 

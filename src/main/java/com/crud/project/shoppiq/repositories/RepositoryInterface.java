@@ -1,5 +1,7 @@
 package com.crud.project.shoppiq.repositories;
 
+import com.crud.project.shoppiq.models.ItemReview;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -9,19 +11,19 @@ public interface RepositoryInterface<T> {
 
     List<T> saveAll(List<T> entities);
 
-    Optional<T> findById(int id);
+    Optional<T> findById(long id);
 
-    boolean existsById(int id);
+    boolean existsById(long id);
 
     List<T> findAll();
 
     long count();
 
-    Optional<T> updateById(int id, T t);
+    Optional<T> updateById(long id, T t);
 
     void delete(T entity);
 
-    void deleteById(int id);
+    void deleteById(long id);
 
     void deleteAll();
 }

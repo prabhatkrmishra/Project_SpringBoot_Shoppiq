@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.crud.project</groupId>
-	<artifactId>cnkart</artifactId>
+	<artifactId>shoppiq</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>

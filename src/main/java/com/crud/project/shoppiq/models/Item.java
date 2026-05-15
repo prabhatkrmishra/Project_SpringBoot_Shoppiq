@@ -1,6 +1,9 @@
 package com.crud.project.shoppiq.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+
+import java.util.List;
 
 @Entity
 @Table(name = "items")
@@ -14,9 +17,14 @@ public class Item {
     @Column
     private String description;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @OneToOne(cascade = CascadeType.ALL)
+    private ItemDetails itemDetails;
+
+    // Mapped by item obj in ItemReview
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
+    // @JoinColumn(name = "items_id") now in review
+    @JsonManagedReference
+    private List<ItemReview> itemReviews;
 
     public Long getId() {
         return id;
@@ -38,8 +46,35 @@ public class Item {
         this.description = description;
     }
 
+    public ItemDetails getItemDetails() {
+        return itemDetails;
+    }
+
+    public void setItemDetails(ItemDetails itemDetails) {
+        this.itemDetails = itemDetails;
+    }
+
     public void update(Item newItem) {
         this.name = newItem.getName();
         this.description = newItem.getDescription();
+
+        if (newItem.getItemDetails() != null) {
+
+            if (this.itemDetails == null) {
+                this.itemDetails = new ItemDetails();
+            }
+
+            this.itemDetails.update(
+                    newItem.getItemDetails()
+            );
+        }
+    }
+
+    public List<ItemReview> getItemReviews() {
+        return itemReviews;
+    }
+
+    public void setItemReviews(List<ItemReview> itemReviews) {
+        this.itemReviews = itemReviews;
     }
 }
