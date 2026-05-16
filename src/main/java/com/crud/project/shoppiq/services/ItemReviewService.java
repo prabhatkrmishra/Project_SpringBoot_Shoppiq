@@ -14,7 +14,22 @@ public class ItemReviewService {
     private ItemReviewRepository itemReviewRepository;
 
     @Transactional
-    public Optional<ItemReview> getReviewById(long id){
+    public Optional<ItemReview> getReviewById(long id) {
         return itemReviewRepository.findById(id);
+    }
+
+    @Transactional
+    public Optional<ItemReview> createNewItemReview(long itemId, ItemReview itemReview) {
+        return Optional.ofNullable(itemReviewRepository.saveWithItemId(itemId, itemReview));
+    }
+
+    @Transactional
+    public Optional<ItemReview> updateItemReview(long reviewId, ItemReview itemReview) {
+        return itemReviewRepository.updateById(reviewId, itemReview);
+    }
+
+    @Transactional
+    public void deleteItemReviewById(long id) {
+        itemReviewRepository.deleteById(id);
     }
 }

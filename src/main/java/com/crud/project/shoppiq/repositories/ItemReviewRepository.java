@@ -4,22 +4,37 @@ import com.crud.project.shoppiq.exceptions.ItemNotFoundException;
 import com.crud.project.shoppiq.exceptions.ItemReviewNotFoundException;
 import com.crud.project.shoppiq.models.Item;
 import com.crud.project.shoppiq.models.ItemReview;
+import com.crud.project.shoppiq.services.ItemService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class ItemReviewRepository implements RepositoryInterface<ItemReview>{
+public class ItemReviewRepository implements RepositoryInterface<ItemReview> {
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+    private ItemService itemService;
 
     @Override
     public ItemReview save(ItemReview entity) {
         return null;
+    }
+
+    public ItemReview saveWithItemId(long itemId, ItemReview newItemReview) {
+        Optional<Item> currentItem = itemService.getItemById(itemId);
+
+        Session session = entityManager.unwrap(Session.class);
+
+        newItemReview.setItem(currentItem.get());
+        session.persist(newItemReview);
+        return newItemReview;
     }
 
     @Override
@@ -37,7 +52,7 @@ public class ItemReviewRepository implements RepositoryInterface<ItemReview>{
             return optionalItem;
         }
 
-        throw new ItemReviewNotFoundException("Item review with id: " + id + " not found");
+        throw new ItemReviewNotFoundException("item review with id: " + id + " not found");
     }
 
     @Override
@@ -56,8 +71,18 @@ public class ItemReviewRepository implements RepositoryInterface<ItemReview>{
     }
 
     @Override
-    public Optional<ItemReview> updateById(long id, ItemReview itemReview) {
-        return Optional.empty();
+    public Optional<ItemReview> updateById(long reviewId, ItemReview itemReview) {
+        Session session = entityManager.unwrap(Session.class);
+
+        Optional<ItemReview> optionalItem = Optional.ofNullable(session.find(ItemReview.class, reviewId));
+
+        if (optionalItem.isPresent()) {
+            optionalItem.get().update(itemReview);
+            session.merge(optionalItem.get());
+            return optionalItem;
+        }
+
+        throw new ItemNotFoundException("item review with id: " + itemReview + " not found");
     }
 
     @Override
@@ -67,7 +92,16 @@ public class ItemReviewRepository implements RepositoryInterface<ItemReview>{
 
     @Override
     public void deleteById(long id) {
+        Session session = entityManager.unwrap(Session.class);
 
+        Optional<ItemReview> optionalItem = Optional.ofNullable(session.find(ItemReview.class, id));
+
+        if (optionalItem.isPresent()) {
+            session.remove(optionalItem.get());
+            return;
+        }
+
+        throw new ItemReviewNotFoundException("item review with id: " + id + " not found");
     }
 
     @Override

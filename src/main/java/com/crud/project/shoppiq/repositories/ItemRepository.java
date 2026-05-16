@@ -68,7 +68,7 @@ public class ItemRepository implements RepositoryInterface<Item> {
             return optionalItem;
         }
 
-        throw new ItemNotFoundException("Item with id: " + id + " not found");
+        throw new ItemNotFoundException("item with id: " + id + " not found");
     }
 
     @Override
@@ -88,7 +88,7 @@ public class ItemRepository implements RepositoryInterface<Item> {
             return;
         }
 
-        throw new ItemNotFoundException("Item with id: " + id + " not found");
+        throw new ItemNotFoundException("item with id: " + id + " not found");
     }
 
     @Override

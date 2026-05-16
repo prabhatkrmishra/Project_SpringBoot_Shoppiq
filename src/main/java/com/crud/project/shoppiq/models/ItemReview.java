@@ -49,8 +49,6 @@ public class ItemReview {
         this.review = review;
     }
 
-
-
     public void update(ItemReview itemReview) {
         this.username = itemReview.username;
         this.review = itemReview.review;

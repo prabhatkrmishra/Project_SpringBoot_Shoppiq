@@ -20,17 +20,17 @@ public class ItemService {
     }
 
     @Transactional
-    public Optional<Item> getItemById(int id) {
+    public Optional<Item> getItemById(long id) {
         return itemRepository.findById(id);
     }
 
     @Transactional
-    public void deleteItemById(int id) {
+    public void deleteItemById(long id) {
         itemRepository.deleteById(id);
     }
 
     @Transactional
-    public Optional<Item> updateItemById(int id, Item newItem) {
+    public Optional<Item> updateItemById(long id, Item newItem) {
         return itemRepository.updateById(id, newItem);
     }
 }
