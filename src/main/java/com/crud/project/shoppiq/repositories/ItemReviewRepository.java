@@ -2,13 +2,10 @@ package com.crud.project.shoppiq.repositories;
 
 import com.crud.project.shoppiq.exceptions.ItemNotFoundException;
 import com.crud.project.shoppiq.exceptions.ItemReviewNotFoundException;
-import com.crud.project.shoppiq.models.Item;
 import com.crud.project.shoppiq.models.ItemReview;
-import com.crud.project.shoppiq.services.ItemService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.Session;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,20 +16,13 @@ public class ItemReviewRepository implements RepositoryInterface<ItemReview> {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Autowired
-    private ItemService itemService;
-
     @Override
     public ItemReview save(ItemReview entity) {
         return null;
     }
 
-    public ItemReview saveWithItemId(long itemId, ItemReview newItemReview) {
-        Optional<Item> currentItem = itemService.getItemById(itemId);
-
+    public ItemReview saveWithItemId(ItemReview newItemReview) {
         Session session = entityManager.unwrap(Session.class);
-
-        newItemReview.setItem(currentItem.get());
         session.persist(newItemReview);
         return newItemReview;
     }

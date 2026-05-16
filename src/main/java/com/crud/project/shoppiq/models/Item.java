@@ -1,5 +1,6 @@
 package com.crud.project.shoppiq.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
@@ -25,6 +26,11 @@ public class Item {
     // @JoinColumn(name = "items_id") now in review
     @JsonManagedReference
     private List<ItemReview> itemReviews;
+
+    @ManyToMany(mappedBy = "itemList")
+    // Ignore loading orders in items json
+    @JsonIgnore
+    private List<Order> orderList;
 
     public Long getId() {
         return id;
@@ -76,5 +82,13 @@ public class Item {
 
     public void setItemReviews(List<ItemReview> itemReviews) {
         this.itemReviews = itemReviews;
+    }
+
+    public List<Order> getOrderList() {
+        return orderList;
+    }
+
+    public void setOrderList(List<Order> orderList) {
+        this.orderList = orderList;
     }
 }
