@@ -1,10 +1,10 @@
 package com.crud.project.shoppiq.services;
 
+import com.crud.project.shoppiq.exceptions.OrderNotFoundException;
 import com.crud.project.shoppiq.models.Item;
 import com.crud.project.shoppiq.models.Order;
 import com.crud.project.shoppiq.repositories.ItemRepository;
 import com.crud.project.shoppiq.repositories.OrderRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +20,6 @@ public class OrderService {
     @Autowired
     private ItemRepository itemRepository;
 
-    @Transactional
     public Optional<Order> saveNewOrder(Order newOrder) {
         Order saveOrder = new Order();
         List<Item> items = new ArrayList<>();
@@ -34,16 +33,31 @@ public class OrderService {
 
         saveOrder.setItemList(items);
 
-        return Optional.ofNullable(orderRepository.save(saveOrder));
+        return Optional.of(orderRepository.save(saveOrder));
     }
 
-    @Transactional
-    public Optional<Order> getOrderById(long id) {
-        return orderRepository.findById(id);
+    public Optional<Order> getOrderById(long orderId) {
+        Optional<Order> currentOrder = orderRepository.findById(orderId);
+        if (currentOrder.isPresent()) {
+            return currentOrder;
+        }
+
+        throw new OrderNotFoundException("order with id: " + orderId + " not found");
     }
 
-    @Transactional
-    public void deleteOrderById(long id) {
-        orderRepository.deleteById(id);
+    public Optional<List<Order>> getAllExistingOrders() {
+        List<Order> orderList = new ArrayList<>();
+        orderRepository.findAll().forEach(orderList::add);
+        return Optional.of(orderList);
+    }
+
+    public void deleteOrderById(long orderId) {
+        Optional<Order> currentOrder = orderRepository.findById(orderId);
+        if (currentOrder.isPresent()) {
+            orderRepository.deleteById(orderId);
+            return;
+        }
+
+        throw new OrderNotFoundException("order with id: " + orderId + " not found");
     }
 }

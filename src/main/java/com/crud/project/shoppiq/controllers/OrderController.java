@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -23,6 +24,12 @@ public class OrderController {
     @GetMapping("/id/{id}")
     public ResponseEntity<Optional<Order>> getItemById(@PathVariable long id) {
         Optional<Order> order = orderService.getOrderById(id);
+        return ResponseEntity.ok(order);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Optional<List<Order>>> getAllOrders() {
+        Optional<List<Order>> order = orderService.getAllExistingOrders();
         return ResponseEntity.ok(order);
     }
 

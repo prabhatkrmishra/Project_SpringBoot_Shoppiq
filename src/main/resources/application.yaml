@@ -6,18 +6,11 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/cnkart_schema
     username: root
     password: spring@
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
-
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        id:
-          optimizer:
-            pooled:
-              preferred: none
+      ddl-auto: create
 
   session:
     jdbc:
