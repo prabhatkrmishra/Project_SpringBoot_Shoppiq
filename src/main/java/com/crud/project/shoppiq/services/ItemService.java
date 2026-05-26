@@ -20,6 +20,10 @@ public class ItemService {
         return Optional.of(itemRepository.save(newItem));
     }
 
+    public Optional<List<Item>> saveItemBulk(List<Item> newItems) {
+        return Optional.of((List<Item>) itemRepository.saveAll(newItems));
+    }
+
     public Optional<Item> getItemById(long id) {
         Optional<Item> currentItem = itemRepository.findById(id);
         if (currentItem.isPresent()) {

@@ -17,8 +17,15 @@ public class ItemController {
     private ItemService itemService;
 
     @PostMapping("/create")
-    public ResponseEntity<Optional<Item>> saveItem(@RequestBody Item newItem) {
+    // ResponseEntity of any type.
+    public ResponseEntity<?> saveItem(@RequestBody Item newItem) {
         Optional<Item> item = itemService.saveNewItem(newItem);
+        return ResponseEntity.ok(item);
+    }
+
+    @PostMapping("/create/bulk")
+    public ResponseEntity<Optional<List<Item>>> saveItem(@RequestBody List<Item> newItems) {
+        Optional<List<Item>> item = itemService.saveItemBulk(newItems);
         return ResponseEntity.ok(item);
     }
 
