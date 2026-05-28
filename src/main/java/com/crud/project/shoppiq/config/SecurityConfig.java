@@ -2,7 +2,10 @@ package com.crud.project.shoppiq.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -15,6 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -34,6 +38,8 @@ public class SecurityConfig {
                         .requestMatchers("/item/update/**").hasRole("ADMIN")
                         .requestMatchers("/item/delete/**").hasRole("ADMIN")
 
+                        .requestMatchers("/user/register").permitAll()
+
                         .anyRequest().authenticated()
                 )
 
@@ -48,20 +54,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-
-        UserDetails user1 = User.builder()
-                .username("admin")
-                .password(passwordEncoder.encode("policy64"))
-                .roles("ADMIN")
-                .build();
-
-        UserDetails user2 = User.builder()
-                .username("user")
-                .password(passwordEncoder.encode("service64"))
-                .roles("USER")
-                .build();
-
-        return new InMemoryUserDetailsManager(user1, user2);
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) {
+        return config.getAuthenticationManager();
     }
 }
