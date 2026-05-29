@@ -46,7 +46,7 @@ public class AuthService {
 
     /**
      * Complete login workflow: validate credentials, load user details, generate JWT.
-     * Called by AuthController.login().
+     * Called by UserAuthenticationController.login().
      *
      * @param request JwtRequest containing username and password
      * @return JwtResponse containing signed JWT token

@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Core security configuration for the application.
@@ -94,7 +95,10 @@ public class SecurityConfig {
                     )
             ;
 
-            http.addFilter(jwtAuthenticationFilter);
+            http.addFilterBefore(
+                    jwtAuthenticationFilter,
+                    UsernamePasswordAuthenticationFilter.class
+            );
             return http.build();
         } catch (Exception e) {
             throw new RuntimeException("Failed to configure SecurityFilterChain", e);
