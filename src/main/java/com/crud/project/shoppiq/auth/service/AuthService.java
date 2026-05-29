@@ -3,6 +3,7 @@ package com.crud.project.shoppiq.auth.service;
 import com.crud.project.shoppiq.auth.dto.JwtRequest;
 import com.crud.project.shoppiq.auth.dto.JwtResponse;
 import com.crud.project.shoppiq.auth.jwt.JwtAuthenticationUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,6 +18,12 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class AuthService {
+
+    // value is in ms
+    @Value("${jwt.expiration}")
+    private long expirationTime;
+    @Value("${jwt.short-expiration}")
+    private long shortExpiration;
 
     private final AuthenticationManager authManager;
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
@@ -46,7 +53,7 @@ public class AuthService {
 
     /**
      * Complete login workflow: validate credentials, load user details, generate JWT.
-     * Called by UserAuthenticationController.login().
+     * Called by FrontEndController.login().
      *
      * @param request JwtRequest containing username and password
      * @return JwtResponse containing signed JWT token
@@ -57,9 +64,10 @@ public class AuthService {
             // 1. Authenticate with authentication managaer
             authenticate(request.getUsername(), request.getPassword());
 
-            // 2. Generate token
+            // 2. Generate token with expiration time
             UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-            String token = jwtAuthenticationUtils.generateToken(userDetails);
+            long expiration = Boolean.TRUE.equals(request.getRememberMe()) ? expirationTime : shortExpiration;
+            String token = jwtAuthenticationUtils.generateToken(userDetails, expiration);
 
             // 3. Return token as response
             return new JwtResponse(token);

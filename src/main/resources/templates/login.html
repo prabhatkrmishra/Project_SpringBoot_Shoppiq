@@ -1,7 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 
 <head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Login</title>
 
     <style>
@@ -24,7 +28,7 @@
             width: 350px;
 
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         .login-container h2 {
@@ -59,6 +63,12 @@
             margin-bottom: 15px;
         }
 
+        .message {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+
         button {
             width: 100%;
             padding: 10px;
@@ -86,20 +96,20 @@
 
         <h2>Login</h2>
 
-        <form th:action="@{/login}" method="post">
+        <form id="loginForm">
 
             <div class="input-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Enter username" required>
+                <input type="text" id="username" placeholder="Enter username" required>
             </div>
 
             <div class="input-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter password" required>
+                <input type="password" id="password" placeholder="Enter password" required>
             </div>
 
             <div class="remember_me">
-                <input type="checkbox" id="rememberMe" name="remember-me">
+                <input type="checkbox" id="rememberMe">
                 <label for="rememberMe">Remember Me</label>
             </div>
 
@@ -107,10 +117,104 @@
                 Login
             </button>
 
+            <div id="message" class="message"></div>
         </form>
-
     </div>
 
-</body>
+    <script>
 
+        document
+            .getElementById("loginForm")
+            .addEventListener("submit", async function (event) {
+
+                event.preventDefault();
+
+                const username =
+                    document.getElementById("username").value;
+
+                const password =
+                    document.getElementById("password").value;
+
+                const rememberMe =
+                    document.getElementById("rememberMe").checked;
+
+                const message =
+                    document.getElementById("message");
+
+                try {
+
+                    const response = await fetch("/auth/login", {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            username: username,
+                            password: password,
+                            rememberMe: rememberMe
+                        })
+                    });
+
+                    if (!response.ok) {
+
+                        message.style.color = "red";
+                        message.textContent =
+                            "Invalid username or password";
+
+                        return;
+                    }
+
+                    const data =
+                        await response.json();
+
+                    /*
+                     * JWT Storage
+                     *
+                     * Remember Me Checked
+                     * -> localStorage
+                     * -> survives browser restart
+                     *
+                     * Remember Me Unchecked
+                     * -> sessionStorage
+                     * -> removed when browser closes
+                     */
+                    if (rememberMe) {
+
+                        localStorage.setItem(
+                            "jwtToken",
+                            data.jwtToken
+                        );
+
+                    } else {
+
+                        sessionStorage.setItem(
+                            "jwtToken",
+                            data.jwtToken
+                        );
+                    }
+
+                    message.style.color = "green";
+                    message.textContent =
+                        "Login successful";
+
+                    setTimeout(() => {
+                        window.location.href = "/allitems";
+                    }, 1000);
+
+                } catch (error) {
+
+                    console.error(error);
+
+                    message.style.color = "red";
+                    message.textContent =
+                        "Unable to connect to server";
+                }
+            });
+
+    </script>
+
+</body>
 </html>

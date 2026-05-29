@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Catalog</title>
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: #f5f5f0;
+            color: #1a1a1a;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0 40px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-family: 'Segoe UI', sans-serif;
+            color: #111;
+        }
+
+        .logout-btn {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #555;
+            background: none;
+            border: 1px solid #ccc;
+            padding: 6px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+
+        .logout-btn:hover {
+            border-color: #111;
+            color: #111;
+        }
+
+        /* Main layout */
+        .main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 40px 40px;
+        }
+
+        .section-label {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.72rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        /* Grid */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+        }
+
+        /* Card */
+        .item-card {
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e0e0e0;
+        }
+
+        .card-top {
+            padding: 24px 24px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .item-meta {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .item-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #111;
+            line-height: 1.35;
+            margin-bottom: 10px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .item-description {
+            font-size: 0.875rem;
+            color: #555;
+            line-height: 1.65;
+            padding-bottom: 18px;
+        }
+
+        /* Details table */
+        .card-details {
+            padding: 18px 24px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 5px 0;
+        }
+
+        .detail-row + .detail-row {
+            border-top: 1px solid #f5f5f5;
+        }
+
+        .detail-label {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #999;
+        }
+
+        .detail-value {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.85rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .item-price {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #111;
+            letter-spacing: -0.02em;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .price-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #aaa;
+            font-weight: 400;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        /* Reviews */
+        .card-reviews {
+            padding: 16px 24px 20px;
+            background: #fafafa;
+            flex: 1;
+        }
+
+        .reviews-label {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #aaa;
+            margin-bottom: 12px;
+        }
+
+        .review-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #ebebeb;
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .review-text {
+            font-size: 0.84rem;
+            color: #444;
+            line-height: 1.55;
+            font-style: italic;
+        }
+
+        .review-author {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.72rem;
+            color: #999;
+            margin-top: 4px;
+            letter-spacing: 0.04em;
+        }
+
+        .no-reviews {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.8rem;
+            color: #bbb;
+        }
+
+        /* States */
+        .loading,
+        .error-message {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.9rem;
+            color: #888;
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+            background: #fff;
+        }
+
+        .error-message {
+            color: #c0392b;
+        }
+
+        .error-message a {
+            color: #111;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>Product Catalog</h1>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+    </header>
+
+    <main class="main">
+        <div class="section-label">All Items</div>
+        <div id="itemsContainer" class="items-grid">
+            <div class="loading">Loading items...</div>
+        </div>
+    </main>
+
+    <script>
+        function getToken() {
+            return localStorage.getItem("jwtToken") || sessionStorage.getItem("jwtToken");
+        }
+
+        if (!getToken()) window.location.href = "/login";
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function (m) {
+                return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+            });
+        }
+
+        async function loadItems() {
+            const currentToken = getToken();
+            if (!currentToken) {
+                window.location.href = "/login";
+                return;
+            }
+
+            try {
+                const res = await fetch("/item/all", {
+                    headers: {"Authorization": "Bearer " + currentToken}
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem("jwtToken");
+                    sessionStorage.removeItem("jwtToken");
+                    window.location.href = "/login";
+                    return;
+                }
+
+                if (!res.ok) throw new Error();
+
+                const items = await res.json();
+                const container = document.getElementById("itemsContainer");
+
+                if (!items.length) {
+                    container.innerHTML = '<div class="error-message">No items found.</div>';
+                    return;
+                }
+
+                container.innerHTML = items.map(item => {
+                    const reviews = item.itemReviews || [];
+                    const reviewCount = reviews.length;
+
+                    const reviewsHtml = reviewCount
+                        ? reviews.map(r => `
+                            <div class="review-item">
+                                <div class="review-text">${escapeHtml(r.review)}</div>
+                                <div class="review-author">${escapeHtml(r.username)}</div>
+                            </div>`).join('')
+                        : '<div class="no-reviews">No reviews yet.</div>';
+
+                    return `
+                    <div class="item-card">
+                        <div class="card-top">
+                            <div class="item-meta">ID: ${item.id}</div>
+                            <div class="item-name">${escapeHtml(item.name)}</div>
+                            <div class="item-description">${escapeHtml(item.description)}</div>
+                        </div>
+
+                        <div class="card-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Brand</span>
+                                <span class="detail-value">${escapeHtml(item.itemDetails?.brand)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Category</span>
+                                <span class="detail-value">${escapeHtml(item.itemDetails?.category)}</span>
+                            </div>
+                            <div class="item-price">
+                                <span class="price-label">Price</span>
+                                Rs. ${(item.itemDetails?.price || 0).toLocaleString('en-IN')}
+                            </div>
+                        </div>
+
+                        <div class="card-reviews">
+                            <div class="reviews-label">Reviews (${reviewCount})</div>
+                            ${reviewsHtml}
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (err) {
+                document.getElementById("itemsContainer").innerHTML =
+                    '<div class="error-message">Failed to load items. <a href="/login">Login again</a></div>';
+            }
+        }
+
+        document.getElementById("logoutBtn").onclick = function () {
+            localStorage.removeItem("jwtToken");
+            sessionStorage.removeItem("jwtToken");
+            window.location.href = "/login";
+        };
+
+        loadItems();
+    </script>
+
+</body>
+</html>

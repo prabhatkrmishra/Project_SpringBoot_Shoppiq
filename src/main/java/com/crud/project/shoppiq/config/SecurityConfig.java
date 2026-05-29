@@ -55,6 +55,7 @@ public class SecurityConfig {
                             .requestMatchers(
                                     "/login",
                                     "/register",
+                                    "/allitems",
                                     "/auth/login"
                             ).permitAll()
 

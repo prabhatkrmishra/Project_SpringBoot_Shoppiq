@@ -21,9 +21,6 @@ public class JwtAuthenticationUtils {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration}")
-    private long expirationTime; // value is in ms
-
     private SecretKey key;
 
     /**
@@ -82,8 +79,8 @@ public class JwtAuthenticationUtils {
     /**
      * Validates token by comparing username and expiration status.
      *
-     * @param token        JWT string
-     * @param userDetails  loaded user details from database
+     * @param token       JWT string
+     * @param userDetails loaded user details from database
      * @return true if username matches and token is not expired
      */
     public boolean validateToken(String token, UserDetails userDetails) {
@@ -99,15 +96,16 @@ public class JwtAuthenticationUtils {
      * Uses modern JJWT builder (subject, issuedAt, expiration).
      *
      * @param userDetails authenticated user details
+     * @param expiration  token expiration time in milliseconds
      * @return compact JWT string
      * @throws RuntimeException if token generation fails
      */
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, long expiration) {
         try {
             return Jwts.builder()
                     .subject(userDetails.getUsername())
                     .issuedAt(new Date())
-                    .expiration(new Date(System.currentTimeMillis() + expirationTime))
+                    .expiration(new Date(System.currentTimeMillis() + expiration))
                     .signWith(key)
                     .compact();
         } catch (Exception e) {
