@@ -26,11 +26,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     public SecurityConfig(UserDetailsService userDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.userDetailsService = userDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
@@ -75,24 +73,6 @@ public class SecurityConfig {
 
                     .sessionManagement(session -> session
                             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    )
-
-                    .formLogin(form -> form
-                                    .loginPage("/login")
-                                    .loginProcessingUrl("/login")
-                                    .defaultSuccessUrl("/item/all", true)
-                            //.permitAll() have in authorizeHttpRequests
-                    )
-
-                    .rememberMe(remember -> remember
-                            .userDetailsService(userDetailsService)
-                            .key("aVeryLongRandomSecretKeyForSecurity123")
-                            .tokenValiditySeconds(7 * 24 * 60 * 60)
-                            .rememberMeCookieName("remember_me")
-                    )
-
-                    .logout(logout -> logout
-                            .deleteCookies("remember_me")
                     )
             ;
 

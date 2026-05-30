@@ -1,5 +1,6 @@
 package com.crud.project.shoppiq.auth.jwt;
 
+import com.crud.project.shoppiq.auth.utils.JwtAuthenticationUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +35,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /**
      * Main filter method executed once per request.
      * Reads Authorization header, extracts token, validates it,
-     * loads user details, and creates authenticated context.
+     * loads user details, and creates an authenticated context.
+     * <p>
+     * SecurityContextHolder stores authentication information for the
+     * current request. After successful JWT validation, an authenticated
+     * UsernamePasswordAuthenticationToken is stored in the SecurityContext,
+     * allowing Spring Security to identify the current user and enforce
+     * role-based access control (@PreAuthorize, hasRole, etc.).
      * <p>
      * Called automatically by Spring Security filter chain.
      */

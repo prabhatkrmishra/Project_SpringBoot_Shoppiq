@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
  * Used during login authentication and JWT token validation.
  */
 @Service
-public class ShoppiqUserDetailService implements UserDetailsService {
+public class CustomUserDetailService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    public ShoppiqUserDetailService(UserRepository userRepository) {
+    public CustomUserDetailService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 

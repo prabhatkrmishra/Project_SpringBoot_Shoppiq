@@ -1,4 +1,4 @@
-package com.crud.project.shoppiq.auth.jwt;
+package com.crud.project.shoppiq.auth.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

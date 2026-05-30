@@ -2,7 +2,7 @@ package com.crud.project.shoppiq.auth.service;
 
 import com.crud.project.shoppiq.auth.dto.JwtRequest;
 import com.crud.project.shoppiq.auth.dto.JwtResponse;
-import com.crud.project.shoppiq.auth.jwt.JwtAuthenticationUtils;
+import com.crud.project.shoppiq.auth.utils.JwtAuthenticationUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -36,8 +36,13 @@ public class AuthService {
     }
 
     /**
-     * Performs actual credential verification using Spring Security's AuthenticationManager.
-     * Delegates to DaoAuthenticationProvider which calls UserDetailsService and PasswordEncoder.
+     * Performs credential verification using Spring Security's AuthenticationManager.
+     * Creates a UsernamePasswordAuthenticationToken containing the supplied username
+     * and password, then delegates authentication to AuthenticationManager.
+     * <p>
+     * AuthenticationManager uses UserDetailsService to load the user from the database,
+     * PasswordEncoder to verify the password, and retrieves the user's roles/authorities
+     * for authorization after successful authentication.
      *
      * @param username user's login name
      * @param password plain-text password
@@ -45,7 +50,8 @@ public class AuthService {
      */
     private void authenticate(String username, String password) {
         try {
-            authManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+            authManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password));
         } catch (AuthenticationException ex) {
             throw new BadCredentialsException("Invalid username or password", ex);
         }
