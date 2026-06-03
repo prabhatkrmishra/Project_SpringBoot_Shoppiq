@@ -109,14 +109,18 @@ public class SecurityConfig {
                         // ── User registration ─────────────────────────────────
                         .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
 
-                        // ── Item read APIs — USER or ADMIN ────────────────────
-                        .requestMatchers(HttpMethod.GET, "/item/all").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/item/id/**").hasAnyRole("USER", "ADMIN")
+                        // ── Item read APIs — CUSTOMER or ADMIN ────────────────────
+                        .requestMatchers(HttpMethod.GET, "/item/all").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/item/id/**").hasAnyRole("CUSTOMER", "ADMIN")
 
                         // ── Item write APIs — ADMIN only ──────────────────────
                         .requestMatchers(HttpMethod.POST, "/item/create/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/item/update/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/item/delete/**").hasRole("ADMIN")
+
+                        // ── Roles APIs — ADMIN only ──────────────────────
+                        .requestMatchers(HttpMethod.POST, "/roles/create/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/roles/all").hasRole("ADMIN")
 
                         // ── Everything else requires authentication ────────────
                         .anyRequest().authenticated()
