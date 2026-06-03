@@ -151,6 +151,13 @@
                             "Content-Type": "application/json"
                         },
 
+                        /*
+                         * credentials: "include" ensures the browser sends
+                         * and accepts cookies on this request, even if the
+                         * API is on a different origin.
+                         */
+                        credentials: "include",
+
                         body: JSON.stringify({
                             username: username,
                             password: password,
@@ -167,38 +174,27 @@
                         return;
                     }
 
-                    const data =
-                        await response.json();
-
                     /*
-                     * JWT Storage
+                     * JWT Cookie Storage
                      *
-                     * Remember Me Checked
-                     * -> localStorage
-                     * -> survives browser restart
+                     * The server sets the JWT as an HttpOnly cookie via
+                     * the Set-Cookie response header. The browser stores
+                     * it automatically — no JS access to the token at all.
                      *
-                     * Remember Me Unchecked
-                     * -> sessionStorage
-                     * -> removed when browser closes
+                     * Remember Me Checked  -> server sets Max-Age/Expires
+                     *                         (persistent cookie)
+                     * Remember Me Unchecked -> server omits Max-Age/Expires
+                     *                         (session cookie, cleared on
+                     *                          browser close)
+                     *
+                     * Recommended server Set-Cookie header:
+                     *   Set-Cookie: jwt=<token>; HttpOnly; Secure;
+                     *               SameSite=Strict; Path=/
+                     *   (add Max-Age=<seconds> when rememberMe is true)
                      */
-                    if (rememberMe) {
-
-                        localStorage.setItem(
-                            "jwtToken",
-                            data.jwtToken
-                        );
-
-                    } else {
-
-                        sessionStorage.setItem(
-                            "jwtToken",
-                            data.jwtToken
-                        );
-                    }
 
                     message.style.color = "green";
-                    message.textContent =
-                        "Login successful";
+                    message.textContent = "Login successful";
 
                     setTimeout(() => {
                         window.location.href = "/allitems";

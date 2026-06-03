@@ -1,28 +1,36 @@
 ## Authentication Flow Chart
 
-
 ### Phase 1: Login Phase
+
 ###### Happens only once when the user logs in.
+
 Example:
+
 ```
 POST /auth/login
 ```
+
 Body:
-```
+
+```json
 {
-    "username":"username",
-    "password":"secret"
+  "username": "username",
+  "password": "secret",
+  "rememberMe": true
 }
 ```
+
 Flow:
+
 ```
 [CLIENT]
 │
-│ POST /auth/login (username, password)
+│ POST /auth/login (username, password, rememberMe)
+│ credentials: "include"   ← tells browser to accept Set-Cookie
 ▼
-[AuthController.login()]
+[AuthController.login(jwtRequest, HttpServletResponse)]
 │
-│ Calls authService.login()
+│ Calls authService.login(request, response)
 ▼
 [AuthService.login()]
 │
@@ -39,134 +47,257 @@ Flow:
 │       ├─► Calls userDetailsService.loadUserByUsername()
 │       │       │
 │       │       ▼
-│       │   [ShoppiqUserDetailService]
+│       │   [CustomUserDetailService]
 │       │       │
 │       │       │ Queries UserRepository
 │       │       ▼
 │       │   [UserRepository.findUserByUsername()]
 │       │
-│       └─► Validates password using PasswordEncoder
+│       └─► Validates password using PasswordEncoder (BCrypt)
 │
 ├─► (on success) userDetailsService.loadUserByUsername() again
 │       │
 │       ▼
 │   [UserDetails object]
 │
-└─► jwtAuthenticationUtils.generateToken(userDetails)
+├─► jwtAuthenticationUtils.generateToken(userDetails, expiryMs)
+│       │
+│       │ Builds JWT with subject, issuedAt, expiration
+│       ▼
+│   [Signed JWT string]
 │
-│ Builds JWT with subject, issuedAt, expiration
-▼
-[Signed JWT token]
+└─► buildJwtCookie(token, maxAge)
+        │
+        │ HttpOnly; Secure; SameSite=Strict; Path=/
+        │ rememberMe=true  → Max-Age=<seconds>  (persistent, survives browser restart)
+        │ rememberMe=false → no Max-Age          (session cookie, cleared on browser close)
+        ▼
+    response.addCookie(cookie)
+        │
+        ▼
+    Set-Cookie: jwt=<token>; HttpOnly; Secure; SameSite=Strict; Path=/
 
-Return JwtResponse(token) to client
+Return JwtResponse { "message": "Login successful" } to client
 │
+│ NOTE: the token is NOT in the response body.
+│       the browser stores the cookie automatically.
+│       JavaScript cannot read it (HttpOnly).
 ▼
-[CLIENT stores token]
+[CLIENT — cookie stored by browser, invisible to JS]
 ```
+
 After this phase, Spring Security forgets everything because the app is stateless.
 
+---
+
 ### Phase 2: Request Authentication Phase
+
 ###### Happens on every protected request.
-Now the client no longer sends username/password.
-Instead, in header we send:
+
+Previously the client sent the token in a header:
+
 ```
-Authorization: Bearer eyJhbGc...
+Authorization: Bearer eyJhbGc...       ← old approach, removed
 ```
+
+Now the browser attaches the cookie automatically — no JavaScript involved:
+
+```
+Cookie: jwt=eyJhbGc...                 ← sent by browser on every request
+```
+
 Flow:
+
 ```
 [CLIENT]
 │
-│ Request with Authorization: Bearer <token>
+│ GET /item/all
+│ Cookie: jwt=eyJhbGc...   ← browser attaches automatically (credentials: "include")
+│ No Authorization header
 ▼
 [JwtAuthenticationFilter.doFilterInternal()]
 │
-├─► Extracts token from header
-├─► Calls jwtAuthenticationUtils.getUsernameFromToken()
+├─► extractJwtFromCookies(request)
 │       │
-│       └─► getClaimsFromToken() → parses & verifies signature
+│       └─► Arrays.stream(request.getCookies())
+│               .filter(c -> "jwt".equals(c.getName()))
+│               .map(Cookie::getValue)
+│               .findFirst()
 │
-├─► If username exists & not already authenticated:
+├─► jwtAuthenticationUtils.getUsernameFromToken(token)
+│       │
+│       └─► getClaimsFromToken() → Jwts.parser().verifyWith(key).parseSignedClaims()
+│
+├─► If username found & SecurityContext not yet populated:
 │       │
 │       ├─► userDetailsService.loadUserByUsername(username)
 │       │
 │       └─► jwtAuthenticationUtils.validateToken(token, userDetails)
 │               │
-│               ├─► Compare username
-│               └─► Check expiration (isTokenExpired())
+│               ├─► Compare username against token subject
+│               └─► isTokenExpired() → checks expiration claim
 │
-├─► Creates UsernamePasswordAuthenticationToken
+├─► Creates UsernamePasswordAuthenticationToken(userDetails, null, authorities)
 ├─► Stores it in SecurityContextHolder
 │
 ▼
 [Request proceeds to secured resource]
 ```
+
 ---
-Also why do we load user again?
+
+#### Why do we load the user again on every request?
+
 We already authenticated here:
+
 ```
-Login
-↓
-AuthenticationManager
+Login → AuthenticationManager
 ```
-So why later:
-```
-userDetailsService.loadUserByUsername(...)
-```
-again? Because the JWT only contains:
-```
+
+So why call `userDetailsService.loadUserByUsername(...)` again on every request?
+
+Because the JWT only contains:
+
+```json
 {
-    "sub":"prabhat",
-    "exp":123456789
+  "sub": "prabhat",
+  "exp": 123456789
 }
 ```
+
 It does NOT contain:
+
 ```
 Roles
 Authorities
 Permissions
 Account status
 ```
+
 Spring Security needs:
+
 ```
 userDetails.getAuthorities()
 ```
-to support:
+
+to enforce:
+
 ```
-@PreAuthorize
-hasRole("ADMIN")
+@PreAuthorize("hasRole('ADMIN')")
+hasAnyRole("USER", "ADMIN")
 ```
-So every request:
+
+So every request follows this chain:
+
 ```
-JWT
+JWT cookie
 ↓
-Username
+Extract username (sub claim)
 ↓
-Load UserDetails
+loadUserByUsername(username)   ← re-fetch roles from DB
 ↓
-Get Roles
+validateToken()                ← username match + not expired
+↓
+SecurityContextHolder          ← roles now available for @PreAuthorize
 ```
+
 ---
-Think of it like this
-Login
+
+### Phase 3: Logout Phase
+
+###### New — required because HttpOnly cookies cannot be cleared by JavaScript.
+
+Previously logout was handled entirely in the browser:
+
+```javascript
+localStorage.removeItem("jwtToken")   ← old
+approach, removed
+```
+
+Because the cookie is `HttpOnly`, `document.cookie` cannot read or delete it.
+The server must expire it by responding with `Max-Age=0`.
+
+```
+[CLIENT]
+│
+│ POST /auth/logout
+│ credentials: "include"
+▼
+[AuthController.logout(HttpServletResponse)]
+│
+│ authService.logout(response)
+▼
+[AuthService.logout()]
+│
+└─► buildJwtCookie("", 0)
+        │
+        │ Same attributes as login cookie, but:
+        │   value   = ""        (empty)
+        │   Max-Age = 0         (browser deletes immediately)
+        ▼
+    Set-Cookie: jwt=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0
+        │
+        ▼
+[Browser receives response → deletes jwt cookie]
+        │
+        ▼
+[Next request carries no cookie → filter finds nothing → 401]
+```
+
+> `/auth/logout` is a public endpoint (no valid JWT required).
+> The user's cookie may already be expired when they click Logout.
+> Requiring a valid JWT to log out would mean an expired-session user
+> could never reach a clean logged-out state.
+
+---
+
+### Think of it like this
+
+**Login**
+
 ```
 Passport Office
 ```
-We prove who we are. Then receive:
+
+We prove who we are once. We receive:
+
 ```
-Passport (JWT)
+Passport (JWT) — sealed inside an envelope the holder cannot open (HttpOnly cookie)
 ```
-Every future request
+
+**Every future request**
+
 ```
 Airport Security
 ```
-We don't prove identity again with birth certificate. We show:
+
+We don't prove identity again with a birth certificate. The browser hands over:
+
 ```
-Passport (JWT)
+The envelope (cookie) — security opens it, reads the passport (JWT)
 ```
+
 Security checks:
+
 ```
 Passport valid?
 Expired?
-Tampered?
+Tampered with?
 ```
+
 and lets us through.
+
+**Logout**
+
+```
+Passport Surrender Desk
+```
+
+We can't burn the passport ourselves (HttpOnly — JS cannot touch it).
+We hand the envelope to the desk, and the server:
+
+```
+Stamps it VOID (Max-Age=0) → browser shreds it
+```
+
+The next time we approach security, we have no envelope → turned away (401).

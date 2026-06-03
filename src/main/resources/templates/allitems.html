@@ -254,12 +254,6 @@
     </main>
 
     <script>
-        function getToken() {
-            return localStorage.getItem("jwtToken") || sessionStorage.getItem("jwtToken");
-        }
-
-        if (!getToken()) window.location.href = "/login";
-
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function (m) {
@@ -268,20 +262,23 @@
         }
 
         async function loadItems() {
-            const currentToken = getToken();
-            if (!currentToken) {
-                window.location.href = "/login";
-                return;
-            }
-
             try {
                 const res = await fetch("/item/all", {
-                    headers: {"Authorization": "Bearer " + currentToken}
+                    /*
+                     * credentials: "include" makes the browser attach the
+                     * HttpOnly JWT cookie automatically. No manual token
+                     * reading or Authorization header needed.
+                     */
+                    credentials: "include"
                 });
 
+                /*
+                 * 401/403 means the cookie is missing or the JWT is
+                 * expired/invalid. Redirect to login — the server will
+                 * clear the cookie if needed (via Set-Cookie: jwt=;
+                 * Max-Age=0 on the logout endpoint).
+                 */
                 if (res.status === 401 || res.status === 403) {
-                    localStorage.removeItem("jwtToken");
-                    sessionStorage.removeItem("jwtToken");
                     window.location.href = "/login";
                     return;
                 }
@@ -344,9 +341,18 @@
             }
         }
 
-        document.getElementById("logoutBtn").onclick = function () {
-            localStorage.removeItem("jwtToken");
-            sessionStorage.removeItem("jwtToken");
+        document.getElementById("logoutBtn").onclick = async function () {
+            /*
+             * Hit a logout endpoint so the server can expire the cookie
+             * server-side with: Set-Cookie: jwt=; HttpOnly; Max-Age=0; Path=/
+             * Then redirect. Never rely on JS to clear an HttpOnly cookie —
+             * JS cannot read or delete it by design.
+             */
+            await fetch("/auth/logout", {
+                method: "POST",
+                credentials: "include"
+            }).catch(() => {});
+
             window.location.href = "/login";
         };
 
