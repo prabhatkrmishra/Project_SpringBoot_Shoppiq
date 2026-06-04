@@ -31,3 +31,16 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# ----------------------
+# Env
+# ----------------------
+.env
+*.env
+application-local.properties
+
+# ----------------------
+# Temp
+# ----------------------
+*.tmp
+*.swp

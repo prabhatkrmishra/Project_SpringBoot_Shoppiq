@@ -1,28 +1,25 @@
+kind: Application
+
 spring:
   application:
     name: shoppiq
-
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/cnkart_schema
-    username: root
-    password: spring@
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-
   jpa:
     hibernate:
       ddl-auto: update
-
   session:
     jdbc:
       table-name: SPRING_SESSION
       initialize-schema: always
 
-server:
-  port: 8090
-
 jwt:
-  secret: ThisIsMyVerySecureSecretKeyForJwtToken123
+  secret: ${JWT_SECRET}
   expiration: 2592000000
   short-expiration: 1800000
 
-kind: Application
+server:
+  port: 8090
