@@ -65,6 +65,12 @@
             cursor: pointer;
         }
 
+        label {
+            text-decoration: none;
+            color: black;
+            font-size: 13px;
+        }
+
         button:hover {
             opacity: 0.9;
         }
@@ -90,6 +96,30 @@
         <h2>Register</h2>
 
         <form id="registerForm">
+
+            <div class="input-group">
+                <label for="name">Full Name</label>
+
+                <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="Enter Full Name"
+                        required
+                >
+            </div>
+
+            <div class="input-group">
+                <label for="email">Email Address</label>
+
+                <input
+                        type="text"
+                        id="email"
+                        name="email"
+                        placeholder="Enter Email"
+                        required
+                >
+            </div>
 
             <div class="input-group">
                 <label for="username">Username</label>
@@ -138,6 +168,8 @@
             event.preventDefault();
 
             const userData = {
+                name: document.getElementById("name").value,
+                email: document.getElementById("email").value,
                 username: document.getElementById("username").value,
                 password: document.getElementById("password").value
             };

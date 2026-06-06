@@ -28,6 +28,8 @@ public class UserService {
         try {
             User newUser = new User();
 
+            newUser.setName(newUserRequest.getName());
+            newUser.setEmail(newUserRequest.getEmail());
             newUser.setUsername(newUserRequest.getUsername());
             newUser.setPassword(passwordEncoder.encode(newUserRequest.getPassword()));
             newUser.setRoles(Set.of(rolesService.getCustomerRole()));

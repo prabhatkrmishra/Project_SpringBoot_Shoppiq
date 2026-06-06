@@ -1,6 +1,8 @@
 package com.crud.project.shoppiq.auth.oauth2;
 
 import com.crud.project.shoppiq.auth.utils.JwtAuthenticationUtils;
+import com.crud.project.shoppiq.auth.dto.OauthResponseDto;
+import com.crud.project.shoppiq.exceptions.InvalidOidcUserException;
 import com.crud.project.shoppiq.models.User;
 import com.crud.project.shoppiq.repositories.UserRepository;
 import com.crud.project.shoppiq.services.RolesService;
@@ -15,7 +17,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Set;
+import java.util.Optional;
 
 @Component
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
@@ -41,41 +43,34 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         try {
             OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
-            String email = oidcUser.getEmail();
+            if (oidcUser == null) {
+                throw new InvalidOidcUserException("Oidc response user is null");
+            }
 
-            User user = userRepository.findUserByUsername(email).orElseGet(() -> createGoogleUser(email));
+            Optional<User> existingUser = userRepository.findUserByEmail(oidcUser.getEmail());
+            if (existingUser.isPresent()) {
 
-            String jwt = jwtAuthenticationUtils.generateToken(user, expirationTime);
+                String jwt = jwtAuthenticationUtils.generateToken(existingUser.get(), expirationTime);
+                response.addCookie(jwtAuthenticationUtils.buildJwtCookie(jwt, (int) (expirationTime / 1000)));
 
-            response.addCookie(jwtAuthenticationUtils.buildJwtCookie(jwt, (int) (expirationTime / 1000)));
+                request.getSession().invalidate();
+
+                response.sendRedirect("/allitems");
+
+                return;
+            }
 
             /*
-             * OAuth2 login temporarily creates an HttpSession that stores an
-             * OAuth2AuthenticationToken. Once a JWT has been issued, the session
-             * is no longer required because authentication for all subsequent
-             * requests is performed using the JWT cookie.
+             * User authenticated successfully with Google but does not yet
+             * have a local application account.
              *
-             * Invalidating the session prevents stale OAuth2 authentication from
-             * remaining in the SecurityContext and ensures the application operates
-             * as a stateless JWT-based system after login.
+             * Store the verified Google profile temporarily so the user can
+             * complete registration by choosing a username/password.
              */
-            request.getSession().invalidate();
+            request.getSession(true).setAttribute("oauth_user", new OauthResponseDto(
+                    oidcUser.getFullName(), oidcUser.getEmail()));
 
-            response.sendRedirect("/allitems");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public User createGoogleUser(String email) {
-        try {
-            User newGoogleUser = new User();
-
-            newGoogleUser.setUsername(email);
-            newGoogleUser.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
-            newGoogleUser.setRoles(Set.of(rolesService.getCustomerRole()));
-
-            return userRepository.save(newGoogleUser);
+            response.sendRedirect("/complete-profile");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

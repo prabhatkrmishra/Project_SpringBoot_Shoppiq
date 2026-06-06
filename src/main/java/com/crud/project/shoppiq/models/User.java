@@ -28,6 +28,16 @@ public class User implements UserDetails, Serializable {
     @Column
     @Getter
     @Setter
+    private String name;
+
+    @Column(nullable = false, unique = true)
+    @Getter
+    @Setter
+    private String email;
+
+    @Column(nullable = false, unique = true)
+    @Getter
+    @Setter
     private String username;
 
     @Column
@@ -35,11 +45,11 @@ public class User implements UserDetails, Serializable {
     @Setter
     private String password;
 
-    @Column
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_roles",
-            joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id")
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "users_id"),
+            inverseJoinColumns = @JoinColumn(name = "roles_id")
     )
     @Getter
     @Setter

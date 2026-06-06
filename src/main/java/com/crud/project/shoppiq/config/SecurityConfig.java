@@ -101,6 +101,7 @@ public class SecurityConfig {
                                 "/login",
                                 "/register",
                                 "/allitems",
+                                "/complete-profile",
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         ).permitAll()
@@ -108,6 +109,8 @@ public class SecurityConfig {
                         // ── Public auth API endpoints ─────────────────────────
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/google/get-profile").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/google/complete-profile").permitAll()
 
                         // ── User registration ─────────────────────────────────
                         .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
@@ -135,11 +138,20 @@ public class SecurityConfig {
                 )
 
                 /*
-                 * No server-side session is ever created or used.
-                 * All authentication state is carried in the JWT cookie.
+                 * Google OAuth registration requires a temporary HttpSession
+                 * to hold the verified Google profile between:
+                 *
+                 *   Google Login
+                 *       ↓
+                 *   Complete Profile Page
+                 *       ↓
+                 *   Account Creation
+                 *
+                 * After registration/login completes the session is explicitly
+                 * invalidated and authentication continues using JWT cookies.
                  */
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 /*

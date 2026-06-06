@@ -19,4 +19,9 @@ public class FrontEndController {
     public String itemsPage() {
         return "allitems";
     }
+
+    @GetMapping("/complete-profile")
+    public String completeProfilePage() {
+        return "completeprofile";
+    }
 }
