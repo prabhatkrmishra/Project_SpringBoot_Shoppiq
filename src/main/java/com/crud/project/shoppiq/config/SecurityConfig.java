@@ -10,10 +10,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.crud.project.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 
 /**
  * Core Spring Security configuration for the application.
@@ -44,9 +43,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, OAuth2SuccessHandler oAuth2SuccessHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
 
     /**
@@ -99,7 +100,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/login",
                                 "/register",
-                                "/allitems"
+                                "/allitems",
+                                "/oauth2/**",
+                                "/login/oauth2/**"
                         ).permitAll()
 
                         // ── Public auth API endpoints ─────────────────────────
@@ -126,6 +129,11 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
+                .oauth2Login(oauth -> oauth
+                        .loginPage("/login")
+                        .successHandler(oAuth2SuccessHandler)
+                )
+
                 /*
                  * No server-side session is ever created or used.
                  * All authentication state is carried in the JWT cookie.
@@ -142,20 +150,6 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    /**
-     * Provides a BCrypt password encoder for hashing and verifying passwords.
-     *
-     * <p>Used automatically by {@code DaoAuthenticationProvider} when
-     * validating credentials during login. The same bean should be injected
-     * wherever passwords are hashed at registration time.</p>
-     *
-     * @return a {@link BCryptPasswordEncoder} with default strength (10 rounds)
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     /**

@@ -159,10 +159,10 @@ public class JwtAuthenticationUtils {
     public Cookie buildJwtCookie(String value, int maxAge) {
         Cookie cookie = new Cookie(JWT_COOKIE_NAME, value);
         cookie.setHttpOnly(true);            // not readable by document.cookie
-        cookie.setSecure(true);              // HTTPS only;
+        cookie.setSecure(false);             // HTTP for dev;
         cookie.setPath("/");                 // attached to every request on this origin
         cookie.setMaxAge(maxAge);
-        cookie.setAttribute("SameSite", "Strict");  // CSRF mitigation for modern browsers
+        cookie.setAttribute("SameSite", "Lax");  // CSRF mitigation for modern browsers
         return cookie;
     }
 }

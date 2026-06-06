@@ -34,4 +34,8 @@ public class RolesService {
             throw new RuntimeException(e);
         }
     }
+
+    public Role getCustomerRole() {
+        return rolesRepository.findByRole("ROLE_CUSTOMER").orElseThrow(() -> new RuntimeException("ROLE_CUSTOMER not found"));
+    }
 }
