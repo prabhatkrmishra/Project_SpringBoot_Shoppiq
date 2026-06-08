@@ -32,5 +32,13 @@ jwt:
   expiration: 2592000000
   short-expiration: 1800000
 
+app:
+  security:
+    secure-cookie: false
+
+logging:
+  level:
+    com.crud.project.shoppiq: OFF
+
 server:
   port: 8090

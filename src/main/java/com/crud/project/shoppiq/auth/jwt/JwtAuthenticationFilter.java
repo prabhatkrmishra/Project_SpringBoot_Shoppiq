@@ -1,156 +1,157 @@
 package com.crud.project.shoppiq.auth.jwt;
 
 import com.crud.project.shoppiq.auth.utils.JwtAuthenticationUtils;
+import com.crud.project.shoppiq.auth.utils.JwtCookieFactory;
+import com.crud.project.shoppiq.models.User;
+import com.crud.project.shoppiq.repositories.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Optional;
 
 /**
- * JWT Authentication Filter.
- * Intercepts every HTTP request, extracts the JWT from the HttpOnly cookie
- * named "jwt", validates it, and sets authentication in the SecurityContext
- * if valid. Runs before standard Spring Security filters.
+ * JWT Authentication Filter that processes the JWT cookie on every request.
  *
- * <p>Cookies are used instead of the Authorization header so the token is
- * never accessible to JavaScript (HttpOnly), reducing XSS exposure. The
- * SameSite=Strict attribute set by the login endpoint additionally mitigates
- * CSRF for modern browsers.</p>
+ * <p>Runs before standard Spring Security filters. Extracts the JWT from the
+ * HttpOnly cookie named "jwt", validates it against the database, and builds
+ * a complete SecurityContext from the token claims without additional database
+ * queries for roles or user details.</p>
+ *
+ * <p>The filter only sets authentication if the SecurityContext is empty
+ * ({@code getAuthentication() == null}), preventing unnecessary replacement
+ * of an already-authenticated context.</p>
+ *
+ * <h4>Stateless request processing</h4>
+ * <pre>
+ * Incoming HTTP request
+ *       ↓
+ * Extract JWT from "jwt" cookie
+ *       ↓
+ * Cookie absent? → continue unauthenticated
+ *       ↓
+ * Parse claims: userId, username, roles, tokenVersion
+ *       ↓
+ * Load User from database by userId (single query)
+ *       ↓
+ * Validate: tokenVersion matches AND user enabled?
+ *       ↓
+ * Valid → Build UsernamePasswordAuthenticationToken from JWT claims
+ *       ↓
+ * Set in SecurityContext with authorities from JWT roles
+ *       ↓
+ * Continue filter chain → Spring Security enforces access rules
+ *       ↓
+ * Invalid → Clear context → continue unauthenticated
+ * </pre>
+ *
+ * <p>The only database query is loading the user by ID to check token version
+ * and enabled status. Roles are taken from the JWT, eliminating per-request
+ * role queries.</p>
+ *
+ * @see JwtAuthenticationUtils
+ * @see JwtCookieFactory
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    /**
-     * Name of the HttpOnly cookie that carries the JWT.
-     */
-    private static final String JWT_COOKIE_NAME = "jwt";
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
-    private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     public JwtAuthenticationFilter(JwtAuthenticationUtils jwtAuthenticationUtils,
-                                   UserDetailsService userDetailsService) {
+                                   UserRepository userRepository) {
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
-        this.userDetailsService = userDetailsService;
+        this.userRepository = userRepository;
     }
 
     /**
-     * Main filter method executed once per request.
+     * Processes each request by extracting and validating the JWT cookie,
+     * then building a SecurityContext from the token claims.
      *
-     * <p>Reads the {@code jwt} cookie from the incoming request, validates the
-     * token, loads user details, and populates the {@link SecurityContextHolder}
-     * so that Spring Security can enforce role-based access control
-     * ({@code @PreAuthorize}, {@code hasRole}, etc.) for the remainder of the
-     * request lifecycle.</p>
+     * <p>Performs a single database lookup by userId to verify:
+     * <ol>
+     *   <li>The username in the token matches the database username</li>
+     *   <li>The token version matches the current database value</li>
+     *   <li>The user account is still enabled</li>
+     * </ol>
      *
-     * <p>If the cookie is absent, malformed, or the token fails validation the
-     * filter clears the SecurityContext and lets the request continue
-     * unauthenticated — downstream security rules will reject it with 401/403
-     * as appropriate.</p>
-     *
-     * <p>Called automatically by the Spring Security filter chain.</p>
+     * <p>Authorities are built from the JWT roles claim — no additional
+     * database queries are needed for authorization decisions.</p>
      *
      * @param request     incoming HTTP request
      * @param response    outgoing HTTP response
      * @param filterChain remaining filters in the chain
+     * @throws ServletException if a servlet error occurs
+     * @throws IOException      if an I/O error occurs during filtering
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
         try {
-            String token = extractJwtFromCookies(request);
+            String token = jwtAuthenticationUtils.extractJwtFromCookies(request);
 
-            if (token != null) {
-                String username = jwtAuthenticationUtils.getUsernameFromToken(token);
-
-                if (username != null) {
-
-                    /*
-                     * Load the application's UserDetails from the database.
-                     *
-                     * Although OAuth2 login initially authenticates the user using
-                     * Spring Security's OAuth2AuthenticationToken, authorization
-                     * throughout the application is based on our own User entity
-                     * and roles stored in the database (ROLE_CUSTOMER, ROLE_ADMIN).
-                     *
-                     * Therefore every request backed by a valid JWT is mapped back
-                     * to the application's UserDetails before authorization checks.
-                     */
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-                    if (jwtAuthenticationUtils.validateToken(token, userDetails)) {
-                        Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
-
-                        /*
-                         * Google OAuth2 login populates the SecurityContext with an
-                         * OAuth2AuthenticationToken containing authorities such as:
-                         *
-                         *   OIDC_USER
-                         *   SCOPE_openid
-                         *   SCOPE_profile
-                         *
-                         * These authorities do not satisfy application rules such as:
-                         *
-                         *   hasRole("CUSTOMER")
-                         *   hasRole("ADMIN")
-                         *
-                         * Therefore we replace the OAuth2 authentication with a
-                         * UsernamePasswordAuthenticationToken backed by our own
-                         * UserDetails implementation so that application roles are
-                         * consistently available regardless of whether the user
-                         * logged in via username/password or Google OAuth2.
-                         *
-                         * We only replace the authentication when it is not already
-                         * a UsernamePasswordAuthenticationToken to avoid rebuilding
-                         * the same authentication object on every request.
-                         */
-                        if (!(currentAuth instanceof UsernamePasswordAuthenticationToken)) {
-                            UsernamePasswordAuthenticationToken authentication =
-                                    new UsernamePasswordAuthenticationToken(
-                                            userDetails, null, userDetails.getAuthorities());
-                            authentication.setDetails(
-                                    new WebAuthenticationDetailsSource().buildDetails(request));
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
-                        }
-                    }
-                }
+            if (token == null) {
+                logger.debug("No JWT cookie found in request");
+                filterChain.doFilter(request, response);
+                return;
             }
+
+            Long userId = jwtAuthenticationUtils.getUserIdFromToken(token);
+            String username = jwtAuthenticationUtils.getUsernameFromToken(token);
+
+            if (userId == null || username == null) {
+                logger.debug("JWT missing required claims");
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isEmpty()) {
+                logger.debug("User not found for ID: {}", userId);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            User user = userOpt.get();
+
+            if (!jwtAuthenticationUtils.validateToken(token, user)) {
+                logger.debug("JWT validation failed for user: {}", username);
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                username,
+                                null,
+                                jwtAuthenticationUtils.getAuthoritiesFromToken(token));
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                logger.debug("JWT authentication set for user: {}", username);
+            }
+
         } catch (Exception e) {
+            logger.error("JWT authentication filter error: {}", e.getMessage());
             SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    /**
-     * Scans the request's cookie array for the {@code jwt} cookie and returns
-     * its value, or {@code null} if the cookie is absent or the request carries
-     * no cookies at all.
-     *
-     * @param request incoming HTTP request
-     * @return raw JWT string, or {@code null} if not found
-     */
-    private String extractJwtFromCookies(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) return null;
-
-        return Arrays.stream(cookies)
-                .filter(c -> JWT_COOKIE_NAME.equals(c.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
     }
 }
