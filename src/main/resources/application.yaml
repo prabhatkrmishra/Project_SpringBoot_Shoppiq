@@ -36,6 +36,14 @@ app:
   security:
     secure-cookie: false
 
+# Logging configuration
+# Available levels (from most to least verbose):
+#   TRACE - Everything including framework internals
+#   DEBUG - Debug messages, Info, Warn, Error
+#   INFO  - Informational messages, Warn, Error
+#   WARN  - Warnings and Errors only
+#   ERROR - Errors only
+#   OFF   - Disable all logging
 logging:
   level:
     com.crud.project.shoppiq: OFF
