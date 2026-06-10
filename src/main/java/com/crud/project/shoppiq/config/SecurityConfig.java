@@ -130,12 +130,12 @@ public class SecurityConfig {
 
                         if (user != null) {
                             Set<GrantedAuthority> userAuthorities = user.getRoles().stream()
-                                    .map(role -> new SimpleGrantedAuthority(role.getRole()))
+                                    .map(role -> new SimpleGrantedAuthority(role.getRoleName()))
                                     .collect(Collectors.toSet());
                             mappedAuthorities.addAll(userAuthorities);
                             logger.debug("Mapped returning OAuth2 user '{}' to roles: {}", email, user.getRoles());
                         } else {
-                            mappedAuthorities.add(new SimpleGrantedAuthority(rolesService.getCustomerRole().getRole()));
+                            mappedAuthorities.add(new SimpleGrantedAuthority(rolesService.getCustomerRole().getRoleName()));
                             logger.debug("Mapped new OAuth2 user '{}' to temporary role: CUSTOMER", email);
                         }
                     }

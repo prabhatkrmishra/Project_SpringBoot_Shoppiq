@@ -22,5 +22,5 @@ public class Role implements Serializable {
     @Getter
     @Setter
     @Column
-    String role;
+    String roleName;
 }

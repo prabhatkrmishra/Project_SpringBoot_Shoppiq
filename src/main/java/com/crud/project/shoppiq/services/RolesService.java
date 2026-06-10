@@ -18,7 +18,7 @@ public class RolesService {
         try {
             Role newRole = new Role();
             String finalRole = "ROLE_" + roleName.toUpperCase();
-            newRole.setRole(finalRole);
+            newRole.setRoleName(finalRole);
 
             return rolesRepository.save(newRole);
 
@@ -36,6 +36,6 @@ public class RolesService {
     }
 
     public Role getCustomerRole() {
-        return rolesRepository.findByRole("ROLE_CUSTOMER").orElseThrow(() -> new RuntimeException("ROLE_CUSTOMER not found"));
+        return rolesRepository.findByRoleName("ROLE_CUSTOMER").orElseThrow(() -> new RuntimeException("ROLE_CUSTOMER not found"));
     }
 }
