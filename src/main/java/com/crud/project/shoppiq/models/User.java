@@ -93,7 +93,6 @@ public class User implements UserDetails, Serializable {
      * previously issued tokens until their token version is incremented.
      */
     @Column(nullable = false)
-    @Getter
     @Setter
     private boolean enabled = true;
 
