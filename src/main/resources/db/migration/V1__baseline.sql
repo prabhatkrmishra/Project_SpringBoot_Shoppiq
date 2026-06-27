@@ -1,0 +1,10 @@
+-- ============================================================
+-- Shoppiq
+-- Baseline Migration
+--
+-- Version : 1
+-- Purpose : Marks the current database schema as the Flyway baseline.
+--
+-- Future schema modifications must be introduced through new
+-- versioned Flyway migration scripts.
+-- ============================================================
