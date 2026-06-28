@@ -1,63 +1,82 @@
 package com.pkmprojects.shoppiq.service;
 
-import com.pkmprojects.shoppiq.entity.Item;
-import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
-import com.pkmprojects.shoppiq.repository.ItemRepository;
-import org.springframework.stereotype.Service;
+import com.pkmprojects.shoppiq.dto.request.ItemRequest;
+import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service for Item CRUD operations.
+ * Business contract for managing catalog items.
  *
  * <p>
- * Methods that look up a single Item throw {@link ItemNotFoundException}
- * when the resource does not exist rather than returning an empty
- * {@code Optional}. This lets {@code GlobalExceptionHandler} translate
- * missing-resource cases into a consistent RFC 9457 response and removes
- * the need for callers to unwrap an {@code Optional} that, by this point,
- * could never actually be empty.
+ * Defines the operations available for creating, retrieving, updating
+ * and deleting products within the Shoppiq catalog.
  * </p>
+ *
+ * <h2>Responsibilities</h2>
+ * <ul>
+ *     <li>Create new products.</li>
+ *     <li>Retrieve existing products.</li>
+ *     <li>Update product information.</li>
+ *     <li>Delete products.</li>
+ * </ul>
+ *
+ * <h2>Design Notes</h2>
+ * <ul>
+ *     <li>Works exclusively with DTOs.</li>
+ *     <li>Does not expose persistence entities.</li>
+ *     <li>Implemented by {@code ItemServiceImpl}.</li>
+ * </ul>
+ *
+ * @author PrabhatKrMishra
+ * @since 1.0.0
  */
-@Service
-public class ItemService {
+public interface ItemService {
 
-    private final ItemRepository itemRepository;
+    /**
+     * Creates a new catalog item.
+     *
+     * @param request product information
+     * @return created product
+     */
+    ItemResponse create(ItemRequest request);
 
-    public ItemService(ItemRepository itemRepository) {
-        this.itemRepository = itemRepository;
-    }
+    /**
+     * Creates list of catalog item.
+     *
+     * @param request product information list
+     * @return created product
+     */
+    List<ItemResponse> createBulk(List<ItemRequest> request);
 
-    public Item saveNewItem(Item newItem) {
-        return itemRepository.save(newItem);
-    }
+    /**
+     * Retrieves a product by its identifier.
+     *
+     * @param id product identifier
+     * @return matching product
+     */
+    ItemResponse getById(Long id);
 
-    public List<Item> saveItemBulk(List<Item> newItems) {
-        return itemRepository.saveAll(newItems);
-    }
+    /**
+     * Retrieves every product in the catalog.
+     *
+     * @return ordered product list
+     */
+    List<ItemResponse> getAll();
 
-    public Item getItemById(long id) {
-        return itemRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Item with id: " + id + " not found"));
-    }
+    /**
+     * Updates an existing product.
+     *
+     * @param id      product identifier
+     * @param request updated product information
+     * @return updated product
+     */
+    ItemResponse update(Long id, ItemRequest request);
 
-    public List<Item> getAllExistingItems() {
-        List<Item> itemList = new ArrayList<>();
-        itemRepository.findAll().forEach(itemList::add);
-        return itemList;
-    }
-
-    public void deleteItemById(long id) {
-        if (!itemRepository.existsById(id)) {
-            throw new ItemNotFoundException("Item with id: " + id + " not found");
-        }
-        itemRepository.deleteById(id);
-    }
-
-    public Item updateItemById(long id, Item newItem) {
-        Item currentItem = getItemById(id);
-        currentItem.update(newItem);
-        return itemRepository.save(currentItem);
-    }
+    /**
+     * Deletes a product.
+     *
+     * @param id product identifier
+     */
+    void delete(Long id);
 }

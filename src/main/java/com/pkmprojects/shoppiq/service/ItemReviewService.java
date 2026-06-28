@@ -1,52 +1,85 @@
 package com.pkmprojects.shoppiq.service;
 
-import com.pkmprojects.shoppiq.entity.Item;
-import com.pkmprojects.shoppiq.entity.ItemReview;
-import com.pkmprojects.shoppiq.exception.ItemReviewNotFoundException;
-import com.pkmprojects.shoppiq.repository.ItemReviewRepository;
-import org.springframework.stereotype.Service;
+import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
+import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
+
+import java.util.List;
 
 /**
- * Service for Item review CRUD operations.
+ * Service responsible for managing product reviews.
  *
  * <p>
- * Methods that look up a single review throw {@link ItemReviewNotFoundException}
- * when the resource does not exist, rather than returning an empty
- * {@code Optional} for the caller to re-check.
+ * Defines the business operations available for the Item Review module.
+ * Implementations are responsible for validating business rules,
+ * coordinating persistence operations and mapping between DTOs and entities.
  * </p>
+ *
+ * <h2>Responsibilities</h2>
+ * <ul>
+ *     <li>Create reviews.</li>
+ *     <li>Retrieve reviews.</li>
+ *     <li>Update reviews.</li>
+ *     <li>Delete reviews.</li>
+ * </ul>
+ *
+ * <h2>Design Notes</h2>
+ * <ul>
+ *     <li>Operates entirely on DTOs.</li>
+ *     <li>Does not expose persistence entities.</li>
+ *     <li>Implemented by {@code ItemReviewServiceImpl}.</li>
+ * </ul>
+ *
+ * @author PrabhatKrMishra
+ * @since 1.0.0
  */
-@Service
-public class ItemReviewService {
+public interface ItemReviewService {
 
-    private final ItemReviewRepository itemReviewRepository;
-    private final ItemService itemService;
+    /**
+     * Creates a new review for an item.
+     *
+     * @param itemId  item identifier
+     * @param userId  reviewer identifier
+     * @param request review request
+     * @return created review
+     */
+    ItemReviewResponse create(
+            Long itemId,
+            Long userId,
+            ItemReviewRequest request
+    );
 
-    public ItemReviewService(ItemReviewRepository itemReviewRepository, ItemService itemService) {
-        this.itemReviewRepository = itemReviewRepository;
-        this.itemService = itemService;
-    }
+    /**
+     * Retrieves a review by its identifier.
+     *
+     * @param reviewId review identifier
+     * @return matching review
+     */
+    ItemReviewResponse getById(Long reviewId);
 
-    public ItemReview getReviewById(long reviewId) {
-        return itemReviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ItemReviewNotFoundException("item review with id: " + reviewId + " not found"));
-    }
+    /**
+     * Retrieves every review belonging to an item.
+     *
+     * @param itemId item identifier
+     * @return ordered review list
+     */
+    List<ItemReviewResponse> getByItem(Long itemId);
 
-    public ItemReview createNewItemReview(long itemId, ItemReview itemReview) {
-        Item currentItem = itemService.getItemById(itemId);
-        itemReview.setItem(currentItem);
-        return itemReviewRepository.save(itemReview);
-    }
+    /**
+     * Updates an existing review.
+     *
+     * @param reviewId review identifier
+     * @param request  updated review
+     * @return updated review
+     */
+    ItemReviewResponse update(
+            Long reviewId,
+            ItemReviewRequest request
+    );
 
-    public ItemReview updateItemReview(long reviewId, ItemReview itemReview) {
-        ItemReview currentItemReview = getReviewById(reviewId);
-        currentItemReview.update(itemReview);
-        return itemReviewRepository.save(currentItemReview);
-    }
-
-    public void deleteItemReviewById(long reviewId) {
-        if (!itemReviewRepository.existsById(reviewId)) {
-            throw new ItemReviewNotFoundException("item review with id: " + reviewId + " not found");
-        }
-        itemReviewRepository.deleteById(reviewId);
-    }
+    /**
+     * Deletes a review.
+     *
+     * @param reviewId review identifier
+     */
+    void delete(Long reviewId);
 }

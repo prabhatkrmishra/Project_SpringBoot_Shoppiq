@@ -2,93 +2,204 @@ package com.pkmprojects.shoppiq.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.pkmprojects.shoppiq.audit.AuditableEntity;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a product available in the Shoppiq catalog.
+ *
+ * <p>
+ * An {@code Item} contains the general catalog information displayed to
+ * customers, while detailed commercial information such as pricing,
+ * inventory, SKU and category is delegated to {@link ItemDetails}.
+ * </p>
+ *
+ * <h2>Responsibilities</h2>
+ * <ul>
+ *     <li>Stores product name and description.</li>
+ *     <li>Owns the associated {@link ItemDetails}.</li>
+ *     <li>Maintains product reviews.</li>
+ *     <li>Participates in customer orders.</li>
+ * </ul>
+ *
+ * <h2>Relationships</h2>
+ * <ul>
+ *     <li>One-to-One with {@link ItemDetails}.</li>
+ *     <li>One-to-Many with {@link ItemReview}.</li>
+ *     <li>Many-to-Many with {@link Order}.</li>
+ * </ul>
+ *
+ * <h2>Design Notes</h2>
+ * <ul>
+ *     <li>Extends {@link AuditableEntity} to inherit persistence,
+ *     optimistic locking and auditing support.</li>
+ *     <li>Uses cascading for {@link ItemDetails} because it is owned
+ *     exclusively by this entity.</li>
+ *     <li>Reviews are orphan-removable to preserve referential integrity.</li>
+ * </ul>
+ *
+ * @author PrabhatKrMishra
+ * @since 1.0.0
+ */
 @Entity
 @Table(name = "items")
-public class Item {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column
-    private Long id;
-    @Column
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class Item extends AuditableEntity {
+
+    /**
+     * Product name displayed throughout the catalog.
+     */
+    @NotBlank(message = "Item name is required.")
+    @Size(max = 150, message = "Item name cannot exceed 150 characters.")
+    @Column(nullable = false, length = 150)
     private String name;
-    @Column
+
+    /**
+     * Short product description.
+     */
+    @NotBlank(message = "Item description is required.")
+    @Size(max = 500, message = "Description cannot exceed 500 characters.")
+    @Column(nullable = false, length = 500)
     private String description;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    /**
+     * Commercial and inventory information associated with this product.
+     *
+     * <p>
+     * The lifecycle of {@link ItemDetails} is fully managed by the owning
+     * {@code Item}. Deleting an item automatically removes its details.
+     * </p>
+     */
+    @Valid
+    @OneToOne(
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
+            orphanRemoval = true,
+            optional = false
+    )
+    @JoinColumn(
+            name = "item_details_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_items_item_details"
+            )
+    )
     private ItemDetails itemDetails;
 
-    // Mapped by item obj in ItemReview
-    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
-    // @JoinColumn(name = "items_id") now in review
+    /**
+     * Reviews submitted for this product.
+     */
+    @Builder.Default
+    @OneToMany(
+            mappedBy = "item",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     @JsonManagedReference
-    private List<ItemReview> itemReviews;
+    private List<ItemReview> itemReviews = new ArrayList<>();
 
+    /**
+     * Orders containing this product.
+     *
+     * <p>
+     * This association is ignored during JSON serialization to prevent
+     * recursive object graphs.
+     * </p>
+     *
+     * <p>
+     * This relationship will eventually be replaced by an explicit
+     * {@code OrderItem} entity to support quantities and pricing history.
+     * </p>
+     */
+    @Builder.Default
     @ManyToMany(mappedBy = "itemList")
-    // Ignore loading orders in items json
     @JsonIgnore
-    private List<Order> orderList;
+    private List<Order> orderList = new ArrayList<>();
 
-    public Long getId() {
-        return id;
-    }
+    /**
+     * Updates the mutable state of this item using the supplied source.
+     *
+     * <p>
+     * The entity identity, optimistic locking version and audit metadata are
+     * intentionally preserved. Only business fields are copied.
+     * </p>
+     *
+     * <p>
+     * If {@link ItemDetails} already exists, its state is updated rather than
+     * replacing the managed entity instance.
+     * </p>
+     *
+     * @param source item containing updated values
+     */
+    public void update(Item source) {
 
-    public String getName() {
-        return name;
-    }
+        if (source == null) {
+            return;
+        }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+        this.name = source.getName();
+        this.description = source.getDescription();
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public ItemDetails getItemDetails() {
-        return itemDetails;
-    }
-
-    public void setItemDetails(ItemDetails itemDetails) {
-        this.itemDetails = itemDetails;
-    }
-
-    public void update(Item newItem) {
-        this.name = newItem.getName();
-        this.description = newItem.getDescription();
-
-        if (newItem.getItemDetails() != null) {
+        if (source.getItemDetails() != null) {
 
             if (this.itemDetails == null) {
-                this.itemDetails = new ItemDetails();
+                this.itemDetails = source.getItemDetails();
+            } else {
+                this.itemDetails.update(source.getItemDetails());
             }
-
-            this.itemDetails.update(
-                    newItem.getItemDetails()
-            );
         }
     }
 
-    public List<ItemReview> getItemReviews() {
-        return itemReviews;
+    /**
+     * Associates a review with this item.
+     *
+     * <p>
+     * This helper maintains both sides of the bidirectional relationship,
+     * ensuring the persistence context remains consistent.
+     * </p>
+     *
+     * @param review review to associate
+     */
+    public void addReview(ItemReview review) {
+
+        if (review == null) {
+            return;
+        }
+
+        itemReviews.add(review);
+        review.setItem(this);
     }
 
-    public void setItemReviews(List<ItemReview> itemReviews) {
-        this.itemReviews = itemReviews;
-    }
+    /**
+     * Removes a review from this item.
+     *
+     * <p>
+     * This helper maintains both sides of the bidirectional relationship.
+     * If orphan removal is enabled, the removed review will be deleted when
+     * the persistence context is flushed.
+     * </p>
+     *
+     * @param review review to remove
+     */
+    public void removeReview(ItemReview review) {
 
-    public List<Order> getOrderList() {
-        return orderList;
-    }
+        if (review == null) {
+            return;
+        }
 
-    public void setOrderList(List<Order> orderList) {
-        this.orderList = orderList;
+        itemReviews.remove(review);
+        review.setItem(null);
     }
 }

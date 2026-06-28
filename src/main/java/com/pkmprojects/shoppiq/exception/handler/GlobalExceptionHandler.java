@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -97,6 +98,25 @@ public class GlobalExceptionHandler {
         return ProblemDetailFactory.create(HttpStatus.NOT_FOUND,
                 "Resource not found",
                 ErrorCode.RESOURCE_NOT_FOUND, createInstance(request));
+    }
+
+    /**
+     * Handles malformed or unreadable JSON request bodies (e.g. a JSON array
+     * sent where an object is expected, or completely invalid JSON).
+     *
+     * @param exception message conversion failure
+     * @param request   current HTTP request
+     * @return RFC 9457 ProblemDetail response with 400 status
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException exception, HttpServletRequest request) {
+
+        log.debug("Unreadable HTTP message [{}]: {}", request.getRequestURI(), exception.getMessage());
+
+        return ProblemDetailFactory.create(HttpStatus.BAD_REQUEST,
+                "Malformed or unreadable request body.",
+                ErrorCode.VALIDATION_FAILED, createInstance(request));
     }
 
     /**

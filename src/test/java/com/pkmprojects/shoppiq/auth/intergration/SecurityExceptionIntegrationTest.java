@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.auth.intergration;
 
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
+import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
@@ -97,6 +98,10 @@ class SecurityExceptionIntegrationTest {
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
 
+    @MockitoBean
+    private HttpCookieOAuth2AuthorizationRequestRepository
+            httpCookieOAuth2AuthorizationRequestRepository;
+
     @Test
     @DisplayName("Unauthenticated request to a protected endpoint returns RFC9457 401")
     void unauthenticatedRequest_returnsUnauthorizedProblemDetail() throws Exception {
@@ -122,14 +127,25 @@ class SecurityExceptionIntegrationTest {
         Role customerRole = new Role();
         customerRole.setRoleName("ROLE_CUSTOMER");
 
-        User user = new User(1L, "Alice", "alice@example.com", "alice",
-                "hashed-password", 0, true, Set.of(customerRole));
+        User user = User.builder().name("Alice").email("alice@example.com").username("alice")
+                .password("hashed-password").enabled(true)
+                .tokenVersion(0).roles(Set.of(customerRole)).build();
+
+        /* The id field is declared in BaseEntity with no setter and no @Builder support,
+         * so it must be set via reflection to ensure generateToken() embeds a non-null
+         * userId claim and the filter's userRepository.findById() call can be matched.
+         */
+        java.lang.reflect.Field idField = com.pkmprojects.shoppiq.audit.BaseEntity.class
+                .getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(user, 1L);
 
         String token = jwtAuthenticationUtils.generateToken(user, 60_000L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        // GET /roles/all is restricted to ROLE_ADMIN in SecurityConfig via URL-level rules.
-        // A CUSTOMER-role user triggers AccessDeniedException -> ShoppiqAccessDeniedHandler -> 403.
+        /* GET /roles/all is restricted to ROLE_ADMIN in SecurityConfig via URL-level rules.
+         * A CUSTOMER-role user triggers AccessDeniedException -> ShoppiqAccessDeniedHandler -> 403.
+         */
         mockMvc.perform(get("/roles/all").cookie(new Cookie("jwt", token)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))

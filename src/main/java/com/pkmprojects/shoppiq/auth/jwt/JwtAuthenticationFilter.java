@@ -129,6 +129,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     private static final RequestMatcher SKIP_MATCHER = new OrRequestMatcher(
             PathPatternRequestMatcher.pathPattern("/login"),
+            PathPatternRequestMatcher.pathPattern("/auth/**"),
             PathPatternRequestMatcher.pathPattern("/oauth2/**"),
             PathPatternRequestMatcher.pathPattern("/login/oauth2/**"),
             PathPatternRequestMatcher.pathPattern("/register"),

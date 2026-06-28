@@ -200,12 +200,18 @@ public class SecurityConfig {
                                 "/user/register"
                         ).permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/item/all").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/item/id/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/items/all").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/items/id/**").hasAnyRole("CUSTOMER", "ADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/item/create/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/item/update/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/item/delete/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/items/itemId/create/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/items/itemId/reviews").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/reviews/reviewId").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/reviews/reviewId/update").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/reviews/reviewId/delete").hasAnyRole("CUSTOMER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/items/create/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/items/update/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/items/delete/**").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/roles/create/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/roles/all").hasRole("ADMIN")

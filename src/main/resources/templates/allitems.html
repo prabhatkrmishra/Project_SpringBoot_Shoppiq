@@ -172,6 +172,52 @@
             margin-bottom: 2px;
         }
 
+        .stock-info {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stock-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .stock-badge.in-stock {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .stock-badge.low-stock {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .stock-badge.out-of-stock {
+            background: #fbe9e7;
+            color: #c62828;
+        }
+
+        .discount-badge {
+            display: inline-block;
+            background: #fce4ec;
+            color: #c62828;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
         /* Reviews */
         .card-reviews {
             padding: 16px 24px 20px;
@@ -212,6 +258,13 @@
             letter-spacing: 0.04em;
         }
 
+        .review-rating {
+            display: inline-block;
+            color: #f57c00;
+            font-size: 0.8rem;
+            margin-right: 6px;
+        }
+
         .no-reviews {
             font-family: 'Segoe UI', sans-serif;
             font-size: 0.8rem;
@@ -237,6 +290,21 @@
         .error-message a {
             color: #111;
         }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header {
+                padding: 0 16px;
+            }
+
+            .main {
+                padding: 20px 16px;
+            }
+
+            .items-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -261,23 +329,26 @@
             });
         }
 
+        function getStockBadge(stock) {
+            if (stock === undefined || stock === null) return '';
+            if (stock <= 0) return '<span class="stock-badge out-of-stock">Out of Stock</span>';
+            if (stock <= 10) return '<span class="stock-badge low-stock">Low Stock</span>';
+            return '<span class="stock-badge in-stock">In Stock</span>';
+        }
+
+        function renderStars(rating) {
+            if (!rating) return '';
+            const full = '★'.repeat(Math.floor(rating));
+            const empty = '☆'.repeat(5 - Math.floor(rating));
+            return full + empty;
+        }
+
         async function loadItems() {
             try {
-                const res = await fetch("/item/all", {
-                    /*
-                     * credentials: "include" makes the browser attach the
-                     * HttpOnly JWT cookie automatically. No manual token
-                     * reading or Authorization header needed.
-                     */
+                const res = await fetch("/items/all", {
                     credentials: "include"
                 });
 
-                /*
-                 * 401/403 means the cookie is missing or the JWT is
-                 * expired/invalid. Redirect to login — the server will
-                 * clear the cookie if needed (via Set-Cookie: jwt=;
-                 * Max-Age=0 on the logout endpoint).
-                 */
                 if (res.status === 401 || res.status === 403) {
                     window.location.href = "/login";
                     return;
@@ -300,10 +371,20 @@
                     const reviewsHtml = reviewCount
                         ? reviews.map(r => `
                             <div class="review-item">
-                                <div class="review-text">${escapeHtml(r.review)}</div>
-                                <div class="review-author">${escapeHtml(r.username)}</div>
+                                <div class="review-text">
+                                    <span class="review-rating">${renderStars(r.rating)}</span>
+                                    ${escapeHtml(r.review)}
+                                </div>
+                                <div class="review-author">${escapeHtml(r.username || 'Anonymous')}</div>
                             </div>`).join('')
                         : '<div class="no-reviews">No reviews yet.</div>';
+
+                    const categoryName = item.category?.name || 'Uncategorized';
+                    const brand = item.brand || 'N/A';
+                    const price = item.price || 0;
+                    const stock = item.stockQuantity || 0;
+                    const discount = item.discountPercentage || 0;
+                    const discountedPrice = discount > 0 ? price * (1 - discount / 100) : null;
 
                     return `
                     <div class="item-card">
@@ -316,15 +397,33 @@
                         <div class="card-details">
                             <div class="detail-row">
                                 <span class="detail-label">Brand</span>
-                                <span class="detail-value">${escapeHtml(item.itemDetails?.brand)}</span>
+                                <span class="detail-value">${escapeHtml(brand)}</span>
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Category</span>
-                                <span class="detail-value">${escapeHtml(item.itemDetails?.category)}</span>
+                                <span class="detail-value">${escapeHtml(categoryName)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">SKU</span>
+                                <span class="detail-value">${escapeHtml(item.sku || 'N/A')}</span>
                             </div>
                             <div class="item-price">
                                 <span class="price-label">Price</span>
-                                Rs. ${(item.itemDetails?.price || 0).toLocaleString('en-IN')}
+                                ${discount > 0 ? `
+                                    <span style="text-decoration: line-through; color: #999; font-size: 0.9rem; font-weight: 400; margin-right: 8px;">
+                                        Rs. ${price.toLocaleString('en-IN')}
+                                    </span>
+                                    <span style="color: #c62828; font-weight: 700;">
+                                        Rs. ${discountedPrice.toLocaleString('en-IN')}
+                                    </span>
+                                    <span class="discount-badge" style="margin-left: 8px;">${discount}% OFF</span>
+                                ` : `
+                                    Rs. ${price.toLocaleString('en-IN')}
+                                `}
+                            </div>
+                            <div class="stock-info">
+                                <span>Stock: ${stock}</span>
+                                ${getStockBadge(stock)}
                             </div>
                         </div>
 
@@ -342,16 +441,11 @@
         }
 
         document.getElementById("logoutBtn").onclick = async function () {
-            /*
-             * Hit a logout endpoint so the server can expire the cookie
-             * server-side with: Set-Cookie: jwt=; HttpOnly; Max-Age=0; Path=/
-             * Then redirect. Never rely on JS to clear an HttpOnly cookie —
-             * JS cannot read or delete it by design.
-             */
             await fetch("/auth/logout", {
                 method: "POST",
                 credentials: "include"
-            }).catch(() => {});
+            }).catch(() => {
+            });
 
             window.location.href = "/login";
         };

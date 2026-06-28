@@ -121,6 +121,20 @@ public enum ErrorCode {
     USER_NOT_FOUND("USER-404-001", "Requested user was not found."),
 
     // =========================================================
+    // Category Errors
+    // =========================================================
+
+    /**
+     * Category already exists.
+     */
+    CATEGORY_ALREADY_EXISTS("CATEGORY-409-001", "Category already exists."),
+
+    /**
+     * Requested category could not be found.
+     */
+    CATEGORY_NOT_FOUND("CATEGORY-404-001", "Requested category was not found."),
+
+    // =========================================================
     // Item Errors
     // =========================================================
 
@@ -130,14 +144,32 @@ public enum ErrorCode {
     ITEM_NOT_FOUND("ITEM-404-001", "Requested item was not found."),
 
     /**
+     * Requested item already exists.
+     */
+    ITEM_ALREADY_EXISTS("ITEM-409-001", "Requested item already exists."),
+
+    // =========================================================
+    // ItemDetails Errors
+    // =========================================================
+
+    /**
      * Requested item details could not be found.
      */
-    ITEM_DETAILS_NOT_FOUND("ITEM-404-002", "Requested item details were not found."),
+    ITEM_DETAILS_NOT_FOUND("ITEM_DETAILS-404-002", "Requested item details were not found."),
+
+    // =========================================================
+    // ItemReview Errors
+    // =========================================================
 
     /**
      * Requested review could not be found.
      */
-    ITEM_REVIEW_NOT_FOUND("REVIEW-404-001", "Requested review was not found."),
+    ITEM_REVIEW_NOT_FOUND("ITEM_REVIEW-404-001", "Requested item review was not found."),
+
+    /**
+     * Requested review already exists.
+     */
+    ITEM_REVIEW_ALREADY_EXISTS("ITEM_REVIEW-409-001", "Requested item review already exist."),
 
     // =========================================================
     // Order Errors
@@ -148,11 +180,6 @@ public enum ErrorCode {
      */
     ORDER_NOT_FOUND("ORDER-404-001", "Requested order was not found."),
 
-    /**
-     * Invalid operation attempted.
-     */
-    INVALID_OPERATION("SYSTEM-400-001", "Invalid operation."),
-
     // =========================================================
     // Role Errors
     // =========================================================
@@ -161,6 +188,15 @@ public enum ErrorCode {
      * Requested role could not be found.
      */
     ROLE_NOT_FOUND("ROLE-404-001", "Requested role was not found."),
+
+    // =========================================================
+    // Other Errors
+    // =========================================================
+
+    /**
+     * Invalid operation attempted.
+     */
+    INVALID_OPERATION("SYSTEM-400-001", "Invalid operation."),
 
     // =========================================================
     // OAuth2 Registration Errors
