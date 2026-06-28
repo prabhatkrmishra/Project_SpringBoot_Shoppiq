@@ -18,6 +18,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import io.jsonwebtoken.JwtException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -101,6 +104,62 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.userRepository = userRepository;
         this.responseWriter = responseWriter;
+    }
+
+    /**
+     * A composite request matcher that aggregates all public, unauthenticated,
+     * and system-level URI endpoints that must completely bypass this security filter.
+     *
+     * <p>By leveraging {@link PathPatternRequestMatcher} via its static factory
+     * method {@link PathPatternRequestMatcher#pathPattern(String)}, this matcher
+     * provides highly optimized parsing of URL path expressions natively compatible
+     * with Spring MVC routing semantics, outperforming legacy Ant-style matchers.</p>
+     *
+     * <h2>Bypassed Endpoints</h2>
+     * <ul>
+     *     <li>{@code /login} - Standard application login route</li>
+     *     <li>{@code /oauth2/**} - Third-party OAuth2 authorization and redirection base pathways</li>
+     *     <li>{@code /login/oauth2/**} - OAuth2 processing filters and client landing hooks</li>
+     *     <li>{@code /register} - User sign-up and account creation registration endpoint</li>
+     *     <li>{@code /error} - Spring Boot global error-dispatch pathway (prevents infinite filter loops on exceptions)</li>
+     *     <li>{@code /favicon.ico} - Browser application icon asset request</li>
+     *     </ul>
+     */
+    private static final RequestMatcher SKIP_MATCHER = new OrRequestMatcher(
+            PathPatternRequestMatcher.pathPattern("/login"),
+            PathPatternRequestMatcher.pathPattern("/oauth2/**"),
+            PathPatternRequestMatcher.pathPattern("/login/oauth2/**"),
+            PathPatternRequestMatcher.pathPattern("/register"),
+            PathPatternRequestMatcher.pathPattern("/error"),
+            PathPatternRequestMatcher.pathPattern("/favicon.ico")
+    );
+
+    /**
+     * Determines whether the incoming HTTP request should completely bypass execution
+     * of this filter's JWT validation logic.
+     *
+     * <p>This method hooks into the lifecycle of {@link OncePerRequestFilter}. If it
+     * returns {@code true}, the framework entirely skips {@link #doFilterInternal} for
+     * the active request, delegating immediately to the next filter down the line.
+     * This prevents unnecessary database lookups, overhead parsing, or early 401/403
+     * failures on public-facing infrastructure routes.</p>
+     *
+     * <h2>Bypass Execution Strategy</h2>
+     * <ol>
+     *     <li>Extracts the routing context path from the raw HTTP servlet structure.</li>
+     *     <li>Evaluates the current request URI and HTTP method payload against the {@link #SKIP_MATCHER}.</li>
+     *     <li>If a structural match succeeds, the filter steps aside completely.</li>
+     *     <li>If no match succeeds, the request proceeds straight into full JWT validation.</li>
+     * </ol>
+     *
+     * @param request the incoming {@link HttpServletRequest} being evaluated
+     * @return {@code true} if the request target matches an entry in {@link #SKIP_MATCHER},
+     * meaning it should bypass JWT extraction; {@code false} otherwise
+     * @throws ServletException if an error occurs while evaluating the matching rules
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        return SKIP_MATCHER.matches(request);
     }
 
     /**
