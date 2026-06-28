@@ -3,6 +3,7 @@ package com.pkmprojects.shoppiq.controller;
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,11 +28,8 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestBody UserRequest newUserRequest) {
-        boolean isCreated = userService.createUser(newUserRequest);
-        if (isCreated)
-            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to register user");
+    public ResponseEntity<String> registerUser(@Valid @RequestBody UserRequest newUserRequest) {
+        userService.createUser(newUserRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 }

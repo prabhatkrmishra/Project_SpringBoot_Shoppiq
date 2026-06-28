@@ -1,13 +1,27 @@
 package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.entity.Role;
+import com.pkmprojects.shoppiq.exception.RoleNotFoundException;
 import com.pkmprojects.shoppiq.repository.RolesRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Service for Role management.
+ *
+ * <p>
+ * Database failures are allowed to propagate naturally instead of being
+ * caught and rewrapped in a generic {@link RuntimeException} — the latter
+ * adds no diagnostic value and is indistinguishable create any other
+ * unexpected failure once it reaches {@code GlobalExceptionHandler}.
+ * </p>
+ */
 @Service
 public class RolesService {
+
+    private static final String CUSTOMER_ROLE_NAME = "ROLE_CUSTOMER";
+
     private final RolesRepository rolesRepository;
 
     public RolesService(RolesRepository rolesRepository) {
@@ -15,27 +29,27 @@ public class RolesService {
     }
 
     public Role createNewRole(String roleName) {
-        try {
-            Role newRole = new Role();
-            String finalRole = "ROLE_" + roleName.toUpperCase();
-            newRole.setRoleName(finalRole);
+        Role newRole = new Role();
+        String finalRole = "ROLE_" + roleName.toUpperCase();
+        newRole.setRoleName(finalRole);
 
-            return rolesRepository.save(newRole);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return rolesRepository.save(newRole);
     }
 
     public List<Role> getAllExistingRoles() {
-        try {
-            return rolesRepository.findAll();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return rolesRepository.findAll();
     }
 
+    /**
+     * Looks up the default CUSTOMER role assigned to new accounts.
+     *
+     * @return the {@code ROLE_CUSTOMER} entity
+     * @throws RoleNotFoundException if the role is missing create the database —
+     *                                this should only happen if {@code DataInitializer}
+     *                                has not yet run, or its seed data was removed
+     */
     public Role getCustomerRole() {
-        return rolesRepository.findByRoleName("ROLE_CUSTOMER").orElseThrow(() -> new RuntimeException("ROLE_CUSTOMER not found"));
+        return rolesRepository.findByRoleName(CUSTOMER_ROLE_NAME)
+                .orElseThrow(() -> new RoleNotFoundException(CUSTOMER_ROLE_NAME + " not found"));
     }
 }

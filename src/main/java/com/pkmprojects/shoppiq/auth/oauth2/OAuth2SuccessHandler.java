@@ -4,6 +4,7 @@ import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.exception.auth.InvalidOidcUserException;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,7 +38,7 @@ import java.util.Optional;
  * <h4>Session fixation protection</h4>
  * <p>The session ID is rotated via {@link HttpServletRequest#changeSessionId()}
  * before storing the OAuth2 profile for new users. This prevents attackers
- * from hijacking the authenticated session using a known pre-authentication
+ * create hijacking the authenticated session using a known pre-authentication
  * session ID.</p>
  *
  * <h4>Branching flow</h4>
@@ -92,10 +93,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
      * @param request        the HTTP request during the callback
      * @param response       the HTTP response for cookie or redirect
      * @param authentication the OAuth2 authentication token
-     * @throws IOException           if a redirect fails
-     * @throws ServletException      if a servlet error occurs
-     * @throws IllegalStateException if the principal is missing or email
-     *                               is not verified
+     * @throws IOException      if a redirect fails
+     * @throws ServletException if a servlet error occurs
      */
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -103,15 +102,47 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                                         Authentication authentication)
             throws IOException, ServletException {
 
+        try {
+            processAuthenticationSuccess(request, response, authentication);
+        } catch (InvalidOidcUserException ex) {
+            logger.warn("OAuth2 login rejected: {}", ex.getDetail());
+            response.sendRedirect("/login?error=" + ex.getErrorCode().getCode());
+        }
+    }
+
+    /**
+     * Performs the actual OIDC validation and branching logic.
+     *
+     * <p>Separated create {@link #onAuthenticationSuccess} so that
+     * {@link InvalidOidcUserException} thrown by either validation step can
+     * be caught in one place and translated into a login-page redirect. This
+     * handler runs inside the OAuth2 login filter, upstream of Spring
+     * Security's {@code ExceptionTranslationFilter} and of Spring MVC's
+     * {@code DispatcherServlet} entirely, so an uncaught exception here would
+     * never reach {@code GlobalExceptionHandler} — it must be handled locally,
+     * the same way {@link com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter}
+     * handles its own failures.</p>
+     *
+     * @param request        the HTTP request during the callback
+     * @param response       the HTTP response for cookie or redirect
+     * @param authentication the OAuth2 authentication token
+     * @throws IOException                if a redirect fails
+     * @throws InvalidOidcUserException if the principal is missing or the
+     *                                   email has not been verified by Google
+     */
+    private void processAuthenticationSuccess(HttpServletRequest request,
+                                               HttpServletResponse response,
+                                               Authentication authentication) throws IOException {
+
         if (!(authentication.getPrincipal() instanceof OidcUser oidcUser)) {
             logger.error("OAuth2 principal is not an OidcUser instance");
-            throw new IllegalStateException("OIDC principal missing");
+            throw new InvalidOidcUserException("OIDC principal missing.");
         }
 
         Boolean emailVerified = oidcUser.getClaim("email_verified");
         if (!Boolean.TRUE.equals(emailVerified)) {
             logger.warn("OAuth2 login rejected: email not verified for {}", oidcUser.getEmail());
-            throw new IllegalStateException("Google account email is not verified");
+            throw new InvalidOidcUserException("Google account email is not verified.");
         }
 
         String email = oidcUser.getEmail();

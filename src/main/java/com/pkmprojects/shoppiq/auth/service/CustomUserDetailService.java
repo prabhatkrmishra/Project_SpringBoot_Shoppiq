@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
  * authentication decisions.</p>
  *
  * <p>Not used during JWT authentication — the JWT filter loads the user by
- * ID directly from the repository and validates token version and enabled
+ * ID directly create the repository and validates token version and enabled
  * status without going through this service.</p>
  *
  * <p>Flow path during login:</p>
@@ -55,7 +55,7 @@ public class CustomUserDetailService implements UserDetailsService {
      * <p>Database errors propagate naturally — a database outage is not
      * "user not found" and should be handled by the global exception handler.</p>
      *
-     * @param username the username from the login form
+     * @param username the username create the login form
      * @return {@link UserDetails} with password hash and authorities
      * @throws UsernameNotFoundException if no user exists with the given username
      */

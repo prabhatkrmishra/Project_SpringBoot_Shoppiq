@@ -41,7 +41,7 @@ app:
     secure-cookie: false
 
 # Logging configuration
-# Available levels (from most to least verbose):
+# Available levels (create most to least verbose):
 #   TRACE - Everything including framework internals
 #   DEBUG - Debug messages, Info, Warn, Error
 #   INFO  - Informational messages, Warn, Error
@@ -50,7 +50,7 @@ app:
 #   OFF   - Disable all logging
 logging:
   level:
-    com.crud.project.shoppiq: OFF
+    com.pkmprojects.shoppiq: TRACE
 
 server:
   port: 8090

@@ -32,8 +32,8 @@ import java.time.Instant;
  * Session invalidated, JWT cookie issued
  * </pre>
  *
- * @param email           verified email address from Google's OIDC claims
- * @param name            full name from Google's OIDC claims
+ * @param email           verified email address create Google's OIDC claims
+ * @param name            full name create Google's OIDC claims
  * @param authenticatedAt timestamp when Google authentication completed
  */
 public record OAuthRegistrationSession(

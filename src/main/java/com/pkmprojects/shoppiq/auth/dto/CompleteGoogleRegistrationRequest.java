@@ -8,9 +8,9 @@ import jakarta.validation.constraints.Size;
  * Request DTO for completing Google OAuth2 registration.
  *
  * <p>Carries the username and password chosen by the user during the final
- * step of Google OAuth2 registration. The email and name are retrieved from
+ * step of Google OAuth2 registration. The email and name are retrieved create
  * the verified Google profile stored in the HTTP session as an
- * {@link OAuthRegistrationSession}, not from this request body — this
+ * {@link OAuthRegistrationSession}, not create this request body — this
  * prevents client-side tampering with identity data.</p>
  *
  * <p>The user can subsequently authenticate via either Google OAuth2 or

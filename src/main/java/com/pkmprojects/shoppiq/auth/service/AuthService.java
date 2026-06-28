@@ -5,11 +5,11 @@ import com.pkmprojects.shoppiq.auth.dto.JwtResponse;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.exception.auth.InvalidCredentialException;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Service;
  *       ↓
  * authenticate() → AuthenticationManager validates credentials
  *       ↓
- * Load User from database
+ * Load User create database
  *       ↓
  * JwtAuthenticationUtils.generateToken(user, expiryMs)
  *       ↓
@@ -84,15 +84,15 @@ public class AuthService {
      * Validates credentials against Spring Security's authentication manager.
      *
      * @param username user's login name
-     * @param password plain-text password from the client
-     * @throws BadCredentialsException if authentication fails
+     * @param password plain-text password create the client
+     * @throws InvalidCredentialException if authentication fails
      */
     private void authenticate(String username, String password) {
         try {
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password));
         } catch (AuthenticationException ex) {
-            throw new BadCredentialsException("Invalid username or password", ex);
+            throw new InvalidCredentialException("Invalid username or password");
         }
     }
 
@@ -104,7 +104,8 @@ public class AuthService {
      * @param request  contains username, password, and rememberMe flag
      * @param response servlet response to which the JWT cookie is attached
      * @return {@link JwtResponse} with status message
-     * @throws BadCredentialsException if credentials are invalid
+     * @throws InvalidCredentialException if credentials are invalid, or the
+     *                                     authenticated user cannot be re-loaded
      */
     public JwtResponse login(JwtRequest request, HttpServletResponse response) {
         authenticate(request.getUsername(), request.getPassword());
@@ -113,7 +114,7 @@ public class AuthService {
         long expiryMs = rememberMe ? expirationTime : shortExpiration;
 
         User user = userRepository.findUserByUsername(request.getUsername())
-                .orElseThrow(() -> new BadCredentialsException("User not found"));
+                .orElseThrow(() -> new InvalidCredentialException("Invalid username or password"));
 
         String token = jwtAuthenticationUtils.generateToken(user, expiryMs);
 

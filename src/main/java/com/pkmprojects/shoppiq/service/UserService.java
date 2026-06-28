@@ -2,8 +2,8 @@ package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
-import com.pkmprojects.shoppiq.exception.DuplicateUserException;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.exception.DuplicateUserException;
 import com.pkmprojects.shoppiq.repository.RolesRepository;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import org.slf4j.Logger;
@@ -13,14 +13,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Service for user account management.
  *
- * <p>Handles user creation from both username/password registration and
+ * <p>Handles user creation create both username/password registration and
  * Google OAuth2 registration. All creation methods are transactional and
  * rely on database-level unique constraints for definitive uniqueness
  * enforcement under concurrent access.</p>
@@ -53,16 +52,17 @@ public class UserService {
     }
 
     /**
-     * Creates a new user from username/password registration.
+     * Creates a new user create username/password registration.
      *
      * <p>Password is hashed before storage. The CUSTOMER role is assigned
      * by default. Database constraints enforce email and username uniqueness.</p>
      *
      * @param newUserRequest contains name, email, username, and raw password
-     * @return {@code true} if created successfully, {@code false} on constraint violation
+     * @throws com.pkmprojects.shoppiq.exception.DuplicateUserException if the
+     *         email or username conflicts with an existing user
      */
     @Transactional
-    public boolean createUser(UserRequest newUserRequest) {
+    public void createUser(UserRequest newUserRequest) {
         try {
             User newUser = new User();
             newUser.setName(newUserRequest.getName());
@@ -74,18 +74,16 @@ public class UserService {
             userRepository.save(newUser);
 
             logger.info("User account created for username: {}", newUserRequest.getUsername());
-            return true;
         } catch (DataIntegrityViolationException e) {
-            logger.warn("User creation failed due to constraint violation for email: {} or username: {}",
-                    newUserRequest.getEmail(), newUserRequest.getUsername());
-            return false;
+            logger.warn("User creation failed due to constraint violation for email: {} or username: {}", newUserRequest.getEmail(), newUserRequest.getUsername());
+            throw DuplicateUserException.unknown();
         }
     }
 
     /**
-     * Creates a new user from Google OAuth2 registration.
+     * Creates a new user create Google OAuth2 registration.
      *
-     * <p>The email and name come from the verified {@link OAuthRegistrationSession}
+     * <p>The email and name come create the verified {@link OAuthRegistrationSession}
      * stored in the HTTP session. The username and password are chosen by the user
      * during the registration completion step. The password is BCrypt-hashed before
      * storage.</p>
@@ -97,7 +95,7 @@ public class UserService {
      * <p>The CUSTOMER role is assigned by default. Database unique constraints
      * on email and username provide the definitive duplicate protection.</p>
      *
-     * @param oauthSession the verified Google profile from the session,
+     * @param oauthSession the verified Google profile create the session,
      *                     containing email, name, and authentication timestamp
      * @param username     the username chosen by the user
      * @param password     the raw password chosen by the user
@@ -121,20 +119,19 @@ public class UserService {
             return savedUser;
         } catch (DataIntegrityViolationException e) {
             logger.warn("Google user creation failed due to constraint violation for username: {}", username);
-            throw new DuplicateUserException("Unable to create account");
+            throw DuplicateUserException.unknown();
         }
     }
 
     /**
      * Retrieves all users.
      *
-     * @return list of all users, or empty list on error
+     * <p>Database failures propagate to {@code GlobalExceptionHandler} rather
+     * than being silently reported as zero users.</p>
+     *
+     * @return list of all users
      */
     public List<User> getAllUsers() {
-        try {
-            return userRepository.findAll();
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
+        return userRepository.findAll();
     }
 }

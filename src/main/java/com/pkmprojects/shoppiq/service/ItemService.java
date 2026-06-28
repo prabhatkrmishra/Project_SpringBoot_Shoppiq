@@ -1,62 +1,63 @@
 package com.pkmprojects.shoppiq.service;
 
-import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
 import com.pkmprojects.shoppiq.entity.Item;
+import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
 import com.pkmprojects.shoppiq.repository.ItemRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
+/**
+ * Service for Item CRUD operations.
+ *
+ * <p>
+ * Methods that look up a single Item throw {@link ItemNotFoundException}
+ * when the resource does not exist rather than returning an empty
+ * {@code Optional}. This lets {@code GlobalExceptionHandler} translate
+ * missing-resource cases into a consistent RFC 9457 response and removes
+ * the need for callers to unwrap an {@code Optional} that, by this point,
+ * could never actually be empty.
+ * </p>
+ */
 @Service
 public class ItemService {
 
-    @Autowired
-    private ItemRepository itemRepository;
+    private final ItemRepository itemRepository;
 
-    public Optional<Item> saveNewItem(Item newItem) {
-        return Optional.of(itemRepository.save(newItem));
+    public ItemService(ItemRepository itemRepository) {
+        this.itemRepository = itemRepository;
     }
 
-    public Optional<List<Item>> saveItemBulk(List<Item> newItems) {
-        return Optional.of((List<Item>) itemRepository.saveAll(newItems));
+    public Item saveNewItem(Item newItem) {
+        return itemRepository.save(newItem);
     }
 
-    public Optional<Item> getItemById(long id) {
-        Optional<Item> currentItem = itemRepository.findById(id);
-        if (currentItem.isPresent()) {
-            return currentItem;
-        }
-
-        throw new ItemNotFoundException("Item with id: " + id + " not found");
+    public List<Item> saveItemBulk(List<Item> newItems) {
+        return itemRepository.saveAll(newItems);
     }
 
-    public Optional<List<Item>> getAllExistingItems() {
+    public Item getItemById(long id) {
+        return itemRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Item with id: " + id + " not found"));
+    }
+
+    public List<Item> getAllExistingItems() {
         List<Item> itemList = new ArrayList<>();
         itemRepository.findAll().forEach(itemList::add);
-        return Optional.of(itemList);
+        return itemList;
     }
 
     public void deleteItemById(long id) {
-        Optional<Item> currentItem = itemRepository.findById(id);
-        if (currentItem.isPresent()) {
-            itemRepository.deleteById(id);
-            return;
+        if (!itemRepository.existsById(id)) {
+            throw new ItemNotFoundException("Item with id: " + id + " not found");
         }
-
-        throw new ItemNotFoundException("Item with id: " + id + " not found");
+        itemRepository.deleteById(id);
     }
 
-    public Optional<Item> updateItemById(long id, Item newItem) {
-        Optional<Item> currentItem = itemRepository.findById(id);
-        if (currentItem.isPresent()) {
-            currentItem.get().update(newItem);
-            itemRepository.save(currentItem.get());
-            return currentItem;
-        }
-
-        throw new ItemNotFoundException("Item with id: " + id + " not found");
+    public Item updateItemById(long id, Item newItem) {
+        Item currentItem = getItemById(id);
+        currentItem.update(newItem);
+        return itemRepository.save(currentItem);
     }
 }

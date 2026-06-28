@@ -173,9 +173,9 @@
 
                     if (!response.ok) {
 
+                        const data = await response.json();
                         message.style.color = "red";
-                        message.textContent =
-                            "Invalid username or password";
+                        message.textContent = data.detail;
 
                         return;
                     }

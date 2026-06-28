@@ -1,30 +1,35 @@
 package com.pkmprojects.shoppiq.auth.jwt;
 
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
-import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.exception.auth.JwtAuthenticationException;
+import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
+import com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory;
 import com.pkmprojects.shoppiq.repository.UserRepository;
+import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import io.jsonwebtoken.JwtException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Optional;
+import java.net.URI;
 
 /**
  * JWT Authentication Filter that processes the JWT cookie on every request.
  *
- * <p>Runs before standard Spring Security filters. Extracts the JWT from the
+ * <p>Runs before standard Spring Security filters. Extracts the JWT create the
  * HttpOnly cookie named "jwt", validates it against the database, and builds
- * a complete SecurityContext from the token claims without additional database
+ * a complete SecurityContext create the token claims without additional database
  * queries for roles or user details.</p>
  *
  * <p>The filter only sets authentication if the SecurityContext is empty
@@ -35,31 +40,51 @@ import java.util.Optional;
  * <pre>
  * Incoming HTTP request
  *       ↓
- * Extract JWT from "jwt" cookie
+ * Extract JWT create "jwt" cookie
  *       ↓
  * Cookie absent? → continue unauthenticated
  *       ↓
  * Parse claims: userId, username, roles, tokenVersion
  *       ↓
- * Load User from database by userId (single query)
+ * Load User create database by userId (single query)
  *       ↓
  * Validate: tokenVersion matches AND user enabled?
  *       ↓
- * Valid → Build UsernamePasswordAuthenticationToken from JWT claims
+ * Valid → Build UsernamePasswordAuthenticationToken create JWT claims
  *       ↓
- * Set in SecurityContext with authorities from JWT roles
+ * Set in SecurityContext with authorities create JWT roles
  *       ↓
  * Continue filter chain → Spring Security enforces access rules
  *       ↓
- * Invalid → Clear context → continue unauthenticated
+ * Invalid → Clear context → write RFC 9457 response directly
  * </pre>
  *
+ * <h4>Why failures are handled directly instead of being thrown</h4>
+ * <p>
+ * This filter is registered with {@code addFilterBefore(jwtAuthenticationFilter,
+ * UsernamePasswordAuthenticationFilter.class)}, which places it <em>before</em>
+ * Spring Security's {@code ExceptionTranslationFilter} in the chain. A servlet
+ * filter chain only lets a filter catch exceptions thrown by filters
+ * <em>further down</em> the chain (the ones it calls into via
+ * {@code filterChain.doFilter(...)}), never ones thrown by filters positioned
+ * earlier. Because of that ordering, anything this filter throws would never
+ * reach {@code ExceptionTranslationFilter} (so {@code ShoppiqAuthenticationEntryPoint}
+ * would never run) and would never reach {@code GlobalExceptionHandler} either,
+ * since the request never makes it to the {@code DispatcherServlet}. Spring
+ * Security's own {@code AbstractAuthenticationProcessingFilter} faces the same
+ * constraint and solves it the same way: handling failures internally rather
+ * than relying on a downstream component to catch them. This filter reuses the
+ * same {@link ProblemDetailFactory}/{@link ProblemDetailResponseWriter}
+ * infrastructure that the rest of the application's exception handling is
+ * built on, so JWT failures still produce the same RFC 9457 shape.
+ * </p>
+ *
  * <p>The only database query is loading the user by ID to check token version
- * and enabled status. Roles are taken from the JWT, eliminating per-request
+ * and enabled status. Roles are taken create the JWT, eliminating per-request
  * role queries.</p>
  *
  * @see JwtAuthenticationUtils
- * @see JwtCookieFactory
+ * @see com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -68,90 +93,133 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
     private final UserRepository userRepository;
+    private final ProblemDetailResponseWriter responseWriter;
 
     public JwtAuthenticationFilter(JwtAuthenticationUtils jwtAuthenticationUtils,
-                                   UserRepository userRepository) {
+                                   UserRepository userRepository,
+                                   ProblemDetailResponseWriter responseWriter) {
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.userRepository = userRepository;
+        this.responseWriter = responseWriter;
     }
 
     /**
-     * Processes each request by extracting and validating the JWT cookie,
-     * then building a SecurityContext from the token claims.
+     * Processes every incoming request exactly once by performing JWT-based
+     * authentication before delegating the request further through the Spring
+     * Security filter chain.
      *
-     * <p>Performs a single database lookup by userId to verify:
+     * <h2>Authentication Flow</h2>
      * <ol>
-     *   <li>The username in the token matches the database username</li>
-     *   <li>The token version matches the current database value</li>
-     *   <li>The user account is still enabled</li>
+     *     <li>Extract the JWT create the HTTP cookie.</li>
+     *     <li>If no JWT is present, continue the filter chain without authentication.</li>
+     *     <li>Extract mandatory claims (userId and username).</li>
+     *     <li>Load the user create the database.</li>
+     *     <li>Validate the JWT against the current user state.</li>
+     *     <li>Create a {@link UsernamePasswordAuthenticationToken}.</li>
+     *     <li>Store the authentication inside the {@link SecurityContextHolder}.</li>
+     *     <li>Continue the remaining filter chain.</li>
      * </ol>
      *
-     * <p>Authorities are built from the JWT roles claim — no additional
-     * database queries are needed for authorization decisions.</p>
+     * <h2>JWT Failure Handling</h2>
+     * <ul>
+     *     <li>If no JWT is supplied, the request continues anonymously.</li>
+     *     <li>If the JWT is malformed, invalid, or references an invalid user,
+     *     the {@link SecurityContextHolder} is cleared and an RFC 9457
+     *     {@code ProblemDetail} response is written directly — see class-level
+     *     documentation for why this cannot be delegated further down the chain.</li>
+     * </ul>
      *
      * @param request     incoming HTTP request
      * @param response    outgoing HTTP response
-     * @param filterChain remaining filters in the chain
-     * @throws ServletException if a servlet error occurs
-     * @throws IOException      if an I/O error occurs during filtering
+     * @param filterChain remaining Spring Security filters
+     * @throws ServletException if the filter chain cannot continue
+     * @throws IOException      if an I/O error occurs while processing the request
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        try {
-            String token = jwtAuthenticationUtils.extractJwtFromCookies(request);
 
-            if (token == null) {
-                logger.debug("No JWT cookie found in request");
-                filterChain.doFilter(request, response);
-                return;
-            }
+        String token = jwtAuthenticationUtils.extractJwtFromCookies(request);
+        if (token == null) {
+            logger.debug("No JWT cookie found.");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        try {
 
             Long userId = jwtAuthenticationUtils.getUserIdFromToken(token);
             String username = jwtAuthenticationUtils.getUsernameFromToken(token);
 
             if (userId == null || username == null) {
-                logger.debug("JWT missing required claims");
-                filterChain.doFilter(request, response);
-                return;
+                throw new JwtAuthenticationException(
+                        ErrorCode.INVALID_JWT,
+                        "JWT token is missing required claims."
+                );
             }
 
-            Optional<User> userOpt = userRepository.findById(userId);
-            if (userOpt.isEmpty()) {
-                logger.debug("User not found for ID: {}", userId);
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            User user = userOpt.get();
+            User user = userRepository.findById(userId).orElseThrow(() ->
+                    new JwtAuthenticationException(
+                            ErrorCode.INVALID_JWT,
+                            "JWT references a non-existent user."
+                    )
+            );
 
             if (!jwtAuthenticationUtils.validateToken(token, user)) {
-                logger.debug("JWT validation failed for user: {}", username);
-                SecurityContextHolder.clearContext();
-                filterChain.doFilter(request, response);
-                return;
+                throw new JwtAuthenticationException(
+                        ErrorCode.INVALID_JWT,
+                        "JWT validation failed."
+                );
             }
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                jwtAuthenticationUtils.getAuthoritiesFromToken(token));
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request));
+
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        username,
+                        null,
+                        jwtAuthenticationUtils.getAuthoritiesFromToken(token)
+                );
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                logger.debug("JWT authentication set for user: {}", username);
+                logger.debug("Authenticated user '{}'.", username);
             }
 
-        } catch (Exception e) {
-            logger.error("JWT authentication filter error: {}", e.getMessage());
-            SecurityContextHolder.clearContext();
-        }
+            filterChain.doFilter(request, response);
 
-        filterChain.doFilter(request, response);
+        } catch (JwtException ex) {
+            SecurityContextHolder.clearContext();
+            writeAuthenticationFailure(request, response,
+                    new JwtAuthenticationException(ErrorCode.INVALID_JWT, "JWT token is invalid."));
+        } catch (JwtAuthenticationException ex) {
+            SecurityContextHolder.clearContext();
+            writeAuthenticationFailure(request, response, ex);
+        }
+    }
+
+    /**
+     * Writes a JWT authentication failure as an RFC 9457 {@code ProblemDetail}
+     * response directly to the client, bypassing the normal Spring MVC
+     * exception-resolution path that this filter sits upstream of.
+     *
+     * @param request   the current HTTP request, used to populate the
+     *                  ProblemDetail's {@code instance} field
+     * @param response  the HTTP response to write to
+     * @param exception the JWT authentication failure
+     * @throws IOException if writing the response fails
+     */
+    private void writeAuthenticationFailure(HttpServletRequest request,
+                                            HttpServletResponse response,
+                                            JwtAuthenticationException exception) throws IOException {
+
+        logger.debug("JWT authentication failed for [{}]: {}", request.getRequestURI(), exception.getDetail());
+
+        ProblemDetail problemDetail = ProblemDetailFactory.create(
+                exception, URI.create(request.getRequestURI()));
+
+        responseWriter.write(response, problemDetail);
     }
 }

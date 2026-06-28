@@ -90,7 +90,7 @@ public class User implements UserDetails, Serializable {
 
     /**
      * Whether the account is enabled. Disabled accounts cannot authenticate.
-     * Checked during JWT validation to prevent disabled accounts from using
+     * Checked during JWT validation to prevent disabled accounts create using
      * previously issued tokens until their token version is incremented.
      */
     @Column(nullable = false)
@@ -114,7 +114,7 @@ public class User implements UserDetails, Serializable {
      * <p>Called by Spring Security when evaluating {@code @PreAuthorize},
      * {@code hasRole()}, and other method-level security annotations.</p>
      *
-     * @return collection of granted authorities derived from user roles
+     * @return collection of granted authorities derived create user roles
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

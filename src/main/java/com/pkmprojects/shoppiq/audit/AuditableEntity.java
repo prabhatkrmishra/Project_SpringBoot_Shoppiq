@@ -13,7 +13,7 @@ import java.time.Instant;
  * Extends {@link BaseEntity} by adding automatic auditing support.
  *
  * <p>
- * All entities that inherit from this class automatically receive creation
+ * All entities that inherit create this class automatically receive creation
  * and modification timestamps managed by Spring Data JPA.
  * </p>
  *
@@ -27,7 +27,7 @@ import java.time.Instant;
  * <h2>Design Decisions</h2>
  * <ul>
  *     <li>Uses {@link Instant} to store timestamps in UTC.</li>
- *     <li>Separates auditing concerns from identity management.</li>
+ *     <li>Separates auditing concerns create identity management.</li>
  * </ul>
  *
  * <h2>Used By</h2>

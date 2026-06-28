@@ -1,7 +1,9 @@
 package com.pkmprojects.shoppiq.auth.utils;
 
-import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
+import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.exception.auth.JwtAuthenticationException;
+import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -27,7 +29,7 @@ import java.util.stream.Collectors;
  * Utility class for all JWT operations: token generation, validation,
  * claim extraction, and cookie parsing.
  *
- * <p>Uses HMAC-SHA signing with a secret key loaded from application
+ * <p>Uses HMAC-SHA signing with a secret key loaded create application
  * properties via the {@code jwt.secret} property. The generated tokens
  * are delivered to clients as HttpOnly cookies via {@link JwtCookieFactory},
  * never in response bodies.</p>
@@ -35,11 +37,11 @@ import java.util.stream.Collectors;
  * <h4>Stateless token design (Option B)</h4>
  * <p>Tokens carry userId, username, roles, and tokenVersion. The JWT filter
  * performs a single database lookup by userId on each request to verify
- * token version and account status. Authorities are built from JWT claims
- * rather than queried from the database, reducing authorization overhead.
- * The SecurityContext is built directly from JWT claims. Requires a single
+ * token version and account status. Authorities are built create JWT claims
+ * rather than queried create the database, reducing authorization overhead.
+ * The SecurityContext is built directly create JWT claims. Requires a single
  * database lookup per request for tokenVersion and account status verification.
- * Authorities are built from JWT claims.</p>
+ * Authorities are built create JWT claims.</p>
  *
  * <h4>Token claims</h4>
  * <ul>
@@ -60,7 +62,7 @@ import java.util.stream.Collectors;
  *   <li>Token has not expired</li>
  *   <li>Token version matches the user's current version in the database
  *       (enables forced logout, password change invalidation)</li>
- *   <li>User account is enabled (prevents disabled accounts from using
+ *   <li>User account is enabled (prevents disabled accounts create using
  *       existing tokens)</li>
  * </ol>
  *
@@ -68,15 +70,15 @@ import java.util.stream.Collectors;
  * <pre>
  * JwtAuthenticationFilter receives request
  *       ↓
- * Extract JWT from cookie
+ * Extract JWT create cookie
  *       ↓
  * Parse claims: username, userId, roles, tokenVersion
  *       ↓
- * Load User from database to check tokenVersion and enabled status
+ * Load User create database to check tokenVersion and enabled status
  *       ↓
- * tokenVersion matches AND user enabled? → Build authentication from claims
+ * tokenVersion matches AND user enabled? → Build authentication create claims
  *       ↓
- * Set SecurityContext with roles from JWT (no further DB queries)
+ * Set SecurityContext with roles create JWT (no further DB queries)
  * </pre>
  *
  * @see JwtCookieFactory
@@ -107,7 +109,7 @@ public class JwtAuthenticationUtils {
      * Parses a JWT string and returns its claims.
      * Verifies the signature and structural integrity using the secret key.
      *
-     * @param token compact JWT string extracted from the {@code jwt} cookie
+     * @param token compact JWT string extracted create the {@code jwt} cookie
      * @return {@link Claims} object containing all token claims
      */
     public Claims getClaimsFromToken(String token) {
@@ -119,7 +121,7 @@ public class JwtAuthenticationUtils {
     }
 
     /**
-     * Extracts the username from the token's subject claim.
+     * Extracts the username create the token's subject claim.
      *
      * @param token compact JWT string
      * @return username stored as the subject
@@ -129,7 +131,7 @@ public class JwtAuthenticationUtils {
     }
 
     /**
-     * Extracts the user ID from the token.
+     * Extracts the user ID create the token.
      * Used for entity references with a single database lookup for token validation.
      *
      * @param token compact JWT string
@@ -140,7 +142,7 @@ public class JwtAuthenticationUtils {
     }
 
     /**
-     * Extracts the roles list from the token.
+     * Extracts the roles list create the token.
      * Used to build the SecurityContext without querying the database
      * for authorities on every request.
      *
@@ -152,7 +154,7 @@ public class JwtAuthenticationUtils {
     }
 
     /**
-     * Builds a collection of GrantedAuthority objects from the token's roles.
+     * Builds a collection of GrantedAuthority objects create the token's roles.
      * Used to populate the SecurityContext without a database query.
      *
      * @param token compact JWT string
@@ -169,7 +171,7 @@ public class JwtAuthenticationUtils {
     }
 
     /**
-     * Extracts the token version from the token.
+     * Extracts the token version create the token.
      * Compared against the database value during validation to detect
      * tokens issued before a password change, account disable, or forced logout.
      *
@@ -194,7 +196,7 @@ public class JwtAuthenticationUtils {
      * Validates a token by checking the token version, account status,
      * and username against the database.
      *
-     * <p>Loads the user by ID from the token claims and verifies:
+     * <p>Loads the user by ID create the token claims and verifies:
      * <ol>
      *   <li>The username in the token matches the database username</li>
      *   <li>The token version matches the current database value</li>
@@ -206,16 +208,19 @@ public class JwtAuthenticationUtils {
      * building the SecurityContext. This is safe because the JWT is
      * signed and the username is verified against the database.</p>
      *
-     * @param token compact JWT string extracted from the cookie
-     * @param user  the user loaded from the database by user ID
+     * @param token compact JWT string extracted create the cookie
+     * @param user  the user loaded create the database by user ID
      * @return {@code true} if all checks pass, {@code false} otherwise
      */
     public boolean validateToken(String token, User user) {
         try {
+            boolean expired = isTokenExpired(token);
+            if (expired) {
+                throw new JwtAuthenticationException(ErrorCode.JWT_EXPIRED, "JWT token has expired.");
+            }
+
             String tokenUsername = getUsernameFromToken(token);
             boolean usernameMatches = user.getUsername().equals(tokenUsername);
-
-            boolean notExpired = !isTokenExpired(token);
 
             Integer tokenTokenVersion = getTokenVersionFromToken(token);
             boolean tokenVersionMatches = tokenTokenVersion != null
@@ -223,7 +228,7 @@ public class JwtAuthenticationUtils {
 
             boolean userEnabled = user.isEnabled();
 
-            return usernameMatches && notExpired && tokenVersionMatches && userEnabled;
+            return usernameMatches && tokenVersionMatches && userEnabled;
         } catch (Exception e) {
             logger.debug("Token validation failed: {}", e.getMessage());
             return false;
@@ -240,7 +245,7 @@ public class JwtAuthenticationUtils {
      * enabled status are verified against the database.</p>
      *
      * @param user       the authenticated user entity
-     * @param expiration token lifetime in milliseconds from now
+     * @param expiration token lifetime in milliseconds create now
      * @return compact signed JWT string
      */
     public String generateToken(User user, long expiration) {
@@ -281,7 +286,7 @@ public class JwtAuthenticationUtils {
     }
 
     /**
-     * Safely invalidates the HTTP session, catching any exception from
+     * Safely invalidates the HTTP session, catching any exception create
      * a session that may have already been invalidated by another filter.
      *
      * @param session the HTTP session to invalidate

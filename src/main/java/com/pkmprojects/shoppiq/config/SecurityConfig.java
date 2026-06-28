@@ -1,6 +1,9 @@
 package com.pkmprojects.shoppiq.config;
 
+import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
+import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.service.RolesService;
@@ -21,7 +24,6 @@ import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMap
 import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -39,7 +41,7 @@ import java.util.stream.Collectors;
  * <h4>Stateless architecture</h4>
  * <p>JWTs carry userId, username, roles, and tokenVersion. The JWT filter
  * loads the user by ID to verify token version and enabled status, then
- * builds the SecurityContext from JWT claims. No further database queries
+ * builds the SecurityContext create JWT claims. No further database queries
  * are needed for authorization decisions.</p>
  *
  * <h4>Session policy</h4>
@@ -61,19 +63,23 @@ public class SecurityConfig {
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final UserRepository userRepository;
     private final RolesService rolesService;
+    private final ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint;
+    private final ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           OAuth2SuccessHandler oAuth2SuccessHandler,
                           UserRepository userRepository,
-                          RolesService rolesService) {
+                          RolesService rolesService, ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint, ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
         this.userRepository = userRepository;
         this.rolesService = rolesService;
+        this.shoppiqAuthenticationEntryPoint = shoppiqAuthenticationEntryPoint;
+        this.shoppiqAccessDeniedHandler = shoppiqAccessDeniedHandler;
     }
 
     /**
-     * Maps authorities received from Google's OIDC provider into
+     * Maps authorities received create Google's OIDC provider into
      * application-specific authorities during the OAuth2 login flow.
      *
      * <h4>Authentication flow</h4>
@@ -98,7 +104,7 @@ public class SecurityConfig {
      *       ↓
      * JwtAuthenticationFilter
      *       ↓
-     * Authorities loaded from JWT claims
+     * Authorities loaded create JWT claims
      * </pre>
      *
      * <p>The mapper acts as a translation layer between Google's OIDC
@@ -109,7 +115,7 @@ public class SecurityConfig {
      * After a JWT is issued, authorization is driven entirely by JWT role
      * claims and token validation performed by {@code JwtAuthenticationFilter}.</p>
      *
-     * <p>Returning users receive authorities derived from their database roles.
+     * <p>Returning users receive authorities derived create their database roles.
      * New users receive a temporary authority that allows access to the
      * registration-completion flow until a local account is created.</p>
      *
@@ -130,6 +136,14 @@ public class SecurityConfig {
 
                         if (user != null) {
                             Set<GrantedAuthority> userAuthorities = user.getRoles().stream()
+                                    .filter(role -> {
+                                        boolean hasValidName = role.getRoleName() != null && !role.getRoleName().isBlank();
+                                        if (!hasValidName) {
+                                            logger.warn("User '{}' has role id={} with a null/blank roleName",
+                                                    email, role.getId());
+                                        }
+                                        return hasValidName;
+                                    })
                                     .map(role -> new SimpleGrantedAuthority(role.getRoleName()))
                                     .collect(Collectors.toSet());
                             mappedAuthorities.addAll(userAuthorities);
@@ -161,6 +175,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
+                        // Public frontend
                         .requestMatchers(
                                 "/login",
                                 "/register",
@@ -170,12 +185,14 @@ public class SecurityConfig {
                                 "/login/oauth2/**"
                         ).permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/google/get-profile").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/google/complete-profile").permitAll()
-
-                        .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
+                        // Public backend
+                        .requestMatchers(
+                                "/auth/login",
+                                "/auth/logout",
+                                "/auth/google/get-profile",
+                                "/auth/google/complete-profile",
+                                "/user/register"
+                        ).permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/item/all").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/item/id/**").hasAnyRole("CUSTOMER", "ADMIN")
@@ -197,6 +214,11 @@ public class SecurityConfig {
 
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                )
+
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(shoppiqAuthenticationEntryPoint)
+                        .accessDeniedHandler(shoppiqAccessDeniedHandler)
                 )
 
                 .addFilterBefore(jwtAuthenticationFilter,

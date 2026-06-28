@@ -2,40 +2,43 @@ package com.pkmprojects.shoppiq.controller;
 
 import com.pkmprojects.shoppiq.entity.Order;
 import com.pkmprojects.shoppiq.service.OrderService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/order")
 public class OrderController {
-    @Autowired
-    private OrderService orderService;
+
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
     @PostMapping("/create")
-    public ResponseEntity<Optional<Order>> saveItem(@RequestBody Order newOrder) {
-        Optional<Order> order = orderService.saveNewOrder(newOrder);
-        return ResponseEntity.ok(order);
+    public ResponseEntity<Order> saveItem(@RequestBody Order newOrder) {
+        Order order = orderService.saveNewOrder(newOrder);
+        return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
     @GetMapping("/id/{id}")
-    public ResponseEntity<Optional<Order>> getItemById(@PathVariable long id) {
-        Optional<Order> order = orderService.getOrderById(id);
+    public ResponseEntity<Order> getItemById(@PathVariable long id) {
+        Order order = orderService.getOrderById(id);
         return ResponseEntity.ok(order);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<Optional<List<Order>>> getAllOrders() {
-        Optional<List<Order>> order = orderService.getAllExistingOrders();
-        return ResponseEntity.ok(order);
+    public ResponseEntity<List<Order>> getAllOrders() {
+        List<Order> orders = orderService.getAllExistingOrders();
+        return ResponseEntity.ok(orders);
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteItem(@PathVariable long id) {
+    public ResponseEntity<Void> deleteItem(@PathVariable long id) {
         orderService.deleteOrderById(id);
-        return ResponseEntity.ok("deleted item with id: " + id);
+        return ResponseEntity.noContent().build();
     }
 }
