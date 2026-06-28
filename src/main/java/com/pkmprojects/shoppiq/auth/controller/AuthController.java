@@ -4,6 +4,7 @@ import com.pkmprojects.shoppiq.auth.dto.CompleteGoogleRegistrationRequest;
 import com.pkmprojects.shoppiq.auth.dto.JwtRequest;
 import com.pkmprojects.shoppiq.auth.dto.JwtResponse;
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthRegistrationCookieService;
 import com.pkmprojects.shoppiq.auth.service.AuthService;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
@@ -13,8 +14,8 @@ import com.pkmprojects.shoppiq.exception.auth.InvalidOidcUserException;
 import com.pkmprojects.shoppiq.exception.auth.OAuthSessionException;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,31 +34,33 @@ import java.time.temporal.ChronoUnit;
  * completion. The JWT is delivered exclusively as an HttpOnly cookie via
  * {@link JwtCookieFactory} — it never appears in response bodies.</p>
  *
- * <p>OAuth2 registration uses a server-side HTTP session to hold the verified
- * Google profile as an {@link OAuthRegistrationSession}. The session has a
- * configurable timeout create authentication; if the user does not complete
- * registration within that window, the session is invalidated.</p>
+ * <h4>Fully stateless — no HttpSession</h4>
+ * <p>OAuth2 registration state is held in the {@code oauth2_registration}
+ * HttpOnly cookie managed by {@link OAuthRegistrationCookieService}. No
+ * server-side session is created at any point in the authentication flow.</p>
+ *
  *
  * <h4>Endpoint flow</h4>
  * <pre>
- * Google Login → OAuth2SuccessHandler stores OAuthRegistrationSession in session
+ * Google Login → OAuth2SuccessHandler stores OAuthRegistrationSession in cookie
  *       ↓
- * GET /auth/google/get-profile → returns name and email to frontend
+ * GET /auth/google/get-profile → reads cookie, returns name and email to frontend
  *       ↓
  * User chooses username + password → POST /auth/google/complete-profile
  *       ↓
- * Validate session exists and has not expired
+ * Validate cookie exists and has not expired
  *       ↓
  * Create user via UserService.createGoogleUser()
  *       ↓
  * Generate JWT with userId, username, roles, tokenVersion
  *       ↓
- * Set HttpOnly cookie with JWT
+ * Set HttpOnly JWT cookie
  *       ↓
- * Invalidate OAuth session
+ * Clear oauth2_registration cookie
  * </pre>
  *
  * @see OAuthRegistrationSession
+ * @see OAuthRegistrationCookieService
  * @see CompleteGoogleRegistrationRequest
  * @see JwtCookieFactory
  */
@@ -72,6 +75,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
     private final JwtCookieFactory jwtCookieFactory;
+    private final OAuthRegistrationCookieService registrationCookieService;
 
     @Value("${jwt.expiration}")
     private long expirationTime;
@@ -80,14 +84,17 @@ public class AuthController {
     private int oauthRegistrationTimeoutMinutes;
 
     public AuthController(AuthService authService,
-                          UserService userService, UserRepository userRepository,
+                          UserService userService,
+                          UserRepository userRepository,
                           JwtAuthenticationUtils jwtAuthenticationUtils,
-                          JwtCookieFactory jwtCookieFactory) {
+                          JwtCookieFactory jwtCookieFactory,
+                          OAuthRegistrationCookieService registrationCookieService) {
         this.authService = authService;
         this.userService = userService;
         this.userRepository = userRepository;
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.jwtCookieFactory = jwtCookieFactory;
+        this.registrationCookieService = registrationCookieService;
     }
 
     /**
@@ -122,15 +129,19 @@ public class AuthController {
      * Returns the OAuth2 registration session data to pre-populate the
      * registration completion form.
      *
-     * @param session the HTTP session containing the OAuth profile
+     * <p>Reads the {@code oauth2_registration} cookie written by
+     * {@link com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler}.</p>
+     *
+     * @param request incoming HTTP request (cookie source)
      * @return 200 with name and email
-     * @throws OAuthSessionException if no OAuth registration session exists
+     * @throws OAuthSessionException if no OAuth registration cookie is present
      */
     @GetMapping("/google/get-profile")
-    public ResponseEntity<OAuthRegistrationSession> getOauthProfile(HttpSession session) {
-        OAuthRegistrationSession oauthSession = (OAuthRegistrationSession) session.getAttribute("oauth_user");
+    public ResponseEntity<OAuthRegistrationSession> getOauthProfile(HttpServletRequest request) {
+        OAuthRegistrationSession oauthSession = registrationCookieService.read(request);
         if (oauthSession == null) {
-            throw new OAuthSessionException("No OAuth registration session was found. Please sign in with Google again.");
+            throw new OAuthSessionException(
+                    "No OAuth registration session was found. Please sign in with Google again.");
         }
         return ResponseEntity.ok(oauthSession);
     }
@@ -139,31 +150,29 @@ public class AuthController {
      * Completes OAuth2 registration by creating a local account and issuing
      * a JWT cookie.
      *
-     * <p>Validates that the OAuth session exists and has not expired.
-     * The username and password are taken create the newRequest body; email and
-     * name come create the verified Google profile in the session.</p>
-     *
-     * <p>On successful account creation, generates a JWT containing userId,
-     * username, roles, and tokenVersion, sets it as an HttpOnly cookie, and
-     * invalidates the OAuth session.</p>
+     * <p>Reads the {@code oauth2_registration} cookie to retrieve the verified
+     * Google profile. The username and password come from the request body;
+     * email and name come from the cookie. On success the registration cookie
+     * is cleared and a JWT cookie is written.</p>
      *
      * @param newRequest contains the chosen username and password
-     * @param session    the HTTP session with the OAuth profile
-     * @param response   servlet response for setting the JWT cookie
+     * @param request    incoming HTTP request (cookie source)
+     * @param response   servlet response for setting/clearing cookies
      * @return 201 with success message
-     * @throws OAuthSessionException  if the session is missing or has expired
+     * @throws OAuthSessionException    if the cookie is missing or has expired
      * @throws InvalidOidcUserException if the session lacks a verified email
-     * @throws DuplicateUserException if the email or username is already taken
+     * @throws DuplicateUserException   if the email or username is already taken
      */
     @PostMapping("/google/complete-profile")
     public ResponseEntity<String> completeProfile(
             @Valid @RequestBody CompleteGoogleRegistrationRequest newRequest,
-            HttpSession session,
+            HttpServletRequest request,
             HttpServletResponse response) {
 
-        OAuthRegistrationSession oauthSession = (OAuthRegistrationSession) session.getAttribute("oauth_user");
+        OAuthRegistrationSession oauthSession = registrationCookieService.read(request);
         if (oauthSession == null) {
-            throw new OAuthSessionException("No OAuth registration session was found. Please sign in with Google again.");
+            throw new OAuthSessionException(
+                    "No OAuth registration session was found. Please sign in with Google again.");
         }
 
         if (oauthSession.email() == null) {
@@ -172,9 +181,10 @@ public class AuthController {
 
         if (Instant.now().isAfter(oauthSession.authenticatedAt()
                 .plus(oauthRegistrationTimeoutMinutes, ChronoUnit.MINUTES))) {
-            jwtAuthenticationUtils.destroySession(session);
-            logger.debug("OAuth registration session expired for email: {}", oauthSession.email());
-            throw new OAuthSessionException("OAuth registration session has expired. Please sign in with Google again.");
+            registrationCookieService.clear(response);
+            logger.debug("OAuth registration cookie expired for email: {}", oauthSession.email());
+            throw new OAuthSessionException(
+                    "OAuth registration session has expired. Please sign in with Google again.");
         }
 
         if (userRepository.findUserByEmail(oauthSession.email()).isPresent()) {
@@ -189,14 +199,14 @@ public class AuthController {
         try {
             user = userService.createGoogleUser(oauthSession, newRequest.username(), newRequest.password());
         } catch (DuplicateUserException e) {
-            jwtAuthenticationUtils.destroySession(session);
+            registrationCookieService.clear(response);
             throw e;
         }
 
         String token = jwtAuthenticationUtils.generateToken(user, expirationTime);
         response.addCookie(jwtCookieFactory.buildJwtCookie(token, (int) (expirationTime / 1000)));
 
-        jwtAuthenticationUtils.destroySession(session);
+        registrationCookieService.clear(response);
 
         logger.info("Google OAuth2 registration completed for user: {}", newRequest.username());
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");

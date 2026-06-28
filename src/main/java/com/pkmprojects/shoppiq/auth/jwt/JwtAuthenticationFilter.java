@@ -59,7 +59,9 @@ import java.net.URI;
  *       ↓
  * Continue filter chain → Spring Security enforces access rules
  *       ↓
- * Invalid → Clear context → write RFC 9457 response directly
+ * Invalid JWT → Clear SecurityContext → continue filter chain
+ *       ↓
+ * AuthorizationFilter → AuthenticationEntryPoint → 401
  * </pre>
  *
  * <h4>Why failures are handled directly instead of being thrown</h4>

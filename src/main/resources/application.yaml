@@ -11,10 +11,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate # update -> validate
-  session:
-    jdbc:
-      table-name: SPRING_SESSION
-      initialize-schema: always
   security:
     oauth2:
       client:

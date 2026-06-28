@@ -3,6 +3,7 @@ package com.pkmprojects.shoppiq.config;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
+import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.repository.UserRepository;
@@ -38,17 +39,38 @@ import java.util.stream.Collectors;
  * authorization rules. Both username/password and OAuth2 authentication
  * converge on the same JWT cookie mechanism.</p>
  *
- * <h4>Stateless architecture</h4>
- * <p>JWTs carry userId, username, roles, and tokenVersion. The JWT filter
- * loads the user by ID to verify token version and enabled status, then
- * builds the SecurityContext create JWT claims. No further database queries
- * are needed for authorization decisions.</p>
+ * <h4>Stateless architecture (Option 2 — fully cookie-based)</h4>
+ * <p>The application is completely stateless. No {@code HttpSession} is
+ * ever created or read:</p>
+ * <ul>
+ *   <li>OAuth2 authorization-code state is stored in a short-lived
+ *       {@code oauth2_auth_request} cookie via
+ *       {@link HttpCookieOAuth2AuthorizationRequestRepository}.</li>
+ *   <li>New-user registration state is stored in an
+ *       {@code oauth2_registration} cookie via
+ *       {@link com.pkmprojects.shoppiq.auth.oauth2.OAuthRegistrationCookieService}.</li>
+ *   <li>Session policy is {@code STATELESS} — Spring Security never
+ *       creates or reads a session.</li>
+ * </ul>
  *
- * <h4>Session policy</h4>
- * <p>Sessions use {@code IF_REQUIRED} to support the OAuth2 login flow,
- * which requires a session between the Google redirect and the callback.
- * Sessions are invalidated once a JWT cookie is issued.</p>
+ * <h4>Request flow (returning user)</h4>
+ * <pre>
+ * Browser → GET /oauth2/authorization/google
+ *       ↓
+ * HttpCookieOAuth2AuthorizationRequestRepository.saveAuthorizationRequest()
+ *       ↓ (cookie: oauth2_auth_request)
+ * Google Login
+ *       ↓
+ * /login/oauth2/code/google?code=…&state=…
+ *       ↓
+ * HttpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequest()
+ *       ↓ (cookie cleared)
+ * OAuth2SuccessHandler — issue JWT cookie, redirect
+ *       ↓
+ * Every subsequent request — JwtAuthenticationFilter only
+ * </pre>
  *
+ * @see HttpCookieOAuth2AuthorizationRequestRepository
  * @see OAuth2SuccessHandler
  * @see JwtAuthenticationFilter
  */
@@ -61,6 +83,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private final UserRepository userRepository;
     private final RolesService rolesService;
     private final ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint;
@@ -68,10 +91,14 @@ public class SecurityConfig {
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           OAuth2SuccessHandler oAuth2SuccessHandler,
+                          HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository,
                           UserRepository userRepository,
-                          RolesService rolesService, ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint, ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler) {
+                          RolesService rolesService,
+                          ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint,
+                          ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+        this.cookieAuthorizationRequestRepository = cookieAuthorizationRequestRepository;
         this.userRepository = userRepository;
         this.rolesService = rolesService;
         this.shoppiqAuthenticationEntryPoint = shoppiqAuthenticationEntryPoint;
@@ -79,45 +106,12 @@ public class SecurityConfig {
     }
 
     /**
-     * Maps authorities received create Google's OIDC provider into
+     * Maps authorities received from Google's OIDC provider into
      * application-specific authorities during the OAuth2 login flow.
      *
-     * <h4>Authentication flow</h4>
-     * <pre>
-     * User clicks "Continue with Google"
-     *       ↓
-     * Google OAuth2 authentication succeeds
-     *       ↓
-     * Spring Security creates OidcUser
-     *       ↓
-     * GrantedAuthoritiesMapper executes
-     *       ↓
-     * OIDC authorities mapped to application authorities
-     *       ↓
-     * OAuth2SuccessHandler executes
-     *       ↓
-     * Existing user?
-     *       ├─ YES → generate JWT and set cookie
-     *       └─ NO  → store OAuthRegistrationSession and redirect
-     *       ↓
-     * Subsequent requests
-     *       ↓
-     * JwtAuthenticationFilter
-     *       ↓
-     * Authorities loaded create JWT claims
-     * </pre>
-     *
-     * <p>The mapper acts as a translation layer between Google's OIDC
-     * authorities (such as {@code OIDC_USER}, {@code SCOPE_email},
-     * {@code SCOPE_profile}) and the application's authorities.</p>
-     *
-     * <p>This mapper executes only once during the OAuth2 callback request.
-     * After a JWT is issued, authorization is driven entirely by JWT role
-     * claims and token validation performed by {@code JwtAuthenticationFilter}.</p>
-     *
-     * <p>Returning users receive authorities derived create their database roles.
-     * New users receive a temporary authority that allows access to the
-     * registration-completion flow until a local account is created.</p>
+     * <p>Returning users receive authorities derived from their database roles.
+     * New users receive a temporary CUSTOMER authority that allows access to
+     * the registration-completion flow until a local account is created.</p>
      *
      * @return mapper converting OIDC authorities into application authorities
      */
@@ -161,8 +155,16 @@ public class SecurityConfig {
     }
 
     /**
-     * Configures the security filter chain with endpoint authorization,
-     * OAuth2 login, session management, and filter ordering.
+     * Configures the fully stateless security filter chain.
+     *
+     * <h4>Session policy</h4>
+     * <p>{@code STATELESS} — Spring Security never creates or consults an
+     * {@code HttpSession}. OAuth2 state is carried in cookies exclusively.</p>
+     *
+     * <h4>OAuth2 authorization request repository</h4>
+     * <p>{@link HttpCookieOAuth2AuthorizationRequestRepository} is wired into
+     * both {@code authorizationEndpoint()} and {@code redirectionEndpoint()},
+     * replacing the default {@code HttpSessionOAuth2AuthorizationRequestRepository}.</p>
      *
      * @param http HttpSecurity builder
      * @return configured SecurityFilterChain
@@ -172,6 +174,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
 
                 .authorizeHttpRequests(auth -> auth
 
@@ -209,11 +215,10 @@ public class SecurityConfig {
 
                 .oauth2Login(oauth -> oauth
                         .loginPage("/login")
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestRepository(cookieAuthorizationRequestRepository)
+                        )
                         .successHandler(oAuth2SuccessHandler)
-                )
-
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 .exceptionHandling(exceptionHandling -> exceptionHandling
@@ -228,7 +233,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Exposes the AuthenticationManager bean for programmatic use.
+     * Exposes the AuthenticationManager bean for programmatic use in
+     * {@link com.pkmprojects.shoppiq.auth.service.AuthService}.
      *
      * @param config Spring Boot auto-configuration
      * @return the AuthenticationManager

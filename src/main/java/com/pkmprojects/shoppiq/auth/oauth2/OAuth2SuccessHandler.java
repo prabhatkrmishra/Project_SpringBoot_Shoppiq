@@ -9,7 +9,6 @@ import com.pkmprojects.shoppiq.repository.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,16 +29,16 @@ import java.util.Optional;
  * after {@link GrantedAuthoritiesMapper} has mapped OIDC authorities to
  * application roles.</p>
  *
+ * <h4>Fully stateless — no HttpSession</h4>
+ * <p>This handler never touches {@code HttpSession}. Registration state for
+ * new users is written to an HttpOnly {@code oauth2_registration} cookie via
+ * {@link OAuthRegistrationCookieService}, keeping the application completely
+ * sessionless even during the OAuth2 flow.</p>
+ *
  * <h4>Verification step</h4>
  * <p>Verifies that Google has confirmed the user's email via the
  * {@code email_verified} OIDC claim before proceeding. Unverified emails
- * are rejected to prevent account takeover via unverified Google accounts.</p>
- *
- * <h4>Session fixation protection</h4>
- * <p>The session ID is rotated via {@link HttpServletRequest#changeSessionId()}
- * before storing the OAuth2 profile for new users. This prevents attackers
- * create hijacking the authenticated session using a known pre-authentication
- * session ID.</p>
+ * are rejected to prevent account takeover.</p>
  *
  * <h4>Branching flow</h4>
  * <pre>
@@ -51,16 +50,14 @@ import java.util.Optional;
  *       ↓
  * Look up email in local database
  *       ↓
- * ┌─ Existing user → generate JWT with userId, roles, tokenVersion
- * │                  → safe session invalidation
+ * ┌─ Existing user → generate JWT cookie
  * │                  → redirect to /allitems
  * │
- * └─ New user → rotate session ID
- *                → store OAuthRegistrationSession with authenticatedAt
- *                → redirect to /complete-profile
+ * └─ New user → write OAuthRegistrationSession to oauth2_registration cookie
+ *               → redirect to /complete-profile
  * </pre>
  *
- * @see OAuthRegistrationSession
+ * @see OAuthRegistrationCookieService
  * @see JwtCookieFactory
  */
 @Component
@@ -71,16 +68,19 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final UserRepository userRepository;
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
     private final JwtCookieFactory jwtCookieFactory;
+    private final OAuthRegistrationCookieService registrationCookieService;
 
     @Value("${jwt.expiration}")
     private long expirationTime;
 
     public OAuth2SuccessHandler(UserRepository userRepository,
                                 JwtAuthenticationUtils jwtAuthenticationUtils,
-                                JwtCookieFactory jwtCookieFactory) {
+                                JwtCookieFactory jwtCookieFactory,
+                                OAuthRegistrationCookieService registrationCookieService) {
         this.userRepository = userRepository;
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.jwtCookieFactory = jwtCookieFactory;
+        this.registrationCookieService = registrationCookieService;
     }
 
     /**
@@ -88,7 +88,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
      *
      * <p>Extracts and validates the OIDC principal, verifies the email,
      * and branches to either issue a JWT for returning users or store
-     * a registration session for new users.</p>
+     * a registration cookie for new users.</p>
      *
      * @param request        the HTTP request during the callback
      * @param response       the HTTP response for cookie or redirect
@@ -113,26 +113,22 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     /**
      * Performs the actual OIDC validation and branching logic.
      *
-     * <p>Separated create {@link #onAuthenticationSuccess} so that
-     * {@link InvalidOidcUserException} thrown by either validation step can
-     * be caught in one place and translated into a login-page redirect. This
-     * handler runs inside the OAuth2 login filter, upstream of Spring
-     * Security's {@code ExceptionTranslationFilter} and of Spring MVC's
-     * {@code DispatcherServlet} entirely, so an uncaught exception here would
-     * never reach {@code GlobalExceptionHandler} — it must be handled locally,
-     * the same way {@link com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter}
-     * handles its own failures.</p>
+     * <p>Separated from {@link #onAuthenticationSuccess} so that
+     * {@link InvalidOidcUserException} thrown by validation can be caught in
+     * one place and translated into a login-page redirect. This handler runs
+     * inside the OAuth2 login filter, upstream of Spring Security's
+     * {@code ExceptionTranslationFilter}, so exceptions must be handled locally.</p>
      *
      * @param request        the HTTP request during the callback
      * @param response       the HTTP response for cookie or redirect
      * @param authentication the OAuth2 authentication token
-     * @throws IOException                if a redirect fails
+     * @throws IOException              if a redirect fails
      * @throws InvalidOidcUserException if the principal is missing or the
-     *                                   email has not been verified by Google
+     *                                  email has not been verified by Google
      */
     private void processAuthenticationSuccess(HttpServletRequest request,
-                                               HttpServletResponse response,
-                                               Authentication authentication) throws IOException {
+                                              HttpServletResponse response,
+                                              Authentication authentication) throws IOException {
 
         if (!(authentication.getPrincipal() instanceof OidcUser oidcUser)) {
             logger.error("OAuth2 principal is not an OidcUser instance");
@@ -157,22 +153,14 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             String jwt = jwtAuthenticationUtils.generateToken(user, expirationTime);
             response.addCookie(jwtCookieFactory.buildJwtCookie(jwt, (int) (expirationTime / 1000)));
 
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                session.invalidate();
-            }
-
             logger.info("Returning OAuth2 user '{}' redirected to /allitems", user.getUsername());
             response.sendRedirect("/allitems");
             return;
         }
 
-        request.changeSessionId();
-
-        OAuthRegistrationSession registrationSession = new OAuthRegistrationSession(
-                email, name, Instant.now());
-
-        request.getSession(true).setAttribute("oauth_user", registrationSession);
+        // New user — store registration data in a cookie, redirect to complete-profile
+        OAuthRegistrationSession registrationSession = new OAuthRegistrationSession(email, name, Instant.now());
+        registrationCookieService.save(registrationSession, response);
 
         logger.info("New OAuth2 user with email '{}' redirected to /complete-profile", email);
         response.sendRedirect("/complete-profile");

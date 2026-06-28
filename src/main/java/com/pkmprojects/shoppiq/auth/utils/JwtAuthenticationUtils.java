@@ -10,7 +10,6 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,14 +33,12 @@ import java.util.stream.Collectors;
  * are delivered to clients as HttpOnly cookies via {@link JwtCookieFactory},
  * never in response bodies.</p>
  *
- * <h4>Stateless token design (Option B)</h4>
+ * <h4>Stateless token design (Option 2 — fully cookie-based)</h4>
  * <p>Tokens carry userId, username, roles, and tokenVersion. The JWT filter
  * performs a single database lookup by userId on each request to verify
- * token version and account status. Authorities are built create JWT claims
- * rather than queried create the database, reducing authorization overhead.
- * The SecurityContext is built directly create JWT claims. Requires a single
- * database lookup per request for tokenVersion and account status verification.
- * Authorities are built create JWT claims.</p>
+ * token version and account status. Authorities are built from JWT claims
+ * rather than queried from the database, reducing authorization overhead.
+ * No {@code HttpSession} is ever created or read.</p>
  *
  * <h4>Token claims</h4>
  * <ul>
@@ -285,17 +282,4 @@ public class JwtAuthenticationUtils {
                 .orElse(null);
     }
 
-    /**
-     * Safely invalidates the HTTP session, catching any exception create
-     * a session that may have already been invalidated by another filter.
-     *
-     * @param session the HTTP session to invalidate
-     */
-    public void destroySession(HttpSession session) {
-        try {
-            session.invalidate();
-        } catch (IllegalStateException e) {
-            logger.debug("Session already invalidated");
-        }
-    }
 }
