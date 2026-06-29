@@ -116,9 +116,10 @@ public class ItemReviewController {
             @PathVariable
             @Positive(message = "Review id must be a positive number")
             Long reviewId,
+            @AuthenticationPrincipal User currentUser,
             @Valid @RequestBody ItemReviewRequest request
     ) {
-        return itemReviewService.update(reviewId, request);
+        return itemReviewService.update(reviewId, currentUser, request);
     }
 
     /**
@@ -131,8 +132,9 @@ public class ItemReviewController {
     public void delete(
             @PathVariable
             @Positive(message = "Review id must be a positive number")
-            Long reviewId
+            Long reviewId,
+            @AuthenticationPrincipal User currentUser
     ) {
-        itemReviewService.delete(reviewId);
+        itemReviewService.delete(reviewId, currentUser);
     }
 }

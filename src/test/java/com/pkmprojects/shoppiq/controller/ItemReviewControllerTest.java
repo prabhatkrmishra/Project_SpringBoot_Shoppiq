@@ -319,7 +319,7 @@ class ItemReviewControllerTest {
         @DisplayName("Returns 200 with updated review")
         void update_validRequest_returns200() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(2, "Changed my mind.");
-            when(itemReviewService.update(eq(100L), any(ItemReviewRequest.class)))
+            when(itemReviewService.update(eq(100L), any(User.class), any(ItemReviewRequest.class)))
                     .thenReturn(stubResponse(2, "Changed my mind."));
 
             mockMvc.perform(put("/reviews/100/update")
@@ -335,7 +335,7 @@ class ItemReviewControllerTest {
         void update_reviewNotFound_returns404() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(3, "Update attempt");
 
-            when(itemReviewService.update(eq(999L), any(ItemReviewRequest.class)))
+            when(itemReviewService.update(eq(999L), any(User.class), any(ItemReviewRequest.class)))
                     .thenThrow(ItemReviewNotFoundException.id(999L));
 
             mockMvc.perform(put("/reviews/999/update")
@@ -369,19 +369,19 @@ class ItemReviewControllerTest {
         @Test
         @DisplayName("Returns 204 No Content on successful deletion")
         void delete_existingReview_returns204() throws Exception {
-            doNothing().when(itemReviewService).delete(100L);
+            doNothing().when(itemReviewService).delete(eq(100L), any(User.class));
 
             mockMvc.perform(delete("/reviews/100/delete"))
                     .andExpect(status().isNoContent());
 
-            verify(itemReviewService).delete(100L);
+            verify(itemReviewService).delete(eq(100L), any(User.class));
         }
 
         @Test
         @DisplayName("Returns 404 when review to delete does not exist")
         void delete_reviewNotFound_returns404() throws Exception {
             doThrow(ItemReviewNotFoundException.id(999L))
-                    .when(itemReviewService).delete(999L);
+                    .when(itemReviewService).delete(eq(999L), any(User.class));
 
             mockMvc.perform(delete("/reviews/999/delete"))
                     .andExpect(status().isNotFound())

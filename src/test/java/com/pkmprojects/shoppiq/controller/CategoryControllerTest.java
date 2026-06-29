@@ -92,7 +92,7 @@ class CategoryControllerTest {
     class CreateCategory {
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 201 with the created category")
         void create_validRequest_returns201() throws Exception {
             CategoryRequest request = new CategoryRequest("Electronics", "Gadgets and devices");
@@ -110,7 +110,7 @@ class CategoryControllerTest {
         }
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 409 when category name already exists")
         void create_duplicateName_returns409() throws Exception {
             CategoryRequest request = new CategoryRequest("Electronics", "Duplicate category");
@@ -126,7 +126,7 @@ class CategoryControllerTest {
         }
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 400 when category name is blank")
         void create_blankName_returns400() throws Exception {
             CategoryRequest request = new CategoryRequest("", "Some description");
@@ -141,7 +141,7 @@ class CategoryControllerTest {
         }
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 400 when description is blank")
         void create_blankDescription_returns400() throws Exception {
             CategoryRequest request = new CategoryRequest("Electronics", "");
@@ -154,7 +154,7 @@ class CategoryControllerTest {
         }
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 400 when name exceeds 100 characters")
         void create_nameTooLong_returns400() throws Exception {
             String longName = "A".repeat(101);
@@ -177,7 +177,7 @@ class CategoryControllerTest {
     class UpdateCategory {
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 200 with updated category on success")
         void update_validRequest_returns200() throws Exception {
             CategoryRequest request = new CategoryRequest("Fashion", "Latest trends");
@@ -194,7 +194,7 @@ class CategoryControllerTest {
         }
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 404 when category does not exist")
         void update_notFound_returns404() throws Exception {
             CategoryRequest request = new CategoryRequest("Fashion", "Latest trends");
@@ -210,7 +210,7 @@ class CategoryControllerTest {
         }
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 409 when new name conflicts with another category")
         void update_duplicateName_returns409() throws Exception {
             CategoryRequest request = new CategoryRequest("Fashion", "Clothing");
@@ -235,7 +235,7 @@ class CategoryControllerTest {
     class DeleteCategory {
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 204 on successful deletion")
         void delete_exists_returns204() throws Exception {
             doNothing().when(categoryService).delete(1L);
@@ -247,7 +247,7 @@ class CategoryControllerTest {
         }
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 404 when category does not exist")
         void delete_notFound_returns404() throws Exception {
             doThrow(CategoryNotFoundException.id(999L)).when(categoryService).delete(999L);

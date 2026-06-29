@@ -68,19 +68,32 @@ public interface ItemReviewService {
     /**
      * Updates an existing review.
      *
-     * @param reviewId review identifier
-     * @param request  updated review
+     * <p>
+     * Only the review's author or an administrator may perform this
+     * operation.
+     * </p>
+     *
+     * @param reviewId    review identifier
+     * @param currentUser caller attempting the update
+     * @param request     updated review
      * @return updated review
      */
     ItemReviewResponse update(
             Long reviewId,
+            User currentUser,
             ItemReviewRequest request
     );
 
     /**
      * Deletes a review.
      *
-     * @param reviewId review identifier
+     * <p>
+     * Only the review's author or an administrator may perform this
+     * operation.
+     * </p>
+     *
+     * @param reviewId    review identifier
+     * @param currentUser caller attempting the deletion
      */
-    void delete(Long reviewId);
+    void delete(Long reviewId, User currentUser);
 }

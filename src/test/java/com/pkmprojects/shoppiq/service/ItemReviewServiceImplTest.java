@@ -7,6 +7,7 @@ import com.pkmprojects.shoppiq.entity.ItemReview;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.exception.DuplicateItemReviewException;
 import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
+import com.pkmprojects.shoppiq.exception.ItemReviewAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.ItemReviewNotFoundException;
 import com.pkmprojects.shoppiq.exception.UserNotFoundException;
 import com.pkmprojects.shoppiq.repository.ItemRepository;
@@ -254,7 +255,7 @@ class ItemReviewServiceImplTest {
     class Update {
 
         @Test
-        @DisplayName("Updates rating and review text and returns updated response")
+        @DisplayName("Updates rating and review text and returns updated response when caller owns the review")
         void update_validRequest_returnsUpdatedResponse() throws Exception {
             ItemReview updatedReview = ItemReview.builder()
                     .rating(2)
@@ -268,7 +269,7 @@ class ItemReviewServiceImplTest {
             when(itemReviewRepository.save(stubReview)).thenReturn(updatedReview);
 
             ItemReviewRequest request = new ItemReviewRequest(2, "Changed my mind.");
-            ItemReviewResponse response = reviewService.update(100L, request);
+            ItemReviewResponse response = reviewService.update(100L, stubUser, request);
 
             assertThat(response.rating()).isEqualTo(2);
             assertThat(response.review()).isEqualTo("Changed my mind.");
@@ -283,8 +284,28 @@ class ItemReviewServiceImplTest {
         void update_reviewNotFound_throwsException() {
             when(itemReviewRepository.findById(999L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> reviewService.update(999L, new ItemReviewRequest(5, "Good")))
+            assertThatThrownBy(() -> reviewService.update(999L, stubUser, new ItemReviewRequest(5, "Good")))
                     .isInstanceOf(ItemReviewNotFoundException.class);
+
+            verify(itemReviewRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Throws ItemReviewAccessDeniedException when caller does not own the review")
+        void update_notOwner_throwsAccessDeniedException() throws Exception {
+            User otherUser = User.builder()
+                    .name("Bob")
+                    .username("bob")
+                    .email("bob@example.com")
+                    .password("hashed")
+                    .enabled(true)
+                    .build();
+            setId(otherUser, 2L);
+
+            when(itemReviewRepository.findById(100L)).thenReturn(Optional.of(stubReview));
+
+            assertThatThrownBy(() -> reviewService.update(100L, otherUser, new ItemReviewRequest(1, "Hijacked")))
+                    .isInstanceOf(ItemReviewAccessDeniedException.class);
 
             verify(itemReviewRepository, never()).save(any());
         }
@@ -299,11 +320,11 @@ class ItemReviewServiceImplTest {
     class Delete {
 
         @Test
-        @DisplayName("Deletes the review when it exists")
+        @DisplayName("Deletes the review when the caller owns it")
         void delete_existingReview_deletesSuccessfully() {
             when(itemReviewRepository.findById(100L)).thenReturn(Optional.of(stubReview));
 
-            reviewService.delete(100L);
+            reviewService.delete(100L, stubUser);
 
             verify(itemReviewRepository).delete(stubReview);
         }
@@ -313,10 +334,53 @@ class ItemReviewServiceImplTest {
         void delete_reviewNotFound_throwsException() {
             when(itemReviewRepository.findById(999L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> reviewService.delete(999L))
+            assertThatThrownBy(() -> reviewService.delete(999L, stubUser))
                     .isInstanceOf(ItemReviewNotFoundException.class);
 
             verify(itemReviewRepository, never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("Throws ItemReviewAccessDeniedException when caller does not own the review")
+        void delete_notOwner_throwsAccessDeniedException() throws Exception {
+            User otherUser = User.builder()
+                    .name("Bob")
+                    .username("bob")
+                    .email("bob@example.com")
+                    .password("hashed")
+                    .enabled(true)
+                    .build();
+            setId(otherUser, 2L);
+
+            when(itemReviewRepository.findById(100L)).thenReturn(Optional.of(stubReview));
+
+            assertThatThrownBy(() -> reviewService.delete(100L, otherUser))
+                    .isInstanceOf(ItemReviewAccessDeniedException.class);
+
+            verify(itemReviewRepository, never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("Allows deletion by an admin who is not the review's author")
+        void delete_admin_deletesSuccessfully() throws Exception {
+            com.pkmprojects.shoppiq.entity.Role adminRole = new com.pkmprojects.shoppiq.entity.Role();
+            adminRole.setRoleName("ROLE_ADMIN");
+
+            User adminUser = User.builder()
+                    .name("Carol")
+                    .username("carol")
+                    .email("carol@example.com")
+                    .password("hashed")
+                    .enabled(true)
+                    .roles(java.util.Set.of(adminRole))
+                    .build();
+            setId(adminUser, 3L);
+
+            when(itemReviewRepository.findById(100L)).thenReturn(Optional.of(stubReview));
+
+            reviewService.delete(100L, adminUser);
+
+            verify(itemReviewRepository).delete(stubReview);
         }
     }
 }

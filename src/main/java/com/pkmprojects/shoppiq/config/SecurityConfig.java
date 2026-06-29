@@ -201,17 +201,23 @@ public class SecurityConfig {
                         ).permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/items/all").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/items/id/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/items/*").hasAnyRole("CUSTOMER", "ADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/items/itemId/create/**").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/items/itemId/reviews").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/reviews/reviewId").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/reviews/reviewId/update").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/reviews/reviewId/delete").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/items/*/create/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/items/*/reviews").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/reviews/*").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/reviews/*/update").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/reviews/*/delete").hasAnyRole("CUSTOMER", "ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/items/create/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/items/update/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/items/delete/**").hasRole("ADMIN")
+
+                        // Categories: public reads, admin-only writes
+                        .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/roles/create/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/roles/all").hasRole("ADMIN")

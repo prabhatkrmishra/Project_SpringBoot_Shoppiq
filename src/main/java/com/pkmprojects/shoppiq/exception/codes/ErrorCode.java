@@ -171,6 +171,11 @@ public enum ErrorCode {
      */
     ITEM_REVIEW_ALREADY_EXISTS("ITEM_REVIEW-409-001", "Requested item review already exist."),
 
+    /**
+     * For attempt to modify or delete a review with no authorization.
+     */
+    ITEM_REVIEW_ACCESS_DENIED("ITEM_REVIEW-403-001", "You are not allowed to modify this review."),
+
     // =========================================================
     // Order Errors
     // =========================================================

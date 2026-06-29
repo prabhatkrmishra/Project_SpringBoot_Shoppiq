@@ -7,6 +7,7 @@ import com.pkmprojects.shoppiq.entity.ItemReview;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.exception.DuplicateItemReviewException;
 import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
+import com.pkmprojects.shoppiq.exception.ItemReviewAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.ItemReviewNotFoundException;
 import com.pkmprojects.shoppiq.exception.UserNotFoundException;
 import com.pkmprojects.shoppiq.repository.ItemRepository;
@@ -147,14 +148,43 @@ public class ItemReviewServiceImpl implements ItemReviewService {
     }
 
     /**
+     * Verifies that the supplied user is allowed to modify the given
+     * review — either because they wrote it, or because they hold the
+     * {@code ROLE_ADMIN} authority.
+     *
+     * @param review      review being modified
+     * @param currentUser caller attempting the modification
+     */
+    private void checkOwnership(ItemReview review, User currentUser) {
+
+        if (currentUser == null) {
+            throw ItemReviewAccessDeniedException.forReview(review.getId());
+        }
+
+        boolean isOwner = (review.getUser() != null) &&
+                review.getUser().getId().equals(currentUser.getId());
+
+        boolean isAdmin = (currentUser.getRoles() != null) &&
+                currentUser.getRoles().stream()
+                        .anyMatch(role -> "ROLE_ADMIN".equals(role.getRoleName()));
+
+        if (!isOwner && !isAdmin) {
+            throw ItemReviewAccessDeniedException.forReview(review.getId());
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
     public ItemReviewResponse update(
             Long reviewId,
+            User currentUser,
             ItemReviewRequest request
     ) {
         ItemReview review = findReview(reviewId);
+        checkOwnership(review, currentUser);
+
         review.setRating(request.rating());
         review.setReview(request.review());
 
@@ -167,8 +197,10 @@ public class ItemReviewServiceImpl implements ItemReviewService {
      * {@inheritDoc}
      */
     @Override
-    public void delete(Long reviewId) {
+    public void delete(Long reviewId, User currentUser) {
         ItemReview review = findReview(reviewId);
+        checkOwnership(review, currentUser);
+
         itemReviewRepository.delete(review);
     }
 }

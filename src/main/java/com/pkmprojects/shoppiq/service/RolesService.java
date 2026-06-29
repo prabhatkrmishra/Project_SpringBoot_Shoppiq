@@ -45,8 +45,9 @@ public class RolesService {
      *
      * @return the {@code ROLE_CUSTOMER} entity
      * @throws RoleNotFoundException if the role is missing create the database —
-     *                                this should only happen if {@code DataInitializer}
-     *                                has not yet run, or its seed data was removed
+     *                                this should only happen if the Flyway
+     *                                {@code V2__seed_roles.sql} migration has not
+     *                                yet run, or its seed data was removed
      */
     public Role getCustomerRole() {
         return rolesRepository.findByRoleName(CUSTOMER_ROLE_NAME)
