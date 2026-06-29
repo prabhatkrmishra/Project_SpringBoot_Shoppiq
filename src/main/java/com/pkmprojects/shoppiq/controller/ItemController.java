@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.controller;
 
+import com.pkmprojects.shoppiq.dto.request.BulkItemRequest;
 import com.pkmprojects.shoppiq.dto.request.ItemRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.service.ItemService;
@@ -79,9 +80,9 @@ public class ItemController {
     @PostMapping("/create/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<ItemResponse> create(
-            @Valid @RequestBody List<ItemRequest> request
+            @Valid @RequestBody BulkItemRequest request
     ) {
-        return itemService.createBulk(request);
+        return itemService.createBulk(request.items());
     }
 
     /**
