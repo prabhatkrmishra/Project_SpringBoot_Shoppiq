@@ -170,6 +170,23 @@ public class User extends AuditableEntity
     private List<ItemReview> itemReviews = new ArrayList<>();
 
     /**
+     * Shipping addresses belonging to this user.
+     *
+     * <p>
+     * A user may have multiple addresses. Addresses are automatically removed
+     * when the owning user is deleted.
+     * </p>
+     */
+    @Builder.Default
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonIgnore
+    private List<Address> addresses = new ArrayList<>();
+
+    /**
      * Shopping cart owned by this user.
      *
      * <p>

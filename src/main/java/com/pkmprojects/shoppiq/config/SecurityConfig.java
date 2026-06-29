@@ -191,6 +191,9 @@ public class SecurityConfig {
                                 "/login/oauth2/**"
                         ).permitAll()
 
+                        // Authenticated frontend pages
+                        .requestMatchers("/address").hasAnyRole("CUSTOMER", "ADMIN")
+
                         // Public backend
                         .requestMatchers(
                                 "/auth/login",
@@ -224,6 +227,9 @@ public class SecurityConfig {
 
                         // Cart: customer-only access
                         .requestMatchers("/user/cart/**").hasAnyRole("CUSTOMER", "ADMIN")
+
+                        // Address: customer-only access
+                        .requestMatchers("/user/address/**").hasAnyRole("CUSTOMER", "ADMIN")
 
                         .anyRequest().authenticated()
                 )

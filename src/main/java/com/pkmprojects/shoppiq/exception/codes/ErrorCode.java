@@ -214,6 +214,20 @@ public enum ErrorCode {
     INSUFFICIENT_STOCK("CART-400-001", "Insufficient stock for the requested quantity."),
 
     // =========================================================
+    // Address Errors
+    // =========================================================
+
+    /**
+     * Requested address could not be found.
+     */
+    ADDRESS_NOT_FOUND("ADDRESS-404-001", "Requested address was not found."),
+
+    /**
+     * Address does not belong to the current user.
+     */
+    ADDRESS_ACCESS_DENIED("ADDRESS-403-001", "You are not allowed to access this address."),
+
+    // =========================================================
     // Other Errors
     // =========================================================
 

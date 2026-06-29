@@ -20,16 +20,16 @@ public class UserController {
         this.userService = userService;
     }
 
+    @PostMapping("/register")
+    public ResponseEntity<String> registerUser(@Valid @RequestBody UserRequest newUserRequest) {
+        userService.createUser(newUserRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
+    }
+
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@Valid @RequestBody UserRequest newUserRequest) {
-        userService.createUser(newUserRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 }

@@ -24,4 +24,9 @@ public class FrontEndController {
     public String completeProfilePage() {
         return "completeprofile";
     }
+
+    @GetMapping("/address")
+    public String addressPage() {
+        return "address";
+    }
 }
