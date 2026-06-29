@@ -195,6 +195,25 @@ public enum ErrorCode {
     ROLE_NOT_FOUND("ROLE-404-001", "Requested role was not found."),
 
     // =========================================================
+    // Cart Errors
+    // =========================================================
+
+    /**
+     * Requested cart item could not be found.
+     */
+    CART_ITEM_NOT_FOUND("CART-404-001", "Requested cart item was not found."),
+
+    /**
+     * Cart item does not belong to the current user's cart.
+     */
+    CART_ITEM_ACCESS_DENIED("CART-403-001", "You are not allowed to access this cart item."),
+
+    /**
+     * Requested quantity exceeds available stock.
+     */
+    INSUFFICIENT_STOCK("CART-400-001", "Insufficient stock for the requested quantity."),
+
+    // =========================================================
     // Other Errors
     // =========================================================
 

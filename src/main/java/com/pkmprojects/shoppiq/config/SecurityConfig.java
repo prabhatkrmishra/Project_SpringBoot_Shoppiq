@@ -222,6 +222,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/roles/create/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/roles/all").hasRole("ADMIN")
 
+                        // Cart: customer-only access
+                        .requestMatchers("/user/cart/**").hasAnyRole("CUSTOMER", "ADMIN")
+
                         .anyRequest().authenticated()
                 )
 

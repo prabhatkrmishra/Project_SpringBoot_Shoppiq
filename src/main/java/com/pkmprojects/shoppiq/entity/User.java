@@ -170,6 +170,18 @@ public class User extends AuditableEntity
     private List<ItemReview> itemReviews = new ArrayList<>();
 
     /**
+     * Shopping cart owned by this user.
+     *
+     * <p>
+     * A user has at most one cart. The cart is created lazily when the
+     * user first adds an item.
+     * </p>
+     */
+    @JsonIgnore
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Cart cart;
+
+    /**
      * Converts the user's assigned roles into Spring Security authorities.
      *
      * <p>
