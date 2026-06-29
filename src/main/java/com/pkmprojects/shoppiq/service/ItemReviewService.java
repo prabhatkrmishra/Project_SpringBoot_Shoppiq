@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
+import com.pkmprojects.shoppiq.entity.User;
 
 import java.util.List;
 
@@ -38,13 +39,13 @@ public interface ItemReviewService {
      * Creates a new review for an item.
      *
      * @param itemId  item identifier
-     * @param userId  reviewer identifier
+     * @param currentUser  reviewer identifier
      * @param request review request
      * @return created review
      */
     ItemReviewResponse create(
             Long itemId,
-            Long userId,
+            User currentUser,
             ItemReviewRequest request
     );
 

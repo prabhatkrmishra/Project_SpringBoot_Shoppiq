@@ -11,7 +11,6 @@ import com.pkmprojects.shoppiq.exception.ItemReviewNotFoundException;
 import com.pkmprojects.shoppiq.exception.UserNotFoundException;
 import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.repository.ItemReviewRepository;
-import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.service.ItemReviewService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -53,25 +52,17 @@ public class ItemReviewServiceImpl implements ItemReviewService {
     private final ItemRepository itemRepository;
 
     /**
-     * User repository.
-     */
-    private final UserRepository userRepository;
-
-    /**
      * Creates a service instance.
      *
      * @param itemReviewRepository review repository
      * @param itemRepository       item repository
-     * @param userRepository       user repository
      */
     public ItemReviewServiceImpl(
             ItemReviewRepository itemReviewRepository,
-            ItemRepository itemRepository,
-            UserRepository userRepository
+            ItemRepository itemRepository
     ) {
         this.itemReviewRepository = itemReviewRepository;
         this.itemRepository = itemRepository;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -85,17 +76,6 @@ public class ItemReviewServiceImpl implements ItemReviewService {
         return itemRepository.findById(id)
                 .orElseThrow(() ->
                         ItemNotFoundException.id(id));
-    }
-
-    /**
-     * Retrieves an existing user.
-     *
-     * @param id user identifier
-     * @return user
-     */
-    private User findUser(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> UserNotFoundException.id(id));
     }
 
     /**
@@ -117,21 +97,24 @@ public class ItemReviewServiceImpl implements ItemReviewService {
     @Override
     public ItemReviewResponse create(
             Long itemId,
-            Long userId,
+            User currentUser,
             ItemReviewRequest request
     ) {
-        if (itemReviewRepository.existsByUserIdAndItemId(userId, itemId)) {
-            throw DuplicateItemReviewException.userId(userId);
+        if (currentUser == null) {
+            throw UserNotFoundException.unknown("Creating new item response");
+        }
+
+        if (itemReviewRepository.existsByUserIdAndItemId(currentUser.getId(), itemId)) {
+            throw DuplicateItemReviewException.userId(currentUser.getId());
         }
 
         Item item = findItem(itemId);
-        User user = findUser(userId);
 
         ItemReview review = ItemReview.builder()
                 .rating(request.rating())
                 .review(request.review())
                 .item(item)
-                .user(user)
+                .user(currentUser)
                 .build();
 
         return ItemReviewResponse.fromEntity(

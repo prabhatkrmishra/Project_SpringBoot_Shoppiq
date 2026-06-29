@@ -79,4 +79,17 @@ public final class UserNotFoundException extends ResourceNotFoundException {
                 "User with username '%s' was not found.".formatted(username)
         );
     }
+
+    /**
+     * Creates an exception indicating that user does not exist
+     * with additional info.
+     *
+     * @param info additional info
+     * @return user not found exception
+     */
+    public static UserNotFoundException unknown(String info) {
+        return new UserNotFoundException(
+                "User was not found -> '%s'".formatted(info)
+        );
+    }
 }

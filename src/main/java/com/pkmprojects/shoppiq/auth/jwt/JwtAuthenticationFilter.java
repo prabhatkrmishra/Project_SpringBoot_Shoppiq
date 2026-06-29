@@ -53,7 +53,7 @@ import java.net.URI;
  *       ↓
  * Validate: tokenVersion matches AND user enabled?
  *       ↓
- * Valid → Build UsernamePasswordAuthenticationToken create JWT claims
+ * Valid → Build UsernamePasswordAuthenticationToken with User entity as principal
  *       ↓
  * Set in SecurityContext with authorities create JWT roles
  *       ↓
@@ -239,7 +239,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        username,
+                        user,
                         null,
                         jwtAuthenticationUtils.getAuthoritiesFromToken(token)
                 );

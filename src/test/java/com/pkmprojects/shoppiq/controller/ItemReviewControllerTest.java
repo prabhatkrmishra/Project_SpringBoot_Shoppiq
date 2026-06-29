@@ -12,6 +12,7 @@ import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
+import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.exception.DuplicateItemReviewException;
 import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
 import com.pkmprojects.shoppiq.exception.ItemReviewNotFoundException;
@@ -20,6 +21,7 @@ import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.service.ItemReviewService;
 import com.pkmprojects.shoppiq.service.RolesService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -46,6 +51,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>Uses {@code @WebMvcTest} to load only the web layer; the service is mocked.
  * The real {@link SecurityConfig} and JWT infrastructure are imported so the
  * security filter chain functions correctly.</p>
+ *
+ * <p>Tests manually set the {@code SecurityContext} with a
+ * {@link UsernamePasswordAuthenticationToken} containing the application's
+ * {@link User} entity as principal, matching how
+ * {@link JwtAuthenticationFilter} configures authentication.</p>
  *
  * @author PrabhatKrMishra
  * @since 1.0.0
@@ -97,12 +107,31 @@ class ItemReviewControllerTest {
         );
     }
 
+    private User authenticatedUser;
+
+    @BeforeEach
+    void setUp() {
+        authenticatedUser = User.builder()
+                .name("Alice")
+                .username("alice")
+                .email("alice@example.com")
+                .password("hashed")
+                .enabled(true)
+                .build();
+
+        // Set the User entity as principal, matching JwtAuthenticationFilter behavior
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        authenticatedUser,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
     // ---------------------------------------------------------------
     // POST /items/{itemId}/create/review
-    // SecurityConfig rule: /items/itemId/create/** → CUSTOMER or ADMIN
-    // The literal rule doesn't match /items/1/create/review, so it falls
-    // through to anyRequest().authenticated(). CUSTOMER role is used here
-    // for clarity and future-proofing if the rule is corrected.
     // ---------------------------------------------------------------
 
     @Nested
@@ -110,17 +139,15 @@ class ItemReviewControllerTest {
     class CreateReview {
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 201 Created with response body on success")
         void create_validRequest_returns201() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(5, "Amazing!");
             ItemReviewResponse response = stubResponse(5, "Amazing!");
 
-            when(itemReviewService.create(eq(1L), eq(42L), any(ItemReviewRequest.class)))
+            when(itemReviewService.create(eq(1L), any(User.class), any(ItemReviewRequest.class)))
                     .thenReturn(response);
 
             mockMvc.perform(post("/items/1/create/review")
-                            .param("userId", "42")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
@@ -130,16 +157,14 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 409 Conflict when user has already reviewed the item")
         void create_duplicateReview_returns409() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(3, "Again");
 
-            when(itemReviewService.create(eq(1L), eq(42L), any(ItemReviewRequest.class)))
+            when(itemReviewService.create(eq(1L), any(User.class), any(ItemReviewRequest.class)))
                     .thenThrow(DuplicateItemReviewException.userId(42L));
 
             mockMvc.perform(post("/items/1/create/review")
-                            .param("userId", "42")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isConflict())
@@ -147,16 +172,14 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 404 when item does not exist")
         void create_itemNotFound_returns404() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(3, "Good");
 
-            when(itemReviewService.create(eq(99L), eq(1L), any(ItemReviewRequest.class)))
+            when(itemReviewService.create(eq(99L), any(User.class), any(ItemReviewRequest.class)))
                     .thenThrow(ItemNotFoundException.id(99L));
 
             mockMvc.perform(post("/items/99/create/review")
-                            .param("userId", "1")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound())
@@ -164,13 +187,11 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 400 when rating is below minimum")
         void create_ratingTooLow_returns400() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(0, "Bad rating");
 
             mockMvc.perform(post("/items/1/create/review")
-                            .param("userId", "1")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -180,13 +201,11 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 400 when rating exceeds maximum")
         void create_ratingTooHigh_returns400() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(6, "Out of range");
 
             mockMvc.perform(post("/items/1/create/review")
-                            .param("userId", "1")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -194,13 +213,11 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 400 when rating is null")
         void create_nullRating_returns400() throws Exception {
             String body = "{\"review\":\"No rating supplied\"}";
 
             mockMvc.perform(post("/items/1/create/review")
-                            .param("userId", "1")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -208,13 +225,11 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 400 when request body is a JSON array instead of an object")
         void create_arrayBody_returns400() throws Exception {
             String arrayBody = "[{\"rating\":5,\"review\":\"test\"}]";
 
             mockMvc.perform(post("/items/1/create/review")
-                            .param("userId", "1")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(arrayBody))
                     .andExpect(status().isBadRequest());
@@ -223,7 +238,6 @@ class ItemReviewControllerTest {
 
     // ---------------------------------------------------------------
     // GET /items/{itemId}/reviews
-    // Falls through to anyRequest().authenticated() — @WithMockUser suffices.
     // ---------------------------------------------------------------
 
     @Nested
@@ -231,7 +245,6 @@ class ItemReviewControllerTest {
     class GetByItem {
 
         @Test
-        @WithMockUser
         @DisplayName("Returns 200 with a list of reviews")
         void getByItem_validItem_returnsList() throws Exception {
             when(itemReviewService.getByItem(1L))
@@ -243,7 +256,6 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser
         @DisplayName("Returns 200 with empty list when item has no reviews")
         void getByItem_noReviews_returnsEmptyList() throws Exception {
             when(itemReviewService.getByItem(1L)).thenReturn(List.of());
@@ -254,7 +266,6 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser
         @DisplayName("Returns 404 when item does not exist")
         void getByItem_itemNotFound_returns404() throws Exception {
             when(itemReviewService.getByItem(99L)).thenThrow(ItemNotFoundException.id(99L));
@@ -267,7 +278,6 @@ class ItemReviewControllerTest {
 
     // ---------------------------------------------------------------
     // GET /reviews/{reviewId}
-    // Falls through to anyRequest().authenticated().
     // ---------------------------------------------------------------
 
     @Nested
@@ -275,7 +285,6 @@ class ItemReviewControllerTest {
     class GetById {
 
         @Test
-        @WithMockUser
         @DisplayName("Returns 200 with the review when found")
         void getById_found_returns200() throws Exception {
             when(itemReviewService.getById(100L)).thenReturn(stubResponse(4, "Good"));
@@ -287,7 +296,6 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser
         @DisplayName("Returns 404 when review does not exist")
         void getById_notFound_returns404() throws Exception {
             when(itemReviewService.getById(999L))
@@ -301,7 +309,6 @@ class ItemReviewControllerTest {
 
     // ---------------------------------------------------------------
     // PUT /reviews/{reviewId}/update
-    // Falls through to anyRequest().authenticated().
     // ---------------------------------------------------------------
 
     @Nested
@@ -309,7 +316,6 @@ class ItemReviewControllerTest {
     class UpdateReview {
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 200 with updated review")
         void update_validRequest_returns200() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(2, "Changed my mind.");
@@ -325,7 +331,6 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 404 when review does not exist")
         void update_reviewNotFound_returns404() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(3, "Update attempt");
@@ -341,7 +346,6 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 400 when rating is null in update request")
         void update_nullRating_returns400() throws Exception {
             String body = "{\"review\":\"Missing rating\"}";
@@ -356,7 +360,6 @@ class ItemReviewControllerTest {
 
     // ---------------------------------------------------------------
     // DELETE /reviews/{reviewId}/delete
-    // Falls through to anyRequest().authenticated().
     // ---------------------------------------------------------------
 
     @Nested
@@ -364,7 +367,6 @@ class ItemReviewControllerTest {
     class DeleteReview {
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 204 No Content on successful deletion")
         void delete_existingReview_returns204() throws Exception {
             doNothing().when(itemReviewService).delete(100L);
@@ -376,7 +378,6 @@ class ItemReviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CUSTOMER")
         @DisplayName("Returns 404 when review to delete does not exist")
         void delete_reviewNotFound_returns404() throws Exception {
             doThrow(ItemReviewNotFoundException.id(999L))

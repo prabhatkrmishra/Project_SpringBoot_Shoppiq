@@ -116,18 +116,17 @@ class ItemReviewServiceImplTest {
 
             when(itemReviewRepository.existsByUserIdAndItemId(1L, 10L)).thenReturn(false);
             when(itemRepository.findById(10L)).thenReturn(Optional.of(stubItem));
-            when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
             when(itemReviewRepository.save(any(ItemReview.class))).thenReturn(stubReview);
 
-            ItemReviewResponse response = reviewService.create(10L, 1L, request);
+            ItemReviewResponse response = reviewService.create(10L, stubUser, request);
 
             assertThat(response).isNotNull();
-            assertThat(response.rating()).isEqualTo(4);            // from stubReview
+            assertThat(response.rating()).isEqualTo(4);
             assertThat(response.reviewerUsername()).isEqualTo("alice");
 
             ArgumentCaptor<ItemReview> captor = ArgumentCaptor.forClass(ItemReview.class);
             verify(itemReviewRepository).save(captor.capture());
-            assertThat(captor.getValue().getRating()).isEqualTo(5); // from request
+            assertThat(captor.getValue().getRating()).isEqualTo(5);
             assertThat(captor.getValue().getReview()).isEqualTo("Excellent!");
         }
 
@@ -138,7 +137,7 @@ class ItemReviewServiceImplTest {
 
             ItemReviewRequest request = new ItemReviewRequest(3, "Second attempt");
 
-            assertThatThrownBy(() -> reviewService.create(10L, 1L, request))
+            assertThatThrownBy(() -> reviewService.create(10L, stubUser, request))
                     .isInstanceOf(DuplicateItemReviewException.class);
 
             verify(itemRepository, never()).findById(any());
@@ -153,21 +152,21 @@ class ItemReviewServiceImplTest {
 
             ItemReviewRequest request = new ItemReviewRequest(3, "Good");
 
-            assertThatThrownBy(() -> reviewService.create(99L, 1L, request))
+            assertThatThrownBy(() -> reviewService.create(99L, stubUser, request))
                     .isInstanceOf(ItemNotFoundException.class);
+
+            verify(itemReviewRepository, never()).save(any());
         }
 
         @Test
-        @DisplayName("Throws UserNotFoundException when user does not exist")
+        @DisplayName("Throws UserNotFoundException when user is null")
         void create_userNotFound_throwsUserNotFoundException() {
-            when(itemReviewRepository.existsByUserIdAndItemId(99L, 10L)).thenReturn(false);
-            when(itemRepository.findById(10L)).thenReturn(Optional.of(stubItem));
-            when(userRepository.findById(99L)).thenReturn(Optional.empty());
-
             ItemReviewRequest request = new ItemReviewRequest(3, "Good");
 
-            assertThatThrownBy(() -> reviewService.create(10L, 99L, request))
+            assertThatThrownBy(() -> reviewService.create(10L, null, request))
                     .isInstanceOf(UserNotFoundException.class);
+
+            verifyNoInteractions(itemReviewRepository, itemRepository, userRepository);
         }
     }
 
@@ -286,6 +285,8 @@ class ItemReviewServiceImplTest {
 
             assertThatThrownBy(() -> reviewService.update(999L, new ItemReviewRequest(5, "Good")))
                     .isInstanceOf(ItemReviewNotFoundException.class);
+
+            verify(itemReviewRepository, never()).save(any());
         }
     }
 

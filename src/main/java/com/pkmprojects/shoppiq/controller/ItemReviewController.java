@@ -2,11 +2,13 @@ package com.pkmprojects.shoppiq.controller;
 
 import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
+import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.service.ItemReviewService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,23 +59,19 @@ public class ItemReviewController {
      * resolved from the authenticated principal instead.
      * </p>
      *
-     * @param itemId  item identifier — must be a positive number
-     * @param userId  reviewer identifier — must be a positive number
-     * @param request review request
+     * @param itemId      item identifier — must be a positive number
+     * @param currentUser reviewer identifier
+     * @param request     review request
      * @return created review
      */
     @PostMapping("/items/{itemId}/create/review")
     @ResponseStatus(HttpStatus.CREATED)
     public ItemReviewResponse create(
-            @PathVariable
-            @Positive(message = "Item id must be a positive number")
-            Long itemId,
-            @RequestParam
-            @Positive(message = "User id must be a positive number")
-            Long userId,
+            @PathVariable @Positive(message = "Item id must be a positive number") Long itemId,
+            @AuthenticationPrincipal User currentUser,
             @Valid @RequestBody ItemReviewRequest request
     ) {
-        return itemReviewService.create(itemId, userId, request);
+        return itemReviewService.create(itemId, currentUser, request);
     }
 
     /**
