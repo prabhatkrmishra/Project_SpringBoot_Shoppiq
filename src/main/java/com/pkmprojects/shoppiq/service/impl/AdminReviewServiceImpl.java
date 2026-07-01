@@ -1,0 +1,79 @@
+package com.pkmprojects.shoppiq.service.impl;
+
+import com.pkmprojects.shoppiq.dto.admin.response.AdminReviewResponse;
+import com.pkmprojects.shoppiq.entity.ItemReview;
+import com.pkmprojects.shoppiq.exception.ItemReviewNotFoundException;
+import com.pkmprojects.shoppiq.repository.ItemReviewRepository;
+import com.pkmprojects.shoppiq.service.admin.AdminReviewService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * Default implementation of {@link AdminReviewService}.
+ *
+ * <p>
+ * Provides review moderation operations for administrators
+ * including retrieval and deletion.
+ * </p>
+ *
+ * <h2>Responsibilities</h2>
+ * <ul>
+ *     <li>Retrieve paginated reviews.</li>
+ *     <li>Delete a review.</li>
+ * </ul>
+ *
+ * <h2>Design Notes</h2>
+ * <ul>
+ *     <li>Uses constructor injection.</li>
+ *     <li>Read operations use read-only transactions.</li>
+ * </ul>
+ *
+ * @author PrabhatKrMishra
+ * @since 1.0.0
+ */
+@Service
+@Transactional
+public class AdminReviewServiceImpl implements AdminReviewService {
+
+    private final ItemReviewRepository itemReviewRepository;
+
+    public AdminReviewServiceImpl(ItemReviewRepository itemReviewRepository) {
+        this.itemReviewRepository = itemReviewRepository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<AdminReviewResponse> getAllReviews(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<ItemReview> reviewPage = itemReviewRepository.findAll(pageable);
+
+        List<AdminReviewResponse> content = reviewPage.getContent().stream()
+                .map(AdminReviewResponse::fromEntity)
+                .toList();
+
+        return new PageResponse<>(
+                content,
+                reviewPage.getNumber(),
+                reviewPage.getSize(),
+                reviewPage.getTotalElements(),
+                reviewPage.getTotalPages(),
+                reviewPage.isFirst(),
+                reviewPage.isLast()
+        );
+    }
+
+    @Override
+    public void deleteReview(Long reviewId) {
+        ItemReview review = itemReviewRepository.findById(reviewId)
+                .orElseThrow(() -> ItemReviewNotFoundException.id(reviewId));
+
+        itemReviewRepository.delete(review);
+    }
+}

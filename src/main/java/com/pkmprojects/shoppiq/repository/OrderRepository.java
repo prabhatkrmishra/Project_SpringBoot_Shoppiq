@@ -2,11 +2,13 @@ package com.pkmprojects.shoppiq.repository;
 
 import com.pkmprojects.shoppiq.entity.Order;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,27 +21,23 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    /**
-     * Returns all orders placed by the given user, newest first.
-     *
-     * @param user the customer
-     * @return list of orders
-     */
     List<Order> findAllByUserOrderByPlacedAtDesc(User user);
 
-    /**
-     * Returns a paginated view of all orders.
-     *
-     * @param pageable pagination params
-     * @return page of orders
-     */
     Page<Order> findAll(Pageable pageable);
 
-    /**
-     * Looks up a single order by id.
-     *
-     * @param id order id
-     * @return optional order
-     */
+    Page<Order> findByStatus(OrderStatus status, Pageable pageable);
+
     Optional<Order> findById(Long id);
+
+    List<Order> findTop10ByOrderByPlacedAtDesc();
+
+    long countByStatus(OrderStatus status);
+
+    long countByPlacedAtBetween(Instant start, Instant end);
+
+    List<Order> findByPlacedAtBetweenOrderByPlacedAtAsc(Instant start, Instant end);
+
+    List<Order> findByPlacedAtBetween(Instant start, Instant end);
+
+    long countByUser(User user);
 }

@@ -194,6 +194,20 @@ public class SecurityConfig {
                         // Authenticated frontend pages
                         .requestMatchers("/address").hasAnyRole("CUSTOMER", "ADMIN")
 
+                        // Admin frontend pages
+                        .requestMatchers(
+                                "/admin/dashboard",
+                                "/admin/inventory",
+                                "/admin/orders",
+                                "/admin/users",
+                                "/admin/payments",
+                                "/admin/reviews",
+                                "/admin/reports"
+                        ).hasRole("ADMIN")
+
+                        // Admin API endpoints
+                        .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
+
                         // Public backend
                         .requestMatchers(
                                 "/auth/login",

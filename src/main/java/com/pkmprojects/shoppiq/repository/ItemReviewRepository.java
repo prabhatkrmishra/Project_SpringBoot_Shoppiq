@@ -70,4 +70,11 @@ public interface ItemReviewRepository
             Long userId,
             Long itemId
     );
+
+    /**
+     * Returns the 10 most recent reviews.
+     *
+     * @return list of recent reviews
+     */
+    List<ItemReview> findTop10ByOrderByCreatedAtDesc();
 }

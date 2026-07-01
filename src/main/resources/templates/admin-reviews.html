@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Moderation - Shoppiq Admin</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+        .header { background: #111; color: #fff; padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+        .header-nav { display: flex; gap: 20px; align-items: center; }
+        .header-nav a { color: #ccc; text-decoration: none; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.15s; }
+        .header-nav a:hover, .header-nav a.active { color: #fff; }
+        .main { max-width: 1280px; margin: 0 auto; padding: 40px; }
+        .section-label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0; }
+        .panel { background: #fff; border: 1px solid #e0e0e0; padding: 24px; }
+        .panel-title { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #e0e0e0; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; }
+        td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #fafafa; }
+        .stars { color: #f0ad4e; letter-spacing: 2px; }
+        .action-btn { padding: 4px 12px; background: #c44; color: #fff; border: none; cursor: pointer; font-size: 0.75rem; }
+        .action-btn:hover { opacity: 0.85; }
+        .pagination { display: flex; gap: 8px; justify-content: center; margin-top: 20px; }
+        .pagination button { padding: 6px 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.8rem; }
+        .pagination button.active { background: #111; color: #fff; border-color: #111; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #2d7d46; color: #fff; font-size: 0.85rem; z-index: 1000; display: none; }
+        .toast.error { background: #c44; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Shoppiq Admin</h1>
+        <nav class="header-nav">
+            <a href="/admin/dashboard">Dashboard</a>
+            <a href="/admin/inventory">Inventory</a>
+            <a href="/admin/orders">Orders</a>
+            <a href="/admin/users">Customers</a>
+            <a href="/admin/payments">Payments</a>
+            <a href="/admin/reviews" class="active">Reviews</a>
+            <a href="/admin/reports">Reports</a>
+            <a href="/allitems">Store</a>
+        </nav>
+    </header>
+    <main class="main">
+        <div class="section-label">Review Moderation</div>
+        <div class="panel">
+            <div class="panel-title">All Reviews</div>
+            <table>
+                <thead><tr><th>Product</th><th>Reviewer</th><th>Rating</th><th>Review</th><th>Date</th><th>Actions</th></tr></thead>
+                <tbody id="reviewTable"><tr><td colspan="6" style="text-align:center;padding:40px;color:#888">Loading...</td></tr></tbody>
+            </table>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </main>
+    <div class="toast" id="toast"></div>
+    <script>
+        const API = '/api/admin/reviews';
+        let currentPage = 0;
+        async function fetchJSON(url) { const r = await fetch(url, { credentials: 'include' }); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
+        function showToast(m, e = false) { const t = document.getElementById('toast'); t.textContent = m; t.className = e ? 'toast error' : 'toast'; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
+        function renderStars(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
+        function fmtDate(iso) { return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); }
+
+        function renderReviews(data) {
+            const tbody = document.getElementById('reviewTable');
+            if (!data.content || data.content.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#888">No reviews found</td></tr>'; return; }
+            tbody.innerHTML = data.content.map(r => `<tr>
+                <td><strong>${r.itemName}</strong><br><span style="color:#888;font-size:0.75rem">SKU: ${r.itemSku}</span></td>
+                <td>${r.reviewerUsername}<br><span style="color:#888;font-size:0.75rem">${r.reviewerEmail}</span></td>
+                <td><span class="stars">${renderStars(r.rating)}</span></td>
+                <td>${r.review || '<span style="color:#888">No text</span>'}</td>
+                <td>${fmtDate(r.createdAt)}</td>
+                <td><button class="action-btn" onclick="deleteReview(${r.id})">Delete</button></td>
+            </tr>`).join('');
+        }
+
+        function renderPagination(page) {
+            const el = document.getElementById('pagination');
+            if (page.totalPages <= 1) { el.innerHTML = ''; return; }
+            let h = `<button ${page.first ? 'disabled' : ''} onclick="loadReviews(${page.page - 1})">Prev</button>`;
+            for (let i = 0; i < page.totalPages; i++) h += `<button class="${i === page.page ? 'active' : ''}" onclick="loadReviews(${i})">${i + 1}</button>`;
+            h += `<button ${page.last ? 'disabled' : ''} onclick="loadReviews(${page.page + 1})">Next</button>`;
+            el.innerHTML = h;
+        }
+
+        async function loadReviews(page = 0) {
+            currentPage = page;
+            try { const d = await fetchJSON(`${API}?page=${page}&size=20`); renderReviews(d); renderPagination(d); } catch (e) { console.error(e); }
+        }
+
+        async function deleteReview(id) {
+            if (!confirm('Delete this review?')) return;
+            try { await fetch(`${API}/${id}`, { method: 'DELETE', credentials: 'include' }); showToast('Review deleted'); loadReviews(currentPage); } catch (e) { showToast('Delete failed', true); }
+        }
+
+        init = () => loadReviews(0);
+        init();
+    </script>
+</body>
+</html>

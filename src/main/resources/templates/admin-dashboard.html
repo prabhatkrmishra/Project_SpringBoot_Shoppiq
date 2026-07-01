@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Shoppiq</title>
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f5f0;
+            color: #1a1a1a;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #111;
+            color: #fff;
+            padding: 0 40px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .header-nav a {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            transition: color 0.15s;
+        }
+
+        .header-nav a:hover,
+        .header-nav a.active {
+            color: #fff;
+        }
+
+        .main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .section-label {
+            font-size: 0.72rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .summary-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            padding: 24px;
+        }
+
+        .summary-card .label {
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .summary-card .value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #111;
+        }
+
+        .summary-card .value.revenue {
+            color: #2d7d46;
+        }
+
+        .summary-card .value.warning {
+            color: #c44;
+        }
+
+        .summary-card .value.info {
+            color: #2a6496;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            padding: 24px;
+        }
+
+        .panel-title {
+            font-size: 0.72rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-item .meta {
+            color: #888;
+            font-size: 0.75rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            border-radius: 2px;
+        }
+
+        .status-badge.pending {
+            background: #fef3cd;
+            color: #856404;
+        }
+
+        .status-badge.confirmed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-badge.shipped {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.delivered {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-badge.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.refunded {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.low-stock {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.out-of-stock {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .chart-container {
+            margin-bottom: 40px;
+        }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-panel {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            padding: 24px;
+        }
+
+        .chart-panel canvas {
+            width: 100%;
+            height: 250px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Shoppiq Admin</h1>
+        <nav class="header-nav">
+            <a href="/admin/dashboard" class="active">Dashboard</a>
+            <a href="/admin/inventory">Inventory</a>
+            <a href="/admin/orders">Orders</a>
+            <a href="/admin/users">Customers</a>
+            <a href="/admin/payments">Payments</a>
+            <a href="/admin/reviews">Reviews</a>
+            <a href="/admin/reports">Reports</a>
+            <a href="/allitems">Store</a>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="section-label">Dashboard Overview</div>
+
+        <div class="summary-grid" id="summaryCards">
+            <div class="summary-card">
+                <div class="label">Total Users</div>
+                <div class="value" id="totalUsers">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Total Products</div>
+                <div class="value" id="totalProducts">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Today's Orders</div>
+                <div class="value info" id="todaysOrders">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Today's Revenue</div>
+                <div class="value revenue" id="todaysRevenue">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Pending Orders</div>
+                <div class="value warning" id="pendingOrders">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Cancelled Orders</div>
+                <div class="value warning" id="cancelledOrders">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Low Stock</div>
+                <div class="value warning" id="lowStockProducts">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Out of Stock</div>
+                <div class="value warning" id="outOfStockProducts">-</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="panel">
+                <div class="panel-title">Recent Orders</div>
+                <ul class="activity-list" id="recentOrders">
+                    <li class="empty-state">Loading...</li>
+                </ul>
+            </div>
+            <div class="panel">
+                <div class="panel-title">Recent Payments</div>
+                <ul class="activity-list" id="recentPayments">
+                    <li class="empty-state">Loading...</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="section-label">Sales Analytics</div>
+            <div class="chart-row">
+                <div class="chart-panel">
+                    <div class="panel-title">Revenue (Last 30 Days)</div>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="chart-panel">
+                    <div class="panel-title">Orders by Day</div>
+                    <canvas id="ordersChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-panel">
+                    <div class="panel-title">Top Products</div>
+                    <canvas id="topProductsChart"></canvas>
+                </div>
+                <div class="chart-panel">
+                    <div class="panel-title">Top Categories</div>
+                    <canvas id="topCategoriesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        const API = '/api/admin';
+
+        async function fetchJSON(url) {
+            const res = await fetch(url, { credentials: 'include' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        }
+
+        function formatCurrency(val) {
+            return '₹' + Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        }
+
+        function renderOrders(orders) {
+            const el = document.getElementById('recentOrders');
+            if (!orders || orders.length === 0) {
+                el.innerHTML = '<li class="empty-state">No recent orders</li>';
+                return;
+            }
+            el.innerHTML = orders.map(o => `
+                <li class="activity-item">
+                    <div>
+                        <strong>#${o.orderId}</strong> — ${o.customerUsername}
+                        <div class="meta">${new Date(o.placedAt).toLocaleDateString()}</div>
+                    </div>
+                    <div>
+                        <span class="status-badge ${o.status.toLowerCase()}">${o.status}</span>
+                        <span style="margin-left:8px;font-weight:600">${formatCurrency(o.grandTotal)}</span>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function renderPayments(payments) {
+            const el = document.getElementById('recentPayments');
+            if (!payments || payments.length === 0) {
+                el.innerHTML = '<li class="empty-state">No recent payments</li>';
+                return;
+            }
+            el.innerHTML = payments.map(p => `
+                <li class="activity-item">
+                    <div>
+                        <strong>${p.paymentReference}</strong>
+                        <div class="meta">${p.customerUsername} — ${new Date(p.createdAt).toLocaleDateString()}</div>
+                    </div>
+                    <div>
+                        <span class="status-badge ${p.paymentStatus.toLowerCase()}">${p.paymentStatus}</span>
+                        <span style="margin-left:8px;font-weight:600">${formatCurrency(p.amount)}</span>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function renderRevenueChart(dailySales) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const labels = dailySales.map(d => d.date);
+            const data = dailySales.map(d => d.revenue);
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data,
+                        borderColor: '#2d7d46',
+                        backgroundColor: 'rgba(45,125,70,0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { ticks: { maxTicksLimit: 10 } }
+                    }
+                }
+            });
+        }
+
+        function renderOrdersChart(dailySales) {
+            const ctx = document.getElementById('ordersChart').getContext('2d');
+            const labels = dailySales.map(d => d.date);
+            const data = dailySales.map(d => d.ordersCount);
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Orders',
+                        data,
+                        backgroundColor: 'rgba(42,100,150,0.7)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { ticks: { maxTicksLimit: 10 } }
+                    }
+                }
+            });
+        }
+
+        function renderTopProductsChart(products) {
+            const ctx = document.getElementById('topProductsChart').getContext('2d');
+            const labels = products.map(p => p.itemName.substring(0, 20));
+            const data = products.map(p => p.totalRevenue);
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data,
+                        backgroundColor: 'rgba(45,125,70,0.7)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function renderTopCategoriesChart(categories) {
+            const ctx = document.getElementById('topCategoriesChart').getContext('2d');
+            const labels = categories.map(c => c.categoryName);
+            const data = categories.map(c => c.totalRevenue);
+            const colors = ['#2d7d46', '#2a6496', '#c44', '#f0ad4e', '#5bc0de', '#6f42c1'];
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        backgroundColor: colors.slice(0, labels.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+        }
+
+        async function init() {
+            try {
+                const [summary, analytics, activity] = await Promise.all([
+                    fetchJSON(`${API}/dashboard/summary`),
+                    fetchJSON(`${API}/dashboard/sales-analytics`),
+                    fetchJSON(`${API}/dashboard/recent-activity`)
+                ]);
+
+                document.getElementById('totalUsers').textContent = summary.totalUsers.toLocaleString();
+                document.getElementById('totalProducts').textContent = summary.totalProducts.toLocaleString();
+                document.getElementById('todaysOrders').textContent = summary.todaysOrders.toLocaleString();
+                document.getElementById('todaysRevenue').textContent = formatCurrency(summary.todaysRevenue);
+                document.getElementById('pendingOrders').textContent = summary.pendingOrders.toLocaleString();
+                document.getElementById('cancelledOrders').textContent = summary.cancelledOrders.toLocaleString();
+                document.getElementById('lowStockProducts').textContent = summary.lowStockProducts.toLocaleString();
+                document.getElementById('outOfStockProducts').textContent = summary.outOfStockProducts.toLocaleString();
+
+                renderOrders(activity.recentOrders);
+                renderPayments(activity.recentPayments);
+
+                if (analytics.dailySales && analytics.dailySales.length > 0) {
+                    renderRevenueChart(analytics.dailySales);
+                    renderOrdersChart(analytics.dailySales);
+                }
+                if (analytics.topSellingProducts && analytics.topSellingProducts.length > 0) {
+                    renderTopProductsChart(analytics.topSellingProducts);
+                }
+                if (analytics.topCategories && analytics.topCategories.length > 0) {
+                    renderTopCategoriesChart(analytics.topCategories);
+                }
+            } catch (err) {
+                console.error('Failed to load dashboard:', err);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

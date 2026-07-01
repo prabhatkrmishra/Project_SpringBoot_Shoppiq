@@ -49,4 +49,39 @@ public class FrontEndController {
     public String paymentPage() {
         return "payment";
     }
+
+    @GetMapping("/admin/dashboard")
+    public String adminDashboardPage() {
+        return "admin-dashboard";
+    }
+
+    @GetMapping("/admin/inventory")
+    public String adminInventoryPage() {
+        return "admin-inventory";
+    }
+
+    @GetMapping("/admin/orders")
+    public String adminOrdersPage() {
+        return "admin-orders";
+    }
+
+    @GetMapping("/admin/users")
+    public String adminUsersPage() {
+        return "admin-users";
+    }
+
+    @GetMapping("/admin/payments")
+    public String adminPaymentsPage() {
+        return "admin-payments";
+    }
+
+    @GetMapping("/admin/reviews")
+    public String adminReviewsPage() {
+        return "admin-reviews";
+    }
+
+    @GetMapping("/admin/reports")
+    public String adminReportsPage() {
+        return "admin-reports";
+    }
 }

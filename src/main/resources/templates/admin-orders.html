@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management - Shoppiq Admin</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+        .header { background: #111; color: #fff; padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+        .header-nav { display: flex; gap: 20px; align-items: center; }
+        .header-nav a { color: #ccc; text-decoration: none; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.15s; }
+        .header-nav a:hover, .header-nav a.active { color: #fff; }
+        .main { max-width: 1280px; margin: 0 auto; padding: 40px; }
+        .section-label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0; }
+        .panel { background: #fff; border: 1px solid #e0e0e0; padding: 24px; margin-bottom: 20px; }
+        .panel-title { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+        .filter-bar select { padding: 8px 12px; border: 1px solid #ddd; font-size: 0.85rem; background: #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #e0e0e0; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; }
+        td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #fafafa; }
+        .status-badge { display: inline-block; padding: 3px 10px; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 2px; }
+        .status-badge.placed { background: #d1ecf1; color: #0c5460; }
+        .status-badge.confirmed { background: #cce5ff; color: #004085; }
+        .status-badge.packed { background: #e2d5f1; color: #4a2d8a; }
+        .status-badge.shipped { background: #fff3cd; color: #856404; }
+        .status-badge.out_for_delivery { background: #ffeeba; color: #856404; }
+        .status-badge.delivered { background: #d4edda; color: #155724; }
+        .status-badge.cancelled { background: #f8d7da; color: #721c24; }
+        .status-select { padding: 4px 8px; font-size: 0.75rem; border: 1px solid #ddd; }
+        .action-btn { padding: 4px 12px; background: #2a6496; color: #fff; border: none; cursor: pointer; font-size: 0.75rem; }
+        .action-btn:hover { background: #1e4d73; }
+        .pagination { display: flex; gap: 8px; justify-content: center; margin-top: 20px; }
+        .pagination button { padding: 6px 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.8rem; }
+        .pagination button.active { background: #111; color: #fff; border-color: #111; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal-content { background: #fff; margin: 100px auto; padding: 30px; max-width: 600px; width: 90%; }
+        .modal-content h3 { margin-bottom: 20px; font-size: 1rem; }
+        .modal-content .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
+        .modal-content .close-btn { float: right; background: none; border: none; font-size: 1.2rem; cursor: pointer; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #2d7d46; color: #fff; font-size: 0.85rem; z-index: 1001; display: none; }
+        .toast.error { background: #c44; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Shoppiq Admin</h1>
+        <nav class="header-nav">
+            <a href="/admin/dashboard">Dashboard</a>
+            <a href="/admin/inventory">Inventory</a>
+            <a href="/admin/orders" class="active">Orders</a>
+            <a href="/admin/users">Customers</a>
+            <a href="/admin/payments">Payments</a>
+            <a href="/admin/reviews">Reviews</a>
+            <a href="/admin/reports">Reports</a>
+            <a href="/allitems">Store</a>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="section-label">Order Management</div>
+        <div class="panel">
+            <div class="panel-title"><span>Orders</span></div>
+            <div class="filter-bar">
+                <select id="statusFilter" onchange="loadOrders(0)">
+                    <option value="">All Status</option>
+                    <option value="PLACED">Placed</option>
+                    <option value="CONFIRMED">Confirmed</option>
+                    <option value="PACKED">Packed</option>
+                    <option value="SHIPPED">Shipped</option>
+                    <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="CANCELLED">Cancelled</option>
+                </select>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="orderTable">
+                    <tr><td colspan="7" style="text-align:center;padding:40px;color:#888">Loading...</td></tr>
+                </tbody>
+            </table>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </main>
+
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <h3>Order Details</h3>
+            <div id="orderDetails"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '/api/admin/orders';
+        let currentPage = 0;
+        const PAGE_SIZE = 20;
+
+        async function fetchJSON(url) {
+            const res = await fetch(url, { credentials: 'include' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = isError ? 'toast error' : 'toast';
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        function formatCurrency(val) {
+            return '₹' + Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        }
+
+        function formatDate(iso) {
+            return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        const VALID_TRANSITIONS = {
+            PLACED: ['CONFIRMED', 'CANCELLED'],
+            CONFIRMED: ['PACKED'],
+            PACKED: ['SHIPPED'],
+            SHIPPED: ['OUT_FOR_DELIVERY'],
+            OUT_FOR_DELIVERY: ['DELIVERED']
+        };
+
+        function getTransitions(currentStatus) {
+            return VALID_TRANSITIONS[currentStatus] || [];
+        }
+
+        function renderOrders(data) {
+            const tbody = document.getElementById('orderTable');
+            if (!data.content || data.content.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#888">No orders found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.content.map(order => {
+                const transitions = getTransitions(order.status);
+                const options = transitions.map(s => `<option value="${s}">${s.replace('_', ' ')}</option>`).join('');
+                return `
+                    <tr>
+                        <td><strong>#${order.id}</strong></td>
+                        <td>${order.customerUsername}<br><span style="color:#888;font-size:0.75rem">${order.customerEmail}</span></td>
+                        <td>${formatCurrency(order.grandTotal)}</td>
+                        <td><span class="status-badge ${order.paymentStatus.toLowerCase()}">${order.paymentStatus}</span></td>
+                        <td><span class="status-badge ${order.status.toLowerCase()}">${order.status.replace('_', ' ')}</span></td>
+                        <td>${formatDate(order.placedAt)}</td>
+                        <td>
+                            <button class="action-btn" onclick="viewOrder(${order.id})" style="margin-right:4px">View</button>
+                            ${options ? `<select class="status-select" id="status-${order.id}">${options}</select><button class="action-btn" onclick="updateStatus(${order.id})">Update</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderPagination(page) {
+            const el = document.getElementById('pagination');
+            if (page.totalPages <= 1) { el.innerHTML = ''; return; }
+            let html = '';
+            html += `<button ${page.first ? 'disabled' : ''} onclick="loadOrders(${page.page - 1})">Prev</button>`;
+            for (let i = 0; i < page.totalPages; i++) {
+                html += `<button class="${i === page.page ? 'active' : ''}" onclick="loadOrders(${i})">${i + 1}</button>`;
+            }
+            html += `<button ${page.last ? 'disabled' : ''} onclick="loadOrders(${page.page + 1})">Next</button>`;
+            el.innerHTML = html;
+        }
+
+        async function loadOrders(page = 0) {
+            currentPage = page;
+            const status = document.getElementById('statusFilter').value;
+            const params = new URLSearchParams({ page, size: PAGE_SIZE });
+            if (status) params.append('status', status);
+            try {
+                const data = await fetchJSON(`${API}?${params}`);
+                renderOrders(data);
+                renderPagination(data);
+            } catch (err) {
+                console.error('Failed to load orders:', err);
+            }
+        }
+
+        async function updateStatus(orderId) {
+            const select = document.getElementById(`status-${orderId}`);
+            const newStatus = select.value;
+            try {
+                await fetch(`${API}/${orderId}/status?status=${newStatus}`, {
+                    method: 'PUT',
+                    credentials: 'include'
+                });
+                showToast('Order status updated');
+                loadOrders(currentPage);
+            } catch (err) {
+                showToast('Failed to update status', true);
+            }
+        }
+
+        async function viewOrder(orderId) {
+            try {
+                const order = await fetchJSON(`${API}/${orderId}`);
+                const details = document.getElementById('orderDetails');
+                details.innerHTML = `
+                    <div class="detail-row"><span>Order ID</span><span>#${order.id}</span></div>
+                    <div class="detail-row"><span>Customer</span><span>${order.customerUsername}</span></div>
+                    <div class="detail-row"><span>Email</span><span>${order.customerEmail}</span></div>
+                    <div class="detail-row"><span>Status</span><span class="status-badge ${order.status.toLowerCase()}">${order.status.replace('_', ' ')}</span></div>
+                    <div class="detail-row"><span>Payment Method</span><span>${order.paymentMethod}</span></div>
+                    <div class="detail-row"><span>Payment Status</span><span class="status-badge ${order.paymentStatus.toLowerCase()}">${order.paymentStatus}</span></div>
+                    <div class="detail-row"><span>Subtotal</span><span>${formatCurrency(order.subtotal)}</span></div>
+                    <div class="detail-row"><span>Shipping</span><span>${formatCurrency(order.shippingFee)}</span></div>
+                    <div class="detail-row"><span>Tax</span><span>${formatCurrency(order.tax)}</span></div>
+                    <div class="detail-row"><span>Discount</span><span>${formatCurrency(order.discount)}</span></div>
+                    <div class="detail-row"><span>Grand Total</span><span><strong>${formatCurrency(order.grandTotal)}</strong></span></div>
+                    <div style="margin-top:16px;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:8px">Shipping Address</div>
+                    <div class="detail-row"><span>${order.address.fullName}</span><span>${order.address.phone}</span></div>
+                    <div class="detail-row"><span>${order.address.line1}${order.address.line2 ? ', ' + order.address.line2 : ''}</span><span></span></div>
+                    <div class="detail-row"><span>${order.address.city}, ${order.address.state} ${order.address.postalCode}</span><span>${order.address.country}</span></div>
+                    <div style="margin-top:16px;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:8px">Items</div>
+                    ${order.items.map(item => `
+                        <div class="detail-row">
+                            <span>${item.itemNameSnapshot} × ${item.quantity}</span>
+                            <span>${formatCurrency(item.subtotal)}</span>
+                        </div>
+                    `).join('')}
+                `;
+                document.getElementById('orderModal').style.display = 'block';
+            } catch (err) {
+                showToast('Failed to load order details', true);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').style.display = 'none';
+        }
+
+        window.onclick = function(e) {
+            if (e.target === document.getElementById('orderModal')) closeModal();
+        };
+
+        init = () => loadOrders(0);
+        init();
+    </script>
+</body>
+</html>

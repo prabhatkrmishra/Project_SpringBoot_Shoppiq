@@ -148,6 +148,11 @@ public enum ErrorCode {
      */
     ITEM_ALREADY_EXISTS("ITEM-409-001", "Requested item already exists."),
 
+    /**
+     * Stock adjustment would result in negative inventory.
+     */
+    ITEM_STOCK_NEGATIVE("ITEM-400-001", "Stock adjustment would result in negative inventory."),
+
     // =========================================================
     // ItemDetails Errors
     // =========================================================
@@ -199,6 +204,11 @@ public enum ErrorCode {
      * Order cannot be cancelled in its current state.
      */
     ORDER_CANNOT_BE_CANCELLED("ORDER-400-001", "This order cannot be cancelled."),
+
+    /**
+     * Invalid order status transition.
+     */
+    ORDER_INVALID_STATUS_TRANSITION("ORDER-400-002", "Invalid order status transition."),
 
     // =========================================================
     // Role Errors

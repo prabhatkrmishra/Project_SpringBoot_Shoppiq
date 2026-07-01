@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Management - Shoppiq Admin</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+        .header { background: #111; color: #fff; padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+        .header-nav { display: flex; gap: 20px; align-items: center; }
+        .header-nav a { color: #ccc; text-decoration: none; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.15s; }
+        .header-nav a:hover, .header-nav a.active { color: #fff; }
+        .main { max-width: 1280px; margin: 0 auto; padding: 40px; }
+        .section-label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0; }
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+        .summary-card { background: #fff; border: 1px solid #e0e0e0; padding: 24px; }
+        .summary-card .label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin-bottom: 8px; }
+        .summary-card .value { font-size: 1.8rem; font-weight: 600; color: #111; }
+        .summary-card .value.revenue { color: #2d7d46; }
+        .summary-card .value.warning { color: #c44; }
+        .panel { background: #fff; border: 1px solid #e0e0e0; padding: 24px; margin-bottom: 20px; }
+        .panel-title { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+        .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+        .filter-bar select { padding: 8px 12px; border: 1px solid #ddd; font-size: 0.85rem; background: #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #e0e0e0; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; }
+        td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #fafafa; }
+        .action-btn { padding: 4px 12px; border: none; cursor: pointer; font-size: 0.75rem; }
+        .action-btn.block { background: #c44; color: #fff; }
+        .action-btn.unblock { background: #2d7d46; color: #fff; }
+        .action-btn:hover { opacity: 0.85; }
+        .pagination { display: flex; gap: 8px; justify-content: center; margin-top: 20px; }
+        .pagination button { padding: 6px 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.8rem; }
+        .pagination button.active { background: #111; color: #fff; border-color: #111; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #2d7d46; color: #fff; font-size: 0.85rem; z-index: 1000; display: none; }
+        .toast.error { background: #c44; }
+        @media (max-width: 768px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Shoppiq Admin</h1>
+        <nav class="header-nav">
+            <a href="/admin/dashboard">Dashboard</a>
+            <a href="/admin/inventory">Inventory</a>
+            <a href="/admin/orders">Orders</a>
+            <a href="/admin/users" class="active">Customers</a>
+            <a href="/admin/payments">Payments</a>
+            <a href="/admin/reviews">Reviews</a>
+            <a href="/admin/reports">Reports</a>
+            <a href="/allitems">Store</a>
+        </nav>
+    </header>
+    <main class="main">
+        <div class="section-label">Customer Management</div>
+        <div class="summary-grid" id="statsGrid">
+            <div class="summary-card"><div class="label">Total Customers</div><div class="value" id="totalCustomers">-</div></div>
+            <div class="summary-card"><div class="label">Active</div><div class="value" id="activeCustomers">-</div></div>
+            <div class="summary-card"><div class="label">Blocked</div><div class="value warning" id="blockedCustomers">-</div></div>
+            <div class="summary-card"><div class="label">New This Month</div><div class="value" id="newThisMonth">-</div></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title">Customers</div>
+            <div class="filter-bar">
+                <select id="statusFilter" onchange="loadUsers(0)">
+                    <option value="">All</option>
+                    <option value="true">Active</option>
+                    <option value="false">Blocked</option>
+                </select>
+            </div>
+            <table>
+                <thead><tr><th>User</th><th>Email</th><th>Roles</th><th>Orders</th><th>Spent</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="userTable"><tr><td colspan="7" style="text-align:center;padding:40px;color:#888">Loading...</td></tr></tbody>
+            </table>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </main>
+    <div class="toast" id="toast"></div>
+    <script>
+        const API = '/api/admin/users';
+        let currentPage = 0;
+        async function fetchJSON(url) { const r = await fetch(url, { credentials: 'include' }); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
+        function showToast(m, e = false) { const t = document.getElementById('toast'); t.textContent = m; t.className = e ? 'toast error' : 'toast'; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
+        function fmtCurrency(v) { return '₹' + Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2 }); }
+
+        async function loadStats() {
+            try {
+                const s = await fetchJSON(`${API}/stats`);
+                document.getElementById('totalCustomers').textContent = s.totalCustomers;
+                document.getElementById('activeCustomers').textContent = s.activeCustomers;
+                document.getElementById('blockedCustomers').textContent = s.blockedCustomers;
+                document.getElementById('newThisMonth').textContent = s.newCustomersThisMonth;
+            } catch (err) { console.error(err); }
+        }
+
+        function renderUsers(data) {
+            const tbody = document.getElementById('userTable');
+            if (!data.content || data.content.length === 0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#888">No customers found</td></tr>'; return; }
+            tbody.innerHTML = data.content.map(u => `<tr>
+                <td><strong>${u.username}</strong><br><span style="color:#888;font-size:0.75rem">${u.name}</span></td>
+                <td>${u.email}</td>
+                <td>${u.roles.join(', ')}</td>
+                <td>${u.totalOrders}</td>
+                <td>${fmtCurrency(u.totalSpent)}</td>
+                <td>${u.enabled ? '<span style="color:#2d7d46">Active</span>' : '<span style="color:#c44">Blocked</span>'}</td>
+                <td>${u.enabled
+                    ? `<button class="action-btn block" onclick="toggleBlock(${u.id}, false)">Block</button>`
+                    : `<button class="action-btn unblock" onclick="toggleBlock(${u.id}, true)">Unblock</button>`}</td>
+            </tr>`).join('');
+        }
+
+        function renderPagination(page) {
+            const el = document.getElementById('pagination');
+            if (page.totalPages <= 1) { el.innerHTML = ''; return; }
+            let h = `<button ${page.first ? 'disabled' : ''} onclick="loadUsers(${page.page - 1})">Prev</button>`;
+            for (let i = 0; i < page.totalPages; i++) h += `<button class="${i === page.page ? 'active' : ''}" onclick="loadUsers(${i})">${i + 1}</button>`;
+            h += `<button ${page.last ? 'disabled' : ''} onclick="loadUsers(${page.page + 1})">Next</button>`;
+            el.innerHTML = h;
+        }
+
+        async function loadUsers(page = 0) {
+            currentPage = page;
+            const enabled = document.getElementById('statusFilter').value;
+            const params = new URLSearchParams({ page, size: 20 });
+            if (enabled) params.append('enabled', enabled);
+            try { const d = await fetchJSON(`${API}?${params}`); renderUsers(d); renderPagination(d); } catch (e) { console.error(e); }
+        }
+
+        async function toggleBlock(userId, enable) {
+            const action = enable ? 'unblock' : 'block';
+            try { await fetch(`${API}/${userId}/${action}`, { method: 'PUT', credentials: 'include' }); showToast(`User ${action}ed`); await Promise.all([loadStats(), loadUsers(currentPage)]); } catch (e) { showToast('Failed', true); }
+        }
+
+        async function init() { await Promise.all([loadStats(), loadUsers(0)]); }
+        init();
+    </script>
+</body>
+</html>

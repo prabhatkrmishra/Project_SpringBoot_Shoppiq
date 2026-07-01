@@ -63,20 +63,19 @@ public interface ItemRepository
     List<Item> findAllByOrderByNameAsc();
 
     /**
-     * Retrieves every SKU that already exists in the database.
+     * Retrieves all items with their item details eagerly fetched.
      *
-     * <p>
-     * Used during bulk creation to validate all SKUs using a single
-     * database query instead of executing one query per item.
-     * </p>
-     *
-     * @param skus SKUs received in the request
-     * @return existing SKUs
+     * @return list of items with item details
      */
-    @Query("""
-            select i.itemDetails.sku
-            from Item i
-            where i.itemDetails.sku in :skus
-            """)
+    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category")
+    List<Item> findAllWithItemDetails();
+
+    /**
+     * Returns the subset of the given SKUs that already exist in the database.
+     *
+     * @param skus set of SKUs to check
+     * @return subset of SKUs that already exist
+     */
+    @Query("SELECT id.sku FROM ItemDetails id WHERE id.sku IN :skus")
     Set<String> findExistingSkus(@Param("skus") Set<String> skus);
 }
