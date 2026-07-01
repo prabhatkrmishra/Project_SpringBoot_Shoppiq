@@ -5,13 +5,17 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory;
 import com.pkmprojects.shoppiq.exception.formatter.ValidationErrorFormatter;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.net.URI;
@@ -98,6 +102,44 @@ public class GlobalExceptionHandler {
         return ProblemDetailFactory.create(HttpStatus.NOT_FOUND,
                 "Resource not found",
                 ErrorCode.RESOURCE_NOT_FOUND, createInstance(request));
+    }
+
+    /**
+     * Handles constraint violations from {@code @Validated} method parameters
+     * (e.g. {@code @RequestParam @NotBlank} on controller methods).
+     *
+     * @param exception constraint violation exception
+     * @param request   current HTTP request
+     * @return RFC 9457 ProblemDetail response with 400 status
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolationException(
+            ConstraintViolationException exception, HttpServletRequest request) {
+
+        log.debug("Constraint violation [{}]: {}", request.getRequestURI(), exception.getMessage());
+
+        return ProblemDetailFactory.create(HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                ErrorCode.VALIDATION_FAILED, createInstance(request));
+    }
+
+    /**
+     * Handles missing required request parameters (e.g. a {@code @RequestParam}
+     * with no default value that was not supplied in the request).
+     *
+     * @param exception missing parameter exception
+     * @param request   current HTTP request
+     * @return RFC 9457 ProblemDetail response with 400 status
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ProblemDetail handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException exception, HttpServletRequest request) {
+
+        log.debug("Missing request parameter [{}]: {}", request.getRequestURI(), exception.getMessage());
+
+        return ProblemDetailFactory.create(HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                ErrorCode.VALIDATION_FAILED, createInstance(request));
     }
 
     /**

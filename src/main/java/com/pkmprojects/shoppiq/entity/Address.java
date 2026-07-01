@@ -5,12 +5,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * Represents a shipping address belonging to a user.
+ * Represents a shipping address.
  *
  * <p>
- * A user may have many addresses; at most one may be marked as the default.
- * The default flag is managed exclusively through the service layer to
- * guarantee the one-default invariant.
+ * Addresses are owned by a user for customer shipping, but may also be
+ * referenced by a seller's business address or a store's pickup address.
+ * The {@code user_id} FK is nullable to support owner-agnostic usage.
  * </p>
  *
  * <h2>Design Notes</h2>
@@ -34,12 +34,14 @@ import lombok.*;
 public class Address extends AuditableEntity {
 
     /**
-     * The user who owns this address.
+     * The user who owns this address, if any.
+     *
+     * <p>Nullable to allow addresses to be referenced by sellers
+     * and stores without requiring a user owner.</p>
      */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "user_id",
-            nullable = false,
             foreignKey = @ForeignKey(name = "fk_addresses_user")
     )
     private User user;

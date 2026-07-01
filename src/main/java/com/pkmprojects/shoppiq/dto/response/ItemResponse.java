@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.dto.response;
 
 import com.pkmprojects.shoppiq.entity.Item;
+import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -34,6 +35,11 @@ import java.time.Instant;
  * @since 1.0.0
  */
 public record ItemResponse(
+
+        /*
+         * Publishing status of the product.
+         */
+        ProductPublishingStatus publishingStatus,
 
         /*
           Unique product identifier.
@@ -105,6 +111,7 @@ public record ItemResponse(
      */
     public static ItemResponse fromEntity(Item item) {
         return new ItemResponse(
+                item.getPublishingStatus(),
                 item.getId(),
                 item.getName(),
                 item.getDescription(),

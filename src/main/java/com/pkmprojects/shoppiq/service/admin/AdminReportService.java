@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.admin;
 
+import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
 import com.pkmprojects.shoppiq.enums.*;
 
 import java.math.BigDecimal;
@@ -78,6 +79,13 @@ public interface AdminReportService {
      * @return inventory report data
      */
     InventoryReport generateInventoryReport();
+
+    /**
+     * Generates a commission report showing revenue and commissions by seller.
+     *
+     * @return list of commission report entries by seller
+     */
+    List<CommissionReportResponse> generateCommissionReport();
 
     /**
      * Exports a report to the specified format.

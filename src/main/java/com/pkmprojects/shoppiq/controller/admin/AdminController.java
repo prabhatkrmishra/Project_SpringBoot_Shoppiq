@@ -5,6 +5,7 @@ import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.service.admin.*;
+import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -273,6 +274,11 @@ public class AdminController {
     @GetMapping("/reports/inventory")
     public AdminReportService.InventoryReport getInventoryReport() {
         return reportService.generateInventoryReport();
+    }
+
+    @GetMapping("/reports/commission")
+    public List<CommissionReportResponse> getCommissionReport() {
+        return reportService.generateCommissionReport();
     }
 
     @GetMapping("/reports/export")

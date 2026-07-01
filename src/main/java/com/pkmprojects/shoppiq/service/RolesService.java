@@ -21,6 +21,7 @@ import java.util.List;
 public class RolesService {
 
     private static final String CUSTOMER_ROLE_NAME = "ROLE_CUSTOMER";
+    private static final String SELLER_ROLE_NAME = "ROLE_SELLER";
 
     private final RolesRepository rolesRepository;
 
@@ -52,5 +53,16 @@ public class RolesService {
     public Role getCustomerRole() {
         return rolesRepository.findByRoleName(CUSTOMER_ROLE_NAME)
                 .orElseThrow(() -> new RoleNotFoundException(CUSTOMER_ROLE_NAME + " not found"));
+    }
+
+    /**
+     * Looks up the SELLER role.
+     *
+     * @return the {@code ROLE_SELLER} entity
+     * @throws RoleNotFoundException if the role is missing
+     */
+    public Role getSellerRole() {
+        return rolesRepository.findByRoleName(SELLER_ROLE_NAME)
+                .orElseThrow(() -> new RoleNotFoundException(SELLER_ROLE_NAME + " not found"));
     }
 }

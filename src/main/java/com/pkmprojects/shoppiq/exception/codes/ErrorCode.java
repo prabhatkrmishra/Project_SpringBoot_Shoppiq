@@ -153,6 +153,11 @@ public enum ErrorCode {
      */
     ITEM_STOCK_NEGATIVE("ITEM-400-001", "Stock adjustment would result in negative inventory."),
 
+    /**
+     * Product is not yet published (DRAFT or REJECTED).
+     */
+    ITEM_NOT_PUBLISHED("ITEM-400-002", "Product is not yet published."),
+
     // =========================================================
     // ItemDetails Errors
     // =========================================================
@@ -180,6 +185,39 @@ public enum ErrorCode {
      * For attempt to modify or delete a review with no authorization.
      */
     ITEM_REVIEW_ACCESS_DENIED("ITEM_REVIEW-403-001", "You are not allowed to modify this review."),
+
+    // =========================================================
+    // Seller Errors
+    // =========================================================
+
+    /**
+     * Requested seller could not be found.
+     */
+    SELLER_NOT_FOUND("SELLER-404-001", "Requested seller was not found."),
+
+    /**
+     * Seller already exists for this user.
+     */
+    SELLER_ALREADY_EXISTS("SELLER-409-001", "A seller profile already exists for this user."),
+
+    /**
+     * Seller is not yet verified.
+     */
+    SELLER_NOT_VERIFIED("SELLER-400-001", "Seller account is not verified."),
+
+    /**
+     * Seller is currently suspended.
+     */
+    SELLER_SUSPENDED("SELLER-400-002", "Seller account is suspended."),
+
+    // =========================================================
+    // Store Errors
+    // =========================================================
+
+    /**
+     * Requested store could not be found.
+     */
+    STORE_NOT_FOUND("STORE-404-001", "Requested store was not found."),
 
     // =========================================================
     // Order Errors

@@ -239,6 +239,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/roles/create/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/roles/all").hasRole("ADMIN")
 
+                        // Seller: registration requires any authenticated user, management requires SELLER role
+                        .requestMatchers(HttpMethod.POST, "/seller/register").authenticated()
+                        .requestMatchers("/seller/**").hasAnyRole("SELLER", "ADMIN")
+
                         // Cart: customer-only access
                         .requestMatchers("/user/cart/**").hasAnyRole("CUSTOMER", "ADMIN")
 

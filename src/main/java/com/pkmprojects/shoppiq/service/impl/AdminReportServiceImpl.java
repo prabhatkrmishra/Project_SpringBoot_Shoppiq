@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.service.impl;
 
 import com.pkmprojects.shoppiq.dto.admin.report.*;
+import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.repository.*;
@@ -13,6 +14,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -57,17 +59,23 @@ public class AdminReportServiceImpl implements AdminReportService {
     private final ItemRepository itemRepository;
     private final ItemDetailsRepository itemDetailsRepository;
     private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final SellerRepository sellerRepository;
 
     public AdminReportServiceImpl(OrderRepository orderRepository,
                                   PaymentRepository paymentRepository,
                                   ItemRepository itemRepository,
                                   ItemDetailsRepository itemDetailsRepository,
-                                  UserRepository userRepository) {
+                                  UserRepository userRepository,
+                                  OrderItemRepository orderItemRepository,
+                                  SellerRepository sellerRepository) {
         this.orderRepository = orderRepository;
         this.paymentRepository = paymentRepository;
         this.itemRepository = itemRepository;
         this.itemDetailsRepository = itemDetailsRepository;
         this.userRepository = userRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.sellerRepository = sellerRepository;
     }
 
     @Override
@@ -413,6 +421,31 @@ public class AdminReportServiceImpl implements AdminReportService {
                 LocalDate.now(), totalProducts, totalStockUnits, totalInventoryValue,
                 lowStockCount, outOfStockCount, productStatuses
         );
+    }
+
+    @Override
+    public List<CommissionReportResponse> generateCommissionReport() {
+        List<Object[]> results = orderItemRepository.aggregateRevenueBySeller(PaymentStatus.PAID);
+        List<CommissionReportResponse> reports = new ArrayList<>();
+
+        for (Object[] row : results) {
+            Long sellerId = (Long) row[0];
+            String businessName = (String) row[1];
+            long totalOrders = ((Number) row[2]).longValue();
+            BigDecimal totalRevenue = (BigDecimal) row[3];
+
+            var seller = sellerRepository.findById(sellerId)
+                    .orElseThrow(() -> new RuntimeException("Seller not found: " + sellerId));
+            BigDecimal commissionRate = seller.getCommissionRate() != null
+                    ? seller.getCommissionRate()
+                    : BigDecimal.ZERO;
+
+            reports.add(CommissionReportResponse.from(
+                    sellerId, businessName, totalOrders, totalRevenue, commissionRate
+            ));
+        }
+
+        return reports;
     }
 
     @Override

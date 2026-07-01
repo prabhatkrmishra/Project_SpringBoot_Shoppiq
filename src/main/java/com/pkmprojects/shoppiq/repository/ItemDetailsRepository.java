@@ -32,4 +32,23 @@ public interface ItemDetailsRepository extends JpaRepository<ItemDetails, Long> 
      */
     @Query("SELECT d FROM ItemDetails d WHERE d.stockQuantity = 0")
     List<ItemDetails> findOutOfStockProducts();
+
+    /**
+     * Finds low stock products belonging to a specific seller.
+     *
+     * @param threshold low stock threshold
+     * @param sellerId the seller identifier
+     * @return list of low stock item details for the seller
+     */
+    @Query("SELECT d FROM ItemDetails d JOIN Item i ON i.itemDetails = d WHERE d.stockQuantity > 0 AND d.stockQuantity <= :threshold AND i.seller.id = :sellerId")
+    List<ItemDetails> findLowStockProductsBySellerId(int threshold, Long sellerId);
+
+    /**
+     * Finds out of stock products belonging to a specific seller.
+     *
+     * @param sellerId the seller identifier
+     * @return list of out of stock item details for the seller
+     */
+    @Query("SELECT d FROM ItemDetails d JOIN Item i ON i.itemDetails = d WHERE d.stockQuantity = 0 AND i.seller.id = :sellerId")
+    List<ItemDetails> findOutOfStockProductsBySellerId(Long sellerId);
 }

@@ -24,6 +24,31 @@ public interface ItemRepository
         extends JpaRepository<Item, Long> {
 
     /**
+     * Finds all items owned by a specific seller.
+     *
+     * @param sellerId the seller identifier
+     * @return list of items belonging to the seller
+     */
+    List<Item> findBySellerId(Long sellerId);
+
+    /**
+     * Counts the number of items owned by a specific seller.
+     *
+     * @param sellerId the seller identifier
+     * @return count of items belonging to the seller
+     */
+    long countBySellerId(Long sellerId);
+
+    /**
+     * Finds an item by its identifier and seller ownership.
+     *
+     * @param id       the item identifier
+     * @param sellerId the seller identifier
+     * @return matching item if it belongs to the seller
+     */
+    Optional<Item> findByIdAndSellerId(Long id, Long sellerId);
+
+    /**
      * Finds an item using its SKU.
      *
      * @param sku stock keeping unit

@@ -19,4 +19,16 @@ public final class OrderNotFoundException extends ResourceNotFoundException {
     public OrderNotFoundException(String detail) {
         super(ErrorCode.ORDER_NOT_FOUND, detail);
     }
+
+    /**
+     * Creates an exception for a missing order by its identifier.
+     *
+     * @param orderId the missing order's identifier
+     * @return a new OrderNotFoundException
+     */
+    public static OrderNotFoundException id(Long orderId) {
+        return new OrderNotFoundException(
+                "Order with id '%d' was not found.".formatted(orderId)
+        );
+    }
 }
