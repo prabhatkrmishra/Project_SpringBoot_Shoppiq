@@ -29,4 +29,24 @@ public class FrontEndController {
     public String addressPage() {
         return "address";
     }
+
+    @GetMapping("/checkout")
+    public String checkoutPage() {
+        return "checkout";
+    }
+
+    @GetMapping("/orders")
+    public String ordersPage() {
+        return "orders";
+    }
+
+    @GetMapping("/order-detail")
+    public String orderDetailPage() {
+        return "order-detail";
+    }
+
+    @GetMapping("/payment")
+    public String paymentPage() {
+        return "payment";
+    }
 }

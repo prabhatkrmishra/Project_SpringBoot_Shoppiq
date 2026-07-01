@@ -1,6 +1,5 @@
 package com.pkmprojects.shoppiq.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.pkmprojects.shoppiq.audit.AuditableEntity;
 import jakarta.persistence.*;
@@ -33,7 +32,7 @@ import java.util.List;
  * <ul>
  *     <li>One-to-One with {@link ItemDetails}.</li>
  *     <li>One-to-Many with {@link ItemReview}.</li>
- *     <li>Many-to-Many with {@link Order}.</li>
+ *     <li>Referenced by {@link OrderItem} snapshots at purchase time.</li>
  * </ul>
  *
  * <h2>Design Notes</h2>
@@ -109,24 +108,6 @@ public class Item extends AuditableEntity {
     )
     @JsonManagedReference
     private List<ItemReview> itemReviews = new ArrayList<>();
-
-    /**
-     * Orders containing this product.
-     *
-     * <p>
-     * This association is ignored during JSON serialization to prevent
-     * recursive object graphs.
-     * </p>
-     *
-     * <p>
-     * This relationship will eventually be replaced by an explicit
-     * {@code OrderItem} entity to support quantities and pricing history.
-     * </p>
-     */
-    @Builder.Default
-    @ManyToMany(mappedBy = "itemList")
-    @JsonIgnore
-    private List<Order> orderList = new ArrayList<>();
 
     /**
      * Updates the mutable state of this item using the supplied source.

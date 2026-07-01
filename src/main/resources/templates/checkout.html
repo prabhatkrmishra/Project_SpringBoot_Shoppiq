@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout — Shoppiq</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body { font-family: 'Georgia', serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+
+        .header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 0 40px; height: 56px;
+            display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 1rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+            font-family: 'Segoe UI', sans-serif; color: #111; }
+        .header-nav { display: flex; align-items: center; gap: 12px; }
+        .nav-link { font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; letter-spacing: 0.06em;
+            text-transform: uppercase; color: #555; text-decoration: none; padding: 6px 16px;
+            border-radius: 3px; transition: color 0.15s; }
+        .nav-link:hover { color: #111; }
+
+        .page { max-width: 980px; margin: 40px auto; padding: 0 20px; display: grid;
+            grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
+
+        .section { background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 28px; }
+        .section-title { font-family: 'Segoe UI', sans-serif; font-size: 0.82rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase; color: #333; margin-bottom: 20px;
+            padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+
+        /* Cart summary */
+        .cart-item { display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .cart-item:last-child { border-bottom: none; }
+        .cart-item-name { font-size: 0.9rem; color: #222; }
+        .cart-item-qty { font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; color: #888; margin-top: 3px; }
+        .cart-item-price { font-family: 'Segoe UI', sans-serif; font-size: 0.92rem; font-weight: 600; color: #111; }
+        .cart-empty { font-family: 'Segoe UI', sans-serif; font-size: 0.88rem; color: #888; text-align: center; padding: 24px 0; }
+
+        /* Address cards */
+        .address-grid { display: grid; gap: 12px; }
+        .address-card { border: 2px solid #e0e0e0; border-radius: 4px; padding: 14px 16px;
+            cursor: pointer; transition: border-color 0.15s; position: relative; }
+        .address-card.selected { border-color: #111; }
+        .address-card input[type=radio] { position: absolute; top: 14px; right: 14px; }
+        .address-label { font-family: 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+        .address-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
+        .address-lines { font-family: 'Segoe UI', sans-serif; font-size: 0.82rem; color: #555; line-height: 1.5; }
+        .no-address { font-family: 'Segoe UI', sans-serif; font-size: 0.88rem; color: #888; }
+        .address-link { color: #333; text-decoration: underline; }
+
+        /* Payment */
+        .payment-options { display: flex; gap: 12px; }
+        .payment-btn { flex: 1; border: 2px solid #e0e0e0; background: #fff; border-radius: 4px;
+            padding: 12px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-size: 0.88rem;
+            color: #333; transition: border-color 0.15s; }
+        .payment-btn.selected { border-color: #111; color: #111; font-weight: 600; }
+
+        /* Order summary sidebar */
+        .summary-row { display: flex; justify-content: space-between;
+            font-family: 'Segoe UI', sans-serif; font-size: 0.88rem; color: #444;
+            padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+        .summary-row:last-of-type { border-bottom: none; }
+        .summary-total { display: flex; justify-content: space-between; padding: 14px 0 0;
+            font-family: 'Segoe UI', sans-serif; font-size: 1rem; font-weight: 700; color: #111; }
+
+        .place-btn { width: 100%; margin-top: 20px; background: #111; color: #fff; border: none;
+            border-radius: 3px; padding: 14px; font-family: 'Segoe UI', sans-serif; font-size: 0.88rem;
+            font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+            transition: background 0.15s; }
+        .place-btn:hover { background: #333; }
+        .place-btn:disabled { background: #bbb; cursor: not-allowed; }
+
+        .toast { position: fixed; bottom: 24px; right: 24px; background: #111; color: #fff;
+            padding: 12px 20px; border-radius: 4px; font-family: 'Segoe UI', sans-serif;
+            font-size: 0.85rem; display: none; z-index: 100; }
+        .toast.error { background: #c0392b; }
+        .toast.show { display: block; }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <h1>Shoppiq</h1>
+    <nav class="header-nav">
+        <a href="/allitems" class="nav-link">Shop</a>
+        <a href="/orders" class="nav-link">My Orders</a>
+        <a href="/address" class="nav-link">Addresses</a>
+    </nav>
+</header>
+
+<main class="page">
+
+    <!-- Left column -->
+    <div style="display:flex;flex-direction:column;gap:24px;">
+
+        <!-- Cart Summary -->
+        <section class="section">
+            <div class="section-title">Cart Summary</div>
+            <div id="cartItems"><div class="cart-empty">Loading cart…</div></div>
+        </section>
+
+        <!-- Shipping Address -->
+        <section class="section">
+            <div class="section-title">Shipping Address</div>
+            <div id="addressGrid" class="address-grid"><p class="no-address">Loading…</p></div>
+        </section>
+
+        <!-- Payment Method -->
+        <section class="section">
+            <div class="section-title">Payment Method</div>
+            <div class="payment-options">
+                <button class="payment-btn selected" id="btnCOD" onclick="selectPayment('COD')">Cash on Delivery</button>
+                <button class="payment-btn" id="btnONLINE" onclick="selectPayment('ONLINE')">Online Payment</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Right column – Order Totals -->
+    <aside class="section">
+        <div class="section-title">Order Total</div>
+        <div class="summary-row"><span>Subtotal</span><span id="subtotal">₹0.00</span></div>
+        <div class="summary-row"><span>Shipping</span><span>₹0.00</span></div>
+        <div class="summary-row"><span>Tax</span><span>₹0.00</span></div>
+        <div class="summary-row"><span>Discount</span><span>₹0.00</span></div>
+        <div class="summary-total"><span>Grand Total</span><span id="grandTotal">₹0.00</span></div>
+        <button class="place-btn" id="placeBtn" onclick="placeOrder()">Place Order</button>
+    </aside>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    let selectedAddressId = null;
+    let selectedPayment   = 'COD';
+    let cartSubtotal      = 0;
+
+    // ── Bootstrap ──────────────────────────────────────────────────────────
+    (async function init() {
+        await Promise.all([loadCart(), loadAddresses()]);
+    })();
+
+    // ── Cart ───────────────────────────────────────────────────────────────
+    async function loadCart() {
+        try {
+            const res  = await fetch('/user/cart/get');
+            const data = await res.json();
+
+            const container = document.getElementById('cartItems');
+            const items     = data.cartItems || [];
+
+            if (!items.length) {
+                container.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
+                document.getElementById('placeBtn').disabled = true;
+                return;
+            }
+
+            cartSubtotal = 0;
+            container.innerHTML = items.map(item => {
+                const line = item.price * item.quantity;
+                cartSubtotal += line;
+                return `<div class="cart-item">
+                    <div>
+                        <div class="cart-item-name">${escHtml(item.itemName)}</div>
+                        <div class="cart-item-qty">Qty: ${item.quantity} &nbsp;×&nbsp; ₹${item.price.toFixed(2)}</div>
+                    </div>
+                    <div class="cart-item-price">₹${line.toFixed(2)}</div>
+                </div>`;
+            }).join('');
+
+            updateTotals();
+        } catch {
+            document.getElementById('cartItems').innerHTML =
+                '<div class="cart-empty">Unable to load cart.</div>';
+        }
+    }
+
+    // ── Addresses ──────────────────────────────────────────────────────────
+    async function loadAddresses() {
+        try {
+            const res   = await fetch('/user/address/get/all');
+            const list  = await res.json();
+            const grid  = document.getElementById('addressGrid');
+
+            if (!list.length) {
+                grid.innerHTML = `<p class="no-address">No addresses found.
+                    <a href="/address" class="address-link">Add one</a>.</p>`;
+                return;
+            }
+
+            grid.innerHTML = list.map(a => {
+                const def = a.default;
+                if (!selectedAddressId && def) selectedAddressId = a.id;
+                return `<label class="address-card ${def ? 'selected' : ''}"
+                              onclick="selectAddress(${a.id}, this)">
+                    <input type="radio" name="address" value="${a.id}" ${def ? 'checked' : ''}>
+                    <div class="address-label">${escHtml(a.label)}</div>
+                    <div class="address-name">${escHtml(a.fullName)}</div>
+                    <div class="address-lines">
+                        ${escHtml(a.line1)}${a.line2 ? ', ' + escHtml(a.line2) : ''}<br>
+                        ${escHtml(a.city)}, ${escHtml(a.state)} ${escHtml(a.postalCode)}<br>
+                        ${escHtml(a.country)} &nbsp;·&nbsp; ${escHtml(a.phone)}
+                    </div>
+                </label>`;
+            }).join('');
+
+            if (!selectedAddressId && list.length) selectedAddressId = list[0].id;
+        } catch {
+            document.getElementById('addressGrid').innerHTML =
+                '<p class="no-address">Unable to load addresses.</p>';
+        }
+    }
+
+    function selectAddress(id, el) {
+        selectedAddressId = id;
+        document.querySelectorAll('.address-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+    }
+
+    // ── Payment ────────────────────────────────────────────────────────────
+    function selectPayment(method) {
+        selectedPayment = method;
+        document.getElementById('btnCOD').classList.toggle('selected', method === 'COD');
+        document.getElementById('btnONLINE').classList.toggle('selected', method === 'ONLINE');
+    }
+
+    // ── Totals ─────────────────────────────────────────────────────────────
+    function updateTotals() {
+        document.getElementById('subtotal').textContent   = '₹' + cartSubtotal.toFixed(2);
+        document.getElementById('grandTotal').textContent = '₹' + cartSubtotal.toFixed(2);
+    }
+
+    // ── Place Order ────────────────────────────────────────────────────────
+    async function placeOrder() {
+        if (!selectedAddressId) { showToast('Please select a shipping address.', true); return; }
+
+        const btn = document.getElementById('placeBtn');
+        btn.disabled = true;
+        btn.textContent = 'Placing Order…';
+
+        try {
+            const res = await fetch('/user/order/checkout', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ addressId: selectedAddressId, paymentMethod: selectedPayment })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                showToast('Order placed! Redirecting…');
+                setTimeout(() => window.location.href = '/orders', 1500);
+            } else {
+                const err = await res.json();
+                showToast(err.detail || 'Checkout failed. Please try again.', true);
+                btn.disabled = false;
+                btn.textContent = 'Place Order';
+            }
+        } catch {
+            showToast('Network error. Please try again.', true);
+            btn.disabled = false;
+            btn.textContent = 'Place Order';
+        }
+    }
+
+    // ── Utility ────────────────────────────────────────────────────────────
+    function showToast(msg, error = false) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className   = 'toast show' + (error ? ' error' : '');
+        setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+</script>
+</body>
+</html>

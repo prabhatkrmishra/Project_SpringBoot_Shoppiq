@@ -185,6 +185,21 @@ public enum ErrorCode {
      */
     ORDER_NOT_FOUND("ORDER-404-001", "Requested order was not found."),
 
+    /**
+     * Order does not belong to the current user.
+     */
+    ORDER_ACCESS_DENIED("ORDER-403-001", "You are not allowed to access this order."),
+
+    /**
+     * Cart is empty at checkout.
+     */
+    CART_EMPTY("CART-400-002", "Your cart is empty."),
+
+    /**
+     * Order cannot be cancelled in its current state.
+     */
+    ORDER_CANNOT_BE_CANCELLED("ORDER-400-001", "This order cannot be cancelled."),
+
     // =========================================================
     // Role Errors
     // =========================================================
@@ -243,7 +258,46 @@ public enum ErrorCode {
     /**
      * The OAuth2 registration session is missing, invalid, or has expired.
      */
-    OAUTH_SESSION_INVALID("AUTH-400-001", "OAuth registration session is invalid or has expired.");
+    OAUTH_SESSION_INVALID("AUTH-400-001", "OAuth registration session is invalid or has expired."),
+
+    // =========================================================
+    // Payment Errors
+    // =========================================================
+
+    /**
+     * Requested payment could not be found.
+     */
+    PAYMENT_NOT_FOUND("PAYMENT-404-001", "Requested payment was not found."),
+
+    /**
+     * Payment does not belong to the current user.
+     */
+    PAYMENT_ACCESS_DENIED("PAYMENT-403-001", "You are not allowed to access this payment."),
+
+    /**
+     * A payment record already exists for this order.
+     */
+    PAYMENT_ALREADY_EXISTS("PAYMENT-409-001", "A payment already exists for this order."),
+
+    /**
+     * Payment cannot be processed in its current state.
+     */
+    PAYMENT_INVALID_STATE("PAYMENT-400-001", "Payment cannot be processed in its current state."),
+
+    /**
+     * Refund is not allowed for this payment.
+     */
+    PAYMENT_REFUND_NOT_ALLOWED("PAYMENT-400-002", "Refund is only allowed for paid payments."),
+
+    /**
+     * Payment cannot be cancelled.
+     */
+    PAYMENT_CANNOT_BE_CANCELLED("PAYMENT-400-003", "This payment cannot be cancelled."),
+
+    /**
+     * Transaction ID not found for verification.
+     */
+    PAYMENT_TRANSACTION_NOT_FOUND("PAYMENT-404-002", "No payment found for the given transaction ID.");
 
     /**
      * Stable machine-readable error identifier.

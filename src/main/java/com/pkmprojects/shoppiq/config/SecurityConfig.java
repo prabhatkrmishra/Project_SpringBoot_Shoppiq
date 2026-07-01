@@ -231,6 +231,19 @@ public class SecurityConfig {
                         // Address: customer-only access
                         .requestMatchers("/user/address/**").hasAnyRole("CUSTOMER", "ADMIN")
 
+                        // Order: customer-only access
+                        .requestMatchers("/user/order/**").hasAnyRole("CUSTOMER", "ADMIN")
+
+                        // Payment: customer endpoints + admin-only refund
+                        .requestMatchers(HttpMethod.PUT, "/user/payment/refund/**").hasRole("ADMIN")
+                        .requestMatchers("/user/payment/**").hasAnyRole("CUSTOMER", "ADMIN")
+
+                        // Frontend order pages
+                        .requestMatchers("/checkout", "/orders", "/order-detail").hasAnyRole("CUSTOMER", "ADMIN")
+
+                        // Frontend payment page
+                        .requestMatchers("/payment").hasAnyRole("CUSTOMER", "ADMIN")
+
                         .anyRequest().authenticated()
                 )
 

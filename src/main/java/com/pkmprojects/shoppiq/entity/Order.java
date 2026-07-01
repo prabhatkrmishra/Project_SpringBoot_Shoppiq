@@ -1,44 +1,135 @@
 package com.pkmprojects.shoppiq.entity;
 
+import com.pkmprojects.shoppiq.audit.AuditableEntity;
+import com.pkmprojects.shoppiq.enums.OrderStatus;
+import com.pkmprojects.shoppiq.enums.PaymentMethod;
+import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import jakarta.persistence.*;
+import lombok.*;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a confirmed customer order using the snapshot model.
+ *
+ * <p>
+ * Product name and price are snapshotted at purchase time inside
+ * {@link OrderItem} so that historical orders remain accurate even
+ * if products change later.
+ * </p>
+ *
+ * @author PrabhatKrMishra
+ * @since 1.0.0
+ */
 @Entity
 @Table(name = "orders")
-public class Order {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column
-    private Long id;
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class Order extends AuditableEntity {
 
-    @Column
-    private String type;
+    /**
+     * Customer who placed the order.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_orders_user")
+    )
+    private User user;
 
-    @ManyToMany()
-    // In new table woth orders mapped with item id, col will be of orders id
-    // and col 2 will be of items id joind inversly
-    @JoinTable(name = "order_with_items", joinColumns = @JoinColumn(name = "orders_id"),
-            inverseJoinColumns = @JoinColumn(name = "items_id"))
-    private List<Item> itemList;
+    /**
+     * Shipping address selected at checkout.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "address_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_orders_address")
+    )
+    private Address address;
 
-    public Long getId() {
-        return id;
-    }
+    /**
+     * Current order lifecycle status.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private OrderStatus status;
 
-    public String getType() {
-        return type;
-    }
+    /**
+     * Payment method chosen by the customer.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false, length = 20)
+    private PaymentMethod paymentMethod;
 
-    public void setType(String type) {
-        this.type = type;
-    }
+    /**
+     * Current payment status.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 20)
+    private PaymentStatus paymentStatus;
 
-    public List<Item> getItemList() {
-        return itemList;
-    }
+    /**
+     * Sum of (unit_price × quantity) for all order items.
+     */
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal subtotal;
 
-    public void setItemList(List<Item> items) {
-        this.itemList = items;
+    /**
+     * Shipping fee applied at checkout.
+     */
+    @Column(name = "shipping_fee", nullable = false, precision = 10, scale = 2)
+    private BigDecimal shippingFee;
+
+    /**
+     * Tax applied at checkout.
+     */
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal tax;
+
+    /**
+     * Discount applied at checkout.
+     */
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal discount;
+
+    /**
+     * Final amount payable: subtotal + shippingFee + tax - discount.
+     */
+    @Column(name = "grand_total", nullable = false, precision = 12, scale = 2)
+    private BigDecimal grandTotal;
+
+    /**
+     * Timestamp when the order was placed.
+     */
+    @Column(name = "placed_at", nullable = false)
+    private Instant placedAt;
+
+    /**
+     * Line items that belong to this order.
+     */
+    @Builder.Default
+    @OneToMany(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<OrderItem> orderItems = new ArrayList<>();
+
+    /**
+     * Adds an order item and maintains bidirectional relationship.
+     */
+    public void addOrderItem(OrderItem orderItem) {
+        if (orderItem == null) return;
+        orderItems.add(orderItem);
+        orderItem.setOrder(this);
     }
 }
