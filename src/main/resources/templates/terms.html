@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Terms of Service')}"></head>
+<body>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+    <main class="page">
+        <div class="container container-narrow">
+            <div class="page-header">
+                <h1>Terms of Service</h1>
+                <p>Last updated: January 1, 2026</p>
+            </div>
+
+            <div class="panel">
+                <div class="content-section">
+                    <h2>1. Acceptance of Terms</h2>
+                    <p>By accessing and using Shoppiq ("the Platform"), you agree to be bound by these Terms of Service.
+                        If you do not agree, please do not use the Platform.</p>
+                </div>
+                <div class="content-section">
+                    <h2>2. Account Registration</h2>
+                    <p>You are responsible for maintaining the confidentiality of your account credentials and for all
+                        activities under your account. You must provide accurate, current, and complete information
+                        during registration.</p>
+                </div>
+                <div class="content-section">
+                    <h2>3. Orders & Payments</h2>
+                    <p>All orders are subject to availability and acceptance. Prices are listed in the currency
+                        specified and may change without notice. Payment must be received before order processing
+                        begins.</p>
+                </div>
+                <div class="content-section">
+                    <h2>4. Shipping & Returns</h2>
+                    <p>Shipping times are estimates and not guaranteed. You may return most items within 30 days of
+                        delivery for a full refund, subject to our return policy.</p>
+                </div>
+                <div class="content-section">
+                    <h2>5. Limitation of Liability</h2>
+                    <p>Shoppiq shall not be liable for any indirect, incidental, or consequential damages arising from
+                        your use of the Platform, to the maximum extent permitted by law.</p>
+                </div>
+                <div class="content-section">
+                    <h2>6. Changes to Terms</h2>
+                    <p>We reserve the right to modify these terms at any time. Changes will be posted on this page with
+                        an updated revision date.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+</body>
+</html>

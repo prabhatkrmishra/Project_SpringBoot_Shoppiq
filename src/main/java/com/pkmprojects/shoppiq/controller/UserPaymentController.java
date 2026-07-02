@@ -117,23 +117,4 @@ public class UserPaymentController {
 
         return ResponseEntity.ok(paymentService.cancelPayment(user, paymentId));
     }
-
-    // =========================================================
-    // Refund (ADMIN only)
-    // =========================================================
-
-    /**
-     * Issues a refund for a PAID payment.
-     *
-     * <p>Restricted to {@code ADMIN} role via security config.</p>
-     *
-     * @param paymentId payment id (must be positive)
-     * @return 200 OK with updated payment status
-     */
-    @PutMapping("/refund/{id}")
-    public ResponseEntity<PaymentStatusResponse> refundPayment(
-            @PathVariable("id") @Positive(message = "Payment id must be a positive number.") Long paymentId) {
-
-        return ResponseEntity.ok(paymentService.refund(paymentId));
-    }
 }

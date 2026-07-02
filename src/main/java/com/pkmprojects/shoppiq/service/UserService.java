@@ -4,7 +4,6 @@ import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.exception.DuplicateUserException;
-import com.pkmprojects.shoppiq.repository.RolesRepository;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -45,7 +43,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RolesService rolesService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RolesRepository roleRepository, RolesService rolesService) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RolesService rolesService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.rolesService = rolesService;
@@ -123,15 +121,4 @@ public class UserService {
         }
     }
 
-    /**
-     * Retrieves all users.
-     *
-     * <p>Database failures propagate to {@code GlobalExceptionHandler} rather
-     * than being silently reported as zero users.</p>
-     *
-     * @return list of all users
-     */
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
 }

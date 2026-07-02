@@ -1,143 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Management - Shoppiq Admin</title>
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
-        .header { background: #111; color: #fff; padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
-        .header h1 { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-        .header-nav { display: flex; gap: 20px; align-items: center; }
-        .header-nav a { color: #ccc; text-decoration: none; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.15s; }
-        .header-nav a:hover, .header-nav a.active { color: #fff; }
-        .main { max-width: 1280px; margin: 0 auto; padding: 40px; }
-        .section-label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0; }
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
-        .summary-card { background: #fff; border: 1px solid #e0e0e0; padding: 24px; }
-        .summary-card .label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin-bottom: 8px; }
-        .summary-card .value { font-size: 1.8rem; font-weight: 600; color: #111; }
-        .summary-card .value.revenue { color: #2d7d46; }
-        .summary-card .value.warning { color: #c44; }
-        .panel { background: #fff; border: 1px solid #e0e0e0; padding: 24px; }
-        .panel-title { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
-        .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
-        .filter-bar select { padding: 8px 12px; border: 1px solid #ddd; font-size: 0.85rem; background: #fff; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { text-align: left; padding: 12px; border-bottom: 2px solid #e0e0e0; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; }
-        td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
-        tr:hover { background: #fafafa; }
-        .status-badge { display: inline-block; padding: 3px 10px; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 2px; }
-        .status-badge.paid { background: #d4edda; color: #155724; }
-        .status-badge.pending { background: #fff3cd; color: #856404; }
-        .status-badge.failed { background: #f8d7da; color: #721c24; }
-        .status-badge.refunded { background: #e2d5f1; color: #4a2d8a; }
-        .status-badge.cancelled { background: #f5f5f5; color: #666; }
-        .action-btn { padding: 4px 12px; background: #c44; color: #fff; border: none; cursor: pointer; font-size: 0.75rem; }
-        .action-btn:hover { opacity: 0.85; }
-        .pagination { display: flex; gap: 8px; justify-content: center; margin-top: 20px; }
-        .pagination button { padding: 6px 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.8rem; }
-        .pagination button.active { background: #111; color: #fff; border-color: #111; }
-        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #2d7d46; color: #fff; font-size: 0.85rem; z-index: 1000; display: none; }
-        .toast.error { background: #c44; }
-        @media (max-width: 768px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
-    </style>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Payment Management')}"></head>
 <body>
-    <header class="header">
-        <h1>Shoppiq Admin</h1>
-        <nav class="header-nav">
-            <a href="/admin/dashboard">Dashboard</a>
-            <a href="/admin/inventory">Inventory</a>
-            <a href="/admin/orders">Orders</a>
-            <a href="/admin/users">Customers</a>
-            <a href="/admin/payments" class="active">Payments</a>
-            <a href="/admin/reviews">Reviews</a>
-            <a href="/admin/reports">Reports</a>
-            <a href="/allitems">Store</a>
-        </nav>
-    </header>
-    <main class="main">
-        <div class="section-label">Payment Management</div>
-        <div class="summary-grid">
-            <div class="summary-card"><div class="label">Total Payments</div><div class="value" id="totalPayments">-</div></div>
-            <div class="summary-card"><div class="label">Successful</div><div class="value" id="successfulPayments">-</div></div>
-            <div class="summary-card"><div class="label">Failed</div><div class="value warning" id="failedPayments">-</div></div>
-            <div class="summary-card"><div class="label">Total Revenue</div><div class="value revenue" id="totalRevenue">-</div></div>
-        </div>
-        <div class="panel">
-            <div class="panel-title">Payments</div>
-            <div class="filter-bar">
-                <select id="statusFilter" onchange="loadPayments(0)">
-                    <option value="">All Status</option>
-                    <option value="PAID">Paid</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="FAILED">Failed</option>
-                    <option value="REFUNDED">Refunded</option>
-                </select>
-            </div>
-            <table>
-                <thead><tr><th>Reference</th><th>Order</th><th>Customer</th><th>Method</th><th>Gateway</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-                <tbody id="paymentTable"><tr><td colspan="9" style="text-align:center;padding:40px;color:#888">Loading...</td></tr></tbody>
-            </table>
-            <div class="pagination" id="pagination"></div>
-        </div>
-    </main>
-    <div class="toast" id="toast"></div>
-    <script>
-        const API = '/api/admin/payments';
-        let currentPage = 0;
-        async function fetchJSON(url) { const r = await fetch(url, { credentials: 'include' }); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
-        function showToast(m, e = false) { const t = document.getElementById('toast'); t.textContent = m; t.className = e ? 'toast error' : 'toast'; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
-        function fmtCurrency(v) { return '₹' + Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2 }); }
-        function fmtDate(iso) { return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); }
+<th:block th:replace="~{fragments/admin-header :: admin-header('payments')}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-        async function loadStats() {
-            try { const s = await fetchJSON(`${API}/stats`); document.getElementById('totalPayments').textContent = s.totalPayments; document.getElementById('successfulPayments').textContent = s.successfulPayments; document.getElementById('failedPayments').textContent = s.failedPayments; document.getElementById('totalRevenue').textContent = fmtCurrency(s.totalRevenue); } catch (e) { console.error(e); }
+<main class="admin-main">
+  <div class="page-header">
+    <h1>Payment Management</h1>
+    <p>View and manage payment transactions</p>
+  </div>
+
+  <div class="admin-summary-grid">
+    <div class="summary-card"><div class="label">Total Revenue</div><div class="value success" id="stat-revenue">$0</div></div>
+    <div class="summary-card"><div class="label">Completed</div><div class="value" id="stat-completed">0</div></div>
+    <div class="summary-card"><div class="label">Pending</div><div class="value warning" id="stat-pending">0</div></div>
+    <div class="summary-card"><div class="label">Refunded</div><div class="value danger" id="stat-refunded">0</div></div>
+  </div>
+
+  <div class="admin-panel">
+    <div class="admin-panel-title">Transaction History</div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Transaction ID</th>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Method</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="payments-body">
+          <tr><td colspan="8" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="paymentModal" class="modal-overlay">
+    <div class="modal" style="max-width:550px;width:90%;">
+      <div class="modal-header">
+        <h3>Payment Details</h3>
+        <button class="modal-close" id="payment-modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-payment-body">
+        <span class="spinner"></span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+(function () {
+  'use strict';
+  function statusClass(s) {
+    if (s === 'COMPLETED' || s === 'SUCCESS') return 'active';
+    if (s === 'REFUNDED') return 'inactive';
+    return 'pending';
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    API.get('/api/admin/payments/stats').then(function (s) {
+      document.getElementById('stat-revenue').textContent = formatCurrency(s && s.totalRevenue ? s.totalRevenue : 0);
+      document.getElementById('stat-completed').textContent = (s && s.completedCount) || 0;
+      document.getElementById('stat-pending').textContent = (s && s.pendingCount) || 0;
+      document.getElementById('stat-refunded').textContent = (s && s.refundedCount) || 0;
+    }).catch(function () {});
+
+    document.getElementById('payment-modal-close').addEventListener('click', function () {
+      document.getElementById('paymentModal').classList.remove('active');
+    });
+    document.getElementById('paymentModal').addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('active');
+    });
+
+    API.get('/api/admin/payments?page=0&size=100').then(function (data) {
+      var payments = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+      var tbody = document.getElementById('payments-body');
+      if (payments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No payments found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      payments.forEach(function (p) {
+        var canRefund = p.paymentStatus === 'COMPLETED' || p.paymentStatus === 'SUCCESS';
+        var actions = '<button class="btn btn-sm btn-secondary view-payment-btn" data-payment-id="' + p.id + '">View</button>';
+        if (canRefund) {
+          actions += ' <button class="btn btn-sm btn-danger refund-btn" data-payment-id="' + p.id + '">Refund</button>';
         }
-
-        function renderPayments(data) {
-            const tbody = document.getElementById('paymentTable');
-            if (!data.content || data.content.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#888">No payments found</td></tr>'; return; }
-            tbody.innerHTML = data.content.map(p => `<tr>
-                <td><strong>${p.paymentReference}</strong></td>
-                <td>#${p.orderId}</td>
-                <td>${p.customerUsername}</td>
-                <td>${p.paymentMethod}</td>
-                <td>${p.gateway}</td>
-                <td>${fmtCurrency(p.amount)}</td>
-                <td><span class="status-badge ${p.paymentStatus.toLowerCase()}">${p.paymentStatus}</span></td>
-                <td>${fmtDate(p.createdAt)}</td>
-                <td>${p.paymentStatus === 'PAID' ? `<button class="action-btn" onclick="refundPayment(${p.id})">Refund</button>` : ''}</td>
-            </tr>`).join('');
-        }
-
-        function renderPagination(page) {
-            const el = document.getElementById('pagination');
-            if (page.totalPages <= 1) { el.innerHTML = ''; return; }
-            let h = `<button ${page.first ? 'disabled' : ''} onclick="loadPayments(${page.page - 1})">Prev</button>`;
-            for (let i = 0; i < page.totalPages; i++) h += `<button class="${i === page.page ? 'active' : ''}" onclick="loadPayments(${i})">${i + 1}</button>`;
-            h += `<button ${page.last ? 'disabled' : ''} onclick="loadPayments(${page.page + 1})">Next</button>`;
-            el.innerHTML = h;
-        }
-
-        async function loadPayments(page = 0) {
-            currentPage = page;
-            const status = document.getElementById('statusFilter').value;
-            const params = new URLSearchParams({ page, size: 20 });
-            if (status) params.append('status', status);
-            try { const d = await fetchJSON(`${API}?${params}`); renderPayments(d); renderPagination(d); } catch (e) { console.error(e); }
-        }
-
-        async function refundPayment(id) {
-            if (!confirm('Confirm refund for this payment?')) return;
-            try { await fetch(`${API}/${id}/refund`, { method: 'PUT', credentials: 'include' }); showToast('Payment refunded'); await Promise.all([loadStats(), loadPayments(currentPage)]); } catch (e) { showToast('Refund failed', true); }
-        }
-
-        async function init() { await Promise.all([loadStats(), loadPayments(0)]); }
-        init();
-    </script>
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td class="text-sm">' + (p.transactionId || p.paymentReference || '') + '</td>' +
+          '<td><a href="/order-detail?id=' + p.orderId + '" class="btn-link">#' + p.orderId + '</a></td>' +
+          '<td class="text-sm">' + (p.customerUsername || '') + '</td>' +
+          '<td class="text-sm">' + (p.paymentMethod || '') + '</td>' +
+          '<td>' + formatCurrency(p.amount) + '</td>' +
+          '<td class="text-sm text-muted">' + formatDate(p.createdAt) + '</td>' +
+          '<td><span class="status-badge ' + statusClass(p.paymentStatus) + '">' + (p.paymentStatus || '') + '</span></td>' +
+          '<td class="admin-table-actions">' + actions + '</td>';
+        tbody.appendChild(tr);
+      });
+      initIcons();
+      tbody.querySelectorAll('.view-payment-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var paymentId = this.dataset.paymentId;
+          document.getElementById('modal-payment-body').innerHTML = '<span class="spinner"></span>';
+          document.getElementById('paymentModal').classList.add('active');
+          API.get('/api/admin/payments/' + paymentId).then(function (p) {
+            var html = '<div class="mb-md"><strong>Payment ID:</strong> #' + p.id + '</div>';
+            html += '<div class="mb-md"><strong>Reference:</strong> ' + (p.paymentReference || '') + '</div>';
+            html += '<div class="mb-md"><strong>Order:</strong> <a href="/order-detail?id=' + p.orderId + '" class="btn-link">#' + p.orderId + '</a></div>';
+            html += '<div class="mb-md"><strong>Customer:</strong> ' + (p.customerUsername || '') + '</div>';
+            html += '<div class="mb-md"><strong>Method:</strong> ' + (p.paymentMethod || '') + '</div>';
+            html += '<div class="mb-md"><strong>Gateway:</strong> ' + (p.gateway || '') + '</div>';
+            html += '<div class="mb-md"><strong>Amount:</strong> ' + formatCurrency(p.amount) + ' ' + (p.currency || '') + '</div>';
+            html += '<div class="mb-md"><strong>Transaction ID:</strong> ' + (p.transactionId || 'N/A') + '</div>';
+            html += '<div class="mb-md"><strong>Status:</strong> <span class="status-badge ' + statusClass(p.paymentStatus) + '">' + (p.paymentStatus || '') + '</span></div>';
+            html += '<div class="mb-md"><strong>Created:</strong> ' + formatDate(p.createdAt) + '</div>';
+            if (p.paidAt) html += '<div class="mb-md"><strong>Paid At:</strong> ' + formatDate(p.paidAt) + '</div>';
+            document.getElementById('modal-payment-body').innerHTML = html;
+          }).catch(function (err) {
+            document.getElementById('modal-payment-body').innerHTML = '<p class="text-danger">' + (err.message || 'Failed to load') + '</p>';
+          });
+        });
+      });
+      tbody.querySelectorAll('.refund-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = this.dataset.paymentId;
+          showConfirmModal({ title: 'Refund Payment', message: 'Refund this payment?', confirmText: 'Refund', danger: true }).then(function (confirmed) {
+            if (!confirmed) return;
+            API.put('/api/admin/payments/' + id + '/refund').then(function () {
+              showToast('Payment refunded', 'success');
+              window.location.reload();
+            }).catch(function (e) { showToast(e.message, 'error'); });
+          });
+        });
+      });
+    }).catch(function () {
+      document.getElementById('payments-body').innerHTML =
+        '<tr><td colspan="8" class="text-center text-muted">Failed to load payments</td></tr>';
+    });
+  });
+})();
+</script>
 </body>
 </html>

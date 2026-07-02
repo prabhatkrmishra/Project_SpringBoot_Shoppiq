@@ -136,8 +136,11 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         if (from == OrderStatus.OUT_FOR_DELIVERY) {
             return to == OrderStatus.DELIVERED;
         }
+        if (from == OrderStatus.DELIVERED) {
+            return to == OrderStatus.RETURNED;
+        }
 
-        // DELIVERED and RETURNED are terminal
+        // RETURNED is terminal
         return false;
     }
 }

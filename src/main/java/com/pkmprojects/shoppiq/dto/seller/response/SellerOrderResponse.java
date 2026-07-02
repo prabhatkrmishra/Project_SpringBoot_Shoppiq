@@ -1,7 +1,6 @@
 package com.pkmprojects.shoppiq.dto.seller.response;
 
 import com.pkmprojects.shoppiq.entity.Order;
-import com.pkmprojects.shoppiq.entity.OrderItem;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;

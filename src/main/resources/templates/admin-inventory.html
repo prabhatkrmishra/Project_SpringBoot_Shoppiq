@@ -1,219 +1,199 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Management - Shoppiq Admin</title>
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
-        .header { background: #111; color: #fff; padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
-        .header h1 { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-        .header-nav { display: flex; gap: 20px; align-items: center; }
-        .header-nav a { color: #ccc; text-decoration: none; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.15s; }
-        .header-nav a:hover, .header-nav a.active { color: #fff; }
-        .main { max-width: 1280px; margin: 0 auto; padding: 40px; }
-        .section-label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0; }
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
-        .summary-card { background: #fff; border: 1px solid #e0e0e0; padding: 24px; }
-        .summary-card .label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin-bottom: 8px; }
-        .summary-card .value { font-size: 1.8rem; font-weight: 600; color: #111; }
-        .summary-card .value.warning { color: #c44; }
-        .panel { background: #fff; border: 1px solid #e0e0e0; padding: 24px; margin-bottom: 20px; }
-        .panel-title { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
-        .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
-        .filter-bar select, .filter-bar input { padding: 8px 12px; border: 1px solid #ddd; font-size: 0.85rem; background: #fff; }
-        .filter-bar button { padding: 8px 16px; background: #111; color: #fff; border: none; cursor: pointer; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; }
-        .filter-bar button:hover { background: #333; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { text-align: left; padding: 12px; border-bottom: 2px solid #e0e0e0; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; }
-        td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
-        tr:hover { background: #fafafa; }
-        .stock-input { width: 80px; padding: 6px 8px; border: 1px solid #ddd; text-align: center; }
-        .adjust-btn { padding: 4px 12px; background: #2d7d46; color: #fff; border: none; cursor: pointer; font-size: 0.75rem; }
-        .adjust-btn:hover { background: #245c36; }
-        .bulk-btn { padding: 8px 20px; background: #2a6496; color: #fff; border: none; cursor: pointer; font-size: 0.8rem; }
-        .bulk-btn:hover { background: #1e4d73; }
-        .status-badge { display: inline-block; padding: 3px 10px; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 2px; }
-        .status-badge.in-stock { background: #d4edda; color: #155724; }
-        .status-badge.low-stock { background: #fff3cd; color: #856404; }
-        .status-badge.out-of-stock { background: #f8d7da; color: #721c24; }
-        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #2d7d46; color: #fff; font-size: 0.85rem; z-index: 1000; display: none; }
-        .toast.error { background: #c44; }
-        @media (max-width: 768px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
-    </style>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Inventory Management')}"></head>
 <body>
-    <header class="header">
-        <h1>Shoppiq Admin</h1>
-        <nav class="header-nav">
-            <a href="/admin/dashboard">Dashboard</a>
-            <a href="/admin/inventory" class="active">Inventory</a>
-            <a href="/admin/orders">Orders</a>
-            <a href="/admin/users">Customers</a>
-            <a href="/admin/payments">Payments</a>
-            <a href="/admin/reviews">Reviews</a>
-            <a href="/admin/reports">Reports</a>
-            <a href="/allitems">Store</a>
-        </nav>
-    </header>
+<th:block th:replace="~{fragments/admin-header :: admin-header('inventory')}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-    <main class="main">
-        <div class="section-label">Inventory Management</div>
+<main class="admin-main">
+  <div class="page-header">
+    <h1>Inventory Management</h1>
+    <p>Manage product stock and availability</p>
+  </div>
 
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="label">Total Products</div>
-                <div class="value" id="totalProducts">-</div>
-            </div>
-            <div class="summary-card">
-                <div class="label">Total Stock Units</div>
-                <div class="value" id="totalStock">-</div>
-            </div>
-            <div class="summary-card">
-                <div class="label">Low Stock</div>
-                <div class="value warning" id="lowStock">-</div>
-            </div>
-            <div class="summary-card">
-                <div class="label">Out of Stock</div>
-                <div class="value warning" id="outOfStock">-</div>
-            </div>
-        </div>
+  <div class="admin-summary-grid">
+    <div class="summary-card"><div class="label">Total Products</div><div class="value" id="stat-total">0</div></div>
+    <div class="summary-card"><div class="label">In Stock</div><div class="value success" id="stat-in-stock">0</div></div>
+    <div class="summary-card"><div class="label">Low Stock</div><div class="value warning" id="stat-low-stock">0</div></div>
+    <div class="summary-card"><div class="label">Out of Stock</div><div class="value danger" id="stat-out-of-stock">0</div></div>
+  </div>
 
-        <div class="panel">
-            <div class="panel-title">
-                <span>Product Inventory</span>
-                <button class="bulk-btn" onclick="bulkUpdate()">Bulk Update</button>
-            </div>
-            <div class="filter-bar">
-                <select id="statusFilter" onchange="loadInventory()">
-                    <option value="">All Status</option>
-                    <option value="IN_STOCK">In Stock</option>
-                    <option value="LOW_STOCK">Low Stock</option>
-                    <option value="OUT_OF_STOCK">Out of Stock</option>
-                </select>
-                <input type="text" id="searchInput" placeholder="Search by name or SKU..." oninput="filterTable()">
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>SKU</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Stock</th>
-                        <th>Status</th>
-                        <th>Adjust</th>
-                    </tr>
-                </thead>
-                <tbody id="inventoryTable">
-                    <tr><td colspan="7" style="text-align:center;padding:40px;color:#888">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </main>
+  <div class="admin-filters">
+    <select id="stockFilter">
+      <option value="">All Status</option>
+      <option value="IN_STOCK">In Stock</option>
+      <option value="LOW_STOCK">Low Stock</option>
+      <option value="OUT_OF_STOCK">Out of Stock</option>
+    </select>
+  </div>
 
-    <div class="toast" id="toast"></div>
+  <div class="admin-panel">
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" aria-label="Select all"></th>
+            <th>Product</th>
+            <th>SKU</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="inventory-body">
+          <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-    <script>
-        const API = '/api/admin/inventory';
-        let allItems = [];
+  <div id="bulkActionBar" class="bulk-action-bar" style="display:none;">
+    <span id="selectedCount">0</span> items selected
+    <div class="bulk-action-bar-controls">
+      <input type="number" id="bulkStockQty" min="0" placeholder="New stock qty" style="width:120px;">
+      <input type="text" id="bulkReason" placeholder="Reason" style="width:200px;" value="Admin bulk adjustment">
+      <button class="btn btn-sm btn-primary" id="bulkUpdateBtn">Update Selected</button>
+      <button class="btn btn-sm btn-ghost" id="bulkClearBtn">Clear</button>
+    </div>
+  </div>
+</main>
 
-        async function fetchJSON(url) {
-            const res = await fetch(url, { credentials: 'include' });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json();
-        }
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<style>
+.bulk-action-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: var(--color-surface, #1a1a2e); border-top: 1px solid var(--color-border, #333);
+  padding: 12px 24px; display: flex; align-items: center; gap: 16px;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.3); font-size: 0.9rem;
+}
+.bulk-action-bar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+</style>
+<script>
+(function () {
+  'use strict';
+  var allItems = [];
 
-        function showToast(msg, isError = false) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.className = isError ? 'toast error' : 'toast';
-            t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        }
+  function stockBadge(status) {
+    if (status === 'IN_STOCK') return '<span class="status-badge in-stock">In Stock</span>';
+    if (status === 'LOW_STOCK') return '<span class="status-badge low-stock">Low Stock</span>';
+    return '<span class="status-badge out-of-stock">Out of Stock</span>';
+  }
 
-        function formatCurrency(val) {
-            return '₹' + Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        }
+  function getSelectedIds() {
+    var ids = [];
+    document.querySelectorAll('.item-checkbox:checked').forEach(function (cb) {
+      ids.push(cb.dataset.itemId);
+    });
+    return ids;
+  }
 
-        function renderTable(items) {
-            const tbody = document.getElementById('inventoryTable');
-            if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#888">No products found</td></tr>';
-                return;
-            }
-            tbody.innerHTML = items.map(item => `
-                <tr data-status="${item.stockStatus}">
-                    <td><strong>${item.itemName}</strong><br><span style="color:#888;font-size:0.75rem">${item.brand}</span></td>
-                    <td>${item.sku}</td>
-                    <td>${item.categoryName}</td>
-                    <td>${formatCurrency(item.effectivePrice)}</td>
-                    <td><input type="number" class="stock-input" id="stock-${item.itemId}" value="${item.stockQuantity}" min="0"></td>
-                    <td><span class="status-badge ${item.stockStatus.toLowerCase().replace('_', '-')}">${item.stockStatus.replace('_', ' ')}</span></td>
-                    <td><button class="adjust-btn" onclick="adjustStock(${item.itemId})">Update</button></td>
-                </tr>
-            `).join('');
-        }
+  function updateBulkBar() {
+    var count = getSelectedIds().length;
+    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('bulkActionBar').style.display = count > 0 ? '' : 'none';
+    var selectAll = document.getElementById('selectAll');
+    var allCheckboxes = document.querySelectorAll('.item-checkbox');
+    selectAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === count;
+  }
 
-        function filterTable() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allItems.filter(item =>
-                item.itemName.toLowerCase().includes(search) ||
-                item.sku.toLowerCase().includes(search)
-            );
-            renderTable(filtered);
-        }
+  function renderInventory(items) {
+    allItems = items || [];
+    var inStock = allItems.filter(function (i) { return i.stockStatus === 'IN_STOCK'; }).length;
+    var lowStock = allItems.filter(function (i) { return i.stockStatus === 'LOW_STOCK'; }).length;
+    var outOfStock = allItems.filter(function (i) { return i.stockStatus === 'OUT_OF_STOCK'; }).length;
+    document.getElementById('stat-total').textContent = allItems.length;
+    document.getElementById('stat-in-stock').textContent = inStock;
+    document.getElementById('stat-low-stock').textContent = lowStock;
+    document.getElementById('stat-out-of-stock').textContent = outOfStock;
 
-        async function loadSummary() {
-            try {
-                const summary = await fetchJSON(`${API}/summary`);
-                document.getElementById('totalProducts').textContent = summary.totalProducts;
-                document.getElementById('totalStock').textContent = summary.totalStockUnits.toLocaleString();
-                document.getElementById('lowStock').textContent = summary.lowStockProducts;
-                document.getElementById('outOfStock').textContent = summary.outOfStockProducts;
-            } catch (err) {
-                console.error('Failed to load summary:', err);
-            }
-        }
+    var filter = document.getElementById('stockFilter').value;
+    var filtered = filter ? allItems.filter(function (i) { return i.stockStatus === filter; }) : allItems;
 
-        async function loadInventory() {
-            try {
-                allItems = await fetchJSON(API);
-                renderTable(allItems);
-            } catch (err) {
-                console.error('Failed to load inventory:', err);
-            }
-        }
+    var tbody = document.getElementById('inventory-body');
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No products found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    filtered.forEach(function (item) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><input type="checkbox" class="item-checkbox" data-item-id="' + item.itemId + '" aria-label="Select"></td>' +
+        '<td><a href="/item/' + item.itemId + '" class="btn-link">' + (item.itemName || '') + '</a></td>' +
+        '<td class="text-sm text-muted">' + (item.sku || '') + '</td>' +
+        '<td>' + formatCurrency(item.effectivePrice || item.basePrice) + '</td>' +
+        '<td>' +
+          '<div class="inline-edit">' +
+            '<input type="number" class="stock-input" value="' + item.stockQuantity + '" min="0" data-item-id="' + item.itemId + '">' +
+            '<button class="stock-adjust-btn btn btn-sm btn-primary" data-item-id="' + item.itemId + '">Update</button>' +
+          '</div>' +
+        '</td>' +
+        '<td>' + stockBadge(item.stockStatus) + '</td>' +
+        '<td class="admin-table-actions">' +
+          '<a href="/item/' + item.itemId + '" class="btn btn-sm btn-ghost" aria-label="View"><i data-lucide="eye" class="icon-sm"></i></a>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+    initIcons();
 
-        async function adjustStock(itemId) {
-            const input = document.getElementById(`stock-${itemId}`);
-            const item = allItems.find(i => i.itemId === itemId);
-            const diff = parseInt(input.value) - item.stockQuantity;
+    tbody.querySelectorAll('.item-checkbox').forEach(function (cb) {
+      cb.addEventListener('change', updateBulkBar);
+    });
+    tbody.querySelectorAll('.stock-adjust-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var itemId = this.dataset.itemId;
+        var input = tbody.querySelector('.stock-input[data-item-id="' + itemId + '"]');
+        var newQty = parseInt(input.value) || 0;
+        API.put('/api/admin/inventory/' + itemId, { quantity: newQty, reason: 'Admin adjustment' }).then(function () {
+          showToast('Stock updated', 'success');
+          loadInventory();
+        }).catch(function (e) { showToast(e.message, 'error'); });
+      });
+    });
+    updateBulkBar();
+  }
 
-            try {
-                await fetch(`${API}/${itemId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ quantity: Math.abs(diff), reason: 'Manual adjustment' })
-                });
-                showToast('Stock updated successfully');
-                await Promise.all([loadSummary(), loadInventory()]);
-            } catch (err) {
-                showToast('Failed to update stock', true);
-            }
-        }
+  function loadInventory() {
+    API.get('/api/admin/inventory').then(renderInventory).catch(function () {
+      document.getElementById('inventory-body').innerHTML =
+        '<tr><td colspan="7" class="text-center text-muted">Failed to load inventory</td></tr>';
+    });
+  }
 
-        async function bulkUpdate() {
-            showToast('Bulk update: Select items and adjust quantities');
-        }
-
-        async function init() {
-            await Promise.all([loadSummary(), loadInventory()]);
-        }
-
-        init();
-    </script>
+  document.addEventListener('DOMContentLoaded', function () {
+    loadInventory();
+    document.getElementById('stockFilter').addEventListener('change', function () {
+      renderInventory(allItems);
+    });
+    document.getElementById('selectAll').addEventListener('change', function () {
+      var checked = this.checked;
+      document.querySelectorAll('.item-checkbox').forEach(function (cb) { cb.checked = checked; });
+      updateBulkBar();
+    });
+    document.getElementById('bulkUpdateBtn').addEventListener('click', function () {
+      var ids = getSelectedIds();
+      if (ids.length === 0) return;
+      var qty = parseInt(document.getElementById('bulkStockQty').value);
+      if (isNaN(qty) || qty < 0) { showToast('Enter a valid stock quantity', 'error'); return; }
+      var reason = document.getElementById('bulkReason').value.trim() || 'Admin bulk adjustment';
+      var adjustments = {};
+      ids.forEach(function (id) { adjustments[id] = { quantity: qty, reason: reason }; });
+      API.post('/api/admin/inventory/bulk-adjust', adjustments).then(function () {
+        showToast(ids.length + ' items updated', 'success');
+        document.querySelectorAll('.item-checkbox').forEach(function (cb) { cb.checked = false; });
+        document.getElementById('selectAll').checked = false;
+        updateBulkBar();
+        loadInventory();
+      }).catch(function (e) { showToast(e.message, 'error'); });
+    });
+    document.getElementById('bulkClearBtn').addEventListener('click', function () {
+      document.querySelectorAll('.item-checkbox').forEach(function (cb) { cb.checked = false; });
+      document.getElementById('selectAll').checked = false;
+      updateBulkBar();
+    });
+  });
+})();
+</script>
 </body>
 </html>

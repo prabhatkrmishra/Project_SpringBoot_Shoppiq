@@ -38,6 +38,16 @@ public record ItemReviewResponse(
         Long id,
 
         /*
+          Item identifier.
+         */
+        Long itemId,
+
+        /*
+          Item name.
+         */
+        String itemName,
+
+        /*
           Reviewer identifier.
          */
         Long reviewerId,
@@ -89,6 +99,8 @@ public record ItemReviewResponse(
     public static ItemReviewResponse fromEntity(ItemReview review) {
         return new ItemReviewResponse(
                 review.getId(),
+                review.getItem().getId(),
+                review.getItem().getName(),
                 review.getUser().getId(),
                 review.getUser().getName(),
                 review.getUser().getUsername(),

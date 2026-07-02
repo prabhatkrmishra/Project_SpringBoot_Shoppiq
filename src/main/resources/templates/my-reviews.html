@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('My Reviews')}"></head>
+<body>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+    <main class="page">
+        <div class="container container-narrow">
+            <div class="page-header">
+                <h1>My Reviews</h1>
+                <p>Manage your product reviews</p>
+            </div>
+
+            <div id="reviews-loading" class="spinner"></div>
+
+            <div id="reviews-empty" class="empty-state" style="display:none;">
+                <i data-lucide="star" class="empty-state-icon"></i>
+                <h3>No Reviews Yet</h3>
+                <p>You haven't written any product reviews.</p>
+                <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse Products</a>
+            </div>
+
+            <div id="reviews-list" style="display:none;"></div>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var loading = document.getElementById('reviews-loading');
+        var empty = document.getElementById('reviews-empty');
+        var list = document.getElementById('reviews-list');
+
+        API.get('/user/reviews').then(function (reviews) {
+            loading.style.display = 'none';
+            if (!reviews || reviews.length === 0) {
+                empty.style.display = '';
+                return;
+            }
+            list.style.display = '';
+            var html = '';
+            reviews.forEach(function (r) {
+                var stars = '';
+                for (var i = 1; i <= 5; i++) {
+                    stars += '<span class="star-icon">' + (i <= r.rating ? '&#9733;' : '&#9734;') + '</span>';
+                }
+                html += '<div class="card mb-md">' +
+                    '<div class="card-body">' +
+                    '<div class="flex-between mb-sm">' +
+                    '<div><a href="/item/' + r.itemId + '" class="btn-link fw-600">' + window.escapeHtml(r.itemName) + '</a></div>' +
+                    '<div class="text-muted text-sm">' + window.formatDateTime(r.createdAt) + '</div>' +
+                    '</div>' +
+                    '<div class="mb-sm">' + stars + '</div>' +
+                    '<p class="text-sm">' + window.escapeHtml(r.review || '') + '</p>' +
+                    '</div>' +
+                    '</div>';
+            });
+            list.innerHTML = html;
+            window.initIcons();
+        }).catch(function () {
+            loading.style.display = 'none';
+            empty.style.display = '';
+        });
+    });
+    </script>
+</body>
+</html>

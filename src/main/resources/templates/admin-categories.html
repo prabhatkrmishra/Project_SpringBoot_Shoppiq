@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Manage Categories')}"></head>
+<body>
+<th:block th:replace="~{fragments/admin-header :: admin-header('categories')}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="admin-main">
+  <div class="page-header">
+    <h1>Categories</h1>
+    <p>Manage product categories</p>
+  </div>
+
+  <div class="admin-panel">
+    <div class="admin-panel-header">
+      <div class="admin-panel-title">All Categories</div>
+      <button id="add-category-btn" class="btn btn-primary btn-sm">+ Add Category</button>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Description</th><th>Slug</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="categories-body">
+          <tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="category-modal" class="modal-overlay">
+    <div class="modal" role="dialog" aria-labelledby="cat-modal-title">
+      <div class="modal-header">
+        <h2 id="cat-modal-title">Add Category</h2>
+        <button class="modal-close" id="cat-modal-close">&times;</button>
+      </div>
+      <form id="category-form" class="modal-body">
+        <input type="hidden" id="cat-id" value="">
+        <div class="form-group">
+          <label for="cat-name" class="form-label">Name</label>
+          <input type="text" id="cat-name" class="form-input" maxlength="100" required>
+        </div>
+        <div class="form-group">
+          <label for="cat-description" class="form-label">Description</label>
+          <input type="text" id="cat-description" class="form-input" maxlength="255" required>
+        </div>
+        <div class="flex gap-sm mt-md">
+          <button type="submit" id="cat-save-btn" class="btn btn-primary">Save</button>
+          <button type="button" id="cat-cancel-btn" class="btn btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+(function () {
+  'use strict';
+  var editingId = null;
+
+  function openModal(cat) {
+    editingId = cat ? cat.id : null;
+    document.getElementById('cat-modal-title').textContent = cat ? 'Edit Category' : 'Add Category';
+    document.getElementById('cat-id').value = cat ? cat.id : '';
+    document.getElementById('cat-name').value = cat ? (cat.name || '') : '';
+    document.getElementById('cat-description').value = cat ? (cat.description || '') : '';
+    document.getElementById('cat-save-btn').textContent = cat ? 'Update' : 'Save';
+    document.getElementById('category-modal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('category-modal').classList.remove('active');
+    editingId = null;
+  }
+
+  function renderCategories(cats) {
+    var tbody = document.getElementById('categories-body');
+    if (!cats || cats.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No categories found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    cats.forEach(function (c) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + c.id + '</td>' +
+        '<td><strong>' + (c.name || '') + '</strong></td>' +
+        '<td class="text-sm">' + (c.description || '') + '</td>' +
+        '<td class="text-sm"><code>' + (c.slug || '') + '</code></td>' +
+        '<td>' +
+          '<button class="btn btn-sm btn-secondary cat-edit-btn" data-id="' + c.id + '">Edit</button> ' +
+          '<button class="btn btn-sm btn-danger cat-delete-btn" data-id="' + c.id + '">Delete</button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.cat-edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.id;
+        var found = cats.find(function (c) { return c.id == id; });
+        if (found) openModal(found);
+      });
+    });
+    tbody.querySelectorAll('.cat-delete-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.id;
+        showConfirmModal({ title: 'Delete Category', message: 'Delete this category?', confirmText: 'Delete', danger: true }).then(function (confirmed) {
+          if (!confirmed) return;
+          API.del('/categories/' + id + '/delete').then(function () {
+            showToast('Category deleted', 'success');
+            loadCategories();
+          }).catch(function (e) { showToast(e.message, 'error'); });
+        });
+      });
+    });
+  }
+
+  function loadCategories() {
+    API.get('/categories/all').then(renderCategories).catch(function () {
+      document.getElementById('categories-body').innerHTML =
+        '<tr><td colspan="5" class="text-center text-muted">Failed to load</td></tr>';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadCategories();
+    document.getElementById('add-category-btn').addEventListener('click', function () { openModal(null); });
+    document.getElementById('cat-modal-close').addEventListener('click', closeModal);
+    document.getElementById('cat-cancel-btn').addEventListener('click', closeModal);
+    document.getElementById('category-modal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
+    document.getElementById('category-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var data = {
+        name: document.getElementById('cat-name').value.trim(),
+        description: document.getElementById('cat-description').value.trim()
+      };
+      var btn = document.getElementById('cat-save-btn');
+      setButtonLoading(btn, true);
+      var promise = editingId
+        ? API.put('/categories/' + editingId + '/update', data)
+        : API.post('/categories', data);
+      promise.then(function () {
+        showToast(editingId ? 'Category updated' : 'Category created', 'success');
+        closeModal();
+        loadCategories();
+      }).catch(function (err) {
+        showToast(err.message || 'Failed to save', 'error');
+        setButtonLoading(btn, false);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

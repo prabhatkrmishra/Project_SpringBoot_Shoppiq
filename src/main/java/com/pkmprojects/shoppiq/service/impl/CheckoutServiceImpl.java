@@ -41,15 +41,18 @@ public class CheckoutServiceImpl {
     private final CartRepository cartRepository;
     private final AddressRepository addressRepository;
     private final OrderRepository orderRepository;
+    private final ItemDetailsRepository itemDetailsRepository;
     private final PaymentService paymentService;
 
     public CheckoutServiceImpl(CartRepository cartRepository,
                                AddressRepository addressRepository,
                                OrderRepository orderRepository,
+                               ItemDetailsRepository itemDetailsRepository,
                                PaymentService paymentService) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
         this.orderRepository = orderRepository;
+        this.itemDetailsRepository = itemDetailsRepository;
         this.paymentService = paymentService;
     }
 
@@ -200,6 +203,37 @@ public class CheckoutServiceImpl {
         }
 
         order.setStatus(OrderStatus.CANCELLED);
+    }
+
+    // =========================================================
+    // Return
+    // =========================================================
+
+    /**
+     * Requests a return for an order in {@code DELIVERED} status.
+     *
+     * <p>Restores stock for each order item and sets the order status to {@code RETURNED}.</p>
+     *
+     * @param user    authenticated customer
+     * @param orderId target order id
+     */
+    public void requestReturn(User user, Long orderId) {
+        Order order = findOrderOrThrow(orderId);
+        assertOwnership(user, order);
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new OrderCannotBeCancelledException(orderId, order.getStatus());
+        }
+
+        for (OrderItem orderItem : order.getOrderItems()) {
+            if (orderItem.getItemDetails() != null) {
+                ItemDetails details = orderItem.getItemDetails();
+                details.setStockQuantity(details.getStockQuantity() + orderItem.getQuantity());
+                itemDetailsRepository.save(details);
+            }
+        }
+
+        order.setStatus(OrderStatus.RETURNED);
     }
 
     // =========================================================

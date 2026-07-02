@@ -34,22 +34,6 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
      */
     Optional<Address> findByUserAndIsDefaultTrue(User user);
 
-    /**
-     * Returns {@code true} if the user already has a default address.
-     *
-     * @param user the owning user
-     * @return {@code true} when a default exists
-     */
-    boolean existsByUserAndIsDefaultTrue(User user);
-
-    /**
-     * Clears the default flag on all addresses belonging to the given user.
-     *
-     * <p>Used before setting a new default to guarantee the one-default
-     * invariant without loading all entities.</p>
-     *
-     * @param user the owning user
-     */
     @Modifying
     @Query("UPDATE Address a SET a.isDefault = false WHERE a.user = :user")
     void clearDefaultForUser(@Param("user") User user);

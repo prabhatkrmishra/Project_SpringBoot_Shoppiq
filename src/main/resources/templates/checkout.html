@@ -1,278 +1,205 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Checkout — Shoppiq</title>
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body { font-family: 'Georgia', serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
-
-        .header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 0 40px; height: 56px;
-            display: flex; align-items: center; justify-content: space-between; }
-        .header h1 { font-size: 1rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
-            font-family: 'Segoe UI', sans-serif; color: #111; }
-        .header-nav { display: flex; align-items: center; gap: 12px; }
-        .nav-link { font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; letter-spacing: 0.06em;
-            text-transform: uppercase; color: #555; text-decoration: none; padding: 6px 16px;
-            border-radius: 3px; transition: color 0.15s; }
-        .nav-link:hover { color: #111; }
-
-        .page { max-width: 980px; margin: 40px auto; padding: 0 20px; display: grid;
-            grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
-
-        .section { background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 28px; }
-        .section-title { font-family: 'Segoe UI', sans-serif; font-size: 0.82rem; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase; color: #333; margin-bottom: 20px;
-            padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
-
-        /* Cart summary */
-        .cart-item { display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .cart-item:last-child { border-bottom: none; }
-        .cart-item-name { font-size: 0.9rem; color: #222; }
-        .cart-item-qty { font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; color: #888; margin-top: 3px; }
-        .cart-item-price { font-family: 'Segoe UI', sans-serif; font-size: 0.92rem; font-weight: 600; color: #111; }
-        .cart-empty { font-family: 'Segoe UI', sans-serif; font-size: 0.88rem; color: #888; text-align: center; padding: 24px 0; }
-
-        /* Address cards */
-        .address-grid { display: grid; gap: 12px; }
-        .address-card { border: 2px solid #e0e0e0; border-radius: 4px; padding: 14px 16px;
-            cursor: pointer; transition: border-color 0.15s; position: relative; }
-        .address-card.selected { border-color: #111; }
-        .address-card input[type=radio] { position: absolute; top: 14px; right: 14px; }
-        .address-label { font-family: 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 700;
-            letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
-        .address-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
-        .address-lines { font-family: 'Segoe UI', sans-serif; font-size: 0.82rem; color: #555; line-height: 1.5; }
-        .no-address { font-family: 'Segoe UI', sans-serif; font-size: 0.88rem; color: #888; }
-        .address-link { color: #333; text-decoration: underline; }
-
-        /* Payment */
-        .payment-options { display: flex; gap: 12px; }
-        .payment-btn { flex: 1; border: 2px solid #e0e0e0; background: #fff; border-radius: 4px;
-            padding: 12px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-size: 0.88rem;
-            color: #333; transition: border-color 0.15s; }
-        .payment-btn.selected { border-color: #111; color: #111; font-weight: 600; }
-
-        /* Order summary sidebar */
-        .summary-row { display: flex; justify-content: space-between;
-            font-family: 'Segoe UI', sans-serif; font-size: 0.88rem; color: #444;
-            padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
-        .summary-row:last-of-type { border-bottom: none; }
-        .summary-total { display: flex; justify-content: space-between; padding: 14px 0 0;
-            font-family: 'Segoe UI', sans-serif; font-size: 1rem; font-weight: 700; color: #111; }
-
-        .place-btn { width: 100%; margin-top: 20px; background: #111; color: #fff; border: none;
-            border-radius: 3px; padding: 14px; font-family: 'Segoe UI', sans-serif; font-size: 0.88rem;
-            font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
-            transition: background 0.15s; }
-        .place-btn:hover { background: #333; }
-        .place-btn:disabled { background: #bbb; cursor: not-allowed; }
-
-        .toast { position: fixed; bottom: 24px; right: 24px; background: #111; color: #fff;
-            padding: 12px 20px; border-radius: 4px; font-family: 'Segoe UI', sans-serif;
-            font-size: 0.85rem; display: none; z-index: 100; }
-        .toast.error { background: #c0392b; }
-        .toast.show { display: block; }
-    </style>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/header :: head('Checkout')}"></head>
 <body>
-
-<header class="header">
-    <h1>Shoppiq</h1>
-    <nav class="header-nav">
-        <a href="/allitems" class="nav-link">Shop</a>
-        <a href="/orders" class="nav-link">My Orders</a>
-        <a href="/address" class="nav-link">Addresses</a>
-    </nav>
-</header>
+<th:block th:replace="~{fragments/header :: header}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
 <main class="page">
-
-    <!-- Left column -->
-    <div style="display:flex;flex-direction:column;gap:24px;">
-
-        <!-- Cart Summary -->
-        <section class="section">
-            <div class="section-title">Cart Summary</div>
-            <div id="cartItems"><div class="cart-empty">Loading cart…</div></div>
-        </section>
-
-        <!-- Shipping Address -->
-        <section class="section">
-            <div class="section-title">Shipping Address</div>
-            <div id="addressGrid" class="address-grid"><p class="no-address">Loading…</p></div>
-        </section>
-
-        <!-- Payment Method -->
-        <section class="section">
-            <div class="section-title">Payment Method</div>
-            <div class="payment-options">
-                <button class="payment-btn selected" id="btnCOD" onclick="selectPayment('COD')">Cash on Delivery</button>
-                <button class="payment-btn" id="btnONLINE" onclick="selectPayment('ONLINE')">Online Payment</button>
-            </div>
-        </section>
+  <div class="container">
+    <div class="page-header">
+      <h1>Checkout</h1>
     </div>
 
-    <!-- Right column – Order Totals -->
-    <aside class="section">
-        <div class="section-title">Order Total</div>
-        <div class="summary-row"><span>Subtotal</span><span id="subtotal">₹0.00</span></div>
-        <div class="summary-row"><span>Shipping</span><span>₹0.00</span></div>
-        <div class="summary-row"><span>Tax</span><span>₹0.00</span></div>
-        <div class="summary-row"><span>Discount</span><span>₹0.00</span></div>
-        <div class="summary-total"><span>Grand Total</span><span id="grandTotal">₹0.00</span></div>
-        <button class="place-btn" id="placeBtn" onclick="placeOrder()">Place Order</button>
-    </aside>
+    <div class="checkout-progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
+      <span class="step active"><span class="step-dot"></span> Cart</span>
+      <span class="step-line"></span>
+      <span class="step"><span class="step-dot"></span> Details</span>
+      <span class="step-line"></span>
+      <span class="step"><span class="step-dot"></span> Pay</span>
+    </div>
+
+    <div class="guest-banner" sec:authorize="!isAuthenticated()">
+      <p>Checking out as a guest. <a th:href="@{/login}" class="btn-link">Sign in</a> for faster checkout.</p>
+    </div>
+
+    <div id="checkout-loading" class="flex-center" style="padding:3rem;">
+      <span class="spinner"></span>
+    </div>
+
+    <form id="checkout-form" class="checkout-page" style="display:none;">
+      <div class="checkout-main">
+        <section class="checkout-section" aria-labelledby="shipping-heading">
+          <div class="checkout-section-header">
+            <h2 id="shipping-heading"><span class="checkout-step-number">1</span> Shipping Address</h2>
+          </div>
+          <div id="address-list"></div>
+          <div id="no-addresses" style="display:none;" class="text-muted text-sm mb-md">
+            No saved addresses. Please add one in your <a href="/address" class="btn-link">address book</a> first.
+          </div>
+        </section>
+
+        <section class="checkout-section" aria-labelledby="payment-heading">
+          <div class="checkout-section-header">
+            <h2 id="payment-heading"><span class="checkout-step-number">2</span> Payment Method</h2>
+          </div>
+          <div class="payment-methods">
+            <label class="payment-method selected">
+              <input type="radio" name="paymentMethod" value="CREDIT_CARD" checked>
+              <div>
+                <div class="method-label">Credit Card</div>
+                <div class="method-desc">Visa, Mastercard, Amex</div>
+              </div>
+            </label>
+            <label class="payment-method">
+              <input type="radio" name="paymentMethod" value="PAYPAL">
+              <div>
+                <div class="method-label">PayPal</div>
+                <div class="method-desc">Pay with your PayPal account</div>
+              </div>
+            </label>
+            <label class="payment-method">
+              <input type="radio" name="paymentMethod" value="STRIPE">
+              <div>
+                <div class="method-label">Stripe</div>
+                <div class="method-desc">Secure card payments via Stripe</div>
+              </div>
+            </label>
+          </div>
+        </section>
+
+        <section class="checkout-section" aria-labelledby="review-heading">
+          <div class="checkout-section-header">
+            <h2 id="review-heading"><span class="checkout-step-number">3</span> Review Items</h2>
+          </div>
+          <div id="review-items"></div>
+        </section>
+      </div>
+
+      <aside class="checkout-sidebar">
+        <div class="checkout-section">
+          <div class="cart-summary-title">Order Summary</div>
+          <div class="cart-summary-row"><span>Subtotal</span><span id="checkout-subtotal">$0.00</span></div>
+          <div class="cart-summary-row"><span>Shipping</span><span>Calculated at checkout</span></div>
+          <div class="cart-summary-row total"><span>Total</span><span id="checkout-total">$0.00</span></div>
+          <div class="cart-actions">
+            <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg btn-block">Place Order</button>
+          </div>
+        </div>
+      </aside>
+    </form>
+  </div>
 </main>
 
-<div class="toast" id="toast"></div>
-
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script>
-    let selectedAddressId = null;
-    let selectedPayment   = 'COD';
-    let cartSubtotal      = 0;
+(function () {
+  'use strict';
+  var selectedAddressId = null;
 
-    // ── Bootstrap ──────────────────────────────────────────────────────────
-    (async function init() {
-        await Promise.all([loadCart(), loadAddresses()]);
-    })();
-
-    // ── Cart ───────────────────────────────────────────────────────────────
-    async function loadCart() {
-        try {
-            const res  = await fetch('/user/cart/get');
-            const data = await res.json();
-
-            const container = document.getElementById('cartItems');
-            const items     = data.cartItems || [];
-
-            if (!items.length) {
-                container.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
-                document.getElementById('placeBtn').disabled = true;
-                return;
-            }
-
-            cartSubtotal = 0;
-            container.innerHTML = items.map(item => {
-                const line = item.price * item.quantity;
-                cartSubtotal += line;
-                return `<div class="cart-item">
-                    <div>
-                        <div class="cart-item-name">${escHtml(item.itemName)}</div>
-                        <div class="cart-item-qty">Qty: ${item.quantity} &nbsp;×&nbsp; ₹${item.price.toFixed(2)}</div>
-                    </div>
-                    <div class="cart-item-price">₹${line.toFixed(2)}</div>
-                </div>`;
-            }).join('');
-
-            updateTotals();
-        } catch {
-            document.getElementById('cartItems').innerHTML =
-                '<div class="cart-empty">Unable to load cart.</div>';
-        }
+  function renderAddresses(addresses) {
+    var list = document.getElementById('address-list');
+    var noMsg = document.getElementById('no-addresses');
+    if (!addresses || addresses.length === 0) {
+      list.style.display = 'none';
+      noMsg.style.display = '';
+      return;
     }
+    noMsg.style.display = 'none';
+    list.style.display = '';
+    list.innerHTML = '<div class="address-radio-list"></div>';
+    var container = list.querySelector('.address-radio-list');
+    addresses.forEach(function (addr) {
+      var div = document.createElement('label');
+      div.className = 'payment-method' + (addr['default'] ? ' selected' : '');
+      div.innerHTML =
+        '<input type="radio" name="addressId" value="' + addr.id + '"' + (addr['default'] ? ' checked' : '') + '>' +
+        '<div>' +
+          '<div class="method-label">' + (addr.fullName || '') + (addr.label ? ' (' + addr.label + ')' : '') + '</div>' +
+          '<div class="method-desc">' +
+            (addr.line1 || '') + (addr.line2 ? ', ' + addr.line2 : '') + '<br>' +
+            (addr.city || '') + ', ' + (addr.state || '') + ' ' + (addr.postalCode || '') + '<br>' +
+            (addr.country || '') +
+            (addr.phone ? ' · ' + addr.phone : '') +
+          '</div>' +
+        '</div>';
+      div.querySelector('input').addEventListener('change', function () {
+        selectedAddressId = addr.id;
+        container.querySelectorAll('.payment-method').forEach(function (el) { el.classList.remove('selected'); });
+        div.classList.add('selected');
+      });
+      if (addr['default']) selectedAddressId = addr.id;
+      container.appendChild(div);
+    });
+    if (!selectedAddressId && addresses.length > 0) selectedAddressId = addresses[0].id;
+  }
 
-    // ── Addresses ──────────────────────────────────────────────────────────
-    async function loadAddresses() {
-        try {
-            const res   = await fetch('/user/address/get/all');
-            const list  = await res.json();
-            const grid  = document.getElementById('addressGrid');
+  function renderReviewItems(cart) {
+    var container = document.getElementById('review-items');
+    container.innerHTML = '';
+    (cart.items || []).forEach(function (item) {
+      var imgUrl = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=48&h=48&fit=crop';
+      var div = document.createElement('div');
+      div.className = 'order-review-item';
+      div.innerHTML =
+        '<img class="item-thumb" src="' + imgUrl + '" alt="" loading="lazy" width="48" height="48">' +
+        '<div class="item-info">' +
+          '<div class="item-name">' + (item.itemName || 'Product') + '</div>' +
+          '<div class="item-qty">Qty: ' + item.quantity + '</div>' +
+        '</div>' +
+        '<div class="item-price">' + formatCurrency(item.lineTotal) + '</div>';
+      container.appendChild(div);
+    });
+    document.getElementById('checkout-subtotal').textContent = formatCurrency(cart.subtotal);
+    document.getElementById('checkout-total').textContent = formatCurrency(cart.subtotal);
+  }
 
-            if (!list.length) {
-                grid.innerHTML = `<p class="no-address">No addresses found.
-                    <a href="/address" class="address-link">Add one</a>.</p>`;
-                return;
-            }
+  function init() {
+    document.getElementById('checkout-loading').style.display = 'none';
+    document.getElementById('checkout-form').style.display = '';
+  }
 
-            grid.innerHTML = list.map(a => {
-                const def = a.default;
-                if (!selectedAddressId && def) selectedAddressId = a.id;
-                return `<label class="address-card ${def ? 'selected' : ''}"
-                              onclick="selectAddress(${a.id}, this)">
-                    <input type="radio" name="address" value="${a.id}" ${def ? 'checked' : ''}>
-                    <div class="address-label">${escHtml(a.label)}</div>
-                    <div class="address-name">${escHtml(a.fullName)}</div>
-                    <div class="address-lines">
-                        ${escHtml(a.line1)}${a.line2 ? ', ' + escHtml(a.line2) : ''}<br>
-                        ${escHtml(a.city)}, ${escHtml(a.state)} ${escHtml(a.postalCode)}<br>
-                        ${escHtml(a.country)} &nbsp;·&nbsp; ${escHtml(a.phone)}
-                    </div>
-                </label>`;
-            }).join('');
+  document.addEventListener('DOMContentLoaded', function () {
+    Promise.all([
+      API.get('/user/cart/get'),
+      API.get('/user/address/get/all')
+    ]).then(function (results) {
+      var cart = results[0];
+      var addresses = results[1];
+      renderReviewItems(cart);
+      renderAddresses(addresses);
+      init();
+    }).catch(function (err) {
+      showToast(err.message || 'Failed to load checkout data', 'error');
+      init();
+    });
 
-            if (!selectedAddressId && list.length) selectedAddressId = list[0].id;
-        } catch {
-            document.getElementById('addressGrid').innerHTML =
-                '<p class="no-address">Unable to load addresses.</p>';
-        }
-    }
-
-    function selectAddress(id, el) {
-        selectedAddressId = id;
-        document.querySelectorAll('.address-card').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
-    }
-
-    // ── Payment ────────────────────────────────────────────────────────────
-    function selectPayment(method) {
-        selectedPayment = method;
-        document.getElementById('btnCOD').classList.toggle('selected', method === 'COD');
-        document.getElementById('btnONLINE').classList.toggle('selected', method === 'ONLINE');
-    }
-
-    // ── Totals ─────────────────────────────────────────────────────────────
-    function updateTotals() {
-        document.getElementById('subtotal').textContent   = '₹' + cartSubtotal.toFixed(2);
-        document.getElementById('grandTotal').textContent = '₹' + cartSubtotal.toFixed(2);
-    }
-
-    // ── Place Order ────────────────────────────────────────────────────────
-    async function placeOrder() {
-        if (!selectedAddressId) { showToast('Please select a shipping address.', true); return; }
-
-        const btn = document.getElementById('placeBtn');
-        btn.disabled = true;
-        btn.textContent = 'Placing Order…';
-
-        try {
-            const res = await fetch('/user/order/checkout', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ addressId: selectedAddressId, paymentMethod: selectedPayment })
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                showToast('Order placed! Redirecting…');
-                setTimeout(() => window.location.href = '/orders', 1500);
-            } else {
-                const err = await res.json();
-                showToast(err.detail || 'Checkout failed. Please try again.', true);
-                btn.disabled = false;
-                btn.textContent = 'Place Order';
-            }
-        } catch {
-            showToast('Network error. Please try again.', true);
-            btn.disabled = false;
-            btn.textContent = 'Place Order';
-        }
-    }
-
-    // ── Utility ────────────────────────────────────────────────────────────
-    function showToast(msg, error = false) {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.className   = 'toast show' + (error ? ' error' : '');
-        setTimeout(() => t.classList.remove('show'), 3500);
-    }
-
-    function escHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
+    document.getElementById('checkout-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!selectedAddressId) {
+        showToast('Please select a shipping address', 'error');
+        return;
+      }
+      var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+      if (!paymentMethod) {
+        showToast('Please select a payment method', 'error');
+        return;
+      }
+      var btn = document.getElementById('place-order-btn');
+      setButtonLoading(btn, true);
+      API.post('/user/order/checkout', {
+        addressId: selectedAddressId,
+        paymentMethod: paymentMethod.value
+      }).then(function (res) {
+        showToast('Order placed successfully!', 'success');
+        window.location.href = '/order-detail?id=' + res.orderId;
+      }).catch(function (err) {
+        showToast(err.message || 'Failed to place order', 'error');
+        setButtonLoading(btn, false);
+      });
+    });
+  });
+})();
 </script>
 </body>
 </html>

@@ -46,6 +46,22 @@ public interface AdminReviewService {
     void deleteReview(Long reviewId);
 
     /**
+     * Approves a pending review, making it visible to customers.
+     *
+     * @param reviewId review identifier
+     * @return updated review response
+     */
+    AdminReviewResponse approveReview(Long reviewId);
+
+    /**
+     * Rejects a pending review, hiding it from customers.
+     *
+     * @param reviewId review identifier
+     * @return updated review response
+     */
+    AdminReviewResponse rejectReview(Long reviewId);
+
+    /**
      * Page response wrapper.
      *
      * @param <T> content type

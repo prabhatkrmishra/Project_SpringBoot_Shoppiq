@@ -35,14 +35,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * @param name category name
      * @return matching category, if present
      */
-    Optional<Category> findByNameIgnoreCase(String name);
-
-    /**
-     * Determines whether a category already exists with the supplied name.
-     *
-     * @param name category name
-     * @return {@code true} if found
-     */
     boolean existsByNameIgnoreCase(String name);
 
     /**
@@ -68,10 +60,5 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      */
     boolean existsBySlug(String slug);
 
-    /**
-     * Retrieves every category ordered alphabetically by name.
-     *
-     * @return ordered category list
-     */
     List<Category> findAllByOrderByNameAsc();
 }

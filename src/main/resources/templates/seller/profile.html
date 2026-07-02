@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Seller Profile')}"></head>
+<body>
+<th:block th:replace="~{fragments/header :: header}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="page">
+  <div class="container container-narrow">
+    <div class="page-header">
+      <h1>Seller Profile</h1>
+      <p>Manage your seller account</p>
+    </div>
+
+    <div id="seller-loading" class="flex-center" style="padding:3rem;">
+      <span class="spinner"></span>
+    </div>
+
+    <div id="not-registered" style="display:none;">
+      <div class="panel">
+        <div class="panel-title">Register as a Seller</div>
+        <p class="text-sm text-muted mb-md">Fill in your business details to start selling on Shoppiq.</p>
+        <form id="register-form">
+          <div class="form-group">
+            <label for="reg-businessName" class="form-label">Business Name</label>
+            <input type="text" id="reg-businessName" class="form-input" maxlength="255" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-businessEmail" class="form-label">Business Email</label>
+            <input type="email" id="reg-businessEmail" class="form-input" maxlength="255" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-phone" class="form-label">Phone</label>
+            <input type="text" id="reg-phone" class="form-input" maxlength="15" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reg-gstNumber" class="form-label">GST Number <span class="text-muted">(optional)</span></label>
+              <input type="text" id="reg-gstNumber" class="form-input" maxlength="20">
+            </div>
+            <div class="form-group">
+              <label for="reg-panNumber" class="form-label">PAN Number</label>
+              <input type="text" id="reg-panNumber" class="form-input" maxlength="10" minlength="10" required>
+            </div>
+          </div>
+          <button type="submit" id="reg-submit-btn" class="btn btn-primary">Register</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="seller-profile" style="display:none;">
+      <div class="panel">
+        <div class="panel-title">Business Details</div>
+        <form id="profile-form">
+          <div class="form-group">
+            <label for="prof-businessName" class="form-label">Business Name</label>
+            <input type="text" id="prof-businessName" class="form-input" maxlength="255" required>
+          </div>
+          <div class="form-group">
+            <label for="prof-businessEmail" class="form-label">Business Email</label>
+            <input type="email" id="prof-businessEmail" class="form-input" maxlength="255" required>
+          </div>
+          <div class="form-group">
+            <label for="prof-phone" class="form-label">Phone</label>
+            <input type="text" id="prof-phone" class="form-input" maxlength="15" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prof-gstNumber" class="form-label">GST Number</label>
+              <input type="text" id="prof-gstNumber" class="form-input" maxlength="20">
+            </div>
+            <div class="form-group">
+              <label for="prof-panNumber" class="form-label">PAN Number</label>
+              <input type="text" id="prof-panNumber" class="form-input" maxlength="10" required>
+            </div>
+          </div>
+          <div class="flex gap-sm mt-md">
+            <button type="submit" id="prof-save-btn" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel mt-lg">
+        <div class="panel-title">Account Status</div>
+        <div id="seller-status-info"></div>
+        <div id="publish-store-section" style="display:none;" class="mt-md">
+          <p class="text-sm text-muted">Your store is in draft mode. Publish it to make it visible to customers.</p>
+          <button id="publish-store-btn" class="btn btn-primary btn-sm">Publish Store</button>
+        </div>
+      </div>
+
+      <div class="panel mt-lg" style="border-color:var(--color-danger);">
+        <div class="panel-title" style="color:var(--color-danger);">Danger Zone</div>
+        <p class="text-sm text-muted">Deleting your seller account cannot be undone.</p>
+        <button id="delete-seller-btn" class="btn btn-danger btn-sm">Delete Seller Account</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+(function () {
+  'use strict';
+  function fillProfile(s) {
+    document.getElementById('prof-businessName').value = s.businessName || '';
+    document.getElementById('prof-businessEmail').value = s.businessEmail || '';
+    document.getElementById('prof-phone').value = s.phone || '';
+    document.getElementById('prof-gstNumber').value = s.gstNumber || '';
+    document.getElementById('prof-panNumber').value = s.panNumber || '';
+    var statusEl = document.getElementById('seller-status-info');
+    statusEl.innerHTML =
+      '<p class="text-sm"><strong>Status:</strong> <span class="badge ' + (s.sellerStatus === 'ACTIVE' ? 'badge-success' : 'badge-warning') + '">' + (s.sellerStatus || '') + '</span></p>' +
+      '<p class="text-sm"><strong>Verification:</strong> <span class="badge ' + (s.verificationStatus === 'APPROVED' ? 'badge-success' : (s.verificationStatus === 'REJECTED' ? 'badge-danger' : 'badge-warning')) + '">' + (s.verificationStatus || '') + '</span></p>' +
+      (s.commissionRate ? '<p class="text-sm"><strong>Commission:</strong> ' + s.commissionRate + '%</p>' : '') +
+      (s.rating ? '<p class="text-sm"><strong>Rating:</strong> ' + s.rating.toFixed(1) + '/5</p>' : '') +
+      (s.joinedAt ? '<p class="text-sm"><strong>Joined:</strong> ' + formatDate(s.joinedAt) + '</p>' : '');
+    if (s.sellerStatus === 'ACTIVE') {
+      document.getElementById('publish-store-section').style.display = '';
+    }
+  }
+  function showProfile(s) {
+    document.getElementById('seller-loading').style.display = 'none';
+    document.getElementById('seller-profile').style.display = '';
+    fillProfile(s);
+  }
+  function showRegister() {
+    document.getElementById('seller-loading').style.display = 'none';
+    document.getElementById('not-registered').style.display = '';
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    API.get('/seller/profile').then(showProfile).catch(function () {
+      showRegister();
+    });
+    document.getElementById('register-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var btn = document.getElementById('reg-submit-btn');
+      setButtonLoading(btn, true);
+      API.post('/seller/register', {
+        businessName: document.getElementById('reg-businessName').value.trim(),
+        businessEmail: document.getElementById('reg-businessEmail').value.trim(),
+        phone: document.getElementById('reg-phone').value.trim(),
+        gstNumber: document.getElementById('reg-gstNumber').value.trim(),
+        panNumber: document.getElementById('reg-panNumber').value.trim()
+      }).then(function () {
+        showToast('Seller account created!', 'success');
+        API.get('/seller/profile').then(showProfile);
+      }).catch(function (err) {
+        showToast(err.message || 'Registration failed', 'error');
+        setButtonLoading(btn, false);
+      });
+    });
+    document.getElementById('profile-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var btn = document.getElementById('prof-save-btn');
+      setButtonLoading(btn, true);
+      API.put('/seller/update', {
+        businessName: document.getElementById('prof-businessName').value.trim(),
+        businessEmail: document.getElementById('prof-businessEmail').value.trim(),
+        phone: document.getElementById('prof-phone').value.trim(),
+        gstNumber: document.getElementById('prof-gstNumber').value.trim(),
+        panNumber: document.getElementById('prof-panNumber').value.trim()
+      }).then(function (s) {
+        showToast('Profile updated', 'success');
+        fillProfile(s);
+        setButtonLoading(btn, false);
+      }).catch(function (err) {
+        showToast(err.message || 'Update failed', 'error');
+        setButtonLoading(btn, false);
+      });
+    });
+    document.getElementById('delete-seller-btn').addEventListener('click', function () {
+      showConfirmModal({ title: 'Delete Seller Account', message: 'Delete your seller account? This cannot be undone.', confirmText: 'Delete', danger: true }).then(function (confirmed) {
+        if (!confirmed) return;
+        API.del('/seller/delete').then(function () {
+          showToast('Seller account deleted', 'success');
+          window.location.href = '/profile';
+        }).catch(function (err) { showToast(err.message, 'error'); });
+      });
+    });
+    document.getElementById('publish-store-btn').addEventListener('click', function () {
+      var btn = this;
+      showConfirmModal({ title: 'Publish Store', message: 'Publish your store? It will become visible to customers.', confirmText: 'Publish' }).then(function (confirmed) {
+        if (!confirmed) return;
+        setButtonLoading(btn, true);
+        API.put('/seller/store/publish', {}).then(function () {
+          showToast('Store published!', 'success');
+          document.getElementById('publish-store-section').style.display = 'none';
+        }).catch(function (err) {
+          showToast(err.message || 'Failed to publish store', 'error');
+          setButtonLoading(btn, false);
+        });
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

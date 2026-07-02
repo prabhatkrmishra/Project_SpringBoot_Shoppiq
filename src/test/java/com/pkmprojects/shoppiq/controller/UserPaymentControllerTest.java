@@ -290,50 +290,6 @@ class UserPaymentControllerTest {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // PUT /user/payment/refund/{id}  (ADMIN only)
+    // PUT /user/payment/refund/{id}  — REMOVED (admin uses own endpoint)
     // ═══════════════════════════════════════════════════════════════════════
-
-    @Nested
-    @DisplayName("PUT /user/payment/refund/{id}")
-    class RefundTests {
-
-        @Test
-        @DisplayName("200 OK — admin can refund a PAID payment")
-        void refund_adminSuccess() throws Exception {
-            admin = User.builder().name("Admin").username("admin")
-                    .email("admin@test.com").password("hashed").enabled(true).build();
-            setId(admin, 2L);
-            setSecurityContext(admin, "ROLE_ADMIN");
-
-            when(paymentService.refund(1L))
-                    .thenReturn(statusResponse(PaymentStatus.REFUNDED));
-
-            mockMvc.perform(put("/user/payment/refund/1"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value("REFUNDED"));
-        }
-
-        @Test
-        @DisplayName("403 Forbidden — CUSTOMER cannot refund")
-        void refund_customerForbidden() throws Exception {
-            // customer context is already set in @BeforeEach
-            mockMvc.perform(put("/user/payment/refund/1"))
-                    .andExpect(status().isForbidden());
-        }
-
-        @Test
-        @DisplayName("400 Bad Request — payment not in PAID state")
-        void refund_invalidState() throws Exception {
-            admin = User.builder().name("Admin").username("admin")
-                    .email("admin@test.com").password("hashed").enabled(true).build();
-            setId(admin, 2L);
-            setSecurityContext(admin, "ROLE_ADMIN");
-
-            when(paymentService.refund(1L))
-                    .thenThrow(PaymentInvalidStateException.refundNotAllowed(1L, PaymentStatus.PENDING));
-
-            mockMvc.perform(put("/user/payment/refund/1"))
-                    .andExpect(status().isBadRequest());
-        }
-    }
 }

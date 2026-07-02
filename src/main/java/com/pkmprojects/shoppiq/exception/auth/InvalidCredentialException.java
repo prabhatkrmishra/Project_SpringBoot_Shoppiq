@@ -2,7 +2,6 @@ package com.pkmprojects.shoppiq.exception.auth;
 
 import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
-import org.springframework.http.HttpStatus;
 
 public class InvalidCredentialException extends InvalidOperationException {
 

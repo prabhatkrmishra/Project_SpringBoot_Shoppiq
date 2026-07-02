@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.*;
  * <ul>
  *     <li>{@code POST   /user/cart/create}     — add an item to the cart</li>
  *     <li>{@code GET    /user/cart/get}         — get the full cart</li>
- *     <li>{@code GET    /user/cart/get/{id}}    — get one cart item</li>
  *     <li>{@code PUT    /user/cart/update/{id}} — update item quantity</li>
  *     <li>{@code DELETE /user/cart/delete/{id}} — remove one item</li>
  * </ul>
@@ -81,26 +80,6 @@ public class UserCartController {
     @ResponseStatus(HttpStatus.OK)
     public CartResponse get(@AuthenticationPrincipal User user) {
         return cartService.get(user);
-    }
-
-    /**
-     * Returns a single cart item by ID.
-     *
-     * <p>
-     * Returns HTTP 403 if the item belongs to a different user's cart.
-     * </p>
-     *
-     * @param user       the authenticated user
-     * @param cartItemId ID of the cart item
-     * @return the matching cart item
-     */
-    @GetMapping("/get/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public CartItemResponse getById(
-            @AuthenticationPrincipal User user,
-            @Positive @PathVariable("id") Long cartItemId
-    ) {
-        return cartService.getById(user, cartItemId);
     }
 
     /**

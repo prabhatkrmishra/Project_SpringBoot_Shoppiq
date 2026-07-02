@@ -58,6 +58,14 @@ public interface ItemReviewService {
     ItemReviewResponse getById(Long reviewId);
 
     /**
+     * Retrieves every review written by the given user.
+     *
+     * @param user reviewer
+     * @return ordered review list
+     */
+    List<ItemReviewResponse> getByUser(User user);
+
+    /**
      * Retrieves every review belonging to an item.
      *
      * @param itemId item identifier

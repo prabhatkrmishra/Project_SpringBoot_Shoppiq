@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Seller Dashboard')}"></head>
+<body>
+<th:block th:replace="~{fragments/header :: header}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="seller-main">
+  <div class="seller-header">
+    <div>
+      <h1>Seller Dashboard</h1>
+      <p>Manage your store and track performance</p>
+    </div>
+    <a href="/seller-panel/products" class="btn btn-primary">+ Add Product</a>
+  </div>
+
+  <div class="seller-summary-grid">
+    <div class="summary-card"><div class="label">Total Products</div><div class="value" id="stat-products">0</div></div>
+    <div class="summary-card"><div class="label">Total Orders</div><div class="value" id="stat-orders">0</div></div>
+    <div class="summary-card"><div class="label">Revenue</div><div class="value success" id="stat-revenue">$0</div></div>
+    <div class="summary-card"><div class="label">Low Stock</div><div class="value warning" id="stat-low-stock">0</div></div>
+  </div>
+
+  <div class="admin-panel">
+    <div class="admin-panel-title">Recent Orders</div>
+    <div class="table-responsive">
+      <table class="seller-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recent-orders-body">
+          <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+(function () {
+  'use strict';
+  function statusClass(s) {
+    if (s === 'DELIVERED' || s === 'COMPLETED') return 'active';
+    if (s === 'CANCELLED') return 'inactive';
+    return 'pending';
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    API.get('/seller/dashboard/summary').then(function (d) {
+      document.getElementById('stat-products').textContent = d.totalProducts || 0;
+      document.getElementById('stat-orders').textContent = d.totalOrders || 0;
+      document.getElementById('stat-revenue').textContent = formatCurrency(d.totalRevenue);
+      document.getElementById('stat-low-stock').textContent = d.lowStockProducts || 0;
+    }).catch(function () {});
+    API.get('/seller/dashboard/recent-orders').then(function (orders) {
+      var tbody = document.getElementById('recent-orders-body');
+      if (!orders || orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No orders yet</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      orders.forEach(function (o) {
+        var itemCount = o.items ? o.items.length : 0;
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td><a href="/seller-panel/orders?id=' + o.id + '" class="btn-link">#' + o.id + '</a></td>' +
+          '<td>' + itemCount + '</td>' +
+          '<td>' + formatCurrency(o.grandTotal) + '</td>' +
+          '<td class="text-sm text-muted">' + formatDate(o.placedAt) + '</td>' +
+          '<td><span class="status-badge ' + statusClass(o.status) + '">' + o.status + '</span></td>' +
+          '<td class="admin-table-actions"><a href="/seller-panel/orders?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a></td>';
+        tbody.appendChild(tr);
+      });
+    }).catch(function () {
+      document.getElementById('recent-orders-body').innerHTML =
+        '<tr><td colspan="6" class="text-center text-muted">Failed to load orders</td></tr>';
+    });
+  });
+})();
+</script>
+</body>
+</html>

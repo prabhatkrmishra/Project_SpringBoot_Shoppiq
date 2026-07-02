@@ -153,8 +153,6 @@ class CategoryServiceImplTest {
             CategoryRequest request = new CategoryRequest("Electronics", "Updated description");
 
             when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory));
-            when(categoryRepository.existsByNameIgnoreCaseAndIdNot("Electronics", 1L))
-                    .thenReturn(false);
             when(categoryRepository.save(stubCategory)).thenReturn(stubCategory);
 
             CategoryResponse response = categoryService.update(1L, request);

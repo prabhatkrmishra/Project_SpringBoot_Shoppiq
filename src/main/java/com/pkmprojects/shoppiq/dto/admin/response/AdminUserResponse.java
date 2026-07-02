@@ -5,7 +5,6 @@ import com.pkmprojects.shoppiq.entity.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Response DTO for admin customer management.

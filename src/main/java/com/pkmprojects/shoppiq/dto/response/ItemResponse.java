@@ -47,6 +47,11 @@ public record ItemResponse(
         Long id,
 
         /*
+          ItemDetails identifier — needed for cart operations.
+         */
+        Long itemDetailsId,
+
+        /*
           Product name.
          */
         String name,
@@ -113,6 +118,7 @@ public record ItemResponse(
         return new ItemResponse(
                 item.getPublishingStatus(),
                 item.getId(),
+                item.getItemDetails().getId(),
                 item.getName(),
                 item.getDescription(),
                 item.getItemDetails().getBrand(),

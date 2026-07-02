@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Order Detail')}"></head>
+<body>
+<th:block th:replace="~{fragments/header :: header}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="page">
+  <div class="container container-narrow">
+    <div id="order-loading" class="flex-center" style="padding:3rem;">
+      <span class="spinner"></span>
+    </div>
+
+    <div id="order-content" style="display:none;">
+      <div class="page-header">
+        <h1>Order #<span id="order-id"></span></h1>
+        <div class="flex items-center gap-sm">
+          <span class="badge" id="order-status"></span>
+          <span class="text-muted text-sm" id="order-date"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Order Items</div>
+        <div id="order-items"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Order Summary</div>
+        <div class="cart-summary-row"><span>Subtotal</span><span id="order-subtotal">$0.00</span></div>
+        <div class="cart-summary-row"><span>Shipping</span><span id="order-shipping">$0.00</span></div>
+        <div class="cart-summary-row" id="order-discount-row" style="display:none;"><span>Discount</span><span class="discount" id="order-discount">-$0.00</span></div>
+        <div class="cart-summary-row total"><span>Total</span><span id="order-total">$0.00</span></div>
+      </div>
+
+      <div class="mt-lg flex gap-sm">
+        <a href="/seller-panel/orders" class="btn btn-secondary">&larr; Back to Orders</a>
+        <select id="status-update" class="form-input" style="width:auto;display:none;">
+          <option value="CONFIRMED">Confirm</option>
+          <option value="SHIPPED">Ship</option>
+          <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+          <option value="DELIVERED">Deliver</option>
+        </select>
+        <button id="update-status-btn" class="btn btn-primary" style="display:none;">Update Status</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+(function () {
+  'use strict';
+  var currentOrder = null;
+  function badgeClass(status) {
+    if (status === 'DELIVERED') return 'badge-success';
+    if (status === 'CANCELLED' || status === 'RETURNED') return 'badge-danger';
+    return 'badge-warning';
+  }
+  function renderOrder(order) {
+    currentOrder = order;
+    document.getElementById('order-loading').style.display = 'none';
+    document.getElementById('order-content').style.display = '';
+    document.getElementById('order-id').textContent = order.id;
+    var statusEl = document.getElementById('order-status');
+    statusEl.textContent = order.status;
+    statusEl.className = 'badge ' + badgeClass(order.status);
+    document.getElementById('order-date').textContent = formatDate(order.placedAt);
+    document.getElementById('order-subtotal').textContent = formatCurrency(order.subtotal);
+    document.getElementById('order-shipping').textContent = formatCurrency(order.shippingFee);
+    document.getElementById('order-total').textContent = formatCurrency(order.grandTotal);
+    if (order.discount && parseFloat(order.discount) > 0) {
+      document.getElementById('order-discount-row').style.display = '';
+      document.getElementById('order-discount').textContent = '-' + formatCurrency(order.discount);
+    }
+    var itemsContainer = document.getElementById('order-items');
+    itemsContainer.innerHTML = '';
+    (order.items || []).forEach(function (item) {
+      var div = document.createElement('div');
+      div.className = 'order-review-item';
+      div.innerHTML =
+        '<div class="item-info">' +
+          '<div class="item-name">' + (item.itemNameSnapshot || 'Product') + '</div>' +
+          '<div class="item-qty">Qty: ' + item.quantity + '</div>' +
+        '</div>' +
+        '<div class="item-price">' + formatCurrency(item.subtotal) + '</div>';
+      itemsContainer.appendChild(div);
+    });
+    if (['PLACED','CONFIRMED','SHIPPED','OUT_FOR_DELIVERY'].indexOf(order.status) !== -1) {
+      var statusSelect = document.getElementById('status-update');
+      statusSelect.style.display = '';
+      document.getElementById('update-status-btn').style.display = '';
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var id = new URLSearchParams(window.location.search).get('id');
+    if (!id) {
+      document.getElementById('order-loading').style.display = 'none';
+      showToast('No order ID specified', 'error');
+      return;
+    }
+    API.get('/seller/orders/' + id).then(renderOrder).catch(function (err) {
+      document.getElementById('order-loading').style.display = 'none';
+      showToast(err.message || 'Failed to load order', 'error');
+    });
+    document.getElementById('update-status-btn').addEventListener('click', function () {
+      var btn = this;
+      var newStatus = document.getElementById('status-update').value;
+      if (!newStatus || !currentOrder) return;
+      setButtonLoading(btn, true);
+      API.put('/seller/orders/' + currentOrder.id + '/status?status=' + newStatus).then(function () {
+        showToast('Status updated', 'success');
+        renderOrder(Object.assign(currentOrder, { status: newStatus }));
+        setButtonLoading(btn, false);
+      }).catch(function (err) {
+        showToast(err.message || 'Failed to update', 'error');
+        setButtonLoading(btn, false);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

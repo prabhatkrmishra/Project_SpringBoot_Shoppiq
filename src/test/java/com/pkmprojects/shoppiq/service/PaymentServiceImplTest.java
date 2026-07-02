@@ -390,62 +390,6 @@ class PaymentServiceImplTest {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // refund()
-    // ═══════════════════════════════════════════════════════════════════════
-
-    @Nested
-    @DisplayName("refund()")
-    class RefundTests {
-
-        @Test
-        @DisplayName("Refunds a PAID payment")
-        void refund_paid_success() throws Exception {
-            User user = buildUser(1L);
-            Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PAID);
-
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
-            when(paymentRepository.save(any())).thenReturn(payment);
-
-            PaymentStatusResponse result = paymentService.refund(1L);
-
-            assertThat(result.status()).isEqualTo(PaymentStatus.REFUNDED);
-        }
-
-        @Test
-        @DisplayName("Throws PaymentInvalidStateException for non-PAID payment")
-        void refund_notPaid_throws() throws Exception {
-            User user = buildUser(1L);
-            Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PENDING);
-
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
-
-            assertThatThrownBy(() -> paymentService.refund(1L))
-                    .isInstanceOf(PaymentInvalidStateException.class);
-        }
-
-        @Test
-        @DisplayName("Throws PaymentInvalidStateException for CANCELLED payment")
-        void refund_cancelled_throws() throws Exception {
-            User user = buildUser(1L);
-            Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.CANCELLED);
-
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
-
-            assertThatThrownBy(() -> paymentService.refund(1L))
-                    .isInstanceOf(PaymentInvalidStateException.class);
-        }
-
-        @Test
-        @DisplayName("Throws PaymentNotFoundException when payment not found")
-        void refund_notFound_throws() throws Exception {
-            when(paymentRepository.findById(999L)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> paymentService.refund(999L))
-                    .isInstanceOf(PaymentNotFoundException.class);
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
     // getPayment()
     // ═══════════════════════════════════════════════════════════════════════
 

@@ -102,7 +102,7 @@ class ItemReviewControllerTest {
 
     private static ItemReviewResponse stubResponse(int rating, String review) {
         return new ItemReviewResponse(
-                100L, 1L, "Alice", "alice",
+                100L, 10L, "Test Product", 1L, "Alice", "alice",
                 rating, review, Instant.now(), Instant.now()
         );
     }

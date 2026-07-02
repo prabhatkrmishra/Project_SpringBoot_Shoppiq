@@ -113,19 +113,6 @@ public class AuthController {
     }
 
     /**
-     * Handles logout by expiring the JWT cookie.
-     * Sets an empty cookie value with Max-Age=0 so the browser deletes it.
-     *
-     * @param response servlet response for expiring the cookie
-     * @return 200 with nobody
-     */
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
-        authService.logout(response);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
      * Returns the OAuth2 registration session data to pre-populate the
      * registration completion form.
      *

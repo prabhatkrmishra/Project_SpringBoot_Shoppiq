@@ -57,16 +57,6 @@ public interface PaymentService {
     PaymentStatusResponse cancelPayment(User user, Long paymentId);
 
     /**
-     * Issues a refund for a {@code PAID} payment.
-     *
-     * <p>This operation is restricted to administrators.</p>
-     *
-     * @param paymentId the payment to refund
-     * @return updated payment status response
-     */
-    PaymentStatusResponse refund(Long paymentId);
-
-    /**
      * Returns the full payment detail for the given payment id.
      *
      * @param user      authenticated customer (ownership is validated)

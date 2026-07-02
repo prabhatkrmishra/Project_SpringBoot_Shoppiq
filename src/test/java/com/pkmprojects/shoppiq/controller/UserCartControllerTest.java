@@ -311,57 +311,8 @@ class UserCartControllerTest {
     }
 
     // ---------------------------------------------------------------
-    // GET /user/cart/get/{id}
+    // GET /user/cart/get/{id}  — REMOVED (cart loads all items)
     // ---------------------------------------------------------------
-
-    @Nested
-    @DisplayName("GET /user/cart/get/{id}")
-    class GetCartItemById {
-
-        @Test
-        @DisplayName("Returns 200 with item body when found and owned")
-        void getById_found_returns200() throws Exception {
-            CartItemResponse response = stubCartItemResponse(4);
-
-            when(cartService.getById(any(User.class), eq(100L))).thenReturn(response);
-
-            mockMvc.perform(get("/user/cart/get/100"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.cartItemId").value(100))
-                    .andExpect(jsonPath("$.quantity").value(4));
-        }
-
-        @Test
-        @DisplayName("Returns 404 when cart item does not exist")
-        void getById_notFound_returns404() throws Exception {
-            when(cartService.getById(any(User.class), eq(999L)))
-                    .thenThrow(CartItemNotFoundException.id(999L));
-
-            mockMvc.perform(get("/user/cart/get/999"))
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.errorCode").value("CART-404-001"));
-        }
-
-        @Test
-        @DisplayName("Returns 403 when cart item belongs to another user")
-        void getById_wrongOwner_returns403() throws Exception {
-            when(cartService.getById(any(User.class), eq(200L)))
-                    .thenThrow(CartItemAccessDeniedException.forItem(200L));
-
-            mockMvc.perform(get("/user/cart/get/200"))
-                    .andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.errorCode").value("CART-403-001"));
-        }
-
-        @Test
-        @DisplayName("Returns 401 when unauthenticated")
-        void getById_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
-            mockMvc.perform(get("/user/cart/get/100"))
-                    .andExpect(status().isUnauthorized());
-        }
-    }
 
     // ---------------------------------------------------------------
     // PUT /user/cart/update/{id}

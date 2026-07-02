@@ -10,12 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.net.URI;
@@ -158,6 +157,33 @@ public class GlobalExceptionHandler {
 
         return ProblemDetailFactory.create(HttpStatus.BAD_REQUEST,
                 "Malformed or unreadable request body.",
+                ErrorCode.VALIDATION_FAILED, createInstance(request));
+    }
+
+    /**
+     * Handles type mismatch errors for request parameters
+     * (e.g. invalid enum value like "VERIFIED" when expected "APPROVED").
+     *
+     * @param exception type mismatch exception
+     * @param request   current HTTP request
+     * @return RFC 9457 ProblemDetail response with 400 status
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
+
+        String paramName = exception.getName();
+        String invalidValue = exception.getValue() != null ? exception.getValue().toString() : "";
+        Class<?> requiredType = exception.getRequiredType();
+        String typeName = requiredType != null ? requiredType.getSimpleName() : "unknown";
+
+        String detail = String.format("Invalid value '%s' for parameter '%s'. Expected type: %s.",
+                invalidValue, paramName, typeName);
+
+        log.debug("Type mismatch [{}]: {}", request.getRequestURI(), detail);
+
+        return ProblemDetailFactory.create(HttpStatus.BAD_REQUEST,
+                detail,
                 ErrorCode.VALIDATION_FAILED, createInstance(request));
     }
 

@@ -1,214 +1,106 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-
-<head>
-
-    <title>Register</title>
-
-    <style>
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-
-            height: 100vh;
-            margin: 0;
-        }
-
-        .register-container {
-            background: white;
-            padding: 30px;
-            width: 350px;
-
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .register-container h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-
-            border: 1px solid #ccc;
-            border-radius: 5px;
-
-            box-sizing: border-box;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-
-            background-color: black;
-            color: white;
-
-            border: none;
-            border-radius: 5px;
-
-            cursor: pointer;
-        }
-
-        label {
-            text-decoration: none;
-            color: black;
-            font-size: 13px;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .message {
-            margin-top: 10px;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        .login-link {
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .login-link a {
-            text-decoration: none;
-            color: black;
-        }
-
-    </style>
-
-</head>
-
+<head th:replace="~{fragments/header :: head('Create Account')}"></head>
 <body>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-    <div class="register-container">
-
-        <h2>Register</h2>
-
-        <form id="registerForm">
-
-            <div class="input-group">
-                <label for="name">Full Name</label>
-
-                <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        placeholder="Enter Full Name"
-                        required
-                >
+    <main class="page">
+        <div class="container container-narrow auth-card">
+            <div class="page-header text-center">
+                <h1>Create Your Account</h1>
+                <p>Join Shoppiq and start shopping today</p>
             </div>
 
-            <div class="input-group">
-                <label for="email">Email Address</label>
-
-                <input
-                        type="text"
-                        id="email"
-                        name="email"
-                        placeholder="Enter Email"
-                        required
-                >
+            <div th:if="${param.error}" class="guest-banner" role="alert">
+                <p th:text="${param.error}">Registration error</p>
             </div>
 
-            <div class="input-group">
-                <label for="username">Username</label>
+            <div class="panel">
+                <form id="registerForm" novalidate>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" id="name" name="name" class="form-input" placeholder="John Doe" required
+                                   autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com"
+                                   required autocomplete="email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" name="username" class="form-input" placeholder="johndoe"
+                               required autocomplete="username"
+                               pattern="^[a-zA-Z0-9_]+$" minlength="3" maxlength="30">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" id="password" name="password" class="form-input"
+                                   placeholder="Min. 8 characters" required autocomplete="new-password" minlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                                   placeholder="Repeat password" required autocomplete="new-password">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+                </form>
 
-                <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        placeholder="Enter username"
-                        required
-                >
+                <div class="text-center mt-lg">
+                    <p class="text-sm">Already have an account? <a th:href="@{/login}" class="btn-link">Sign in</a></p>
+                </div>
             </div>
-
-            <div class="input-group">
-                <label for="password">Password</label>
-
-                <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="Enter password"
-                        required
-                >
-            </div>
-
-            <button type="submit">
-                Register
-            </button>
-
-        </form>
-
-        <div class="login-link">
-            <a th:href="@{/login}">
-                Already have an account? Login
-            </a>
         </div>
+    </main>
 
-        <div id="message" class="message"></div>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
-    </div>
-
-    <script>
-
+    <script th:inline="javascript">
+        /*<![CDATA[*/
         const registerForm = document.getElementById("registerForm");
-
         registerForm.addEventListener("submit", async function (event) {
-
             event.preventDefault();
-
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+            if (password !== confirmPassword) {
+                showToast("Passwords do not match", "error");
+                return;
+            }
+            if (password.length < 8) {
+                showToast("Password must be at least 8 characters", "error");
+                return;
+            }
             const userData = {
                 name: document.getElementById("name").value,
                 email: document.getElementById("email").value,
                 username: document.getElementById("username").value,
-                password: document.getElementById("password").value
+                password: password
             };
-
-            const message =
-                document.getElementById("message");
-
-            const response = await fetch("/user/register", {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify(userData)
-            });
-
-            if (response.ok) {
-                alert("User registered successfully");
-                window.location.href = "/login";
-            } else {
-                const data = await response.json();
-                message.style.color = "red";
-                message.textContent = data.detail;
+            try {
+                const response = await fetch("/user/register", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(userData)
+                });
+                if (response.ok) {
+                    showToast("Account created! Redirecting to login...", "success");
+                    setTimeout(() => {
+                        window.location.href = "/login";
+                    }, 1500);
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    showToast(data.detail || "Registration failed. Please try again.", "error");
+                }
+            } catch (err) {
+                showToast("Network error. Please try again.", "error");
             }
-
         });
-
+        /*]]>*/
     </script>
-
 </body>
-
 </html>

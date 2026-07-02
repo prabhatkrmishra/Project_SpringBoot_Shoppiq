@@ -259,38 +259,8 @@ class CategoryControllerTest {
     }
 
     // ---------------------------------------------------------------
-    // GET /categories/{id}
+    // GET /categories/{id}  — REMOVED (use slug instead)
     // ---------------------------------------------------------------
-
-    @Nested
-    @DisplayName("GET /categories/{id}")
-    class GetById {
-
-        @Test
-        @WithMockUser
-        @DisplayName("Returns 200 with the category when found")
-        void getById_found_returns200() throws Exception {
-            when(categoryService.getById(1L))
-                    .thenReturn(stubResponse(1L, "Electronics", "electronics"));
-
-            mockMvc.perform(get("/categories/1"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(1))
-                    .andExpect(jsonPath("$.name").value("Electronics"))
-                    .andExpect(jsonPath("$.slug").value("electronics"));
-        }
-
-        @Test
-        @WithMockUser
-        @DisplayName("Returns 404 when category does not exist")
-        void getById_notFound_returns404() throws Exception {
-            when(categoryService.getById(999L)).thenThrow(CategoryNotFoundException.id(999L));
-
-            mockMvc.perform(get("/categories/999"))
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.errorCode").value("CATEGORY-404-001"));
-        }
-    }
 
     // ---------------------------------------------------------------
     // GET /categories/slug/{slug}

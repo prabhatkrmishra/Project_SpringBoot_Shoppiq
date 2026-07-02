@@ -1,0 +1,22 @@
+<div th:fragment="toast-container" class="toast-container" id="toast-container" aria-live="polite"></div>
+
+<div th:fragment="alerts">
+  <div th:if="${param.success}" class="toast toast-success" role="alert">
+    <span class="toast-message" th:text="${param.success}"></span>
+    <button class="toast-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+  </div>
+  <div th:if="${param.error}" class="toast toast-error" role="alert">
+    <span class="toast-message" th:text="${param.error}"></span>
+    <button class="toast-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+  </div>
+</div>
+
+<script th:fragment="toast-js">
+document.addEventListener('DOMContentLoaded', function() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var successMsg = urlParams.get('success');
+  var errorMsg = urlParams.get('error');
+  if (successMsg && typeof showToast === 'function') showToast(successMsg, 'success');
+  if (errorMsg && typeof showToast === 'function') showToast(errorMsg, 'error');
+});
+</script>

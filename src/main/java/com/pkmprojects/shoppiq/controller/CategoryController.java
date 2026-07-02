@@ -99,27 +99,6 @@ public class CategoryController {
         categoryService.delete(id);
     }
 
-    /**
-     * Retrieves a category by its identifier.
-     *
-     * @param id category identifier — must be a positive number
-     * @return matching category
-     */
-    @GetMapping("/{id}")
-    public CategoryResponse getById(
-            @PathVariable
-            @Positive(message = "Category id must be a positive number")
-            Long id) {
-
-        return categoryService.getById(id);
-    }
-
-    /**
-     * Retrieves a category using its URL slug.
-     *
-     * @param slug category slug — lowercase letters, digits, and hyphens only
-     * @return matching category
-     */
     @GetMapping("/slug/{slug}")
     public CategoryResponse getBySlug(
             @PathVariable

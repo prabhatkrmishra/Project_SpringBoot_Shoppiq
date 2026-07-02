@@ -55,7 +55,7 @@ public interface AdminOrderService {
      *
      * <p>Valid transitions:</p>
      * <pre>
-     * PLACED → CONFIRMED → PACKED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED
+     * PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED → RETURNED
      * PLACED → CANCELLED (at any point before DELIVERED)
      * </pre>
      *

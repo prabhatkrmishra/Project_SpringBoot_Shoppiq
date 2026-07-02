@@ -60,4 +60,28 @@ public interface AdminSellerService {
      * @return the updated seller
      */
     AdminSellerResponse rejectSeller(Long sellerId);
+
+    /**
+     * Suspends an active seller.
+     *
+     * <p>
+     * Sets seller status to SUSPENDED and cascades to store status SUSPENDED.
+     * </p>
+     *
+     * @param sellerId the seller ID to suspend
+     * @return the updated seller
+     */
+    AdminSellerResponse suspendSeller(Long sellerId);
+
+    /**
+     * Unsuspends a suspended seller.
+     *
+     * <p>
+     * Sets seller status to ACTIVE and cascades to store status DRAFT.
+     * </p>
+     *
+     * @param sellerId the seller ID to unsuspend
+     * @return the updated seller
+     */
+    AdminSellerResponse unsuspendSeller(Long sellerId);
 }

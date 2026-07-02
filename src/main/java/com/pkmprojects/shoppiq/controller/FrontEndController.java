@@ -5,6 +5,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class FrontEndController {
+
+    @GetMapping("/")
+    public String homePage() {
+        return "index";
+    }
+
     @GetMapping("/login")
     public String loginPage() {
         return "login";
@@ -20,6 +26,31 @@ public class FrontEndController {
         return "allitems";
     }
 
+    @GetMapping("/shop")
+    public String shopPage() {
+        return "allitems";
+    }
+
+    @GetMapping("/categories")
+    public String categoriesPage() {
+        return "categories";
+    }
+
+    @GetMapping("/category/{slug}")
+    public String categoryPage() {
+        return "category";
+    }
+
+    @GetMapping("/profile")
+    public String profilePage() {
+        return "profile";
+    }
+
+    @GetMapping("/cart")
+    public String cartPage() {
+        return "cart";
+    }
+
     @GetMapping("/complete-profile")
     public String completeProfilePage() {
         return "completeprofile";
@@ -27,6 +58,16 @@ public class FrontEndController {
 
     @GetMapping("/address")
     public String addressPage() {
+        return "address";
+    }
+
+    @GetMapping("/address/add")
+    public String addressAddPage() {
+        return "address";
+    }
+
+    @GetMapping("/address/edit/{id}")
+    public String addressEditPage() {
         return "address";
     }
 
@@ -45,9 +86,34 @@ public class FrontEndController {
         return "order-detail";
     }
 
+    @GetMapping("/item/{id}")
+    public String itemDetailPage() {
+        return "item-detail";
+    }
+
     @GetMapping("/payment")
     public String paymentPage() {
         return "payment";
+    }
+
+    @GetMapping("/about")
+    public String aboutPage() {
+        return "about";
+    }
+
+    @GetMapping("/contact")
+    public String contactPage() {
+        return "contact";
+    }
+
+    @GetMapping("/terms")
+    public String termsPage() {
+        return "terms";
+    }
+
+    @GetMapping("/privacy")
+    public String privacyPage() {
+        return "privacy";
     }
 
     @GetMapping("/admin/dashboard")
@@ -83,5 +149,60 @@ public class FrontEndController {
     @GetMapping("/admin/reports")
     public String adminReportsPage() {
         return "admin-reports";
+    }
+
+    @GetMapping("/admin/categories")
+    public String adminCategoriesPage() {
+        return "admin-categories";
+    }
+
+    @GetMapping("/admin/sellers")
+    public String adminSellersPage() {
+        return "admin-sellers";
+    }
+
+    @GetMapping("/admin/pending")
+    public String adminPendingPage() {
+        return "admin-pending";
+    }
+
+    @GetMapping("/admin/roles")
+    public String adminRolesPage() {
+        return "admin-roles";
+    }
+
+    @GetMapping("/seller-panel/dashboard")
+    public String sellerDashboardPage() {
+        return "seller/dashboard";
+    }
+
+    @GetMapping("/seller-panel/products")
+    public String sellerProductsPage() {
+        return "seller/products";
+    }
+
+    @GetMapping("/seller-panel/inventory")
+    public String sellerInventoryPage() {
+        return "seller/inventory";
+    }
+
+    @GetMapping("/seller-panel/orders")
+    public String sellerOrdersPage() {
+        return "seller/orders";
+    }
+
+    @GetMapping("/seller-panel/order-detail")
+    public String sellerOrderDetailPage() {
+        return "seller/order-detail";
+    }
+
+    @GetMapping("/seller-panel/profile")
+    public String sellerProfilePage() {
+        return "seller/profile";
+    }
+
+    @GetMapping("/my-reviews")
+    public String myReviewsPage() {
+        return "my-reviews";
     }
 }

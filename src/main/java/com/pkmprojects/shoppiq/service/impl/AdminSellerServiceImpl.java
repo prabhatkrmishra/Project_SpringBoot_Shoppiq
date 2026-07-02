@@ -97,6 +97,46 @@ public class AdminSellerServiceImpl implements AdminSellerService {
         return AdminSellerResponse.fromEntity(seller);
     }
 
+    @Override
+    public AdminSellerResponse suspendSeller(Long sellerId) {
+        Seller seller = sellerRepository.findById(sellerId)
+                .orElseThrow(() -> SellerNotFoundException.id(sellerId));
+
+        if (seller.getSellerStatus() != SellerStatus.ACTIVE) {
+            throw SellerApprovalInvalidException.notActive(sellerId);
+        }
+
+        seller.setSellerStatus(SellerStatus.SUSPENDED);
+        seller = sellerRepository.save(seller);
+
+        storeRepository.findBySellerId(sellerId).ifPresent(store -> {
+            store.setStatus(StoreStatus.SUSPENDED);
+            storeRepository.save(store);
+        });
+
+        return AdminSellerResponse.fromEntity(seller);
+    }
+
+    @Override
+    public AdminSellerResponse unsuspendSeller(Long sellerId) {
+        Seller seller = sellerRepository.findById(sellerId)
+                .orElseThrow(() -> SellerNotFoundException.id(sellerId));
+
+        if (seller.getSellerStatus() != SellerStatus.SUSPENDED) {
+            throw SellerApprovalInvalidException.notSuspended(sellerId);
+        }
+
+        seller.setSellerStatus(SellerStatus.ACTIVE);
+        seller = sellerRepository.save(seller);
+
+        storeRepository.findBySellerId(sellerId).ifPresent(store -> {
+            store.setStatus(StoreStatus.DRAFT);
+            storeRepository.save(store);
+        });
+
+        return AdminSellerResponse.fromEntity(seller);
+    }
+
     private void createStore(Seller seller) {
         String baseSlug = SlugUtil.toSlug(seller.getBusinessName());
         String slug = baseSlug;

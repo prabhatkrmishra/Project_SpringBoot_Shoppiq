@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Seller Orders')}"></head>
+<body>
+<th:block th:replace="~{fragments/header :: header}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="seller-main">
+  <div class="seller-header">
+    <div>
+      <h1>Orders</h1>
+      <p>View and manage incoming orders</p>
+    </div>
+  </div>
+
+  <div class="admin-filters">
+    <select id="statusFilter">
+      <option value="">All Orders</option>
+      <option value="PLACED">Placed</option>
+      <option value="CONFIRMED">Confirmed</option>
+      <option value="SHIPPED">Shipped</option>
+      <option value="DELIVERED">Delivered</option>
+      <option value="RETURNED">Returned</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+  </div>
+
+  <div class="admin-panel">
+    <div class="admin-panel-title">Order List</div>
+    <div class="table-responsive">
+      <table class="seller-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="orders-body">
+          <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+(function () {
+  'use strict';
+  var allOrders = [];
+
+  function statusClass(s) {
+    if (s === 'DELIVERED' || s === 'COMPLETED') return 'active';
+    if (s === 'CANCELLED' || s === 'RETURNED') return 'inactive';
+    return 'pending';
+  }
+
+  function renderOrders(orders) {
+    allOrders = orders || [];
+    var filter = document.getElementById('statusFilter').value;
+    var filtered = filter ? allOrders.filter(function (o) { return o.status === filter; }) : allOrders;
+    var tbody = document.getElementById('orders-body');
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No orders found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    filtered.forEach(function (o) {
+      var itemCount = o.items ? o.items.length : 0;
+      var actions = '<a href="/seller-panel/orders?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a>';
+      if (o.status === 'PLACED') {
+        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="CONFIRMED">Process</button>';
+      } else if (o.status === 'CONFIRMED') {
+        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="SHIPPED">Ship</button>';
+      }
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><a href="/seller-panel/orders?id=' + o.id + '" class="btn-link">#' + o.id + '</a></td>' +
+        '<td>' + itemCount + '</td>' +
+        '<td>' + formatCurrency(o.grandTotal) + '</td>' +
+        '<td class="text-sm text-muted">' + formatDate(o.placedAt) + '</td>' +
+        '<td><span class="status-badge ' + statusClass(o.status) + '">' + o.status + '</span></td>' +
+        '<td class="admin-table-actions">' + actions + '</td>';
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.status-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var orderId = this.dataset.orderId;
+        var newStatus = this.dataset.status;
+        API.put('/seller/orders/' + orderId + '/status?status=' + newStatus).then(function () {
+          showToast('Order status updated', 'success');
+          loadOrders();
+        }).catch(function (e) { showToast(e.message, 'error'); });
+      });
+    });
+  }
+
+  function loadOrders() {
+    API.get('/seller/orders').then(function (orders) {
+      allOrders = orders || [];
+      renderOrders(allOrders);
+    }).catch(function () {
+      document.getElementById('orders-body').innerHTML =
+        '<tr><td colspan="6" class="text-center text-muted">Failed to load orders</td></tr>';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadOrders();
+    document.getElementById('statusFilter').addEventListener('change', function () {
+      renderOrders(allOrders);
+    });
+  });
+})();
+</script>
+</body>
+</html>

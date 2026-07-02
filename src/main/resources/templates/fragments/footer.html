@@ -1,0 +1,50 @@
+<footer th:fragment="footer" class="site-footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a th:href="@{/}" class="footer-logo">Shoppiq</a>
+        <p>Your modern shopping destination. Quality products, transparent pricing, delivered with care.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Shop</h4>
+        <ul>
+          <li><a th:href="@{/allitems}">All Products</a></li>
+          <li><a th:href="@{/allitems}">Categories</a></li>
+          <li><a th:href="@{/allitems}">New Arrivals</a></li>
+          <li><a th:href="@{/allitems}">Sale</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a th:href="@{/about}">About Us</a></li>
+          <li><a th:href="@{/contact}">Contact</a></li>
+          <li><a th:href="@{/terms}">Terms of Service</a></li>
+          <li><a th:href="@{/privacy}">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Account</h4>
+        <ul>
+          <li><a th:href="@{/profile}">My Account</a></li>
+          <li><a th:href="@{/orders}">My Orders</a></li>
+          <li><a th:href="@{/cart}">Cart</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Shoppiq. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram" class="tooltip" data-tooltip="Instagram">
+          <i data-lucide="instagram" class="icon"></i>
+        </a>
+        <a href="#" aria-label="Twitter/X" class="tooltip" data-tooltip="Twitter/X">
+          <i data-lucide="twitter" class="icon"></i>
+        </a>
+        <a href="#" aria-label="Facebook" class="tooltip" data-tooltip="Facebook">
+          <i data-lucide="facebook" class="icon"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>

@@ -37,9 +37,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByPlacedAtBetween(Instant start, Instant end);
 
-    List<Order> findByPlacedAtBetweenOrderByPlacedAtAsc(Instant start, Instant end);
-
     List<Order> findByPlacedAtBetween(Instant start, Instant end);
+
+    List<Order> findByPlacedAtBetweenOrderByPlacedAtAsc(Instant start, Instant end);
 
     long countByUser(User user);
 

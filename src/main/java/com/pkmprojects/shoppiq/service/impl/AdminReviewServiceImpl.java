@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.service.impl;
 
 import com.pkmprojects.shoppiq.dto.admin.response.AdminReviewResponse;
 import com.pkmprojects.shoppiq.entity.ItemReview;
+import com.pkmprojects.shoppiq.enums.ReviewStatus;
 import com.pkmprojects.shoppiq.exception.ItemReviewNotFoundException;
 import com.pkmprojects.shoppiq.repository.ItemReviewRepository;
 import com.pkmprojects.shoppiq.service.admin.AdminReviewService;
@@ -75,5 +76,25 @@ public class AdminReviewServiceImpl implements AdminReviewService {
                 .orElseThrow(() -> ItemReviewNotFoundException.id(reviewId));
 
         itemReviewRepository.delete(review);
+    }
+
+    @Override
+    public AdminReviewResponse approveReview(Long reviewId) {
+        ItemReview review = itemReviewRepository.findById(reviewId)
+                .orElseThrow(() -> ItemReviewNotFoundException.id(reviewId));
+
+        review.setStatus(ReviewStatus.APPROVED);
+        ItemReview saved = itemReviewRepository.save(review);
+        return AdminReviewResponse.fromEntity(saved);
+    }
+
+    @Override
+    public AdminReviewResponse rejectReview(Long reviewId) {
+        ItemReview review = itemReviewRepository.findById(reviewId)
+                .orElseThrow(() -> ItemReviewNotFoundException.id(reviewId));
+
+        review.setStatus(ReviewStatus.REJECTED);
+        ItemReview saved = itemReviewRepository.save(review);
+        return AdminReviewResponse.fromEntity(saved);
     }
 }

@@ -88,20 +88,11 @@ public class CategoryServiceImpl implements CategoryService {
         Objects.requireNonNull(request, "Category request cannot be null.");
 
         Category category = getCategoryOrThrow(id);
-        if (categoryRepository.existsByNameIgnoreCaseAndIdNot(
-                request.name(),
-                id
-        )) {
-            throw DuplicateCategoryException.category(request.name());
-        }
 
-        category.setName(request.name());
         if (!category.getName().equalsIgnoreCase(request.name())) {
-
             if (categoryRepository.existsByNameIgnoreCaseAndIdNot(request.name(), id)) {
                 throw DuplicateCategoryException.category(request.name());
             }
-
             category.setName(request.name());
             category.setSlug(generateUniqueSlug(request.name()));
         }

@@ -3,18 +3,23 @@ package com.pkmprojects.shoppiq.controller.admin;
 import com.pkmprojects.shoppiq.dto.admin.analytics.*;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.request.BulkItemRequest;
+import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.enums.*;
+import com.pkmprojects.shoppiq.service.ItemService;
 import com.pkmprojects.shoppiq.service.admin.*;
 import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -55,6 +60,7 @@ public class AdminController {
     private final AdminPaymentService paymentService;
     private final AdminReviewService reviewService;
     private final AdminReportService reportService;
+    private final ItemService itemService;
 
     public AdminController(AdminDashboardService dashboardService,
                            AdminInventoryService inventoryService,
@@ -62,7 +68,8 @@ public class AdminController {
                            AdminUserService userService,
                            AdminPaymentService paymentService,
                            AdminReviewService reviewService,
-                           AdminReportService reportService) {
+                           AdminReportService reportService,
+                           ItemService itemService) {
         this.dashboardService = dashboardService;
         this.inventoryService = inventoryService;
         this.orderService = orderService;
@@ -70,6 +77,7 @@ public class AdminController {
         this.paymentService = paymentService;
         this.reviewService = reviewService;
         this.reportService = reportService;
+        this.itemService = itemService;
     }
 
     // =========================================================
@@ -89,6 +97,18 @@ public class AdminController {
     @GetMapping("/dashboard/recent-activity")
     public RecentActivityResponse getRecentActivity() {
         return dashboardService.getRecentActivity();
+    }
+
+    // =========================================================
+    // Items (Bulk)
+    // =========================================================
+
+    @PostMapping("/items/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<ItemResponse> createBulkItems(
+            @Valid @RequestBody BulkItemRequest request
+    ) {
+        return itemService.createBulk(request.items());
     }
 
     // =========================================================
@@ -233,6 +253,16 @@ public class AdminController {
     public ResponseEntity<Void> deleteReview(@PathVariable @Min(1) Long reviewId) {
         reviewService.deleteReview(reviewId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/reviews/{reviewId}/approve")
+    public AdminReviewResponse approveReview(@PathVariable @Min(1) Long reviewId) {
+        return reviewService.approveReview(reviewId);
+    }
+
+    @PutMapping("/reviews/{reviewId}/reject")
+    public AdminReviewResponse rejectReview(@PathVariable @Min(1) Long reviewId) {
+        return reviewService.rejectReview(reviewId);
     }
 
     // =========================================================

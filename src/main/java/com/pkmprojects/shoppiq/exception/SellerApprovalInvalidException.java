@@ -20,4 +20,14 @@ public final class SellerApprovalInvalidException extends InvalidOperationExcept
         return new SellerApprovalInvalidException(
                 "Seller '%d' is not in PENDING status.".formatted(sellerId));
     }
+
+    public static SellerApprovalInvalidException notActive(Long sellerId) {
+        return new SellerApprovalInvalidException(
+                "Seller '%d' is not ACTIVE and cannot be suspended.".formatted(sellerId));
+    }
+
+    public static SellerApprovalInvalidException notSuspended(Long sellerId) {
+        return new SellerApprovalInvalidException(
+                "Seller '%d' is not SUSPENDED and cannot be unsuspended.".formatted(sellerId));
+    }
 }

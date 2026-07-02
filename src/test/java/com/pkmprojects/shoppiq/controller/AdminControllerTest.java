@@ -91,6 +91,9 @@ class AdminControllerTest {
     private RolesService rolesService;
 
     @MockitoBean
+    private ItemService itemService;
+
+    @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @MockitoBean

@@ -78,4 +78,11 @@ public class SellerController {
         sellerService.deleteProfile(currentUser);
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping("/store/publish")
+    public ResponseEntity<Void> publishStore(
+            @AuthenticationPrincipal User currentUser) {
+        sellerService.publishStore(currentUser);
+        return ResponseEntity.ok().build();
+    }
 }

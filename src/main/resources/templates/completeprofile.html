@@ -1,246 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Complete Profile</title>
-
-    <style>
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-
-            height: 100vh;
-            margin: 0;
-        }
-
-        .register-container {
-            background: white;
-            padding: 30px;
-            width: 350px;
-
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .register-container h2 {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-
-            border: 1px solid #ccc;
-            border-radius: 5px;
-
-            box-sizing: border-box;
-        }
-
-        .readonly-field {
-            background-color: #f5f5f5;
-            color: #666;
-            cursor: not-allowed;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-
-            background-color: black;
-            color: white;
-
-            border: none;
-            border-radius: 5px;
-
-            cursor: pointer;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .message {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-        }
-
-    </style>
-
-</head>
-
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Complete Profile')}"></head>
 <body>
+<th:block th:replace="~{fragments/header :: header}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-    <div class="register-container">
-
-        <h2>Complete Profile</h2>
-
-        <div class="subtitle">
-            Google account verified successfully.
-            Choose a username and password to finish registration.
-        </div>
-
-        <form id="completeProfileForm">
-
-            <div class="input-group">
-                <label for="name">Full Name</label>
-
-                <input
-                        type="text"
-                        id="name"
-                        readonly
-                        class="readonly-field">
-            </div>
-
-            <div class="input-group">
-                <label for="email">Email Address</label>
-
-                <input
-                        type="email"
-                        id="email"
-                        readonly
-                        class="readonly-field">
-            </div>
-
-            <div class="input-group">
-                <label for="username">Username</label>
-
-                <input
-                        type="text"
-                        id="username"
-                        placeholder="Choose a username"
-                        required>
-            </div>
-
-            <div class="input-group">
-                <label for="password">Password</label>
-
-                <input
-                        type="password"
-                        id="password"
-                        placeholder="Choose a password"
-                        required>
-            </div>
-
-            <button type="submit">
-                Complete Registration
-            </button>
-
-            <div id="message" class="message"></div>
-
-        </form>
-
+<main class="page">
+  <div class="container container-narrow auth-card">
+    <div class="page-header text-center">
+      <h1>Complete Your Profile</h1>
+      <p class="text-muted">Google account verified. Choose a username and password to finish registration.</p>
     </div>
 
-    <script>
+    <div th:if="${param.error}" class="guest-banner" role="alert">
+      <p th:text="${param.error}">Error</p>
+    </div>
 
-        async function loadGoogleProfile() {
+    <div class="panel">
+      <form id="completeProfileForm" novalidate>
+        <div class="form-group">
+          <label for="name" class="form-label">Full Name</label>
+          <input type="text" id="name" class="form-input auth-readonly" readonly aria-readonly="true">
+        </div>
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <input type="email" id="email" class="form-input auth-readonly" readonly aria-readonly="true">
+        </div>
+        <div class="form-group">
+          <label for="username" class="form-label">Username</label>
+          <input type="text" id="username" name="username" class="form-input" placeholder="Choose a username" required autocomplete="username" pattern="^[a-zA-Z0-9_]+$" minlength="3" maxlength="30">
+        </div>
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" id="password" name="password" class="form-input" placeholder="Choose a password" required autocomplete="new-password" minlength="8">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Complete Registration</button>
+      </form>
+    </div>
+  </div>
+</main>
 
-            try {
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
-                const response =
-                    await fetch("/auth/google/get-profile", {
-                        credentials: "include"
-                    });
+<script th:inline="javascript">
+/*<![CDATA[*/
+async function loadGoogleProfile() {
+  try {
+    const response = await fetch("/auth/google/get-profile", {
+      credentials: "include"
+    });
+    if (!response.ok) {
+      throw new Error("Unable to load profile");
+    }
+    const profile = await response.json();
+    document.getElementById("name").value = profile.name || "";
+    document.getElementById("email").value = profile.email || "";
+  } catch (err) {
+    console.error(err);
+    showToast("Unable to load Google profile information. Please sign in with Google again.", "error");
+  }
+}
 
-                if (!response.ok) {
-                    throw new Error("Unable to load profile");
-                }
+loadGoogleProfile();
 
-                const profile = await response.json();
-
-                document.getElementById("name").value =
-                    profile.name;
-
-                document.getElementById("email").value =
-                    profile.email;
-
-            } catch (error) {
-
-                console.error(error);
-
-                document.getElementById("message").innerHTML =
-                    "Unable to load Google profile information.";
-            }
-        }
-
-        loadGoogleProfile();
-
-        document
-            .getElementById("completeProfileForm")
-            .addEventListener("submit", async function (event) {
-
-                event.preventDefault();
-
-                const payload = {
-                    username: document.getElementById("username").value,
-                    password: document.getElementById("password").value
-                };
-
-                const response =
-                    await fetch("/auth/google/complete-profile", {
-
-                        method: "POST",
-
-                        credentials: "include",
-
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-
-                        body: JSON.stringify(payload)
-                    });
-
-                const message =
-                    document.getElementById("message");
-
-                if (!response.ok) {
-
-                    const errorText =
-                        await response.text();
-
-                    message.style.color = "red";
-                    message.textContent = errorText;
-
-                    return;
-                }
-
-                message.style.color = "green";
-                message.textContent =
-                    "Registration completed successfully.";
-
-                setTimeout(() => {
-                    window.location.href = "/allitems";
-                }, 1000);
-            });
-
-    </script>
-
+document.getElementById("completeProfileForm").addEventListener("submit", async function (event) {
+  event.preventDefault();
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  if (!username || !password) {
+    showToast("Please fill in all fields", "error");
+    return;
+  }
+  try {
+    const response = await fetch("/auth/google/complete-profile", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: username, password: password })
+    });
+    if (!response.ok) {
+      const errText = await response.text();
+      showToast(errText || "Registration failed. Please try again.", "error");
+      return;
+    }
+    showToast("Registration completed successfully!", "success");
+    setTimeout(() => { window.location.href = "/allitems"; }, 800);
+  } catch (err) {
+    showToast("Unable to connect to server", "error");
+  }
+});
+/*]]>*/
+</script>
 </body>
 </html>

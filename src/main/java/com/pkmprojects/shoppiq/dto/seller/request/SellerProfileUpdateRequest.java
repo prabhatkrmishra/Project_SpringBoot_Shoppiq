@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.dto.seller.request;
 
+import com.pkmprojects.shoppiq.dto.address.CreateAddressRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
@@ -29,7 +30,7 @@ public record SellerProfileUpdateRequest(
         @Size(max = 10)
         String panNumber,
 
-        AddressRequest businessAddress
+        CreateAddressRequest businessAddress
 
 ) {
 }

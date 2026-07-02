@@ -54,7 +54,7 @@ public class SellerProductController {
         this.sellerProductService = sellerProductService;
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<ItemResponse> createProduct(
             @Valid @RequestBody ItemRequest request,
             @AuthenticationPrincipal User currentUser) {
@@ -77,7 +77,7 @@ public class SellerProductController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<ItemResponse> updateProduct(
             @PathVariable @Positive(message = "Product id must be a positive number") Long id,
             @Valid @RequestBody ItemRequest request,
@@ -86,7 +86,7 @@ public class SellerProductController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable @Positive(message = "Product id must be a positive number") Long id,
             @AuthenticationPrincipal User currentUser) {

@@ -2,7 +2,6 @@ package com.pkmprojects.shoppiq.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.pkmprojects.shoppiq.audit.AuditableEntity;
-import com.pkmprojects.shoppiq.entity.Seller;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;

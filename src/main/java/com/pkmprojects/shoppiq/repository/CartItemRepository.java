@@ -36,13 +36,4 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
      * @return list of cart items
      */
     List<CartItem> findAllByCart(Cart cart);
-
-    /**
-     * Deletes all items belonging to the given cart.
-     *
-     * <p>Used during cart-clear operations.</p>
-     *
-     * @param cart the cart to clear
-     */
-    void deleteByCart(Cart cart);
 }

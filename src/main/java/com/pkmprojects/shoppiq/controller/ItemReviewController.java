@@ -75,6 +75,19 @@ public class ItemReviewController {
     }
 
     /**
+     * Retrieves every review written by the authenticated user.
+     *
+     * @param currentUser authenticated user
+     * @return ordered review list
+     */
+    @GetMapping("/user/reviews")
+    public List<ItemReviewResponse> getByUser(
+            @AuthenticationPrincipal User currentUser
+    ) {
+        return itemReviewService.getByUser(currentUser);
+    }
+
+    /**
      * Retrieves every review belonging to an item.
      *
      * @param itemId item identifier — must be a positive number

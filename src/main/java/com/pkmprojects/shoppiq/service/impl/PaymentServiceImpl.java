@@ -82,9 +82,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentReference(reference)
                 .paymentMethod(order.getPaymentMethod())
                 .paymentStatus(PaymentStatus.PENDING)
-                .gateway(order.getPaymentMethod() == PaymentMethod.COD
-                        ? PaymentGateway.NONE
-                        : PaymentGateway.NONE)
+                .gateway(PaymentGateway.NONE)
                 .amount(order.getGrandTotal())
                 .currency(DEFAULT_CURRENCY)
                 .build();
@@ -174,32 +172,6 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         payment.setPaymentStatus(PaymentStatus.CANCELLED);
-        paymentRepository.save(payment);
-        return PaymentStatusResponse.from(payment);
-    }
-
-    // =========================================================
-    // Refund
-    // =========================================================
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>
-     * Only {@code PAID} payments can be refunded.
-     * This method does not check ownership — it is secured at the controller
-     * layer to {@code ADMIN} only.
-     * </p>
-     */
-    @Override
-    public PaymentStatusResponse refund(Long paymentId) {
-        Payment payment = findOrThrow(paymentId);
-
-        if (payment.getPaymentStatus() != PaymentStatus.PAID) {
-            throw PaymentInvalidStateException.refundNotAllowed(paymentId, payment.getPaymentStatus());
-        }
-
-        payment.setPaymentStatus(PaymentStatus.REFUNDED);
         paymentRepository.save(payment);
         return PaymentStatusResponse.from(payment);
     }

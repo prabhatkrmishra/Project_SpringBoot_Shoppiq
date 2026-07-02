@@ -17,7 +17,8 @@ import org.springframework.stereotype.Component;
  * <ul>
  *   <li>{@code HttpOnly} — inaccessible to JavaScript, mitigates XSS</li>
  *   <li>{@code Secure} — HTTPS-only in production</li>
- *   <li>{@code SameSite=Strict} — not sent on cross-site requests, mitigates CSRF</li>
+ *   <li>{@code SameSite=Lax} — sent on same-site top-level navigations; mitigates CSRF
+ *       while allowing browser redirect after login</li>
  *   <li>{@code Path=/} — sent with every request to this origin</li>
  *   <li>{@code Max-Age} — controls persistence (session vs. remember-me)</li>
  * </ul>
@@ -46,7 +47,7 @@ public class JwtCookieFactory {
         cookie.setSecure(secureCookie);
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
-        cookie.setAttribute("SameSite", "Strict");
+        cookie.setAttribute("SameSite", "Lax");
         return cookie;
     }
 }

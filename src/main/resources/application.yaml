@@ -27,6 +27,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
+  web:
+    error:
+      include-message: always
+      include-binding-errors: always
+      include-stacktrace: never
 jwt:
   secret: ${JWT_SECRET}
   expiration: 2592000000

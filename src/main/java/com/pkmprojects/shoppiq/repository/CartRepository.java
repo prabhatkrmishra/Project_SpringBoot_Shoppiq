@@ -23,12 +23,4 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
      * @return the user's cart, if it exists
      */
     Optional<Cart> findByUser(User user);
-
-    /**
-     * Returns {@code true} if the given user already has a cart.
-     *
-     * @param user the authenticated user
-     * @return {@code true} when a cart exists
-     */
-    boolean existsByUser(User user);
 }

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/header :: head('My Profile')}"></head>
+<body>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+    <main class="page">
+        <div class="container container-narrow">
+            <div class="page-header">
+                <h1>My Profile</h1>
+                <p>Manage your account information</p>
+            </div>
+
+            <!-- Account Info Panel -->
+            <div class="panel">
+                <div class="panel-title">Account Details</div>
+                <div sec:authorize="isAuthenticated()">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <p class="text-sm m-0" sec:authentication="principal.name">User</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <p class="text-sm m-0" sec:authentication="name">user</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Member Since</label>
+                        <p class="text-sm m-0" id="profile-member-since">Loading...</p>
+                    </div>
+                </div>
+                <div sec:authorize="!isAuthenticated()">
+                    <p class="text-sm">Please <a th:href="@{/login}" class="btn-link">sign in</a> to view your profile.</p>
+                </div>
+            </div>
+
+            <!-- Role Badge -->
+            <div sec:authorize="isAuthenticated()" class="mb-lg">
+                <span sec:authorize="hasRole('ADMIN')" class="badge badge-danger badge-lg">
+                    Admin
+                </span>
+                <span sec:authorize="hasRole('SELLER') and !hasRole('ADMIN')" class="badge badge-warning badge-lg">
+                    Seller
+                </span>
+                <span sec:authorize="!hasRole('ADMIN') and !hasRole('SELLER')" class="badge badge-success badge-lg">
+                    Customer
+                </span>
+            </div>
+
+            <!-- Quick Actions (customers only, no admin/seller) -->
+            <div sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('SELLER')">
+                <div class="section-label">Quick Actions</div>
+                <div class="grid-2">
+                    <a th:href="@{/orders}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="package" class="icon-sm"></i> My Orders</h3>
+                                <p class="card-text">View order history and track shipments</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/address}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="map-pin" class="icon-sm"></i> Addresses</h3>
+                                <p class="card-text">Manage your shipping addresses</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/cart}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="shopping-cart" class="icon-sm"></i> Shopping Cart</h3>
+                                <p class="card-text">View and edit your cart</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/my-reviews}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="star" class="icon-sm"></i> My Reviews</h3>
+                                <p class="card-text">View and manage your product reviews</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Seller Quick Actions (only addresses) -->
+            <div sec:authorize="hasRole('SELLER') and !hasRole('ADMIN')">
+                <div class="section-label">Quick Actions</div>
+                <div class="grid-2">
+                    <a th:href="@{/address}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="map-pin" class="icon-sm"></i> Addresses</h3>
+                                <p class="card-text">Manage your shipping addresses</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Seller Section -->
+            <div sec:authorize="hasRole('SELLER')" class="mt-lg">
+                <div class="section-label">Seller Tools</div>
+                <div class="grid-2">
+                    <a th:href="@{/seller-panel/profile}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="user" class="icon-sm"></i> Seller Profile</h3>
+                                <p class="card-text">Manage your seller account</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/seller-panel/dashboard}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="bar-chart-2" class="icon-sm"></i> Seller Dashboard</h3>
+                                <p class="card-text">Overview of your store performance</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/seller-panel/products}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="box" class="icon-sm"></i> My Products</h3>
+                                <p class="card-text">Manage your product listings</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/seller-panel/inventory}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="clipboard-list" class="icon-sm"></i> Inventory</h3>
+                                <p class="card-text">Track and adjust stock levels</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/seller-panel/orders}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="truck" class="icon-sm"></i> Seller Orders</h3>
+                                <p class="card-text">View and fulfill customer orders</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Admin Section -->
+            <div sec:authorize="hasRole('ADMIN')" class="mt-lg">
+                <div class="section-label">Administration</div>
+                <div class="grid-2">
+                    <a th:href="@{/admin/dashboard}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="layout-dashboard" class="icon-sm"></i> Admin Dashboard</h3>
+                                <p class="card-text">System overview and analytics</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/users}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="users" class="icon-sm"></i> Manage Users</h3>
+                                <p class="card-text">View and manage user accounts</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/inventory}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="package" class="icon-sm"></i> Inventory</h3>
+                                <p class="card-text">Manage all products and stock</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/orders}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="shopping-bag" class="icon-sm"></i> All Orders</h3>
+                                <p class="card-text">View and manage all orders</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/reports}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="file-text" class="icon-sm"></i> Reports</h3>
+                                <p class="card-text">Sales data and analytics reports</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/reviews}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="star" class="icon-sm"></i> Reviews</h3>
+                                <p class="card-text">Moderate product reviews</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/categories}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="layers" class="icon-sm"></i> Categories</h3>
+                                <p class="card-text">Manage product categories</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/sellers}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="store" class="icon-sm"></i> Sellers</h3>
+                                <p class="card-text">Review and approve sellers</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/pending}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="clock" class="icon-sm"></i> Pending Products</h3>
+                                <p class="card-text">Approve new product listings</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/roles}" class="card-link">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3><i data-lucide="shield" class="icon-sm"></i> Roles</h3>
+                                <p class="card-text">Manage system roles</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Logout -->
+            <div sec:authorize="isAuthenticated()" class="mt-xl text-center">
+                <a th:href="@{/logout}" class="btn btn-secondary"><i data-lucide="log-out" class="icon-sm"></i> Sign Out</a>
+            </div>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script>
+    (function () {
+      'use strict';
+      API.get('/user/profile').then(function (user) {
+        var el = document.getElementById('profile-member-since');
+        if (el && user.createdAt) {
+          var d = new Date(user.createdAt);
+          var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+          el.textContent = months[d.getMonth()] + ' ' + d.getFullYear();
+        } else if (el) {
+          el.textContent = 'N/A';
+        }
+      }).catch(function () {
+        var el = document.getElementById('profile-member-since');
+        if (el) el.textContent = 'N/A';
+      });
+    })();
+    </script>
+</body>
+</html>

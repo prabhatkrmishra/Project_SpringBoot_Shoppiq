@@ -1,255 +1,149 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Order Detail — Shoppiq</title>
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body { font-family: 'Georgia', serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
-
-        .header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 0 40px; height: 56px;
-            display: flex; align-items: center; justify-content: space-between; }
-        .header h1 { font-size: 1rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
-            font-family: 'Segoe UI', sans-serif; color: #111; }
-        .header-nav { display: flex; align-items: center; gap: 12px; }
-        .nav-link { font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; letter-spacing: 0.06em;
-            text-transform: uppercase; color: #555; text-decoration: none; padding: 6px 16px;
-            border-radius: 3px; transition: color 0.15s; }
-        .nav-link:hover { color: #111; }
-
-        .page { max-width: 780px; margin: 40px auto; padding: 0 20px;
-            display: flex; flex-direction: column; gap: 22px; }
-
-        .back-link { font-family: 'Segoe UI', sans-serif; font-size: 0.82rem; color: #555;
-            text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-        .back-link:hover { color: #111; }
-
-        .section { background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 24px 28px; }
-        .section-title { font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase; color: #333; margin-bottom: 16px;
-            padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
-
-        /* Status row */
-        .status-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-        .order-id-text { font-family: 'Segoe UI', sans-serif; font-size: 0.88rem; color: #666; }
-        .order-id-text strong { color: #111; font-size: 1rem; }
-        .placed-at { font-family: 'Segoe UI', sans-serif; font-size: 0.82rem; color: #888; margin-top: 4px; }
-
-        .status-badge { display: inline-block; padding: 5px 14px; border-radius: 20px;
-            font-family: 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 700;
-            letter-spacing: 0.06em; text-transform: uppercase; }
-        .badge-PLACED       { background: #eaf0fb; color: #2563eb; }
-        .badge-CONFIRMED    { background: #e8f5e9; color: #2e7d32; }
-        .badge-SHIPPED      { background: #fff3e0; color: #e65100; }
-        .badge-OUT_FOR_DELIVERY { background: #fff8e1; color: #f57f17; }
-        .badge-DELIVERED    { background: #e8f5e9; color: #1b5e20; }
-        .badge-CANCELLED    { background: #fce4ec; color: #b71c1c; }
-        .badge-RETURNED     { background: #f3e5f5; color: #6a1b9a; }
-
-        /* Address */
-        .address-label { font-family: 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 700;
-            letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin-bottom: 4px; }
-        .address-name { font-size: 0.92rem; font-weight: 600; margin-bottom: 2px; }
-        .address-lines { font-family: 'Segoe UI', sans-serif; font-size: 0.84rem; color: #555; line-height: 1.6; }
-
-        /* Items */
-        .order-item { display: grid; grid-template-columns: 1fr auto auto;
-            gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
-        .order-item:last-child { border-bottom: none; }
-        .item-name { font-size: 0.9rem; }
-        .item-qty  { font-family: 'Segoe UI', sans-serif; font-size: 0.8rem; color: #888; margin-top: 2px; }
-        .item-price { font-family: 'Segoe UI', sans-serif; font-size: 0.85rem; color: #555; }
-        .item-subtotal { font-family: 'Segoe UI', sans-serif; font-size: 0.92rem; font-weight: 600; color: #111; }
-
-        /* Totals */
-        .total-row { display: flex; justify-content: space-between;
-            font-family: 'Segoe UI', sans-serif; font-size: 0.88rem; color: #555;
-            padding: 7px 0; border-bottom: 1px solid #f8f8f8; }
-        .total-row:last-of-type { border-bottom: none; }
-        .grand-total-row { display: flex; justify-content: space-between;
-            font-family: 'Segoe UI', sans-serif; font-size: 1rem; font-weight: 700; color: #111;
-            padding: 14px 0 0; }
-
-        /* Payment */
-        .payment-info { font-family: 'Segoe UI', sans-serif; font-size: 0.9rem; color: #444; }
-        .payment-badge { display: inline-block; margin-left: 8px; padding: 3px 10px;
-            border-radius: 20px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
-            text-transform: uppercase; background: #e8f5e9; color: #2e7d32; }
-        .payment-badge.PENDING  { background: #fff3e0; color: #e65100; }
-        .payment-badge.FAILED   { background: #fce4ec; color: #b71c1c; }
-        .payment-badge.REFUNDED { background: #f3e5f5; color: #6a1b9a; }
-
-        /* Cancel */
-        .cancel-btn { background: none; border: 1px solid #c0392b; color: #c0392b; border-radius: 3px;
-            padding: 9px 20px; font-family: 'Segoe UI', sans-serif; font-size: 0.82rem;
-            font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
-            transition: background 0.15s; }
-        .cancel-btn:hover { background: #fce4ec; }
-
-        .toast { position: fixed; bottom: 24px; right: 24px; background: #111; color: #fff;
-            padding: 12px 20px; border-radius: 4px; font-family: 'Segoe UI', sans-serif;
-            font-size: 0.85rem; display: none; z-index: 100; }
-        .toast.error { background: #c0392b; }
-        .toast.show { display: block; }
-
-        .loading { text-align: center; padding: 40px; font-family: 'Segoe UI', sans-serif;
-            color: #888; font-size: 0.88rem; }
-    </style>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Order Detail')}"></head>
 <body>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<header class="header">
-    <h1>Shoppiq</h1>
-    <nav class="header-nav">
-        <a href="/allitems" class="nav-link">Shop</a>
-        <a href="/orders" class="nav-link">My Orders</a>
-    </nav>
-</header>
+    <main class="page">
+        <div class="container container-narrow">
+            <div id="order-loading" class="flex-center" style="padding:3rem;">
+                <span class="spinner"></span>
+            </div>
 
-<main class="page">
-    <a href="/orders" class="back-link">← Back to Orders</a>
-    <div id="content"><div class="loading">Loading order…</div></div>
-</main>
+            <div id="order-content" style="display:none;">
+                <div class="page-header">
+                    <h1>Order #<span id="order-id"></span></h1>
+                    <div class="flex items-center gap-sm">
+                        <span class="badge" id="order-status"></span>
+                        <span class="text-muted text-sm" id="order-date"></span>
+                    </div>
+                </div>
 
-<div class="toast" id="toast"></div>
+                <div class="panel">
+                    <div class="panel-title">Order Items</div>
+                    <div id="order-items"></div>
+                </div>
 
-<script>
-    const orderId = new URLSearchParams(location.search).get('id');
+                <div class="panel">
+                    <div class="panel-title">Order Summary</div>
+                    <div class="cart-summary-row"><span>Subtotal</span><span id="order-subtotal">$0.00</span></div>
+                    <div class="cart-summary-row"><span>Shipping</span><span id="order-shipping">$0.00</span></div>
+                    <div class="cart-summary-row" id="order-discount-row" style="display:none;"><span>Discount</span><span class="discount" id="order-discount">-$0.00</span></div>
+                    <div class="cart-summary-row total"><span>Total</span><span id="order-total">$0.00</span></div>
+                </div>
 
-    (async function load() {
-        if (!orderId) { renderError('No order ID provided.'); return; }
-        try {
-            const res = await fetch(`/user/order/get/${orderId}`);
-            if (!res.ok) { renderError('Order not found.'); return; }
-            render(await res.json());
-        } catch {
-            renderError('Unable to load order.');
+                <div class="panel" id="order-address-panel" style="display:none;">
+                    <div class="panel-title">Shipping Address</div>
+                    <p class="text-sm" style="margin:0;" id="order-address"></p>
+                </div>
+
+                <div class="mt-lg flex gap-sm">
+                    <a href="/orders" class="btn btn-secondary">&larr; Back to Orders</a>
+                    <button id="cancel-order-btn" class="btn btn-danger" style="display:none;">Cancel Order</button>
+                    <button id="return-order-btn" class="btn btn-warning" style="display:none;">Request Return</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script>
+    (function () {
+      'use strict';
+      function badgeClass(status) {
+        if (status === 'DELIVERED' || status === 'COMPLETED') return 'badge-success';
+        if (status === 'CANCELLED') return 'badge-danger';
+        if (status === 'RETURNED') return 'badge-info';
+        return 'badge-warning';
+      }
+      function renderOrder(order) {
+        document.getElementById('order-loading').style.display = 'none';
+        document.getElementById('order-content').style.display = '';
+        document.getElementById('order-id').textContent = order.id;
+        var statusEl = document.getElementById('order-status');
+        statusEl.textContent = order.status;
+        statusEl.className = 'badge ' + badgeClass(order.status);
+        document.getElementById('order-date').textContent = formatDate(order.placedAt);
+        document.getElementById('order-subtotal').textContent = formatCurrency(order.subtotal);
+        document.getElementById('order-shipping').textContent = formatCurrency(order.shippingFee);
+        document.getElementById('order-total').textContent = formatCurrency(order.grandTotal);
+        if (order.discount && parseFloat(order.discount) > 0) {
+          document.getElementById('order-discount-row').style.display = '';
+          document.getElementById('order-discount').textContent = '-' + formatCurrency(order.discount);
         }
+        if (order.address) {
+          document.getElementById('order-address-panel').style.display = '';
+          var a = order.address;
+          document.getElementById('order-address').textContent =
+            (a.fullName || '') + '\n' +
+            (a.line1 || '') + (a.line2 ? ', ' + a.line2 : '') + '\n' +
+            (a.city || '') + ', ' + (a.state || '') + ' ' + (a.postalCode || '') + '\n' +
+            (a.country || '');
+        }
+        var itemsContainer = document.getElementById('order-items');
+        itemsContainer.innerHTML = '';
+        (order.orderItems || []).forEach(function (item) {
+          var imgUrl = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=48&h=48&fit=crop';
+          var div = document.createElement('div');
+          div.className = 'order-review-item';
+          div.innerHTML =
+            '<img class="item-thumb" src="' + imgUrl + '" alt="" loading="lazy" width="48" height="48">' +
+            '<div class="item-info">' +
+              '<div class="item-name">' + (item.itemNameSnapshot || 'Product') + '</div>' +
+              '<div class="item-qty">Qty: ' + item.quantity + '</div>' +
+            '</div>' +
+            '<div class="item-price">' + formatCurrency(item.subtotal) + '</div>';
+          itemsContainer.appendChild(div);
+        });
+        if (order.status === 'PLACED') {
+          var cancelBtn = document.getElementById('cancel-order-btn');
+          cancelBtn.style.display = '';
+          cancelBtn.addEventListener('click', function () {
+            showConfirmModal({ title: 'Cancel Order', message: 'Cancel this order? This cannot be undone.', confirmText: 'Cancel Order', danger: true }).then(function (confirmed) {
+              if (!confirmed) return;
+              setButtonLoading(cancelBtn, true);
+              API.put('/user/order/cancel/' + order.id, {}).then(function () {
+                showToast('Order cancelled', 'success');
+                renderOrder(Object.assign(order, { status: 'CANCELLED' }));
+              }).catch(function (err) {
+                showToast(err.message || 'Failed to cancel order', 'error');
+                setButtonLoading(cancelBtn, false);
+              });
+            });
+          });
+        }
+        if (order.status === 'DELIVERED') {
+          var returnBtn = document.getElementById('return-order-btn');
+          returnBtn.style.display = '';
+          returnBtn.addEventListener('click', function () {
+            showConfirmModal({ title: 'Request Return', message: 'Request a return for this order? Stock will be restored.', confirmText: 'Request Return' }).then(function (confirmed) {
+              if (!confirmed) return;
+              setButtonLoading(returnBtn, true);
+              API.put('/user/order/return/' + order.id, {}).then(function () {
+                showToast('Return requested', 'success');
+                renderOrder(Object.assign(order, { status: 'RETURNED' }));
+              }).catch(function (err) {
+                showToast(err.message || 'Failed to request return', 'error');
+                setButtonLoading(returnBtn, false);
+              });
+            });
+          });
+        }
+      }
+      document.addEventListener('DOMContentLoaded', function () {
+        var id = new URLSearchParams(window.location.search).get('id');
+        if (!id) {
+          document.getElementById('order-loading').style.display = 'none';
+          showToast('No order ID specified', 'error');
+          return;
+        }
+        API.get('/user/order/get/' + id).then(renderOrder).catch(function (err) {
+          document.getElementById('order-loading').style.display = 'none';
+          showToast(err.message || 'Failed to load order', 'error');
+        });
+      });
     })();
-
-    function render(o) {
-        const a = o.address;
-        const badgeClass = 'badge-' + o.status;
-        const payBadge   = 'payment-badge ' + o.paymentStatus;
-        const canCancel  = o.status === 'PLACED';
-
-        document.getElementById('content').innerHTML = `
-
-            <!-- Status -->
-            <section class="section">
-                <div class="status-row">
-                    <div>
-                        <div class="order-id-text">Order <strong>#${o.id}</strong></div>
-                        <div class="placed-at">Placed on ${fmt(o.placedAt)}</div>
-                    </div>
-                    <span class="status-badge ${badgeClass}">${o.status.replace(/_/g,' ')}</span>
-                </div>
-            </section>
-
-            <!-- Address -->
-            <section class="section">
-                <div class="section-title">Shipping Address</div>
-                <div class="address-label">${esc(a.label)}</div>
-                <div class="address-name">${esc(a.fullName)}</div>
-                <div class="address-lines">
-                    ${esc(a.line1)}${a.line2 ? ', ' + esc(a.line2) : ''}<br>
-                    ${esc(a.city)}, ${esc(a.state)} ${esc(a.postalCode)}<br>
-                    ${esc(a.country)} &nbsp;·&nbsp; ${esc(a.phone)}
-                </div>
-            </section>
-
-            <!-- Items -->
-            <section class="section">
-                <div class="section-title">Ordered Items</div>
-                ${o.orderItems.map(i => `
-                    <div class="order-item">
-                        <div>
-                            <div class="item-name">${esc(i.itemNameSnapshot)}</div>
-                            <div class="item-qty">Qty: ${i.quantity}</div>
-                        </div>
-                        <div class="item-price">₹${num(i.unitPriceSnapshot)}</div>
-                        <div class="item-subtotal">₹${num(i.subtotal)}</div>
-                    </div>
-                `).join('')}
-            </section>
-
-            <!-- Totals -->
-            <section class="section">
-                <div class="section-title">Price Breakdown</div>
-                <div class="total-row"><span>Subtotal</span><span>₹${num(o.subtotal)}</span></div>
-                <div class="total-row"><span>Shipping</span><span>₹${num(o.shippingFee)}</span></div>
-                <div class="total-row"><span>Tax</span><span>₹${num(o.tax)}</span></div>
-                <div class="total-row"><span>Discount</span><span>−₹${num(o.discount)}</span></div>
-                <div class="grand-total-row"><span>Grand Total</span><span>₹${num(o.grandTotal)}</span></div>
-            </section>
-
-            <!-- Payment -->
-            <section class="section">
-                <div class="section-title">Payment</div>
-                <div class="payment-info">
-                    Method: <strong>${o.paymentMethod}</strong>
-                    &nbsp; Status: <span class="${payBadge}">${o.paymentStatus}</span>
-                </div>
-                ${o.payment ? `
-                <div class="payment-info" style="margin-top:10px;">
-                    Reference: <strong>${esc(o.payment.paymentReference)}</strong>
-                    ${o.payment.transactionId
-                        ? `&nbsp;·&nbsp; Transaction ID: <strong>${esc(o.payment.transactionId)}</strong>`
-                        : ''}
-                </div>
-                <div style="margin-top:12px;">
-                    <a href="/payment?paymentId=${o.payment.id}"
-                       style="font-family:'Segoe UI',sans-serif;font-size:.82rem;color:#333;text-decoration:underline;">
-                        View payment details →
-                    </a>
-                </div>` : ''}
-            </section>
-
-            <!-- Cancel -->
-            ${canCancel ? `<div><button class="cancel-btn" onclick="cancelOrder(${o.id})">Cancel Order</button></div>` : ''}
-        `;
-    }
-
-    async function cancelOrder(id) {
-        if (!confirm('Cancel this order?')) return;
-        try {
-            const res = await fetch(`/user/order/cancel/${id}`, { method: 'PUT' });
-            if (res.ok) {
-                showToast('Order cancelled.');
-                setTimeout(() => location.reload(), 1200);
-            } else {
-                const err = await res.json();
-                showToast(err.detail || 'Could not cancel order.', true);
-            }
-        } catch {
-            showToast('Network error.', true);
-        }
-    }
-
-    function renderError(msg) {
-        document.getElementById('content').innerHTML =
-            `<div class="loading">${msg}</div>`;
-    }
-
-    function fmt(iso) {
-        return iso ? new Date(iso).toLocaleString('en-IN', {
-            day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'
-        }) : '';
-    }
-
-    function num(v) { return Number(v || 0).toFixed(2); }
-
-    function esc(s) {
-        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    function showToast(msg, error = false) {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.className   = 'toast show' + (error ? ' error' : '');
-        setTimeout(() => t.classList.remove('show'), 3500);
-    }
-</script>
+    </script>
 </body>
 </html>

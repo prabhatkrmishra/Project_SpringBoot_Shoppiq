@@ -183,16 +183,28 @@ public class SecurityConfig {
 
                         // Public frontend
                         .requestMatchers(
+                                "/",
                                 "/login",
                                 "/register",
                                 "/allitems",
+                                "/categories",
+                                "/category/**",
+                                "/item/**",
                                 "/complete-profile",
+                                "/terms",
+                                "/privacy",
+                                "/about",
+                                "/error",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/favicon.ico",
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         ).permitAll()
 
                         // Authenticated frontend pages
-                        .requestMatchers("/address").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers("/address", "/cart", "/profile").hasAnyRole("CUSTOMER", "ADMIN")
 
                         // Admin frontend pages
                         .requestMatchers(
@@ -202,23 +214,25 @@ public class SecurityConfig {
                                 "/admin/users",
                                 "/admin/payments",
                                 "/admin/reviews",
-                                "/admin/reports"
+                                "/admin/reports",
+                                "/admin/categories",
+                                "/admin/sellers",
+                                "/admin/pending",
+                                "/admin/roles"
                         ).hasRole("ADMIN")
 
                         // Admin API endpoints
                         .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
 
                         // Public backend
-                        .requestMatchers(
-                                "/auth/login",
-                                "/auth/logout",
-                                "/auth/google/get-profile",
-                                "/auth/google/complete-profile",
-                                "/user/register"
-                        ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/google/get-profile").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/google/complete-profile").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/contact").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/items/all").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/items/*").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/items/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/items/*").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/items/*/create/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/items/*/reviews").hasAnyRole("CUSTOMER", "ADMIN")
@@ -227,8 +241,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/reviews/*/delete").hasAnyRole("CUSTOMER", "ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/items/create/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/items/update/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/items/delete/**").hasRole("ADMIN")
 
                         // Categories: public reads, admin-only writes
                         .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
@@ -252,8 +264,7 @@ public class SecurityConfig {
                         // Order: customer-only access
                         .requestMatchers("/user/order/**").hasAnyRole("CUSTOMER", "ADMIN")
 
-                        // Payment: customer endpoints + admin-only refund
-                        .requestMatchers(HttpMethod.PUT, "/user/payment/refund/**").hasRole("ADMIN")
+                        // Payment: customer endpoints
                         .requestMatchers("/user/payment/**").hasAnyRole("CUSTOMER", "ADMIN")
 
                         // Frontend order pages
@@ -264,6 +275,8 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
+
+                .formLogin(form -> form.disable())
 
                 .oauth2Login(oauth -> oauth
                         .loginPage("/login")

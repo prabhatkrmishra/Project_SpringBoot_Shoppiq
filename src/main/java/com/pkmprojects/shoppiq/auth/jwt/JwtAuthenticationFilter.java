@@ -8,6 +8,7 @@ import com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -119,6 +120,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      *
      * <h2>Bypassed Endpoints</h2>
      * <ul>
+     *     <li>{@code /} - Standard application home route</li>
      *     <li>{@code /login} - Standard application login route</li>
      *     <li>{@code /oauth2/**} - Third-party OAuth2 authorization and redirection base pathways</li>
      *     <li>{@code /login/oauth2/**} - OAuth2 processing filters and client landing hooks</li>
@@ -128,13 +130,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      *     </ul>
      */
     private static final RequestMatcher SKIP_MATCHER = new OrRequestMatcher(
-            PathPatternRequestMatcher.pathPattern("/login"),
+            PathPatternRequestMatcher.pathPattern("/error"),
+            PathPatternRequestMatcher.pathPattern("/favicon.ico"),
+            PathPatternRequestMatcher.pathPattern("/css/**"),
+            PathPatternRequestMatcher.pathPattern("/js/**"),
+            PathPatternRequestMatcher.pathPattern("/images/**"),
             PathPatternRequestMatcher.pathPattern("/auth/**"),
             PathPatternRequestMatcher.pathPattern("/oauth2/**"),
             PathPatternRequestMatcher.pathPattern("/login/oauth2/**"),
-            PathPatternRequestMatcher.pathPattern("/register"),
-            PathPatternRequestMatcher.pathPattern("/error"),
-            PathPatternRequestMatcher.pathPattern("/favicon.ico")
+            PathPatternRequestMatcher.pathPattern("/items/all"),
+            PathPatternRequestMatcher.pathPattern("/items/*")
     );
 
     /**
@@ -241,7 +246,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         user,
                         null,
-                        jwtAuthenticationUtils.getAuthoritiesFromToken(token)
+                        user.getAuthorities()
                 );
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -254,11 +259,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (JwtException ex) {
             SecurityContextHolder.clearContext();
-            writeAuthenticationFailure(request, response,
-                    new JwtAuthenticationException(ErrorCode.INVALID_JWT, "JWT token is invalid."));
+            if (isBrowserRequest(request)) {
+                filterChain.doFilter(request, response);
+            } else {
+                writeAuthenticationFailure(request, response,
+                        new JwtAuthenticationException(ErrorCode.INVALID_JWT, "JWT token is invalid."));
+            }
         } catch (JwtAuthenticationException ex) {
             SecurityContextHolder.clearContext();
-            writeAuthenticationFailure(request, response, ex);
+            if (isBrowserRequest(request)) {
+                filterChain.doFilter(request, response);
+            } else {
+                writeAuthenticationFailure(request, response, ex);
+            }
         }
     }
 
@@ -275,13 +288,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     private void writeAuthenticationFailure(HttpServletRequest request,
                                             HttpServletResponse response,
-                                            JwtAuthenticationException exception) throws IOException {
+                                            JwtAuthenticationException exception) throws IOException, ServletException {
 
         logger.debug("JWT authentication failed for [{}]: {}", request.getRequestURI(), exception.getDetail());
 
         ProblemDetail problemDetail = ProblemDetailFactory.create(
                 exception, URI.create(request.getRequestURI()));
 
-        responseWriter.write(response, problemDetail);
+        if (isBrowserRequest(request)) {
+            request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, problemDetail.getStatus());
+            request.setAttribute(RequestDispatcher.ERROR_MESSAGE, problemDetail.getDetail());
+            request.setAttribute("errorCode", problemDetail.getProperties() != null
+                    ? problemDetail.getProperties().get("errorCode") : null);
+            request.getRequestDispatcher("/error").forward(request, response);
+        } else {
+            responseWriter.write(response, problemDetail);
+        }
+    }
+
+    private boolean isBrowserRequest(HttpServletRequest request) {
+        String accept = request.getHeader("Accept");
+        return accept != null && accept.contains("text/html");
     }
 }

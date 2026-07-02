@@ -114,4 +114,24 @@ public class UserOrderController {
         checkoutService.cancelOrder(user, orderId);
         return ResponseEntity.noContent().build();
     }
+
+    // =========================================================
+    // Return
+    // =========================================================
+
+    /**
+     * Requests a return for an order in {@code DELIVERED} status.
+     *
+     * @param user    authenticated customer
+     * @param orderId order id (must be positive)
+     * @return 204 No Content
+     */
+    @PutMapping("/return/{id}")
+    public ResponseEntity<Void> requestReturn(
+            @AuthenticationPrincipal User user,
+            @PathVariable("id") @Positive(message = "Order id must be a positive number.") Long orderId) {
+
+        checkoutService.requestReturn(user, orderId);
+        return ResponseEntity.noContent().build();
+    }
 }

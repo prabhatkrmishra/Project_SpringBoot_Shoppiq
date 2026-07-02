@@ -1,114 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My Orders — Shoppiq</title>
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body { font-family: 'Georgia', serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
-
-        .header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 0 40px; height: 56px;
-            display: flex; align-items: center; justify-content: space-between; }
-        .header h1 { font-size: 1rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
-            font-family: 'Segoe UI', sans-serif; color: #111; }
-        .header-nav { display: flex; align-items: center; gap: 12px; }
-        .nav-link { font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; letter-spacing: 0.06em;
-            text-transform: uppercase; color: #555; text-decoration: none; padding: 6px 16px;
-            border-radius: 3px; transition: color 0.15s; }
-        .nav-link:hover { color: #111; }
-
-        .page { max-width: 800px; margin: 40px auto; padding: 0 20px; }
-
-        .page-heading { font-family: 'Segoe UI', sans-serif; font-size: 0.82rem; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase; color: #333; margin-bottom: 20px; }
-
-        .order-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 4px;
-            padding: 20px 24px; margin-bottom: 14px; display: grid;
-            grid-template-columns: 1fr auto; gap: 12px; align-items: center; cursor: pointer;
-            transition: box-shadow 0.15s; text-decoration: none; color: inherit; }
-        .order-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
-
-        .order-id { font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; color: #888; margin-bottom: 4px; }
-        .order-date { font-family: 'Segoe UI', sans-serif; font-size: 0.82rem; color: #555; margin-bottom: 8px; }
-        .order-total { font-family: 'Segoe UI', sans-serif; font-size: 1rem; font-weight: 700; color: #111; }
-
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px;
-            font-family: 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 700;
-            letter-spacing: 0.06em; text-transform: uppercase; }
-        .badge-PLACED       { background: #eaf0fb; color: #2563eb; }
-        .badge-CONFIRMED    { background: #e8f5e9; color: #2e7d32; }
-        .badge-SHIPPED      { background: #fff3e0; color: #e65100; }
-        .badge-OUT_FOR_DELIVERY { background: #fff8e1; color: #f57f17; }
-        .badge-DELIVERED    { background: #e8f5e9; color: #1b5e20; }
-        .badge-CANCELLED    { background: #fce4ec; color: #b71c1c; }
-        .badge-RETURNED     { background: #f3e5f5; color: #6a1b9a; }
-
-        .empty-state { text-align: center; padding: 60px 20px; }
-        .empty-state p { font-family: 'Segoe UI', sans-serif; color: #888; margin-bottom: 16px; }
-        .shop-link { display: inline-block; padding: 10px 24px; background: #111; color: #fff;
-            text-decoration: none; border-radius: 3px; font-family: 'Segoe UI', sans-serif;
-            font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }
-
-        .loading { text-align: center; padding: 40px; font-family: 'Segoe UI', sans-serif;
-            color: #888; font-size: 0.88rem; }
-    </style>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('My Orders')}"></head>
 <body>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<header class="header">
-    <h1>Shoppiq</h1>
-    <nav class="header-nav">
-        <a href="/allitems" class="nav-link">Shop</a>
-        <a href="/checkout" class="nav-link">Checkout</a>
-        <a href="/address" class="nav-link">Addresses</a>
-    </nav>
-</header>
+    <main class="page">
+        <div class="container container-narrow">
+            <div class="page-header">
+                <h1>My Orders</h1>
+                <p>View and track your orders</p>
+            </div>
 
-<main class="page">
-    <div class="page-heading">My Orders</div>
-    <div id="ordersContainer"><div class="loading">Loading orders…</div></div>
-</main>
+            <div id="orders-loading" class="flex-center" style="padding:3rem;">
+                <span class="spinner"></span>
+            </div>
 
-<script>
-    (async function loadOrders() {
-        const container = document.getElementById('ordersContainer');
-        try {
-            const res  = await fetch('/user/order/get');
-            const list = await res.json();
+            <div id="orders-empty" class="cart-empty" style="display:none;">
+                <h2>No orders yet</h2>
+                <p>Place your first order to see it here.</p>
+                <a href="/allitems" class="btn btn-primary">Start Shopping</a>
+            </div>
 
-            if (!list.length) {
-                container.innerHTML = `<div class="empty-state">
-                    <p>You haven't placed any orders yet.</p>
-                    <a href="/allitems" class="shop-link">Start Shopping</a>
-                </div>`;
-                return;
-            }
+            <div id="orders-list" style="display:none;"></div>
+        </div>
+    </main>
 
-            container.innerHTML = list.map(o => `
-                <a class="order-card" href="/order-detail?id=${o.id}">
-                    <div>
-                        <div class="order-id">Order #${o.id}</div>
-                        <div class="order-date">${formatDate(o.placedAt)}</div>
-                        <div class="order-total">₹${Number(o.grandTotal).toFixed(2)}</div>
-                    </div>
-                    <div>
-                        <span class="status-badge badge-${o.status}">${o.status.replace(/_/g,' ')}</span>
-                    </div>
-                </a>
-            `).join('');
-
-        } catch {
-            container.innerHTML = '<div class="loading">Unable to load orders.</div>';
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script>
+    (function () {
+      'use strict';
+      function badgeClass(status) {
+        if (status === 'DELIVERED' || status === 'COMPLETED') return 'badge-success';
+        if (status === 'CANCELLED') return 'badge-danger';
+        if (status === 'RETURNED') return 'badge-info';
+        return 'badge-warning';
+      }
+      function renderOrders(orders) {
+        document.getElementById('orders-loading').style.display = 'none';
+        if (!orders || orders.length === 0) {
+          document.getElementById('orders-empty').style.display = '';
+          return;
         }
-    })();
-
-    function formatDate(iso) {
-        if (!iso) return '';
-        return new Date(iso).toLocaleDateString('en-IN', {
-            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        var container = document.getElementById('orders-list');
+        container.style.display = '';
+        container.innerHTML = '';
+        orders.forEach(function (order) {
+          var itemCount = order.orderItems ? order.orderItems.length : 0;
+          var div = document.createElement('div');
+          div.className = 'card mb-md';
+          div.innerHTML =
+            '<div class="card-body">' +
+              '<div class="flex items-center justify-between mb-sm">' +
+                '<div>' +
+                  '<strong>Order #' + order.id + '</strong>' +
+                  '<span class="text-muted text-sm ml-sm">' + formatDate(order.placedAt) + '</span>' +
+                '</div>' +
+                '<span class="badge ' + badgeClass(order.status) + '">' + order.status + '</span>' +
+              '</div>' +
+              '<p class="text-sm" style="margin:0;">' +
+                itemCount + ' item(s)' +
+                ' &middot; <strong>' + formatCurrency(order.grandTotal) + '</strong>' +
+              '</p>' +
+              '<div class="mt-md">' +
+                '<a href="/order-detail?id=' + order.id + '" class="btn btn-sm btn-secondary">View Details</a>' +
+              '</div>' +
+            '</div>';
+          container.appendChild(div);
         });
-    }
-</script>
+      }
+      document.addEventListener('DOMContentLoaded', function () {
+        API.get('/user/order/get/all').then(renderOrders).catch(function (err) {
+          document.getElementById('orders-loading').style.display = 'none';
+          document.getElementById('orders-empty').style.display = '';
+        });
+      });
+    })();
+    </script>
 </body>
 </html>

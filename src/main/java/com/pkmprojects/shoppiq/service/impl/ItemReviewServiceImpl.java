@@ -148,6 +148,18 @@ public class ItemReviewServiceImpl implements ItemReviewService {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<ItemReviewResponse> getByUser(User user) {
+        return itemReviewRepository
+                .findAllByUserIdOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(ItemReviewResponse::fromEntity)
+                .toList();
+    }
+
+    /**
      * Verifies that the supplied user is allowed to modify the given
      * review — either because they wrote it, or because they hold the
      * {@code ROLE_ADMIN} authority.

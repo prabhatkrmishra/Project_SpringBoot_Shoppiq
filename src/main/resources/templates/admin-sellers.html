@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Manage Sellers')}"></head>
+<body>
+<th:block th:replace="~{fragments/admin-header :: admin-header('sellers')}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="admin-main">
+  <div class="page-header">
+    <h1>Sellers</h1>
+    <p>Review and manage seller accounts</p>
+  </div>
+
+  <div class="admin-panel">
+    <div class="admin-panel-header">
+      <div class="admin-panel-title">All Sellers</div>
+      <div class="flex gap-sm">
+        <select id="status-filter" class="form-input" style="width:auto;">
+          <option value="">All Status</option>
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Verified</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr><th>ID</th><th>Business</th><th>User</th><th>Email</th><th>Verification</th><th>Seller</th><th>Commission</th><th>Joined</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="sellers-body">
+          <tr><td colspan="9" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+(function () {
+  'use strict';
+  function statusBadge(s) {
+    if (s === 'APPROVED') return 'badge-success';
+    if (s === 'REJECTED') return 'badge-danger';
+    return 'badge-warning';
+  }
+  function sellerStatusBadge(s) {
+    if (s === 'ACTIVE') return 'badge-success';
+    if (s === 'SUSPENDED') return 'badge-danger';
+    return 'badge-warning';
+  }
+  function renderSellers(sellers) {
+    var tbody = document.getElementById('sellers-body');
+    if (!sellers || sellers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No sellers found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    sellers.forEach(function (s) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + s.id + '</td>' +
+        '<td><strong>' + (s.businessName || '') + '</strong></td>' +
+        '<td>' + (s.userName || '') + '</td>' +
+        '<td class="text-sm">' + (s.userEmail || '') + '</td>' +
+        '<td><span class="badge ' + statusBadge(s.verificationStatus) + '">' + (s.verificationStatus || '') + '</span></td>' +
+        '<td><span class="badge ' + sellerStatusBadge(s.sellerStatus) + '">' + (s.sellerStatus || '') + '</span></td>' +
+        '<td>' + (s.commissionRate ? s.commissionRate + '%' : 'N/A') + '</td>' +
+        '<td class="text-sm">' + formatDate(s.joinedAt) + '</td>' +
+        '<td class="flex gap-xs">' +
+          (s.verificationStatus !== 'APPROVED' ? '<button class="btn btn-sm btn-success seller-approve-btn" data-id="' + s.id + '">Approve</button>' : '') +
+          (s.verificationStatus !== 'REJECTED' ? '<button class="btn btn-sm btn-danger seller-reject-btn" data-id="' + s.id + '">Reject</button>' : '') +
+          (s.sellerStatus === 'ACTIVE' ? '<button class="btn btn-sm btn-warning seller-suspend-btn" data-id="' + s.id + '">Suspend</button>' : '') +
+          (s.sellerStatus === 'SUSPENDED' ? '<button class="btn btn-sm btn-success seller-unsuspend-btn" data-id="' + s.id + '">Unsuspend</button>' : '') +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.seller-approve-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.id;
+        API.put('/api/admin/sellers/' + id + '/approve', {}).then(function () {
+          showToast('Seller approved', 'success');
+          loadSellers();
+        }).catch(function (e) { showToast(e.message, 'error'); });
+      });
+    });
+    tbody.querySelectorAll('.seller-reject-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.id;
+        showConfirmModal({ title: 'Reject Seller', message: 'Reject this seller?', confirmText: 'Reject', danger: true }).then(function (confirmed) {
+          if (!confirmed) return;
+          API.put('/api/admin/sellers/' + id + '/reject', {}).then(function () {
+            showToast('Seller rejected', 'success');
+            loadSellers();
+          }).catch(function (e) { showToast(e.message, 'error'); });
+        });
+      });
+    });
+    tbody.querySelectorAll('.seller-suspend-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.id;
+        showConfirmModal({ title: 'Suspend Seller', message: 'Suspend this seller? Their store will also be suspended.', confirmText: 'Suspend', danger: true }).then(function (confirmed) {
+          if (!confirmed) return;
+          API.put('/api/admin/sellers/' + id + '/suspend', {}).then(function () {
+            showToast('Seller suspended', 'success');
+            loadSellers();
+          }).catch(function (e) { showToast(e.message, 'error'); });
+        });
+      });
+    });
+    tbody.querySelectorAll('.seller-unsuspend-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.id;
+        showConfirmModal({ title: 'Unsuspend Seller', message: 'Unsuspend this seller? Their store will be set to DRAFT.', confirmText: 'Unsuspend' }).then(function (confirmed) {
+          if (!confirmed) return;
+          API.put('/api/admin/sellers/' + id + '/unsuspend', {}).then(function () {
+            showToast('Seller unsuspended', 'success');
+            loadSellers();
+          }).catch(function (e) { showToast(e.message, 'error'); });
+        });
+      });
+    });
+  }
+  function loadSellers() {
+    var status = document.getElementById('status-filter').value;
+    var url = '/api/admin/sellers' + (status ? '?status=' + status : '');
+    API.get(url).then(renderSellers).catch(function () {
+      document.getElementById('sellers-body').innerHTML =
+        '<tr><td colspan="9" class="text-center text-muted">Failed to load</td></tr>';
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    loadSellers();
+    document.getElementById('status-filter').addEventListener('change', loadSellers);
+  });
+})();
+</script>
+</body>
+</html>

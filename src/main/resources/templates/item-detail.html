@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/header :: head('Product Detail')}"></head>
+<body>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+    <main class="page">
+        <div class="container">
+            <div id="loadingState" class="text-center" style="padding:48px 0;">
+                <div class="spinner"></div>
+                <p class="text-muted mt-md">Loading product...</p>
+            </div>
+
+            <div id="errorState" class="empty-state" style="display:none;">
+                <div class="empty-state-icon"><i data-lucide="package-x" class="icon-xl"></i></div>
+                <h2>Product Not Found</h2>
+                <p>The product you're looking for doesn't exist or has been removed.</p>
+                <a th:href="@{/allitems}" class="btn btn-primary">Back to Shop</a>
+            </div>
+
+            <div id="itemDetail" class="item-detail" style="display:none;"></div>
+
+            <div id="reviewsSection" style="display:none;" class="mt-xl">
+                <div class="panel">
+                    <div class="panel-title">Customer Reviews</div>
+                    <div id="reviews-loading" class="flex-center" style="padding:1rem;">
+                        <span class="spinner"></span>
+                    </div>
+                    <div id="reviews-list" style="display:none;"></div>
+                    <div id="reviews-empty" class="text-center text-muted text-sm" style="display:none;padding:1rem;">No reviews yet. Be the first to review this product!</div>
+                </div>
+
+                <div sec:authorize="isAuthenticated()" class="panel mt-lg">
+                    <div class="panel-title">Write a Review</div>
+                    <form id="review-form">
+                        <div class="form-group">
+                            <label class="form-label">Rating</label>
+                            <div id="star-rating" class="star-rating" style="display:flex;gap:4px;cursor:pointer;">
+                                <i data-lucide="star" class="icon star-icon" data-rating="1"></i>
+                                <i data-lucide="star" class="icon star-icon" data-rating="2"></i>
+                                <i data-lucide="star" class="icon star-icon" data-rating="3"></i>
+                                <i data-lucide="star" class="icon star-icon" data-rating="4"></i>
+                                <i data-lucide="star" class="icon star-icon" data-rating="5"></i>
+                            </div>
+                            <input type="hidden" id="review-rating" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="review-text" class="form-label">Your Review <span class="text-muted">(optional)</span></label>
+                            <textarea id="review-text" class="form-input" rows="4" maxlength="1000" placeholder="Tell others what you think about this product..." style="resize:vertical;"></textarea>
+                        </div>
+                        <button type="submit" id="review-submit-btn" class="btn btn-primary">Submit Review</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Edit Review Modal -->
+            <div id="editReviewModal" class="modal-overlay">
+                <div class="modal" style="max-width:480px;width:90%;">
+                    <div class="modal-header">
+                        <h3>Edit Review</h3>
+                        <button type="button" class="modal-close" id="editReviewClose">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">Rating</label>
+                            <div id="edit-star-rating" class="star-rating" style="display:flex;gap:4px;cursor:pointer;">
+                                <i data-lucide="star" class="icon star-icon" data-rating="1"></i>
+                                <i data-lucide="star" class="icon star-icon" data-rating="2"></i>
+                                <i data-lucide="star" class="icon star-icon" data-rating="3"></i>
+                                <i data-lucide="star" class="icon star-icon" data-rating="4"></i>
+                                <i data-lucide="star" class="icon star-icon" data-rating="5"></i>
+                            </div>
+                            <input type="hidden" id="edit-review-rating" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-review-text" class="form-label">Your Review</label>
+                            <textarea id="edit-review-text" class="form-input" rows="4" maxlength="1000" style="resize:vertical;"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="editReviewCancel">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="editReviewSave">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" id="currentUsername" sec:authorize="isAuthenticated()" th:value="${#authentication.name}">
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <script>
+    (function () {
+      'use strict';
+      var currentItemId = null;
+      var selectedRating = 0;
+      var editSelectedRating = 0;
+      var currentUsername = '';
+      var editingReviewId = null;
+
+      function escapeHtml(s) { var d = document.createElement('div'); d.appendChild(document.createTextNode(s || '')); return d.innerHTML; }
+      function escapeAttr(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+      function starHtml(rating, interactive) {
+        var html = '';
+        for (var i = 1; i <= 5; i++) {
+          var cls = i <= rating ? 'star-icon filled' : 'star-icon';
+          if (interactive) {
+            html += '<i data-lucide="star" class="icon ' + cls + '" data-rating="' + i + '" style="cursor:pointer;"></i>';
+          } else {
+            html += '<i data-lucide="star" class="icon ' + cls + '"></i>';
+          }
+        }
+        return html;
+      }
+
+      function renderReviews(reviews) {
+        document.getElementById('reviews-loading').style.display = 'none';
+        var list = document.getElementById('reviews-list');
+        var empty = document.getElementById('reviews-empty');
+        if (!reviews || reviews.length === 0) {
+          empty.style.display = '';
+          return;
+        }
+        list.style.display = '';
+        list.innerHTML = '';
+        reviews.forEach(function (r) {
+          var isOwner = currentUsername && r.reviewerUsername === currentUsername;
+          var div = document.createElement('div');
+          div.className = 'review-item';
+          div.style.cssText = 'border-bottom:1px solid var(--border);padding:1rem 0;';
+          div.innerHTML =
+            '<div class="flex items-center justify-between mb-sm">' +
+              '<div class="flex items-center gap-sm">' +
+                '<strong>' + escapeHtml(r.reviewerName || r.reviewerUsername || 'Anonymous') + '</strong>' +
+                '<span class="text-sm text-muted">' + formatDate(r.createdAt) + '</span>' +
+              '</div>' +
+              '<div class="star-rating-display">' + starHtml(r.rating || 0, false) + '</div>' +
+            '</div>' +
+            (r.review ? '<p class="text-sm" style="margin:0.5rem 0 0;">' + escapeHtml(r.review) + '</p>' : '') +
+            (isOwner ? '<div class="mt-sm" style="display:flex;gap:8px;">' +
+              '<button class="btn btn-sm btn-secondary edit-review-btn" data-review-id="' + r.id + '" data-rating="' + r.rating + '" data-review="' + escapeAttr(r.review || '') + '"><i data-lucide="pencil" class="icon-sm"></i> Edit</button>' +
+              '<button class="btn btn-sm btn-danger delete-review-btn" data-review-id="' + r.id + '"><i data-lucide="trash-2" class="icon-sm"></i> Delete</button>' +
+              '</div>' : '');
+          list.appendChild(div);
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        list.querySelectorAll('.edit-review-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            editingReviewId = this.dataset.reviewId;
+            editSelectedRating = parseInt(this.dataset.rating) || 0;
+            document.getElementById('edit-review-rating').value = editSelectedRating;
+            document.getElementById('edit-review-text').value = this.dataset.review || '';
+            updateEditStars();
+            document.getElementById('editReviewModal').classList.add('active');
+          });
+        });
+
+        list.querySelectorAll('.delete-review-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var rid = this.dataset.reviewId;
+            showConfirmModal({ title: 'Delete Review', message: 'Are you sure you want to delete this review?', confirmText: 'Delete', danger: true }).then(function (confirmed) {
+              if (!confirmed) return;
+              API.del('/reviews/' + rid + '/delete').then(function () {
+                showToast('Review deleted', 'success');
+                loadReviews();
+              }).catch(function (err) {
+                showToast(err.message || 'Failed to delete review', 'error');
+              });
+            });
+          });
+        });
+      }
+
+      function updateEditStars() {
+        var container = document.getElementById('edit-star-rating');
+        if (!container) return;
+        container.querySelectorAll('.star-icon').forEach(function (s, i) {
+          if (i < editSelectedRating) { s.classList.add('filled'); s.style.color = 'var(--color-warning, #f59e0b)'; }
+          else { s.classList.remove('filled'); s.style.color = ''; }
+        });
+      }
+
+      function setupEditStarRating() {
+        var container = document.getElementById('edit-star-rating');
+        if (!container) return;
+        container.querySelectorAll('.star-icon').forEach(function (star) {
+          star.addEventListener('click', function () {
+            editSelectedRating = parseInt(this.dataset.rating) || 0;
+            document.getElementById('edit-review-rating').value = editSelectedRating;
+            updateEditStars();
+          });
+        });
+      }
+
+      function loadReviews() {
+        if (!currentItemId) return;
+        document.getElementById('reviewsSection').style.display = '';
+        document.getElementById('reviews-loading').style.display = '';
+        API.get('/items/' + currentItemId + '/reviews').then(renderReviews).catch(function () {
+          document.getElementById('reviews-loading').style.display = 'none';
+          document.getElementById('reviews-empty').style.display = '';
+        });
+      }
+
+      function setupStarRating() {
+        var container = document.getElementById('star-rating');
+        if (!container) return;
+        container.querySelectorAll('.star-icon').forEach(function (star) {
+          star.addEventListener('click', function () {
+            selectedRating = parseInt(this.dataset.rating) || 0;
+            document.getElementById('review-rating').value = selectedRating;
+            container.querySelectorAll('.star-icon').forEach(function (s, i) {
+              if (i < selectedRating) {
+                s.classList.add('filled');
+              } else {
+                s.classList.remove('filled');
+              }
+            });
+          });
+          star.addEventListener('mouseenter', function () {
+            var hover = parseInt(this.dataset.rating) || 0;
+            container.querySelectorAll('.star-icon').forEach(function (s, i) {
+              if (i < hover) s.style.color = 'var(--color-warning, #f59e0b)';
+              else s.style.color = '';
+            });
+          });
+          star.addEventListener('mouseleave', function () {
+            container.querySelectorAll('.star-icon').forEach(function (s, i) {
+              if (i < selectedRating) {
+                s.style.color = 'var(--color-warning, #f59e0b)';
+              } else {
+                s.style.color = '';
+              }
+            });
+          });
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        var usernameEl = document.getElementById('currentUsername');
+        if (usernameEl) currentUsername = usernameEl.value || '';
+
+        var pathParts = window.location.pathname.split('/');
+        var itemId = pathParts[pathParts.length - 1];
+        currentItemId = itemId;
+
+        API.get('/items/' + itemId).then(function (item) {
+          document.title = escapeHtml(item.name) + ' — Shoppiq';
+          var imgUrl = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop';
+          var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
+          var stockClass = item.stockQuantity > 10 ? 'text-success' : (item.stockQuantity > 0 ? 'text-warning' : 'text-danger');
+          var stockText = item.stockQuantity > 10 ? 'In Stock (' + item.stockQuantity + ' available)' : (item.stockQuantity > 0 ? 'Low Stock (' + item.stockQuantity + ' left)' : 'Out of Stock');
+          var catLink = item.category ? '<a href="/category/' + escapeAttr(item.category.slug) + '">' + escapeHtml(item.category.name) + '</a>' : '';
+
+          document.getElementById('itemDetail').innerHTML =
+            '<nav class="breadcrumbs" aria-label="Breadcrumb">' +
+            '<a href="/">Home</a><span class="separator"><i data-lucide="chevron-right" class="icon-sm"></i></span>' +
+            '<a href="/allitems">Shop</a><span class="separator"><i data-lucide="chevron-right" class="icon-sm"></i></span>' +
+            (catLink ? catLink + '<span class="separator"><i data-lucide="chevron-right" class="icon-sm"></i></span>' : '') +
+            '<span class="current">' + escapeHtml(item.name) + '</span>' +
+            '</nav>' +
+            '<div class="item-detail-grid">' +
+            '<div class="item-detail-image"><div class="card-image-wrapper">' +
+            '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="600" height="600">' +
+            (hasDiscount ? '<span class="card-badge badge badge-success"><i data-lucide="tag" class="icon-sm"></i> ' + escapeHtml(String(item.discountPercentage)) + '% Off</span>' : '') +
+            '</div></div>' +
+            '<div class="item-detail-info">' +
+            (item.category ? '<span class="badge badge-neutral">' + escapeHtml(item.category.name) + '</span>' : '') +
+            '<h1 class="item-detail-title">' + escapeHtml(item.name) + '</h1>' +
+            '<div class="item-detail-price"><span class="price-current">$' + escapeHtml(String(item.price)) + '</span>' +
+            (hasDiscount ? ' <span class="badge badge-success">' + escapeHtml(String(item.discountPercentage)) + '% Off</span>' : '') +
+            '</div>' +
+            '<div class="item-detail-meta">' +
+            (item.brand ? '<div class="item-detail-meta-row"><i data-lucide="building-2" class="icon-sm text-muted"></i><span class="text-muted">Brand:</span><span>' + escapeHtml(item.brand) + '</span></div>' : '') +
+            (item.sku ? '<div class="item-detail-meta-row"><i data-lucide="barcode" class="icon-sm text-muted"></i><span class="text-muted">SKU:</span><span>' + escapeHtml(item.sku) + '</span></div>' : '') +
+            '<div class="item-detail-meta-row"><i data-lucide="package" class="icon-sm text-muted"></i><span class="text-muted">Stock:</span><span class="' + stockClass + '">' + stockText + '</span></div>' +
+            '</div>' +
+            (item.description ? '<div class="item-detail-description"><h3>Description</h3><p>' + escapeHtml(item.description) + '</p></div>' : '') +
+            '<div class="item-detail-actions" sec:authorize="isAuthenticated()">' +
+            '<form class="item-detail-form" id="add-to-cart-form">' +
+            '<div class="qty-controls">' +
+            '<button type="button" class="qty-minus" aria-label="Decrease quantity"><i data-lucide="minus" class="icon-sm"></i></button>' +
+            '<input type="number" id="qtyInput" name="quantity" value="1" min="1" max="99" class="form-input qty-input" aria-label="Quantity">' +
+            '<button type="button" class="qty-plus" aria-label="Increase quantity"><i data-lucide="plus" class="icon-sm"></i></button>' +
+            '</div>' +
+            '<button type="submit" class="btn btn-primary btn-lg"' + (item.stockQuantity == null || item.stockQuantity == 0 ? ' disabled' : '') + '><i data-lucide="shopping-cart" class="icon-sm"></i> Add to Cart</button>' +
+            '</form>' +
+            '</div>' +
+            '<div class="item-detail-actions" sec:authorize="!isAuthenticated()">' +
+            '<a href="/login" class="btn btn-primary btn-lg btn-block"><i data-lucide="log-in" class="icon-sm"></i> Sign in to Purchase</a>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+
+          document.getElementById('itemDetail').style.display = '';
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+
+          document.getElementById('add-to-cart-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var qty = parseInt(document.getElementById('qtyInput').value) || 1;
+            API.post('/user/cart/create', { itemDetailsId: item.itemDetailsId, quantity: qty }).then(function () {
+              showToast('Added to cart', 'success');
+            }).catch(function (err) {
+              showToast(err.message || 'Could not add to cart', 'error');
+            });
+          });
+
+          var qtyInput = document.getElementById('qtyInput');
+          var minusBtn = document.querySelector('.qty-minus');
+          var plusBtn = document.querySelector('.qty-plus');
+          if (minusBtn) minusBtn.addEventListener('click', function () { qtyInput.value = Math.max(1, parseInt(qtyInput.value) - 1); });
+          if (plusBtn) plusBtn.addEventListener('click', function () { qtyInput.value = Math.min(99, parseInt(qtyInput.value) + 1); });
+
+          loadReviews();
+          setupStarRating();
+          setupEditStarRating();
+        }).catch(function () {
+          document.getElementById('errorState').style.display = '';
+        }).finally(function () {
+          document.getElementById('loadingState').style.display = 'none';
+        });
+
+        document.getElementById('review-form').addEventListener('submit', function (e) {
+          e.preventDefault();
+          if (selectedRating < 1) { showToast('Please select a rating', 'error'); return; }
+          var btn = document.getElementById('review-submit-btn');
+          setButtonLoading(btn, true);
+          API.post('/items/' + currentItemId + '/create/review', {
+            rating: selectedRating,
+            review: document.getElementById('review-text').value.trim()
+          }).then(function () {
+            showToast('Review submitted!', 'success');
+            document.getElementById('review-text').value = '';
+            selectedRating = 0;
+            document.getElementById('review-rating').value = 0;
+            document.getElementById('star-rating').querySelectorAll('.star-icon').forEach(function (s) { s.classList.remove('filled'); s.style.color = ''; });
+            loadReviews();
+            setButtonLoading(btn, false);
+          }).catch(function (err) {
+            showToast(err.message || 'Failed to submit review', 'error');
+            setButtonLoading(btn, false);
+          });
+        });
+
+        document.getElementById('editReviewClose').addEventListener('click', function () {
+          document.getElementById('editReviewModal').classList.remove('active');
+        });
+        document.getElementById('editReviewCancel').addEventListener('click', function () {
+          document.getElementById('editReviewModal').classList.remove('active');
+        });
+        document.getElementById('editReviewSave').addEventListener('click', function () {
+          if (editSelectedRating < 1) { showToast('Please select a rating', 'error'); return; }
+          var btn = this;
+          setButtonLoading(btn, true);
+          API.put('/reviews/' + editingReviewId + '/update', {
+            rating: editSelectedRating,
+            review: document.getElementById('edit-review-text').value.trim()
+          }).then(function () {
+            showToast('Review updated!', 'success');
+            document.getElementById('editReviewModal').classList.remove('active');
+            setButtonLoading(btn, false);
+            loadReviews();
+          }).catch(function (err) {
+            showToast(err.message || 'Failed to update review', 'error');
+            setButtonLoading(btn, false);
+          });
+        });
+      });
+    })();
+    </script>
+</body>
+</html>

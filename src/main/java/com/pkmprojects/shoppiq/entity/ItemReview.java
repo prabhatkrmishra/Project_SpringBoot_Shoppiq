@@ -3,6 +3,7 @@ package com.pkmprojects.shoppiq.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.pkmprojects.shoppiq.audit.AuditableEntity;
+import com.pkmprojects.shoppiq.enums.ReviewStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -99,6 +100,14 @@ public class ItemReview extends AuditableEntity {
     @Size(max = 1000, message = "Review cannot exceed 1000 characters.")
     @Column(length = 1000)
     private String review;
+
+    /**
+     * Moderation status of this review.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private ReviewStatus status = ReviewStatus.PENDING;
 
     /**
      * Updates the mutable fields of this review.

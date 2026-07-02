@@ -54,14 +54,6 @@ public interface ItemRepository
      * @param sku stock keeping unit
      * @return matching item if present
      */
-    Optional<Item> findByItemDetailsSku(String sku);
-
-    /**
-     * Determines whether a SKU already exists.
-     *
-     * @param sku stock keeping unit
-     * @return true if found
-     */
     boolean existsByItemDetailsSku(String sku);
 
     /**

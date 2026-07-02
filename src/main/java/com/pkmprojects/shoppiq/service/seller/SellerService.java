@@ -64,4 +64,16 @@ public interface SellerService {
      * @param user the authenticated user
      */
     void deleteProfile(User user);
+
+    /**
+     * Publishes the seller's store, making it visible to customers.
+     *
+     * <p>
+     * Sets the store status to {@code PUBLISHED}. The store must exist
+     * (created automatically upon seller approval) and must be in {@code DRAFT} status.
+     * </p>
+     *
+     * @param user the authenticated user
+     */
+    void publishStore(User user);
 }

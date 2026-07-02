@@ -59,4 +59,16 @@ public class AdminSellerController {
             @PathVariable Long sellerId) {
         return ResponseEntity.ok(adminSellerService.rejectSeller(sellerId));
     }
+
+    @PutMapping("/{sellerId}/suspend")
+    public ResponseEntity<AdminSellerResponse> suspendSeller(
+            @PathVariable Long sellerId) {
+        return ResponseEntity.ok(adminSellerService.suspendSeller(sellerId));
+    }
+
+    @PutMapping("/{sellerId}/unsuspend")
+    public ResponseEntity<AdminSellerResponse> unsuspendSeller(
+            @PathVariable Long sellerId) {
+        return ResponseEntity.ok(adminSellerService.unsuspendSeller(sellerId));
+    }
 }

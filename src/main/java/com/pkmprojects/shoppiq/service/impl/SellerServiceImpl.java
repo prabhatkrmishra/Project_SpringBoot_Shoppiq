@@ -5,13 +5,16 @@ import com.pkmprojects.shoppiq.dto.seller.request.SellerRegistrationRequest;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
 import com.pkmprojects.shoppiq.entity.Address;
 import com.pkmprojects.shoppiq.entity.Seller;
+import com.pkmprojects.shoppiq.entity.Store;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
+import com.pkmprojects.shoppiq.enums.StoreStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 import com.pkmprojects.shoppiq.exception.SellerAlreadyExistsException;
 import com.pkmprojects.shoppiq.exception.SellerNotFoundException;
 import com.pkmprojects.shoppiq.repository.AddressRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
+import com.pkmprojects.shoppiq.repository.StoreRepository;
 import com.pkmprojects.shoppiq.service.seller.SellerService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,11 +40,14 @@ public class SellerServiceImpl implements SellerService {
 
     private final SellerRepository sellerRepository;
     private final AddressRepository addressRepository;
+    private final StoreRepository storeRepository;
 
     public SellerServiceImpl(SellerRepository sellerRepository,
-                             AddressRepository addressRepository) {
+                             AddressRepository addressRepository,
+                             StoreRepository storeRepository) {
         this.sellerRepository = sellerRepository;
         this.addressRepository = addressRepository;
+        this.storeRepository = storeRepository;
     }
 
     @Override
@@ -127,5 +133,22 @@ public class SellerServiceImpl implements SellerService {
 
         seller.setSellerStatus(SellerStatus.INACTIVE);
         sellerRepository.save(seller);
+    }
+
+    @Override
+    public void publishStore(User user) {
+        Seller seller = sellerRepository.findByUserId(user.getId())
+                .orElseThrow(() -> SellerNotFoundException.userId(user.getId()));
+
+        Store store = storeRepository.findBySellerId(seller.getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "No store found for seller '%d'.".formatted(seller.getId())));
+
+        if (store.getStatus() == StoreStatus.PUBLISHED) {
+            throw new IllegalStateException("Store is already published.");
+        }
+
+        store.setStatus(StoreStatus.PUBLISHED);
+        storeRepository.save(store);
     }
 }
