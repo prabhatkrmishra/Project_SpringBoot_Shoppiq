@@ -1233,6 +1233,20 @@ small { font-size: 0.78rem; }
 .modal h2 { font-size: 1.2rem; margin-bottom: var(--space-sm); }
 .modal p { margin-bottom: var(--space-lg); color: var(--color-text-secondary); }
 .modal-actions { display: flex; gap: var(--space-sm); justify-content: flex-end; }
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-sm); margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+.modal-header h3 { margin: 0; font-size: 1.1rem; }
+.modal-body { color: var(--color-text-secondary); }
+.modal-close {
+  background: none; border: none; padding: 0; margin-left: auto;
+  font-size: 1.5rem; line-height: 1; color: var(--color-text-muted);
+  cursor: pointer; transition: color var(--transition-fast);
+}
+.modal-close:hover { color: var(--color-text); }
 
 /* ── Back to Top ── */
 .back-to-top {
