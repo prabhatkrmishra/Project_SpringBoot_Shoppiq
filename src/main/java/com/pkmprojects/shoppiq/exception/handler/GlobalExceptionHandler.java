@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import org.apache.catalina.connector.ClientAbortException;
+
 import java.io.IOException;
 import java.net.URI;
 
@@ -196,6 +198,22 @@ public class GlobalExceptionHandler {
         return ProblemDetailFactory.create(HttpStatus.BAD_REQUEST,
                 detail,
                 ErrorCode.VALIDATION_FAILED, createInstance(request));
+    }
+
+    /**
+     * Handles client disconnections (browser navigated away, tab closed, etc.).
+     *
+     * <p>
+     * These are expected and harmless. Logged at DEBUG level only.
+     * Returns null to avoid writing a response body to a disconnected client.
+     * </p>
+     */
+    @ExceptionHandler(ClientAbortException.class)
+    public Object handleClientAbortException(ClientAbortException exception, HttpServletRequest request) {
+
+        log.debug("Client disconnected during [{}]: {}", request.getRequestURI(), exception.getMessage());
+
+        return null;
     }
 
     /**
