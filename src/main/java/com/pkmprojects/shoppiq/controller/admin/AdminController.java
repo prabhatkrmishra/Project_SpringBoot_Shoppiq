@@ -140,7 +140,7 @@ public class AdminController {
 
     @PostMapping("/inventory/bulk-adjust")
     public List<AdminProductInventoryResponse> bulkAdjustStock(
-            @Valid @RequestBody Map<Long, StockAdjustmentRequest> adjustments
+            @RequestBody Map<Long, @Valid StockAdjustmentRequest> adjustments
     ) {
         return inventoryService.bulkUpdateStock(adjustments);
     }
