@@ -151,6 +151,7 @@
           '</p>' +
           '<div class="mt-md flex gap-sm">' +
             '<button class="btn btn-sm btn-secondary address-edit-btn" data-addr-id="' + addr.id + '">Edit</button>' +
+            (addr['default'] ? '' : '<button class="btn btn-sm btn-ghost address-default-btn" data-address-id="' + addr.id + '">Set as Default</button>') +
             '<button class="btn btn-sm btn-danger address-delete-btn" data-address-id="' + addr.id + '">Delete</button>' +
           '</div>' +
         '</div>';
@@ -161,6 +162,18 @@
         var id = this.dataset.addrId;
         var found = addresses.find(function (a) { return a.id == id; });
         if (found) openModal(found);
+      });
+    });
+    grid.querySelectorAll('.address-default-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.addressId;
+        showConfirmModal({ title: 'Set as Default', message: 'Make this your default shipping address?', confirmText: 'Set Default' }).then(function (confirmed) {
+          if (!confirmed) return;
+          API.put('/user/address/default/' + id).then(function () {
+            showToast('Default address updated', 'success');
+            loadAddresses();
+          }).catch(function (e) { showToast(e.message, 'error'); });
+        });
       });
     });
     grid.querySelectorAll('.address-delete-btn').forEach(function (btn) {
@@ -188,6 +201,17 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    var editMatch = window.location.pathname.match(/\/address\/edit\/(\d+)/);
+    if (editMatch) {
+      var addrId = editMatch[1];
+      API.get('/user/address/get/' + addrId).then(function (addr) {
+        openModal(addr);
+      }).catch(function () {
+        openModal(null);
+      });
+    } else if (window.location.pathname.indexOf('/address/add') !== -1) {
+      openModal(null);
+    }
     loadAddresses();
     document.getElementById('add-address-btn').addEventListener('click', function () { openModal(null); });
     document.getElementById('modal-close-btn').addEventListener('click', closeModal);

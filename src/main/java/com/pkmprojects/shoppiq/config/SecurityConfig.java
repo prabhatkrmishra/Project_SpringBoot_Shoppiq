@@ -203,8 +203,10 @@ public class SecurityConfig {
                                 "/login/oauth2/**"
                         ).permitAll()
 
-                        // Authenticated frontend pages
-                        .requestMatchers("/address", "/cart", "/profile").hasAnyRole("CUSTOMER", "ADMIN")
+                        // Customer-only: cart, Address: customer + seller, Profile: customer + seller + admin
+                        .requestMatchers("/cart").hasRole("CUSTOMER")
+                        .requestMatchers("/address").hasAnyRole("CUSTOMER", "SELLER")
+                        .requestMatchers("/profile").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
 
                         // Admin frontend pages
                         .requestMatchers(
@@ -218,6 +220,7 @@ public class SecurityConfig {
                                 "/admin/categories",
                                 "/admin/sellers",
                                 "/admin/pending",
+                                "/admin/products",
                                 "/admin/roles"
                         ).hasRole("ADMIN")
 
@@ -252,7 +255,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/roles/create/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/roles/all").hasRole("ADMIN")
 
-                        // Seller: registration requires any authenticated user, management requires SELLER role
+                        // Seller: profile view + registration for any authenticated user, management requires SELLER role
+                        .requestMatchers(HttpMethod.GET, "/seller/profile").authenticated()
                         .requestMatchers(HttpMethod.POST, "/seller/register").authenticated()
                         .requestMatchers("/seller/**").hasAnyRole("SELLER", "ADMIN")
 

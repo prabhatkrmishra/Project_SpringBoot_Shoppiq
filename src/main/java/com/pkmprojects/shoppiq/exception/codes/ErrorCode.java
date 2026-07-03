@@ -345,7 +345,21 @@ public enum ErrorCode {
     /**
      * Transaction ID not found for verification.
      */
-    PAYMENT_TRANSACTION_NOT_FOUND("PAYMENT-404-002", "No payment found for the given transaction ID.");
+    PAYMENT_TRANSACTION_NOT_FOUND("PAYMENT-404-002", "No payment found for the given transaction ID."),
+
+    // =========================================================
+    // Admin Errors
+    // =========================================================
+
+    /**
+     * Admin cannot block their own account.
+     */
+    AUTH_BLOCK_SELF("ADMIN-403-001", "Administrators cannot disable their own account."),
+
+    /**
+     * Admin cannot unblock their own account.
+     */
+    AUTH_UNBLOCK_SELF("ADMIN-403-002", "Administrators cannot enable their own account.");
 
     /**
      * Stable machine-readable error identifier.

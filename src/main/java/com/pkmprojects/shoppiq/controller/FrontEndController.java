@@ -166,6 +166,11 @@ public class FrontEndController {
         return "admin-pending";
     }
 
+    @GetMapping("/admin/products")
+    public String adminProductsPage() {
+        return "admin-products";
+    }
+
     @GetMapping("/admin/roles")
     public String adminRolesPage() {
         return "admin-roles";

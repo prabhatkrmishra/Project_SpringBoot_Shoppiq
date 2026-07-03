@@ -63,29 +63,14 @@
     return '<span class="status-badge out-of-stock">Out of Stock</span>';
   }
 
-  function renderInventory(items) {
-    allItems = items || [];
-    var total = allItems.length;
-    var inStock = allItems.filter(function (i) { return i.stockStatus === 'IN_STOCK'; }).length;
-    var lowStock = allItems.filter(function (i) { return i.stockStatus === 'LOW_STOCK'; }).length;
-    var outOfStock = allItems.filter(function (i) { return i.stockStatus === 'OUT_OF_STOCK'; }).length;
-    document.getElementById('stat-total').textContent = total;
-    document.getElementById('stat-in-stock').textContent = inStock;
-    document.getElementById('stat-low-stock').textContent = lowStock;
-    document.getElementById('stat-out-of-stock').textContent = outOfStock;
-
-    var filter = document.getElementById('stock-filter').value;
-    var filtered = allItems;
-    if (filter === 'low') filtered = allItems.filter(function (i) { return i.stockStatus === 'LOW_STOCK'; });
-    else if (filter === 'out') filtered = allItems.filter(function (i) { return i.stockStatus === 'OUT_OF_STOCK'; });
-
+  function renderRows(items) {
     var tbody = document.getElementById('inventory-body');
-    if (filtered.length === 0) {
+    if (!items || items.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No products found</td></tr>';
       return;
     }
     tbody.innerHTML = '';
-    filtered.forEach(function (item) {
+    items.forEach(function (item) {
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td><a href="/item/' + item.itemId + '" class="btn-link">' + (item.itemName || '') + '</a></td>' +
@@ -115,6 +100,29 @@
     });
   }
 
+  function renderInventory(items) {
+    allItems = items || [];
+    var total = allItems.length;
+    var inStock = allItems.filter(function (i) { return i.stockStatus === 'IN_STOCK'; }).length;
+    var lowStock = allItems.filter(function (i) { return i.stockStatus === 'LOW_STOCK'; }).length;
+    var outOfStock = allItems.filter(function (i) { return i.stockStatus === 'OUT_OF_STOCK'; }).length;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-in-stock').textContent = inStock;
+    document.getElementById('stat-low-stock').textContent = lowStock;
+    document.getElementById('stat-out-of-stock').textContent = outOfStock;
+    renderRows(allItems);
+  }
+
+  function loadFiltered(filter) {
+    var url = '/seller/inventory';
+    if (filter === 'low') url = '/seller/inventory/low-stock';
+    else if (filter === 'out') url = '/seller/inventory/out-of-stock';
+    API.get(url).then(renderRows).catch(function () {
+      document.getElementById('inventory-body').innerHTML =
+        '<tr><td colspan="5" class="text-center text-muted">Failed to load inventory</td></tr>';
+    });
+  }
+
   function loadInventory() {
     API.get('/seller/inventory').then(renderInventory).catch(function () {
       document.getElementById('inventory-body').innerHTML =
@@ -125,7 +133,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     loadInventory();
     document.getElementById('stock-filter').addEventListener('change', function () {
-      renderInventory(allItems);
+      loadFiltered(this.value);
     });
   });
 })();

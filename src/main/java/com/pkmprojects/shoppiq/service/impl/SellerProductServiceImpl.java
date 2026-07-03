@@ -134,6 +134,10 @@ public class SellerProductServiceImpl implements SellerProductService {
         details.setDiscountPercentage(request.discountPercentage());
         details.setCategory(category);
 
+        if (item.getPublishingStatus() == ProductPublishingStatus.PUBLISHED) {
+            item.setPublishingStatus(ProductPublishingStatus.DRAFT);
+        }
+
         return ItemResponse.fromEntity(itemRepository.save(item));
     }
 

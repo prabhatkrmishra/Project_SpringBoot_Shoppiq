@@ -6,9 +6,12 @@
 <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
 <main class="admin-main">
-  <div class="page-header">
-    <h1>Inventory Management</h1>
-    <p>Manage product stock and availability</p>
+  <div class="page-header flex-between items-center">
+    <div>
+      <h1>Inventory Management</h1>
+      <p>Manage product stock and availability</p>
+    </div>
+    <a href="/admin/products" class="btn btn-primary btn-sm">Bulk Import</a>
   </div>
 
   <div class="admin-summary-grid">
@@ -97,26 +100,14 @@
     selectAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === count;
   }
 
-  function renderInventory(items) {
-    allItems = items || [];
-    var inStock = allItems.filter(function (i) { return i.stockStatus === 'IN_STOCK'; }).length;
-    var lowStock = allItems.filter(function (i) { return i.stockStatus === 'LOW_STOCK'; }).length;
-    var outOfStock = allItems.filter(function (i) { return i.stockStatus === 'OUT_OF_STOCK'; }).length;
-    document.getElementById('stat-total').textContent = allItems.length;
-    document.getElementById('stat-in-stock').textContent = inStock;
-    document.getElementById('stat-low-stock').textContent = lowStock;
-    document.getElementById('stat-out-of-stock').textContent = outOfStock;
-
-    var filter = document.getElementById('stockFilter').value;
-    var filtered = filter ? allItems.filter(function (i) { return i.stockStatus === filter; }) : allItems;
-
+  function renderRows(items) {
     var tbody = document.getElementById('inventory-body');
-    if (filtered.length === 0) {
+    if (!items || items.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No products found</td></tr>';
       return;
     }
     tbody.innerHTML = '';
-    filtered.forEach(function (item) {
+    items.forEach(function (item) {
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td><input type="checkbox" class="item-checkbox" data-item-id="' + item.itemId + '" aria-label="Select"></td>' +
@@ -154,6 +145,28 @@
     updateBulkBar();
   }
 
+  function renderInventory(items) {
+    allItems = items || [];
+    var inStock = allItems.filter(function (i) { return i.stockStatus === 'IN_STOCK'; }).length;
+    var lowStock = allItems.filter(function (i) { return i.stockStatus === 'LOW_STOCK'; }).length;
+    var outOfStock = allItems.filter(function (i) { return i.stockStatus === 'OUT_OF_STOCK'; }).length;
+    document.getElementById('stat-total').textContent = allItems.length;
+    document.getElementById('stat-in-stock').textContent = inStock;
+    document.getElementById('stat-low-stock').textContent = lowStock;
+    document.getElementById('stat-out-of-stock').textContent = outOfStock;
+    renderRows(allItems);
+  }
+
+  function loadFiltered(filter) {
+    var url = '/api/admin/inventory';
+    if (filter === 'LOW_STOCK') url = '/api/admin/inventory/low-stock';
+    else if (filter === 'OUT_OF_STOCK') url = '/api/admin/inventory/out-of-stock';
+    API.get(url).then(renderRows).catch(function () {
+      document.getElementById('inventory-body').innerHTML =
+        '<tr><td colspan="7" class="text-center text-muted">Failed to load inventory</td></tr>';
+    });
+  }
+
   function loadInventory() {
     API.get('/api/admin/inventory').then(renderInventory).catch(function () {
       document.getElementById('inventory-body').innerHTML =
@@ -164,7 +177,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     loadInventory();
     document.getElementById('stockFilter').addEventListener('change', function () {
-      renderInventory(allItems);
+      loadFiltered(this.value);
     });
     document.getElementById('selectAll').addEventListener('change', function () {
       var checked = this.checked;

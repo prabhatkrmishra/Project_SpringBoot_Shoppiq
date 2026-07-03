@@ -25,19 +25,52 @@
         </div>
     </main>
 
+    <div id="edit-review-modal" class="modal-overlay">
+        <div class="modal" role="dialog">
+            <div class="modal-header">
+                <h2>Edit Review</h2>
+                <button class="modal-close" id="edit-review-close">&times;</button>
+            </div>
+            <form id="edit-review-form" class="modal-body">
+                <input type="hidden" id="edit-review-id">
+                <div class="form-group">
+                    <label for="edit-review-rating" class="form-label">Rating</label>
+                    <select id="edit-review-rating" class="form-input" required>
+                        <option value="1">1 Star</option>
+                        <option value="2">2 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="5">5 Stars</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-review-text" class="form-label">Review</label>
+                    <textarea id="edit-review-text" class="form-input" rows="4" required></textarea>
+                </div>
+                <div class="flex gap-sm mt-md">
+                    <button type="submit" id="edit-review-save" class="btn btn-primary">Save</button>
+                    <button type="button" id="edit-review-cancel" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         var loading = document.getElementById('reviews-loading');
         var empty = document.getElementById('reviews-empty');
         var list = document.getElementById('reviews-list');
+        var allReviews = [];
 
-        API.get('/user/reviews').then(function (reviews) {
-            loading.style.display = 'none';
+        function renderReviews(reviews) {
             if (!reviews || reviews.length === 0) {
+                loading.style.display = 'none';
                 empty.style.display = '';
                 return;
             }
+            allReviews = reviews;
+            loading.style.display = 'none';
             list.style.display = '';
             var html = '';
             reviews.forEach(function (r) {
@@ -51,16 +84,85 @@
                     '<div><a href="/item/' + r.itemId + '" class="btn-link fw-600">' + window.escapeHtml(r.itemName) + '</a></div>' +
                     '<div class="text-muted text-sm">' + window.formatDateTime(r.createdAt) + '</div>' +
                     '</div>' +
-                    '<div class="mb-sm">' + stars + '</div>' +
-                    '<p class="text-sm">' + window.escapeHtml(r.review || '') + '</p>' +
+                    '<div class="mb-sm" id="stars-' + r.id + '">' + stars + '</div>' +
+                    '<p class="text-sm" id="review-text-' + r.id + '">' + window.escapeHtml(r.review || '') + '</p>' +
+                    '<div class="mt-sm">' +
+                    '<button class="btn btn-sm btn-secondary edit-review-btn" data-review-id="' + r.id + '">Edit</button> ' +
+                    '<button class="btn btn-sm btn-danger delete-review-btn" data-review-id="' + r.id + '">Delete</button>' +
+                    '</div>' +
                     '</div>' +
                     '</div>';
             });
             list.innerHTML = html;
             window.initIcons();
-        }).catch(function () {
-            loading.style.display = 'none';
-            empty.style.display = '';
+
+            list.querySelectorAll('.edit-review-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var reviewId = this.dataset.reviewId;
+                    openEditModal(reviewId);
+                });
+            });
+
+            list.querySelectorAll('.delete-review-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var reviewId = this.dataset.reviewId;
+                    showConfirmModal({ title: 'Delete Review', message: 'Are you sure you want to delete this review?', confirmText: 'Delete', danger: true }).then(function (confirmed) {
+                        if (!confirmed) return;
+                        API.del('/reviews/' + reviewId + '/delete').then(function () {
+                            showToast('Review deleted', 'success');
+                            loadReviews();
+                        }).catch(function (e) { showToast(e.message || 'Failed to delete', 'error'); });
+                    });
+                });
+            });
+        }
+
+        function openEditModal(reviewId) {
+            API.get('/reviews/' + reviewId).then(function (r) {
+                document.getElementById('edit-review-id').value = r.id;
+                document.getElementById('edit-review-rating').value = r.rating;
+                document.getElementById('edit-review-text').value = r.review || '';
+                document.getElementById('edit-review-modal').classList.add('active');
+            }).catch(function (e) { showToast(e.message || 'Failed to load review', 'error'); });
+        }
+
+        function closeModal() {
+            document.getElementById('edit-review-modal').classList.remove('active');
+        }
+
+        function loadReviews() {
+            loading.style.display = '';
+            empty.style.display = 'none';
+            list.style.display = 'none';
+            API.get('/user/reviews').then(renderReviews).catch(function () {
+                loading.style.display = 'none';
+                empty.style.display = '';
+            });
+        }
+
+        loadReviews();
+
+        document.getElementById('edit-review-close').addEventListener('click', closeModal);
+        document.getElementById('edit-review-cancel').addEventListener('click', closeModal);
+        document.getElementById('edit-review-modal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
+
+        document.getElementById('edit-review-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var reviewId = document.getElementById('edit-review-id').value;
+            var btn = document.getElementById('edit-review-save');
+            setButtonLoading(btn, true);
+            API.put('/reviews/' + reviewId + '/update', {
+                rating: parseInt(document.getElementById('edit-review-rating').value),
+                review: document.getElementById('edit-review-text').value.trim()
+            }).then(function () {
+                showToast('Review updated', 'success');
+                closeModal();
+                setButtonLoading(btn, false);
+                loadReviews();
+            }).catch(function (err) {
+                showToast(err.message || 'Failed to update', 'error');
+                setButtonLoading(btn, false);
+            });
         });
     });
     </script>

@@ -41,4 +41,23 @@ public class UserRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
+
+    private String businessName;
+
+    @Email(message = "Business email must be valid")
+    private String businessEmail;
+
+    private String phone;
+
+    private String gstNumber;
+
+    @Size(min = 10, max = 10, message = "PAN number must be exactly 10 characters")
+    private String panNumber;
+
+    public boolean isSellerRegistration() {
+        return businessName != null && !businessName.isBlank()
+                && businessEmail != null && !businessEmail.isBlank()
+                && phone != null && !phone.isBlank()
+                && panNumber != null && !panNumber.isBlank();
+    }
 }

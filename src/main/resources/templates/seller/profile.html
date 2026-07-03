@@ -16,6 +16,30 @@
       <span class="spinner"></span>
     </div>
 
+    <div id="pending-approval" style="display:none;">
+      <div class="panel" style="border-color:var(--color-warning,#f59e0b);">
+        <div class="flex items-center gap-sm mb-md">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning,#f59e0b)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div class="panel-title" style="color:var(--color-warning,#f59e0b);margin:0;">Seller Account Pending Approval</div>
+        </div>
+        <p class="text-sm mb-sm">Your seller registration has been submitted and is being reviewed by our team.</p>
+        <div id="pending-status-details"></div>
+        <p class="text-sm text-muted mt-md">You will be notified once your account is approved. This usually takes 1-2 business days.</p>
+      </div>
+    </div>
+
+    <div id="rejected-approval" style="display:none;">
+      <div class="panel" style="border-color:var(--color-danger,#ef4444);">
+        <div class="flex items-center gap-sm mb-md">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger,#ef4444)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <div class="panel-title" style="color:var(--color-danger,#ef4444);margin:0;">Seller Account Rejected</div>
+        </div>
+        <p class="text-sm mb-sm">Your seller registration has been rejected.</p>
+        <div id="rejected-status-details"></div>
+        <p class="text-sm text-muted mt-md">Please contact support for more information.</p>
+      </div>
+    </div>
+
     <div id="not-registered" style="display:none;">
       <div class="panel">
         <div class="panel-title">Register as a Seller</div>
@@ -121,6 +145,21 @@
   }
   function showProfile(s) {
     document.getElementById('seller-loading').style.display = 'none';
+    if (s.verificationStatus === 'PENDING') {
+      document.getElementById('pending-approval').style.display = '';
+      var details = document.getElementById('pending-status-details');
+      details.innerHTML =
+        '<p class="text-sm"><strong>Business:</strong> ' + (s.businessName || '') + '</p>' +
+        '<p class="text-sm"><strong>Submitted:</strong> ' + (s.joinedAt ? formatDate(s.joinedAt) : 'N/A') + '</p>';
+      return;
+    }
+    if (s.verificationStatus === 'REJECTED') {
+      document.getElementById('rejected-approval').style.display = '';
+      var details = document.getElementById('rejected-status-details');
+      details.innerHTML =
+        '<p class="text-sm"><strong>Business:</strong> ' + (s.businessName || '') + '</p>';
+      return;
+    }
     document.getElementById('seller-profile').style.display = '';
     fillProfile(s);
   }

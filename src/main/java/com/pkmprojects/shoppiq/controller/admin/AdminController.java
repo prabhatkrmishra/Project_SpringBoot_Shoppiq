@@ -6,6 +6,8 @@ import com.pkmprojects.shoppiq.dto.admin.response.*;
 import com.pkmprojects.shoppiq.dto.request.BulkItemRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.enums.*;
+import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.exception.business.AdminCannotBlockSelfException;
 import com.pkmprojects.shoppiq.service.ItemService;
 import com.pkmprojects.shoppiq.service.admin.*;
 import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
@@ -17,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -195,12 +198,22 @@ public class AdminController {
     }
 
     @PutMapping("/users/{userId}/block")
-    public AdminUserResponse blockCustomer(@PathVariable @Min(1) Long userId) {
+    public AdminUserResponse blockCustomer(
+            @PathVariable @Min(1) Long userId,
+            @AuthenticationPrincipal User currentUser) {
+        if (userId.equals(currentUser.getId())) {
+            throw AdminCannotBlockSelfException.block();
+        }
         return userService.blockCustomer(userId);
     }
 
     @PutMapping("/users/{userId}/unblock")
-    public AdminUserResponse unblockCustomer(@PathVariable @Min(1) Long userId) {
+    public AdminUserResponse unblockCustomer(
+            @PathVariable @Min(1) Long userId,
+            @AuthenticationPrincipal User currentUser) {
+        if (userId.equals(currentUser.getId())) {
+            throw AdminCannotBlockSelfException.unblock();
+        }
         return userService.unblockCustomer(userId);
     }
 

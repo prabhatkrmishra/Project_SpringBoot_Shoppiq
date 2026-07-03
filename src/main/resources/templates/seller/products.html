@@ -90,9 +90,36 @@
 (function () {
   'use strict';
   var categories = [];
+  var editingId = null;
 
   function statusClass(enabled) { return enabled ? 'active' : 'inactive'; }
   function stockClass(qty) { return qty > 10 ? 'badge badge-success' : (qty > 0 ? 'badge badge-warning' : 'badge badge-danger'); }
+
+  function openForm(product) {
+    var panel = document.getElementById('add-product-panel');
+    var title = panel.querySelector('.admin-panel-title');
+    var submitBtn = document.getElementById('submit-product-btn');
+    if (product) {
+      editingId = product.id;
+      title.textContent = 'Edit Product';
+      submitBtn.textContent = 'Update Product';
+      document.getElementById('name').value = product.name || '';
+      document.getElementById('description').value = product.description || '';
+      document.getElementById('brand').value = product.brand || '';
+      document.getElementById('sku').value = product.sku || '';
+      document.getElementById('price').value = product.price || '';
+      document.getElementById('stockQuantity').value = product.stockQuantity || 0;
+      document.getElementById('discountPercentage').value = product.discountPercentage || 0;
+      var sel = document.getElementById('categoryId');
+      if (product.category) { sel.value = product.category.id; }
+    } else {
+      editingId = null;
+      title.textContent = 'Add New Product';
+      submitBtn.textContent = 'Add Product';
+      document.getElementById('add-product-form').reset();
+    }
+    panel.style.display = '';
+  }
 
   function renderProducts(products) {
     var tbody = document.getElementById('products-body');
@@ -110,10 +137,18 @@
         '<td><span class="' + stockClass(p.stockQuantity) + '">' + p.stockQuantity + '</span></td>' +
         '<td><span class="status-badge ' + statusClass(p.publishingStatus === 'PUBLISHED') + '">' + (p.publishingStatus || 'DRAFT') + '</span></td>' +
         '<td class="admin-table-actions">' +
-          '<a href="/item/' + p.id + '" class="btn btn-sm btn-secondary">Edit</a> ' +
+          '<button class="btn btn-sm btn-secondary edit-product-btn" data-product-id="' + p.id + '">Edit</button> ' +
           '<button class="btn btn-sm btn-danger delete-product-btn" data-product-id="' + p.id + '">Delete</button>' +
         '</td>';
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.edit-product-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.productId;
+        API.get('/seller/products/' + id).then(function (product) {
+          openForm(product);
+        }).catch(function (e) { showToast(e.message || 'Failed to load product', 'error'); });
+      });
     });
     tbody.querySelectorAll('.delete-product-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -150,15 +185,14 @@
     }).catch(function () {});
 
     document.getElementById('show-add-form-btn').addEventListener('click', function () {
-      var panel = document.getElementById('add-product-panel');
-      panel.style.display = panel.style.display === 'none' ? '' : 'none';
+      openForm(null);
     });
 
     document.getElementById('add-product-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var btn = document.getElementById('submit-product-btn');
       setButtonLoading(btn, true);
-      API.post('/seller/products/create', {
+      var payload = {
         name: document.getElementById('name').value,
         description: document.getElementById('description').value,
         brand: document.getElementById('brand').value,
@@ -167,14 +201,22 @@
         stockQuantity: parseInt(document.getElementById('stockQuantity').value) || 0,
         discountPercentage: parseFloat(document.getElementById('discountPercentage').value) || 0,
         categoryId: parseInt(document.getElementById('categoryId').value)
-      }).then(function () {
-        showToast('Product added!', 'success');
+      };
+      var promise = editingId
+        ? API.put('/seller/products/update/' + editingId, payload)
+        : API.post('/seller/products/create', payload);
+      promise.then(function (resp) {
+        showToast(editingId ? 'Product updated' : 'Product added!', 'success');
+        if (resp && resp.publishingStatus === 'DRAFT') {
+          showToast('This edit will be reviewed by an admin before going live', 'info');
+        }
         document.getElementById('add-product-form').reset();
         document.getElementById('add-product-panel').style.display = 'none';
+        editingId = null;
         setButtonLoading(btn, false);
         loadProducts();
       }).catch(function (err) {
-        showToast(err.message || 'Failed to add product', 'error');
+        showToast(err.message || 'Failed to save product', 'error');
         setButtonLoading(btn, false);
       });
     });

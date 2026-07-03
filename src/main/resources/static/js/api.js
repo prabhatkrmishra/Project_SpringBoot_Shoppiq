@@ -21,7 +21,7 @@ window.API = (function () {
       if (response.status === 204) return null;
       var data = await response.json().catch(function () { return null; });
       if (!response.ok) {
-        var message = (data && data.message) || (data && data.error) || "Request failed (" + response.status + ")";
+        var message = (data && data.message) || (data && data.detail) || (data && data.error) || "Request failed (" + response.status + ")";
         throw { status: response.status, message: message, data: data };
       }
       return data;

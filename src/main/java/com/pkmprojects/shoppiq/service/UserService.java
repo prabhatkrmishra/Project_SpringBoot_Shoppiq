@@ -2,8 +2,12 @@ package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
+import com.pkmprojects.shoppiq.entity.Seller;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.enums.SellerStatus;
+import com.pkmprojects.shoppiq.enums.VerificationStatus;
 import com.pkmprojects.shoppiq.exception.DuplicateUserException;
+import com.pkmprojects.shoppiq.repository.SellerRepository;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
@@ -42,11 +47,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RolesService rolesService;
+    private final SellerRepository sellerRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RolesService rolesService) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RolesService rolesService, SellerRepository sellerRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.rolesService = rolesService;
+        this.sellerRepository = sellerRepository;
     }
 
     /**
@@ -67,11 +74,32 @@ public class UserService {
             newUser.setEmail(newUserRequest.getEmail());
             newUser.setUsername(newUserRequest.getUsername());
             newUser.setPassword(passwordEncoder.encode(newUserRequest.getPassword()));
-            newUser.setRoles(Set.of(rolesService.getCustomerRole()));
 
-            userRepository.save(newUser);
+            if (newUserRequest.isSellerRegistration()) {
+                newUser.setRoles(Set.of(rolesService.getSellerRole()));
+            } else {
+                newUser.setRoles(Set.of(rolesService.getCustomerRole()));
+            }
 
-            logger.info("User account created for username: {}", newUserRequest.getUsername());
+            User savedUser = userRepository.save(newUser);
+
+            if (newUserRequest.isSellerRegistration()) {
+                Seller seller = Seller.builder()
+                        .user(savedUser)
+                        .businessName(newUserRequest.getBusinessName())
+                        .businessEmail(newUserRequest.getBusinessEmail())
+                        .phone(newUserRequest.getPhone())
+                        .gstNumber(newUserRequest.getGstNumber())
+                        .panNumber(newUserRequest.getPanNumber())
+                        .verificationStatus(VerificationStatus.PENDING)
+                        .sellerStatus(SellerStatus.INACTIVE)
+                        .joinedAt(LocalDateTime.now())
+                        .build();
+                sellerRepository.save(seller);
+                logger.info("Seller registration created for username: {}", newUserRequest.getUsername());
+            } else {
+                logger.info("User account created for username: {}", newUserRequest.getUsername());
+            }
         } catch (DataIntegrityViolationException e) {
             logger.warn("User creation failed due to constraint violation for email: {} or username: {}", newUserRequest.getEmail(), newUserRequest.getUsername());
             throw DuplicateUserException.unknown();

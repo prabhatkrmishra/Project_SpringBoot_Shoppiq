@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Admin: Products')}"></head>
+<body>
+<th:block th:replace="~{fragments/admin-header :: admin-header('products')}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="admin-main">
+  <div class="page-header flex-between items-center">
+    <div>
+      <h1>Products</h1>
+      <p>Bulk import products via CSV or Excel (.xlsx)</p>
+    </div>
+    <a href="/admin/inventory" class="btn btn-secondary btn-sm">Back to Inventory</a>
+  </div>
+
+  <div class="admin-panel">
+    <div class="admin-panel-header">
+      <div class="admin-panel-title">Upload File</div>
+    </div>
+    <div class="admin-panel-body">
+      <p class="text-muted mb-sm">Accepted formats: <strong>.csv</strong>, <strong>.xlsx</strong>. Columns must be: <code>name, description, brand, sku, price, stockQuantity, discountPercentage, categoryId</code></p>
+
+      <div class="flex gap-sm items-center mb-md">
+        <input type="file" id="file-input" accept=".csv,.xlsx" class="form-input" style="flex:1">
+        <button id="preview-btn" class="btn btn-primary btn-sm" disabled>Preview</button>
+        <button id="clear-btn" class="btn btn-secondary btn-sm" disabled>Clear</button>
+      </div>
+
+      <div id="file-info" class="text-muted text-sm mb-sm" style="display:none">
+        <span id="file-info-text"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="preview-panel" class="admin-panel" style="display:none">
+    <div class="admin-panel-header">
+      <div class="admin-panel-title">Preview (<span id="row-count">0</span> items)</div>
+      <div class="flex gap-sm">
+        <span id="valid-count" class="badge badge-success" style="display:none">0 valid</span>
+        <span id="error-count" class="badge badge-danger" style="display:none">0 errors</span>
+        <button id="upload-btn" class="btn btn-primary btn-sm">Upload All</button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>#</th><th>name</th><th>description</th><th>brand</th><th>sku</th>
+            <th>price</th><th>stockQuantity</th><th>discountPercentage</th><th>categoryId</th><th>status</th>
+          </tr>
+        </thead>
+        <tbody id="preview-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="results-panel" class="admin-panel" style="display:none">
+    <div class="admin-panel-header">
+      <div class="admin-panel-title">Upload Results</div>
+    </div>
+    <div class="admin-panel-body">
+      <p id="results-summary"></p>
+      <ul id="results-list" class="text-sm" style="list-style:disc inside"></ul>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var parsedRows = [];
+
+  var REQUIRED = ['name','description','brand','sku','price','stockQuantity','discountPercentage','categoryId'];
+
+  function validateRow(row, idx) {
+    var missing = REQUIRED.filter(function (k) { return row[k] === undefined || row[k] === null || row[k] === ''; });
+    if (missing.length) return { ok: false, msg: 'Missing: ' + missing.join(', ') };
+    if (isNaN(parseFloat(row.price))) return { ok: false, msg: 'price is not a number' };
+    if (isNaN(parseInt(row.stockQuantity))) return { ok: false, msg: 'stockQuantity is not a number' };
+    if (row.discountPercentage !== undefined && row.discountPercentage !== '' && isNaN(parseFloat(row.discountPercentage)))
+      return { ok: false, msg: 'discountPercentage is not a number' };
+    if (isNaN(parseInt(row.categoryId))) return { ok: false, msg: 'categoryId is not a number' };
+    return { ok: true };
+  }
+
+  function toPayload(row) {
+    return {
+      name: String(row.name || ''),
+      description: String(row.description || ''),
+      brand: String(row.brand || ''),
+      sku: String(row.sku || ''),
+      price: parseFloat(row.price) || 0,
+      stockQuantity: parseInt(row.stockQuantity) || 0,
+      discountPercentage: parseFloat(row.discountPercentage) || 0,
+      categoryId: parseInt(row.categoryId) || 0
+    };
+  }
+
+  function renderPreview() {
+    var tbody = document.getElementById('preview-body');
+    tbody.innerHTML = '';
+    var valid = 0, errors = 0;
+    parsedRows.forEach(function (r, i) {
+      var v = validateRow(r, i);
+      var tr = document.createElement('tr');
+      if (v.ok) valid++; else errors++;
+      tr.innerHTML =
+        '<td>' + (i + 1) + '</td>' +
+        '<td>' + esc(r.name || '') + '</td>' +
+        '<td class="text-sm">' + esc(r.description || '') + '</td>' +
+        '<td>' + esc(r.brand || '') + '</td>' +
+        '<td><code>' + esc(r.sku || '') + '</code></td>' +
+        '<td>' + (r.price || '') + '</td>' +
+        '<td>' + (r.stockQuantity || '') + '</td>' +
+        '<td>' + (r.discountPercentage || '') + '</td>' +
+        '<td>' + (r.categoryId || '') + '</td>' +
+        '<td>' + (v.ok
+          ? '<span class="badge badge-success">OK</span>'
+          : '<span class="badge badge-danger">' + esc(v.msg) + '</span>') +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+    document.getElementById('row-count').textContent = parsedRows.length;
+    var vc = document.getElementById('valid-count');
+    var ec = document.getElementById('error-count');
+    vc.textContent = valid + ' valid';
+    ec.textContent = errors + ' errors';
+    vc.style.display = valid > 0 ? '' : 'none';
+    ec.style.display = errors > 0 ? '' : 'none';
+    document.getElementById('upload-btn').disabled = valid === 0;
+    document.getElementById('preview-panel').style.display = '';
+  }
+
+  function parseCSV(text) {
+    var lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    var headers = lines[0].split(',').map(function (h) { return h.trim().replace(/^"|"$/g, ''); });
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      var line = lines[i];
+      if (!line.trim()) continue;
+      var vals = line.split(',').map(function (v) { return v.trim().replace(/^"|"$/g, ''); });
+      var row = {};
+      headers.forEach(function (h, j) { row[h] = vals[j] || ''; });
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var fileInput = document.getElementById('file-input');
+    var previewBtn = document.getElementById('preview-btn');
+    var clearBtn = document.getElementById('clear-btn');
+    var uploadBtn = document.getElementById('upload-btn');
+
+    fileInput.addEventListener('change', function () {
+      var file = this.files[0];
+      if (!file) return;
+      document.getElementById('file-info-text').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+      document.getElementById('file-info').style.display = '';
+      previewBtn.disabled = false;
+      clearBtn.disabled = false;
+      document.getElementById('preview-panel').style.display = 'none';
+      document.getElementById('results-panel').style.display = 'none';
+    });
+
+    previewBtn.addEventListener('click', function () {
+      var file = fileInput.files[0];
+      if (!file) return;
+      var ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'csv') {
+        var reader = new FileReader();
+        reader.onload = function (e) { parsedRows = parseCSV(e.target.result); renderPreview(); };
+        reader.readAsText(file);
+      } else if (ext === 'xlsx') {
+        var reader2 = new FileReader();
+        reader2.onload = function (e) {
+          var wb = XLSX.read(e.target.result, { type: 'array' });
+          var sheet = wb.Sheets[wb.SheetNames[0]];
+          parsedRows = XLSX.utils.sheet_to_json(sheet);
+          renderPreview();
+        };
+        reader2.readAsArrayBuffer(file);
+      } else {
+        showToast('Unsupported file type', 'error');
+      }
+    });
+
+    clearBtn.addEventListener('click', function () {
+      fileInput.value = '';
+      parsedRows = [];
+      document.getElementById('file-info').style.display = 'none';
+      document.getElementById('preview-panel').style.display = 'none';
+      document.getElementById('results-panel').style.display = 'none';
+      previewBtn.disabled = true;
+      clearBtn.disabled = true;
+    });
+
+    uploadBtn.addEventListener('click', function () {
+      var items = parsedRows.filter(function (r) { return validateRow(r).ok; }).map(toPayload);
+      if (!items.length) { showToast('No valid items to upload', 'error'); return; }
+      setButtonLoading(uploadBtn, true);
+      API.post('/api/admin/items/bulk', { items: items }).then(function (resp) {
+        var resultsPanel = document.getElementById('results-panel');
+        document.getElementById('results-summary').textContent =
+          'Imported ' + (resp.imported || items.length) + ' items. They are in DRAFT status — review and publish from the Pending Products page.';
+        document.getElementById('results-list').innerHTML = '';
+        resultsPanel.style.display = '';
+        showToast('Bulk import complete', 'success');
+        setButtonLoading(uploadBtn, false);
+      }).catch(function (err) {
+        showToast(err.message || 'Upload failed', 'error');
+        setButtonLoading(uploadBtn, false);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
