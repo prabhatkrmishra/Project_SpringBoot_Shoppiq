@@ -4,7 +4,9 @@ import com.pkmprojects.shoppiq.exception.base.ShoppiqException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory;
 import com.pkmprojects.shoppiq.exception.formatter.ValidationErrorFormatter;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.IOException;
 import java.net.URI;
 
 /**
@@ -85,22 +88,30 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles requests for missing static resources (e.g. favicon.ico).
-     * Logged at debug level since this is expected browser behavior,
-     * not an application error.
+     * Handles requests for missing static resources (e.g. favicon.ico) and 404 errors.
      *
-     * @param exception validation exception
+     * <p>
+     * Forwards to the /error page so the HTML error template is rendered.
+     * </p>
+     *
+     * @param exception NoResourceFoundException for missing resources
      * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response
+     * @param response  current HTTP response
+     * @return ProblemDetail for API requests, or void when forwarding for browser requests
      */
     @ExceptionHandler(NoResourceFoundException.class)
-    public ProblemDetail handleNoResourceFoundException(NoResourceFoundException exception, HttpServletRequest request) {
+    public Object handleNoResourceFoundException(NoResourceFoundException exception,
+                                                 HttpServletRequest request,
+                                                 HttpServletResponse response) throws IOException {
 
-        log.debug("Static resource not found: [{}]", request.getRequestURI());
+        log.debug("Resource not found: [{}]", request.getRequestURI());
 
-        return ProblemDetailFactory.create(HttpStatus.NOT_FOUND,
+        ProblemDetail problemDetail = ProblemDetailFactory.create(HttpStatus.NOT_FOUND,
                 "Resource not found",
                 ErrorCode.RESOURCE_NOT_FOUND, createInstance(request));
+
+        forwardToErrorPage(request, response, problemDetail);
+        return null;
     }
 
     /**
@@ -212,5 +223,22 @@ public class GlobalExceptionHandler {
      */
     private URI createInstance(HttpServletRequest request) {
         return URI.create(request.getRequestURI());
+    }
+
+    /**
+     * Forwards the request to the /error page with error attributes set.
+     */
+    private void forwardToErrorPage(HttpServletRequest request, HttpServletResponse response,
+                                     ProblemDetail problemDetail) throws IOException {
+        try {
+            request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, problemDetail.getStatus());
+            request.setAttribute(RequestDispatcher.ERROR_MESSAGE, problemDetail.getDetail());
+            request.setAttribute("errorCode", problemDetail.getProperties() != null
+                    ? problemDetail.getProperties().get("errorCode") : null);
+            request.getRequestDispatcher("/error").forward(request, response);
+        } catch (Exception e) {
+            log.error("Failed to forward to /error page", e);
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Resource not found");
+        }
     }
 }

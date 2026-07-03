@@ -3,7 +3,6 @@ package com.pkmprojects.shoppiq.auth.entrypoint;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -77,18 +76,6 @@ public class ShoppiqAuthenticationEntryPoint implements AuthenticationEntryPoint
     private boolean isBrowserRequest(HttpServletRequest request) {
         String accept = request.getHeader("Accept");
         return accept != null && accept.contains("text/html");
-    }
-
-    /**
-     * Forwards the request to the /error page with error attributes set.
-     */
-    private void forwardToErrorPage(HttpServletRequest request, HttpServletResponse response,
-                                     ProblemDetail problemDetail) throws IOException, ServletException {
-        request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, problemDetail.getStatus());
-        request.setAttribute(RequestDispatcher.ERROR_MESSAGE, problemDetail.getDetail());
-        request.setAttribute("errorCode", problemDetail.getProperties() != null
-                ? problemDetail.getProperties().get("errorCode") : null);
-        request.getRequestDispatcher("/error").forward(request, response);
     }
 
 }

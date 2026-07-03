@@ -2,12 +2,10 @@ package com.pkmprojects.shoppiq.auth.handler;
 
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory;
-import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
@@ -27,21 +25,14 @@ import java.net.URI;
  * </p>
  *
  * <p>
- * For API requests (Accept: application/json), returns a JSON ProblemDetail response.
- * For browser requests (Accept: text/html), forwards to the /error page.
+ * For all requests, forwards to the /error page.
  * </p>
  *
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
 @Component
-@RequiredArgsConstructor
 public class ShoppiqAccessDeniedHandler implements AccessDeniedHandler {
-
-    /**
-     * ProblemDetail writer.
-     */
-    private final ProblemDetailResponseWriter responseWriter;
 
     /**
      * Handles the access denied exception by returning
@@ -65,19 +56,7 @@ public class ShoppiqAccessDeniedHandler implements AccessDeniedHandler {
                         URI.create(request.getRequestURI())
                 );
 
-        if (isBrowserRequest(request)) {
-            forwardToErrorPage(request, response, problemDetail);
-        } else {
-            responseWriter.write(response, problemDetail);
-        }
-    }
-
-    /**
-     * Checks if the request is from a browser (Accept header contains text/html).
-     */
-    private boolean isBrowserRequest(HttpServletRequest request) {
-        String accept = request.getHeader("Accept");
-        return accept != null && accept.contains("text/html");
+        forwardToErrorPage(request, response, problemDetail);
     }
 
     /**

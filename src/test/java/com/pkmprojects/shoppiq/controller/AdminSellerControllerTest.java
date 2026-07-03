@@ -131,10 +131,11 @@ class AdminSellerControllerTest {
 
         @Test
         @WithMockUser(roles = "USER")
-        @DisplayName("Returns 403 when not admin")
+        @DisplayName("Forwards to error page when not admin")
         void getSellers_forbidden_returns403() throws Exception {
             mockMvc.perform(get("/api/admin/sellers"))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isOk())
+                    .andExpect(forwardedUrl("/error"));
         }
     }
 

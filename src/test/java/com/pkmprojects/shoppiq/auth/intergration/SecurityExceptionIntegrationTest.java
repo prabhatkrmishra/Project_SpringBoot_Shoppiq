@@ -32,6 +32,7 @@ import java.util.Set;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -144,12 +145,11 @@ class SecurityExceptionIntegrationTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         /* GET /roles/all is restricted to ROLE_ADMIN in SecurityConfig via URL-level rules.
-         * A CUSTOMER-role user triggers AccessDeniedException -> ShoppiqAccessDeniedHandler -> 403.
+         * A CUSTOMER-role user triggers AccessDeniedException -> ShoppiqAccessDeniedHandler -> /error.
          */
         mockMvc.perform(get("/roles/all").cookie(new Cookie("jwt", token)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.errorCode").value("AUTH-403-001"));
+                .andExpect(status().isOk())
+                .andExpect(forwardedUrl("/error"));
     }
 
     @RestController

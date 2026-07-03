@@ -2,7 +2,7 @@ package com.pkmprojects.shoppiq.auth.handler;
 
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import com.pkmprojects.shoppiq.exception.constants.ProblemDetailProperties;
-import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,8 +28,8 @@ import static org.mockito.Mockito.when;
  * Unit tests for {@link ShoppiqAccessDeniedHandler}.
  *
  * <p>
- * Verifies that authorization failures are converted into RFC 9457
- * {@link ProblemDetail} responses.
+ * Verifies that authorization failures are forwarded to the /error page
+ * with the correct ProblemDetail attributes set.
  * </p>
  *
  * @author PrabhatKrMishra
@@ -40,43 +40,41 @@ import static org.mockito.Mockito.when;
 class ShoppiqAccessDeniedHandlerTest {
 
     @Mock
-    private ProblemDetailResponseWriter responseWriter;
-
-    @Mock
     private HttpServletRequest request;
 
     @Mock
     private HttpServletResponse response;
 
+    @Mock
+    private RequestDispatcher requestDispatcher;
+
     @InjectMocks
     private ShoppiqAccessDeniedHandler accessDeniedHandler;
 
     /**
-     * Verifies that authorization failures produce a RFC 9457 response.
+     * Verifies that authorization failures forward to /error with a 403 ProblemDetail.
      *
      * @throws IOException      if writing the response fails
      * @throws ServletException if servlet processing fails
      */
     @Test
-    @DisplayName("Should write forbidden ProblemDetail")
-    void shouldWriteForbiddenProblemDetail() throws IOException, ServletException {
+    @DisplayName("Should forward to error page with forbidden ProblemDetail")
+    void shouldForwardToErrorPageWithForbiddenProblemDetail() throws IOException, ServletException {
 
         // Arrange
         when(request.getRequestURI()).thenReturn("/api/admin/users");
+        when(request.getRequestDispatcher("/error")).thenReturn(requestDispatcher);
 
         AccessDeniedException exception = new AccessDeniedException("Access denied.");
-        ArgumentCaptor<ProblemDetail> captor = ArgumentCaptor.forClass(ProblemDetail.class);
 
         // Act
         accessDeniedHandler.handle(request, response, exception);
 
         // Assert
-        verify(responseWriter).write(eq(response), captor.capture());
-        ProblemDetail problemDetail = captor.getValue();
-        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(problemDetail.getTitle()).isEqualTo(HttpStatus.FORBIDDEN.getReasonPhrase());
-        assertThat(problemDetail.getProperties())
-                .containsEntry(ProblemDetailProperties.ERROR_CODE, ErrorCode.ACCESS_DENIED.getCode());
+        verify(request).setAttribute(RequestDispatcher.ERROR_STATUS_CODE, HttpStatus.FORBIDDEN.value());
+        verify(request).setAttribute(RequestDispatcher.ERROR_MESSAGE, ErrorCode.ACCESS_DENIED.getDefaultMessage());
+        verify(request).setAttribute("errorCode", ErrorCode.ACCESS_DENIED.getCode());
+        verify(requestDispatcher).forward(request, response);
     }
 
 }
