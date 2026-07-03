@@ -4,11 +4,14 @@ import com.pkmprojects.shoppiq.dto.admin.analytics.*;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
 import com.pkmprojects.shoppiq.dto.request.BulkItemRequest;
+import com.pkmprojects.shoppiq.dto.request.BulkCategoryRequest;
+import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.exception.business.AdminCannotBlockSelfException;
 import com.pkmprojects.shoppiq.service.ItemService;
+import com.pkmprojects.shoppiq.service.CategoryService;
 import com.pkmprojects.shoppiq.service.admin.*;
 import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
 import jakarta.validation.Valid;
@@ -64,6 +67,7 @@ public class AdminController {
     private final AdminReviewService reviewService;
     private final AdminReportService reportService;
     private final ItemService itemService;
+    private final CategoryService categoryService;
 
     public AdminController(AdminDashboardService dashboardService,
                            AdminInventoryService inventoryService,
@@ -72,7 +76,8 @@ public class AdminController {
                            AdminPaymentService paymentService,
                            AdminReviewService reviewService,
                            AdminReportService reportService,
-                           ItemService itemService) {
+                           ItemService itemService,
+                           CategoryService categoryService) {
         this.dashboardService = dashboardService;
         this.inventoryService = inventoryService;
         this.orderService = orderService;
@@ -81,6 +86,7 @@ public class AdminController {
         this.reviewService = reviewService;
         this.reportService = reportService;
         this.itemService = itemService;
+        this.categoryService = categoryService;
     }
 
     // =========================================================
@@ -112,6 +118,14 @@ public class AdminController {
             @Valid @RequestBody BulkItemRequest request
     ) {
         return itemService.createBulk(request.items());
+    }
+
+    @PostMapping("/categories/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<CategoryResponse> createBulkCategories(
+            @Valid @RequestBody BulkCategoryRequest request
+    ) {
+        return categoryService.createBulk(request.categories());
     }
 
     // =========================================================

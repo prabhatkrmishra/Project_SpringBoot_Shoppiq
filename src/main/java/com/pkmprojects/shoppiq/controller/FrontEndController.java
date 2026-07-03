@@ -156,6 +156,11 @@ public class FrontEndController {
         return "admin-categories";
     }
 
+    @GetMapping("/admin/categories/import")
+    public String adminCategoryImportPage() {
+        return "admin-category-import";
+    }
+
     @GetMapping("/admin/sellers")
     public String adminSellersPage() {
         return "admin-sellers";

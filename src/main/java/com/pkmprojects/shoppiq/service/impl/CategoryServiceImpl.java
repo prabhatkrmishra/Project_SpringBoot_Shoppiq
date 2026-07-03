@@ -11,6 +11,7 @@ import com.pkmprojects.shoppiq.util.SlugUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -76,6 +77,13 @@ public class CategoryServiceImpl implements CategoryService {
         Category savedCategory = categoryRepository.save(category);
 
         return CategoryResponse.fromEntity(savedCategory);
+    }
+
+    @Override
+    public List<CategoryResponse> createBulk(List<CategoryRequest> requests) {
+        return requests.stream()
+                .map(this::create)
+                .toList();
     }
 
     /**

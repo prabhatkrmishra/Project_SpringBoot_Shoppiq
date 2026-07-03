@@ -218,6 +218,7 @@ public class SecurityConfig {
                                 "/admin/reviews",
                                 "/admin/reports",
                                 "/admin/categories",
+                                "/admin/categories/import",
                                 "/admin/sellers",
                                 "/admin/pending",
                                 "/admin/products",

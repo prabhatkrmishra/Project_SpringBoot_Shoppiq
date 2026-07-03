@@ -17,6 +17,7 @@ import java.util.List;
  * <h2>Responsibilities</h2>
  * <ul>
  *     <li>Create new categories.</li>
+ *     <li>Bulk create categories.</li>
  *     <li>Update existing categories.</li>
  *     <li>Delete categories.</li>
  *     <li>Retrieve categories by identifier or slug.</li>
@@ -65,6 +66,14 @@ public interface CategoryService {
      * @return newly created category
      */
     CategoryResponse create(CategoryRequest request);
+
+    /**
+     * Creates multiple categories at once.
+     *
+     * @param requests list of category creation requests
+     * @return list of newly created categories
+     */
+    List<CategoryResponse> createBulk(List<CategoryRequest> requests);
 
     /**
      * Updates an existing category.

@@ -6,15 +6,20 @@
 <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
 <main class="admin-main">
-  <div class="page-header">
-    <h1>Categories</h1>
-    <p>Manage product categories</p>
+  <div class="page-header flex-between items-center">
+    <div>
+      <h1>Categories</h1>
+      <p>Manage product categories</p>
+    </div>
+    <div class="flex gap-sm">
+      <button id="add-category-btn" class="btn btn-primary btn-sm">+ Add Category</button>
+      <a href="/admin/categories/import" class="btn btn-secondary btn-sm">Bulk Import</a>
+    </div>
   </div>
 
   <div class="admin-panel">
     <div class="admin-panel-header">
       <div class="admin-panel-title">All Categories</div>
-      <button id="add-category-btn" class="btn btn-primary btn-sm">+ Add Category</button>
     </div>
     <div class="table-responsive">
       <table class="admin-table">
