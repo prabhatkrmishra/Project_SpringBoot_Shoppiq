@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -110,6 +111,29 @@ public class AuthController {
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody JwtRequest jwtRequest,
                                              HttpServletResponse response) {
         return ResponseEntity.ok(authService.login(jwtRequest, response));
+    }
+
+    /**
+     * Logs the user out by clearing the JWT cookie, any OAuth2 registration
+     * cookie, and the Spring Security context.
+     *
+     * <p>Since the application is fully stateless, logout only needs to:</p>
+     * <ol>
+     *     <li>Expire the JWT cookie (Max-Age=0).</li>
+     *     <li>Expire the OAuth2 registration cookie if present.</li>
+     *     <li>Clear the SecurityContextHolder.</li>
+     * </ol>
+     *
+     * @param response servlet response for clearing cookies
+     * @return 200 with logout confirmation
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletResponse response) {
+        authService.logout(response);
+        registrationCookieService.clear(response);
+        SecurityContextHolder.clearContext();
+        logger.info("User logged out successfully");
+        return ResponseEntity.ok("Logout successful");
     }
 
     /**

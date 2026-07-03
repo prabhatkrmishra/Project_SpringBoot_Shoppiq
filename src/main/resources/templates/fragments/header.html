@@ -37,7 +37,7 @@
                 </div>
                 <div sec:authorize="isAuthenticated()" class="flex items-center gap-xs">
                     <a th:href="@{/profile}" class="btn btn-sm btn-header-ghost" sec:authentication="name">Account</a>
-                    <a th:href="@{/logout}" class="btn btn-sm btn-header-muted"><i data-lucide="log-out"
+                    <a href="#" class="btn btn-sm btn-header-muted" onclick="window.handleLogout(event)"><i data-lucide="log-out"
                                                                                    class="icon-sm"></i> Logout</a>
                 </div>
                 <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false"
@@ -58,7 +58,7 @@
                                                                                  class="icon-sm"></i><span>Admin</span></a>
             <hr class="mobile-menu-divider">
             <a sec:authorize="!isAuthenticated()" th:href="@{/login}"><i data-lucide="log-in" class="icon-sm"></i><span>Sign In</span></a>
-            <a sec:authorize="isAuthenticated()" th:href="@{/logout}"><i data-lucide="log-out"
+            <a sec:authorize="isAuthenticated()" href="#" onclick="window.handleLogout(event)"><i data-lucide="log-out"
                                                                          class="icon-sm"></i><span>Logout</span></a>
         </div>
     </header>

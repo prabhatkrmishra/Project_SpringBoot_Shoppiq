@@ -302,6 +302,18 @@ function initHeroParallax() {
     }, 16));
 }
 
+// ─── Logout ──────────────────────────────────────────
+window.handleLogout = function (e) {
+    if (e) e.preventDefault();
+    API.post('/auth/logout')
+        .then(function () {
+            window.location.href = '/login';
+        })
+        .catch(function () {
+            window.location.href = '/login';
+        });
+};
+
 // ─── Page Transitions ─────────────────────────────────
 function initPageTransitions() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;

@@ -226,6 +226,7 @@ public class SecurityConfig {
 
                         // Public backend
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth/google/get-profile").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/google/complete-profile").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
