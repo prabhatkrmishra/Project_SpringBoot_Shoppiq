@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
-public record BulkCategoryRequest(
-        @NotEmpty(message = "At least one category is required.")
-        List<@Valid CategoryRequest> categories
+public record BulkAdminItemRequest(
+        @NotEmpty(message = "At least one item is required.")
+        List<@Valid AdminItemRequest> items
 ) {
 }

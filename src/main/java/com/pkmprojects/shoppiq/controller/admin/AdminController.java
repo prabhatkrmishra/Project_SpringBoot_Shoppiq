@@ -3,10 +3,11 @@ package com.pkmprojects.shoppiq.controller.admin;
 import com.pkmprojects.shoppiq.dto.admin.analytics.*;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
-import com.pkmprojects.shoppiq.dto.request.BulkItemRequest;
-import com.pkmprojects.shoppiq.dto.request.BulkCategoryRequest;
-import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
-import com.pkmprojects.shoppiq.dto.response.ItemResponse;
+import com.pkmprojects.shoppiq.dto.address.AddressResponse;
+import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
+import com.pkmprojects.shoppiq.dto.request.*;
+import com.pkmprojects.shoppiq.dto.response.*;
+import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.exception.business.AdminCannotBlockSelfException;
@@ -68,6 +69,7 @@ public class AdminController {
     private final AdminReportService reportService;
     private final ItemService itemService;
     private final CategoryService categoryService;
+    private final AdminTestDataService testDataService;
 
     public AdminController(AdminDashboardService dashboardService,
                            AdminInventoryService inventoryService,
@@ -77,7 +79,8 @@ public class AdminController {
                            AdminReviewService reviewService,
                            AdminReportService reportService,
                            ItemService itemService,
-                           CategoryService categoryService) {
+                           CategoryService categoryService,
+                           AdminTestDataService testDataService) {
         this.dashboardService = dashboardService;
         this.inventoryService = inventoryService;
         this.orderService = orderService;
@@ -87,6 +90,7 @@ public class AdminController {
         this.reportService = reportService;
         this.itemService = itemService;
         this.categoryService = categoryService;
+        this.testDataService = testDataService;
     }
 
     // =========================================================
@@ -109,23 +113,71 @@ public class AdminController {
     }
 
     // =========================================================
-    // Items (Bulk)
+    // Test Data (Admin Bulk Import)
     // =========================================================
 
-    @PostMapping("/items/bulk")
+    @PostMapping("/test/items/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<ItemResponse> createBulkItems(
-            @Valid @RequestBody BulkItemRequest request
+            @Valid @RequestBody BulkAdminItemRequest request
     ) {
-        return itemService.createBulk(request.items());
+        return testDataService.createBulkItems(request);
     }
 
-    @PostMapping("/categories/bulk")
+    @PostMapping("/test/categories/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<CategoryResponse> createBulkCategories(
             @Valid @RequestBody BulkCategoryRequest request
     ) {
         return categoryService.createBulk(request.categories());
+    }
+
+    @PostMapping("/test/users/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<UserResponse> createBulkUsers(
+            @Valid @RequestBody BulkUserRequest request
+    ) {
+        return testDataService.createBulkUsers(request);
+    }
+
+    @PostMapping("/test/addresses/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<AddressResponse> createBulkAddresses(
+            @Valid @RequestBody BulkAddressRequest request
+    ) {
+        return testDataService.createBulkAddresses(request);
+    }
+
+    @PostMapping("/test/reviews/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<ItemReviewResponse> createBulkReviews(
+            @Valid @RequestBody BulkReviewRequest request
+    ) {
+        return testDataService.createBulkReviews(request);
+    }
+
+    @PostMapping("/test/sellers/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<SellerResponse> createBulkSellers(
+            @Valid @RequestBody BulkSellerRequest request
+    ) {
+        return testDataService.createBulkSellers(request);
+    }
+
+    @PostMapping("/test/carts/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<CartItemResponse> createBulkCarts(
+            @Valid @RequestBody BulkCartRequest request
+    ) {
+        return testDataService.createBulkCartItems(request);
+    }
+
+    @PostMapping("/test/orders/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<CheckoutResponse> createBulkOrders(
+            @Valid @RequestBody BulkOrderRequest request
+    ) {
+        return testDataService.createBulkOrders(request);
     }
 
     // =========================================================

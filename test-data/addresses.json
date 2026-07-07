@@ -1,0 +1,904 @@
+{
+  "addresses": [
+    {
+      "address": {
+        "postalCode": "10001",
+        "phone": "+1234567890",
+        "line2": "Apt 4B",
+        "state": "NY",
+        "fullName": "John Doe",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "123 Main St",
+        "city": "New York"
+      },
+      "userId": 2
+    },
+    {
+      "address": {
+        "postalCode": "10002",
+        "phone": "+1234567891",
+        "line2": "Suite 200",
+        "state": "NY",
+        "fullName": "John Doe",
+        "country": "US",
+        "label": "Work",
+        "default": false,
+        "line1": "456 Business Ave",
+        "city": "New York"
+      },
+      "userId": 2
+    },
+    {
+      "address": {
+        "postalCode": "90001",
+        "phone": "+1234567892",
+        "line2": "",
+        "state": "CA",
+        "fullName": "Jane Smith",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "789 Oak Rd",
+        "city": "Los Angeles"
+      },
+      "userId": 3
+    },
+    {
+      "address": {
+        "postalCode": "60601",
+        "phone": "+1234567893",
+        "line2": "",
+        "state": "IL",
+        "fullName": "Jane Smith",
+        "country": "US",
+        "label": "Parent's House",
+        "default": false,
+        "line1": "321 Elm St",
+        "city": "Chicago"
+      },
+      "userId": 3
+    },
+    {
+      "address": {
+        "postalCode": "77001",
+        "phone": "+1234567894",
+        "line2": "Unit 3",
+        "state": "TX",
+        "fullName": "Robert Johnson",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "654 Pine St",
+        "city": "Houston"
+      },
+      "userId": 4
+    },
+    {
+      "address": {
+        "postalCode": "85001",
+        "phone": "+1234567895",
+        "line2": "",
+        "state": "AZ",
+        "fullName": "Emily Davis",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "987 Cedar Ln",
+        "city": "Phoenix"
+      },
+      "userId": 5
+    },
+    {
+      "address": {
+        "postalCode": "85002",
+        "phone": "+1234567896",
+        "line2": "Floor 5",
+        "state": "AZ",
+        "fullName": "Emily Davis",
+        "country": "US",
+        "label": "Office",
+        "default": false,
+        "line1": "147 Commerce Blvd",
+        "city": "Phoenix"
+      },
+      "userId": 5
+    },
+    {
+      "address": {
+        "postalCode": "19019",
+        "phone": "+1234567897",
+        "line2": "",
+        "state": "PA",
+        "fullName": "Michael Wilson",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "258 Maple Dr",
+        "city": "Philadelphia"
+      },
+      "userId": 6
+    },
+    {
+      "address": {
+        "postalCode": "78201",
+        "phone": "+1234567898",
+        "line2": "Apt 12",
+        "state": "TX",
+        "fullName": "Sarah Brown",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "369 Birch Ct",
+        "city": "San Antonio"
+      },
+      "userId": 7
+    },
+    {
+      "address": {
+        "postalCode": "73301",
+        "phone": "+1234567899",
+        "line2": "",
+        "state": "TX",
+        "fullName": "Sarah Brown",
+        "country": "US",
+        "label": "Summer House",
+        "default": false,
+        "line1": "741 Lake View",
+        "city": "Austin"
+      },
+      "userId": 7
+    },
+    {
+      "address": {
+        "postalCode": "92101",
+        "phone": "+1234567900",
+        "line2": "",
+        "state": "CA",
+        "fullName": "David Lee",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "852 Spruce Way",
+        "city": "San Diego"
+      },
+      "userId": 8
+    },
+    {
+      "address": {
+        "postalCode": "75201",
+        "phone": "+1234567901",
+        "line2": "Apt 7",
+        "state": "TX",
+        "fullName": "Laura Martinez",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "963 Walnut St",
+        "city": "Dallas"
+      },
+      "userId": 9
+    },
+    {
+      "address": {
+        "postalCode": "75202",
+        "phone": "+1234567902",
+        "line2": "",
+        "state": "TX",
+        "fullName": "Laura Martinez",
+        "country": "US",
+        "label": "Studio",
+        "default": false,
+        "line1": "159 Art Studio Ln",
+        "city": "Dallas"
+      },
+      "userId": 9
+    },
+    {
+      "address": {
+        "postalCode": "95101",
+        "phone": "+1234567903",
+        "line2": "",
+        "state": "CA",
+        "fullName": "James Anderson",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "357 Cherry St",
+        "city": "San Jose"
+      },
+      "userId": 10
+    },
+    {
+      "address": {
+        "postalCode": "32099",
+        "phone": "+1234567904",
+        "line2": "Unit 9",
+        "state": "FL",
+        "fullName": "Linda Taylor",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "468 Palm Ave",
+        "city": "Jacksonville"
+      },
+      "userId": 11
+    },
+    {
+      "address": {
+        "postalCode": "43004",
+        "phone": "+1234567905",
+        "line2": "",
+        "state": "OH",
+        "fullName": "William Thomas",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "579 Aspen Dr",
+        "city": "Columbus"
+      },
+      "userId": 12
+    },
+    {
+      "address": {
+        "postalCode": "28201",
+        "phone": "+1234567906",
+        "line2": "Apt 22",
+        "state": "NC",
+        "fullName": "Karen Moore",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "680 Willow Rd",
+        "city": "Charlotte"
+      },
+      "userId": 13
+    },
+    {
+      "address": {
+        "postalCode": "46201",
+        "phone": "+1234567907",
+        "line2": "",
+        "state": "IN",
+        "fullName": "Christopher Jackson",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "791 Fir St",
+        "city": "Indianapolis"
+      },
+      "userId": 14
+    },
+    {
+      "address": {
+        "postalCode": "98101",
+        "phone": "+1234567908",
+        "line2": "",
+        "state": "WA",
+        "fullName": "Nancy White",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "802 Poplar Ave",
+        "city": "Seattle"
+      },
+      "userId": 15
+    },
+    {
+      "address": {
+        "postalCode": "80201",
+        "phone": "+1234567909",
+        "line2": "Suite 1",
+        "state": "CO",
+        "fullName": "Daniel Harris",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "913 Holly Ln",
+        "city": "Denver"
+      },
+      "userId": 16
+    },
+    {
+      "address": {
+        "postalCode": "02101",
+        "phone": "+1234567910",
+        "line2": "",
+        "state": "MA",
+        "fullName": "Betty Clark",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "124 Magnolia St",
+        "city": "Boston"
+      },
+      "userId": 17
+    },
+    {
+      "address": {
+        "postalCode": "37201",
+        "phone": "+1234567911",
+        "line2": "Apt 5",
+        "state": "TN",
+        "fullName": "Matthew Lewis",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "235 Dogwood Dr",
+        "city": "Nashville"
+      },
+      "userId": 18
+    },
+    {
+      "address": {
+        "postalCode": "97201",
+        "phone": "+1234567912",
+        "line2": "",
+        "state": "OR",
+        "fullName": "Sandra Walker",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "346 Redwood Rd",
+        "city": "Portland"
+      },
+      "userId": 19
+    },
+    {
+      "address": {
+        "postalCode": "48201",
+        "phone": "+1234567913",
+        "line2": "",
+        "state": "MI",
+        "fullName": "Anthony Hall",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "457 Sycamore Ave",
+        "city": "Detroit"
+      },
+      "userId": 20
+    },
+    {
+      "address": {
+        "postalCode": "38101",
+        "phone": "+1234567914",
+        "line2": "Unit 11",
+        "state": "TN",
+        "fullName": "Ashley Young",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "568 Chestnut St",
+        "city": "Memphis"
+      },
+      "userId": 21
+    },
+    {
+      "address": {
+        "postalCode": "40201",
+        "phone": "+1234567915",
+        "line2": "",
+        "state": "KY",
+        "fullName": "Mark Allen",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "679 Hickory Ln",
+        "city": "Louisville"
+      },
+      "userId": 22
+    },
+    {
+      "address": {
+        "postalCode": "21201",
+        "phone": "+1234567916",
+        "line2": "",
+        "state": "MD",
+        "fullName": "Kimberly King",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "780 Ash St",
+        "city": "Baltimore"
+      },
+      "userId": 23
+    },
+    {
+      "address": {
+        "postalCode": "53201",
+        "phone": "+1234567917",
+        "line2": "Apt 3",
+        "state": "WI",
+        "fullName": "Steven Wright",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "891 Birchwood Dr",
+        "city": "Milwaukee"
+      },
+      "userId": 24
+    },
+    {
+      "address": {
+        "postalCode": "87101",
+        "phone": "+1234567918",
+        "line2": "",
+        "state": "NM",
+        "fullName": "Donna Scott",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "902 Elmwood Ave",
+        "city": "Albuquerque"
+      },
+      "userId": 25
+    },
+    {
+      "address": {
+        "postalCode": "85701",
+        "phone": "+1234567919",
+        "line2": "",
+        "state": "AZ",
+        "fullName": "Paul Green",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "103 Oakridge Rd",
+        "city": "Tucson"
+      },
+      "userId": 26
+    },
+    {
+      "address": {
+        "postalCode": "93701",
+        "phone": "+1234567920",
+        "line2": "Suite 4",
+        "state": "CA",
+        "fullName": "Carol Adams",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "214 Pinecrest Ln",
+        "city": "Fresno"
+      },
+      "userId": 27
+    },
+    {
+      "address": {
+        "postalCode": "95801",
+        "phone": "+1234567921",
+        "line2": "",
+        "state": "CA",
+        "fullName": "Andrew Baker",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "325 Crestview Dr",
+        "city": "Sacramento"
+      },
+      "userId": 28
+    },
+    {
+      "address": {
+        "postalCode": "64101",
+        "phone": "+1234567922",
+        "line2": "Apt 8",
+        "state": "MO",
+        "fullName": "Melissa Nelson",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "436 Hilltop Rd",
+        "city": "Kansas City"
+      },
+      "userId": 29
+    },
+    {
+      "address": {
+        "postalCode": "30301",
+        "phone": "+1234567923",
+        "line2": "",
+        "state": "GA",
+        "fullName": "Joshua Carter",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "547 Meadow Ln",
+        "city": "Atlanta"
+      },
+      "userId": 30
+    },
+    {
+      "address": {
+        "postalCode": "33101",
+        "phone": "+1234567924",
+        "line2": "",
+        "state": "FL",
+        "fullName": "Deborah Mitchell",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "658 Brookside Ave",
+        "city": "Miami"
+      },
+      "userId": 31
+    },
+    {
+      "address": {
+        "postalCode": "89101",
+        "phone": "+1234567925",
+        "line2": "Unit 15",
+        "state": "NV",
+        "fullName": "Kevin Perez",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "769 Sunset Blvd",
+        "city": "Las Vegas"
+      },
+      "userId": 32
+    },
+    {
+      "address": {
+        "postalCode": "27601",
+        "phone": "+1234567926",
+        "line2": "",
+        "state": "NC",
+        "fullName": "Stephanie Roberts",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "870 Sunrise Ct",
+        "city": "Raleigh"
+      },
+      "userId": 33
+    },
+    {
+      "address": {
+        "postalCode": "68101",
+        "phone": "+1234567927",
+        "line2": "Apt 2",
+        "state": "NE",
+        "fullName": "Brian Turner",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "981 Gateway Dr",
+        "city": "Omaha"
+      },
+      "userId": 34
+    },
+    {
+      "address": {
+        "postalCode": "55401",
+        "phone": "+1234567928",
+        "line2": "",
+        "state": "MN",
+        "fullName": "Rebecca Phillips",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "192 Lakeshore Rd",
+        "city": "Minneapolis"
+      },
+      "userId": 35
+    },
+    {
+      "address": {
+        "postalCode": "33601",
+        "phone": "+1234567929",
+        "line2": "",
+        "state": "FL",
+        "fullName": "Edward Campbell",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "293 Riverwalk Ave",
+        "city": "Tampa"
+      },
+      "userId": 36
+    },
+    {
+      "address": {
+        "postalCode": "84101",
+        "phone": "+1234567930",
+        "line2": "Suite 6",
+        "state": "UT",
+        "fullName": "Sharon Parker",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "394 Mountain View",
+        "city": "Salt Lake City"
+      },
+      "userId": 37
+    },
+    {
+      "address": {
+        "postalCode": "45201",
+        "phone": "+1234567931",
+        "line2": "",
+        "state": "OH",
+        "fullName": "Ronald Evans",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "495 Valley St",
+        "city": "Cincinnati"
+      },
+      "userId": 38
+    },
+    {
+      "address": {
+        "postalCode": "44101",
+        "phone": "+1234567932",
+        "line2": "Apt 14",
+        "state": "OH",
+        "fullName": "Cynthia Edwards",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "596 Canyon Rd",
+        "city": "Cleveland"
+      },
+      "userId": 39
+    },
+    {
+      "address": {
+        "postalCode": "23450",
+        "phone": "+1234567933",
+        "line2": "",
+        "state": "VA",
+        "fullName": "Timothy Collins",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "697 Park Place",
+        "city": "Virginia Beach"
+      },
+      "userId": 40
+    },
+    {
+      "address": {
+        "postalCode": "92801",
+        "phone": "+1234567934",
+        "line2": "",
+        "state": "CA",
+        "fullName": "Katherine Stewart",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "798 Garden St",
+        "city": "Anaheim"
+      },
+      "userId": 41
+    },
+    {
+      "address": {
+        "postalCode": "96801",
+        "phone": "+1234567935",
+        "line2": "Unit 7",
+        "state": "HI",
+        "fullName": "Jason Sanchez",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "899 Villa Ct",
+        "city": "Honolulu"
+      },
+      "userId": 42
+    },
+    {
+      "address": {
+        "postalCode": "70112",
+        "phone": "+1234567936",
+        "line2": "",
+        "state": "LA",
+        "fullName": "Amy Morris",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "910 Bayshore Dr",
+        "city": "New Orleans"
+      },
+      "userId": 43
+    },
+    {
+      "address": {
+        "postalCode": "94101",
+        "phone": "+1234567937",
+        "line2": "",
+        "state": "CA",
+        "fullName": "Jeffrey Rogers",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "111 Harbor View",
+        "city": "San Francisco"
+      },
+      "userId": 44
+    },
+    {
+      "address": {
+        "postalCode": "14201",
+        "phone": "+1234567938",
+        "line2": "Apt 19",
+        "state": "NY",
+        "fullName": "Angela Reed",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "222 Cliffside Ave",
+        "city": "Buffalo"
+      },
+      "userId": 45
+    },
+    {
+      "address": {
+        "postalCode": "43601",
+        "phone": "+1234567939",
+        "line2": "",
+        "state": "OH",
+        "fullName": "Ryan Cook",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "333 Willow Bend",
+        "city": "Toledo"
+      },
+      "userId": 46
+    },
+    {
+      "address": {
+        "postalCode": "75023",
+        "phone": "+1234567940",
+        "line2": "",
+        "state": "TX",
+        "fullName": "Virginia Morgan",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "444 Quail Run",
+        "city": "Plano"
+      },
+      "userId": 47
+    },
+    {
+      "address": {
+        "postalCode": "68501",
+        "phone": "+1234567941",
+        "line2": "Suite 3",
+        "state": "NE",
+        "fullName": "Gary Bell",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "555 Ridgecrest Ln",
+        "city": "Lincoln"
+      },
+      "userId": 48
+    },
+    {
+      "address": {
+        "postalCode": "27401",
+        "phone": "+1234567942",
+        "line2": "",
+        "state": "NC",
+        "fullName": "Maria Murphy",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "666 Spring Creek",
+        "city": "Greensboro"
+      },
+      "userId": 49
+    },
+    {
+      "address": {
+        "postalCode": "07302",
+        "phone": "+1234567943",
+        "line2": "Apt 6",
+        "state": "NJ",
+        "fullName": "Nicholas Bailey",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "777 Woodland Ave",
+        "city": "Jersey City"
+      },
+      "userId": 50
+    },
+    {
+      "address": {
+        "postalCode": "91910",
+        "phone": "+1234567944",
+        "line2": "",
+        "state": "CA",
+        "fullName": "Denise Rivera",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "888 Forest Glen",
+        "city": "Chula Vista"
+      },
+      "userId": 51
+    },
+    {
+      "address": {
+        "postalCode": "76101",
+        "phone": "+1234567945",
+        "line2": "",
+        "state": "TX",
+        "fullName": "Eric Cooper",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "999 Misty Hollow",
+        "city": "Fort Worth"
+      },
+      "userId": 52
+    },
+    {
+      "address": {
+        "postalCode": "27701",
+        "phone": "+1234567946",
+        "line2": "Unit 4",
+        "state": "NC",
+        "fullName": "Michelle Richardson",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "121 Devon St",
+        "city": "Durham"
+      },
+      "userId": 53
+    },
+    {
+      "address": {
+        "postalCode": "92501",
+        "phone": "+1234567947",
+        "line2": "",
+        "state": "CA",
+        "fullName": "Stephen Cox",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "232 Essex Ave",
+        "city": "Riverside"
+      },
+      "userId": 54
+    },
+    {
+      "address": {
+        "postalCode": "53701",
+        "phone": "+1234567948",
+        "line2": "",
+        "state": "WI",
+        "fullName": "Laura Howard",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "343 Franklin Ct",
+        "city": "Madison"
+      },
+      "userId": 55
+    },
+    {
+      "address": {
+        "postalCode": "32801",
+        "phone": "+1234567949",
+        "line2": "Apt 10",
+        "state": "FL",
+        "fullName": "Adam Ward",
+        "country": "US",
+        "label": "Home",
+        "default": true,
+        "line1": "454 Georgetown Rd",
+        "city": "Orlando"
+      },
+      "userId": 56
+    }
+  ]
+}

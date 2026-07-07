@@ -1,0 +1,164 @@
+{
+  "categories": [
+    {
+      "name": "Computers & Laptops",
+      "description": "Desktops, laptops, monitors, and peripherals"
+    },
+    {
+      "name": "Smartphones",
+      "description": "Mobile phones, cases, and screen protectors"
+    },
+    {
+      "name": "Audio",
+      "description": "Headphones, speakers, earbuds, and audio equipment"
+    },
+    {
+      "name": "Cameras",
+      "description": "DSLR, mirrorless, action cameras, and lenses"
+    },
+    {
+      "name": "Gaming",
+      "description": "Consoles, games, controllers, and gaming accessories"
+    },
+    {
+      "name": "Wearables",
+      "description": "Smartwatches, fitness trackers, and smart glasses"
+    },
+    {
+      "name": "Home Appliances",
+      "description": "Kitchen appliances, cleaning, and climate control"
+    },
+    {
+      "name": "Kitchen & Dining",
+      "description": "Cookware, bakeware, utensils, and dinnerware"
+    },
+    {
+      "name": "Home Decor",
+      "description": "Lighting, rugs, and decorative accents"
+    },
+    {
+      "name": "Bedding & Bath",
+      "description": "Sheets, towels, pillows, and bathroom accessories"
+    },
+    {
+      "name": "Clothing - Men",
+      "description": "Shirts, pants, suits, and activewear for men"
+    },
+    {
+      "name": "Clothing - Women",
+      "description": "Dresses, tops, bottoms, and outerwear for women"
+    },
+    {
+      "name": "Clothing - Kids",
+      "description": "Apparel for babies, toddlers, and children"
+    },
+    {
+      "name": "Shoes",
+      "description": "Sneakers, boots, sandals, and formal footwear"
+    },
+    {
+      "name": "Accessories",
+      "description": "Bags, belts, hats, scarves, and jewelry"
+    },
+    {
+      "name": "Watches",
+      "description": "Analog, digital, and smart watches for all occasions"
+    },
+    {
+      "name": "Health & Wellness",
+      "description": "Vitamins, supplements, fitness equipment, and medical supplies"
+    },
+    {
+      "name": "Tools & Home Improvement",
+      "description": "Power tools, hand tools, hardware, and building supplies"
+    },
+    {
+      "name": "Baby & Nursery",
+      "description": "Diapers, strollers, cribs, and baby care essentials"
+    },
+    {
+      "name": "Movies & Music",
+      "description": "DVDs, Blu-rays, vinyl records, and digital media"
+    },
+    {
+      "name": "Art & Craft Supplies",
+      "description": "Paints, brushes, canvases, and crafting materials"
+    },
+    {
+      "name": "Party & Occasions",
+      "description": "Decorations, gifts, and seasonal celebrations"
+    },
+    {
+      "name": "Travel Gear",
+      "description": "Luggage, backpacks, travel accessories, and organizers"
+    },
+    {
+      "name": "Collectibles",
+      "description": "Coins, stamps, trading cards, and memorabilia"
+    },
+    {
+      "name": "Lighting",
+      "description": "Lamps, bulbs, smart lighting, and fixtures"
+    },
+    {
+      "name": "Storage & Organization",
+      "description": "Containers, shelves, closets, and space savers"
+    },
+    {
+      "name": "Cleaning Supplies",
+      "description": "Detergents, vacuums, mops, and cleaning tools"
+    },
+    {
+      "name": "Security & Smart Home",
+      "description": "Cameras, locks, sensors, and home automation"
+    },
+    {
+      "name": "Pet Food",
+      "description": "Dog food, cat food, treats, and specialized diets"
+    },
+    {
+      "name": "Pet Toys",
+      "description": "Chew toys, interactive toys, and exercise equipment"
+    },
+    {
+      "name": "Baby Gear",
+      "description": "Car seats, strollers, carriers, and high chairs"
+    },
+    {
+      "name": "Baby Feeding",
+      "description": "Bottles, formula, bibs, and feeding accessories"
+    },
+    {
+      "name": "School Supplies",
+      "description": "Backpacks, notebooks, pens, and lunch boxes"
+    },
+    {
+      "name": "Craft Materials",
+      "description": "Fabric, yarn, beads, and DIY kits"
+    },
+    {
+      "name": "Holiday Decor",
+      "description": "Christmas, Halloween, Easter, and seasonal decorations"
+    },
+    {
+      "name": "Gift Cards",
+      "description": "Digital and physical gift cards for all occasions"
+    },
+    {
+      "name": "Services",
+      "description": "Installation, warranty, repair, and subscription services"
+    },
+    {
+      "name": "Refurbished Electronics",
+      "description": "Certified pre-owned devices with warranty"
+    },
+    {
+      "name": "Clearance",
+      "description": "End-of-season and overstock items at deep discounts"
+    },
+    {
+      "name": "New Arrivals",
+      "description": "Latest products just added to the catalog"
+    }
+  ]
+}

@@ -41,7 +41,6 @@ public record BulkItemRequest(
           List of item creation requests.
          */
         @NotEmpty(message = "At least one item is required.")
-        @Valid
-        List<ItemRequest> items
+        List<@Valid ItemRequest> items
 ) {
 }

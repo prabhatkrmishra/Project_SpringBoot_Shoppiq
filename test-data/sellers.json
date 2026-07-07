@@ -1,0 +1,524 @@
+{
+  "sellers": [
+    {
+      "userId": 2,
+      "seller": {
+        "panNumber": "ABCDE1234F",
+        "phone": "9876543210",
+        "businessName": "TechWorld Electronics",
+        "businessEmail": "sales@techworld.com",
+        "gstNumber": "27ABCDE1234F1Z5"
+      }
+    },
+    {
+      "userId": 3,
+      "seller": {
+        "panNumber": "BCDEF1234G",
+        "phone": "9876543211",
+        "businessName": "AudioVibe Store",
+        "businessEmail": "hello@audiovibe.com",
+        "gstNumber": "27ABCDE1234F2Z6"
+      }
+    },
+    {
+      "userId": 4,
+      "seller": {
+        "panNumber": "CDEFG1234H",
+        "phone": "9876543212",
+        "businessName": "HomeEssentials Co",
+        "businessEmail": "contact@homeessentials.com",
+        "gstNumber": "27ABCDE1234F3Z7"
+      }
+    },
+    {
+      "userId": 5,
+      "seller": {
+        "panNumber": "DEFGH1234I",
+        "phone": "9876543213",
+        "businessName": "FashionForward",
+        "businessEmail": "team@fashionforward.com",
+        "gstNumber": "27ABCDE1234F4Z8"
+      }
+    },
+    {
+      "userId": 6,
+      "seller": {
+        "panNumber": "EFGHI1234J",
+        "phone": "9876543214",
+        "businessName": "FitLife Gear",
+        "businessEmail": "info@fitlifegear.com",
+        "gstNumber": "27ABCDE1234F5Z9"
+      }
+    },
+    {
+      "userId": 7,
+      "seller": {
+        "panNumber": "FGHIJ1234K",
+        "phone": "9876543215",
+        "businessName": "GourmetKitchen",
+        "businessEmail": "orders@gourmetkitchen.com",
+        "gstNumber": "27ABCDE1234F6Z0"
+      }
+    },
+    {
+      "userId": 8,
+      "seller": {
+        "panNumber": "GHIJK1234L",
+        "phone": "9876543216",
+        "businessName": "PetParadise",
+        "businessEmail": "care@petparadise.com",
+        "gstNumber": "27ABCDE1234F7Z1"
+      }
+    },
+    {
+      "userId": 9,
+      "seller": {
+        "panNumber": "HIJKL1234M",
+        "phone": "9876543217",
+        "businessName": "BabyBliss",
+        "businessEmail": "support@babybliss.com",
+        "gstNumber": "27ABCDE1234F8Z2"
+      }
+    },
+    {
+      "userId": 10,
+      "seller": {
+        "panNumber": "IJKLM1234N",
+        "phone": "9876543218",
+        "businessName": "BookHaven",
+        "businessEmail": "hello@bookhaven.com",
+        "gstNumber": "27ABCDE1234F9Z3"
+      }
+    },
+    {
+      "userId": 11,
+      "seller": {
+        "panNumber": "JKLMN1234O",
+        "phone": "9876543219",
+        "businessName": "GameZone",
+        "businessEmail": "admin@gamezone.com",
+        "gstNumber": "27ABCDE1234F0Z4"
+      }
+    },
+    {
+      "userId": 12,
+      "seller": {
+        "panNumber": "KLMNO1234P",
+        "phone": "9876543220",
+        "businessName": "SmartHome Solutions",
+        "businessEmail": "sales@smarthome.com",
+        "gstNumber": "27ABCDE1234F1Z6"
+      }
+    },
+    {
+      "userId": 13,
+      "seller": {
+        "panNumber": "LMNOP1234Q",
+        "phone": "9876543221",
+        "businessName": "OutdoorAdventures",
+        "businessEmail": "info@outdooradv.com",
+        "gstNumber": "27ABCDE1234F2Z7"
+      }
+    },
+    {
+      "userId": 14,
+      "seller": {
+        "panNumber": "MNOPQ1234R",
+        "phone": "9876543222",
+        "businessName": "BeautyBar",
+        "businessEmail": "contact@beautybar.com",
+        "gstNumber": "27ABCDE1234F3Z8"
+      }
+    },
+    {
+      "userId": 15,
+      "seller": {
+        "panNumber": "NOPQR1234S",
+        "phone": "9876543223",
+        "businessName": "ToyTreasure",
+        "businessEmail": "hello@toytreasure.com",
+        "gstNumber": "27ABCDE1234F4Z9"
+      }
+    },
+    {
+      "userId": 16,
+      "seller": {
+        "panNumber": "OPQRS1234T",
+        "phone": "9876543224",
+        "businessName": "MusicMakers",
+        "businessEmail": "team@musicmakers.com",
+        "gstNumber": "27ABCDE1234F5Z0"
+      }
+    },
+    {
+      "userId": 17,
+      "seller": {
+        "panNumber": "PQRST1234U",
+        "phone": "9876543225",
+        "businessName": "GardenGurus",
+        "businessEmail": "care@gardengurus.com",
+        "gstNumber": "27ABCDE1234F6Z1"
+      }
+    },
+    {
+      "userId": 18,
+      "seller": {
+        "panNumber": "QRSTU1234V",
+        "phone": "9876543226",
+        "businessName": "AutoParts Plus",
+        "businessEmail": "orders@autopartsplus.com",
+        "gstNumber": "27ABCDE1234F7Z2"
+      }
+    },
+    {
+      "userId": 19,
+      "seller": {
+        "panNumber": "RSTUV1234W",
+        "phone": "9876543227",
+        "businessName": "OfficePro",
+        "businessEmail": "support@officepro.com",
+        "gstNumber": "27ABCDE1234F8Z3"
+      }
+    },
+    {
+      "userId": 20,
+      "seller": {
+        "panNumber": "STUVW1234X",
+        "phone": "9876543228",
+        "businessName": "TravelTrove",
+        "businessEmail": "info@traveltrove.com",
+        "gstNumber": "27ABCDE1234F9Z4"
+      }
+    },
+    {
+      "userId": 21,
+      "seller": {
+        "panNumber": "TUVWX1234Y",
+        "phone": "9876543229",
+        "businessName": "CraftCorner",
+        "businessEmail": "hello@craftcorner.com",
+        "gstNumber": "27ABCDE1234F0Z5"
+      }
+    },
+    {
+      "userId": 22,
+      "seller": {
+        "panNumber": "UVWXY1234Z",
+        "phone": "9876543230",
+        "businessName": "LuxeLiving",
+        "businessEmail": "sales@luxeliving.com",
+        "gstNumber": "27ABCDE1234F1Z7"
+      }
+    },
+    {
+      "userId": 23,
+      "seller": {
+        "panNumber": "VWXYZ1234A",
+        "phone": "9876543231",
+        "businessName": "SportStyle",
+        "businessEmail": "contact@sportstyle.com",
+        "gstNumber": "27ABCDE1234F2Z8"
+      }
+    },
+    {
+      "userId": 24,
+      "seller": {
+        "panNumber": "WXYZA1234B",
+        "phone": "9876543232",
+        "businessName": "CoolGadgets",
+        "businessEmail": "team@coolgadgets.com",
+        "gstNumber": "27ABCDE1234F3Z9"
+      }
+    },
+    {
+      "userId": 25,
+      "seller": {
+        "panNumber": "XYZAB1234C",
+        "phone": "9876543233",
+        "businessName": "WearWell",
+        "businessEmail": "care@wearwell.com",
+        "gstNumber": "27ABCDE1234F4Z0"
+      }
+    },
+    {
+      "userId": 26,
+      "seller": {
+        "panNumber": "YZABC1234D",
+        "phone": "9876543234",
+        "businessName": "CleanSweep",
+        "businessEmail": "orders@cleansweep.com",
+        "gstNumber": "27ABCDE1234F5Z1"
+      }
+    },
+    {
+      "userId": 27,
+      "seller": {
+        "panNumber": "ZABCD1234E",
+        "phone": "9876543235",
+        "businessName": "SnackStation",
+        "businessEmail": "info@snackstation.com",
+        "gstNumber": "27ABCDE1234F6Z2"
+      }
+    },
+    {
+      "userId": 28,
+      "seller": {
+        "panNumber": "ABCDE1234Z",
+        "phone": "9876543236",
+        "businessName": "TimePiece Co",
+        "businessEmail": "hello@timepiece.com",
+        "gstNumber": "27ABCDE1234F7Z3"
+      }
+    },
+    {
+      "userId": 29,
+      "seller": {
+        "panNumber": "BCDEF1234Y",
+        "phone": "9876543237",
+        "businessName": "LightLogic",
+        "businessEmail": "support@lightlogic.com",
+        "gstNumber": "27ABCDE1234F8Z4"
+      }
+    },
+    {
+      "userId": 30,
+      "seller": {
+        "panNumber": "CDEFG1234X",
+        "phone": "9876543238",
+        "businessName": "StorageSmart",
+        "businessEmail": "info@storagesmart.com",
+        "gstNumber": "27ABCDE1234F9Z5"
+      }
+    },
+    {
+      "userId": 31,
+      "seller": {
+        "panNumber": "DEFGH1234W",
+        "phone": "9876543239",
+        "businessName": "HealthyHabitat",
+        "businessEmail": "care@healthyhabitat.com",
+        "gstNumber": "27ABCDE1234F0Z6"
+      }
+    },
+    {
+      "userId": 32,
+      "seller": {
+        "panNumber": "EFGHI1234V",
+        "phone": "9876543240",
+        "businessName": "StyleStudio",
+        "businessEmail": "orders@stylestudio.com",
+        "gstNumber": "27ABCDE1234F1Z8"
+      }
+    },
+    {
+      "userId": 33,
+      "seller": {
+        "panNumber": "FGHIJ1234U",
+        "phone": "9876543241",
+        "businessName": "GadgetGrove",
+        "businessEmail": "team@gadgetgrove.com",
+        "gstNumber": "27ABCDE1234F2Z9"
+      }
+    },
+    {
+      "userId": 34,
+      "seller": {
+        "panNumber": "GHIJK1234T",
+        "phone": "9876543242",
+        "businessName": "ComfortCove",
+        "businessEmail": "hello@comfortcove.com",
+        "gstNumber": "27ABCDE1234F3Z0"
+      }
+    },
+    {
+      "userId": 35,
+      "seller": {
+        "panNumber": "HIJKL1234S",
+        "phone": "9876543243",
+        "businessName": "ProTools Direct",
+        "businessEmail": "sales@protoolsdirect.com",
+        "gstNumber": "27ABCDE1234F4Z1"
+      }
+    },
+    {
+      "userId": 36,
+      "seller": {
+        "panNumber": "IJKLM1234R",
+        "phone": "9876543244",
+        "businessName": "EcoEarth",
+        "businessEmail": "contact@ecoearth.com",
+        "gstNumber": "27ABCDE1234F5Z2"
+      }
+    },
+    {
+      "userId": 37,
+      "seller": {
+        "panNumber": "JKLMN1234Q",
+        "phone": "9876543245",
+        "businessName": "PrimePicks",
+        "businessEmail": "info@primepicks.com",
+        "gstNumber": "27ABCDE1234F6Z3"
+      }
+    },
+    {
+      "userId": 38,
+      "seller": {
+        "panNumber": "KLMNO1234P",
+        "phone": "9876543246",
+        "businessName": "UrbanEdge",
+        "businessEmail": "care@urbanedge.com",
+        "gstNumber": "27ABCDE1234F7Z4"
+      }
+    },
+    {
+      "userId": 39,
+      "seller": {
+        "panNumber": "LMNOP1234O",
+        "phone": "9876543247",
+        "businessName": "PurePixel",
+        "businessEmail": "orders@purepixel.com",
+        "gstNumber": "27ABCDE1234F8Z5"
+      }
+    },
+    {
+      "userId": 40,
+      "seller": {
+        "panNumber": "MNOPQ1234N",
+        "phone": "9876543248",
+        "businessName": "BlissfulBeds",
+        "businessEmail": "support@blissfulbeds.com",
+        "gstNumber": "27ABCDE1234F9Z6"
+      }
+    },
+    {
+      "userId": 41,
+      "seller": {
+        "panNumber": "NOPQR1234M",
+        "phone": "9876543249",
+        "businessName": "QuickCart",
+        "businessEmail": "hello@quickcart.com",
+        "gstNumber": "27ABCDE1234F0Z7"
+      }
+    },
+    {
+      "userId": 42,
+      "seller": {
+        "panNumber": "OPQRS1234L",
+        "phone": "9876543250",
+        "businessName": "MegaMart",
+        "businessEmail": "team@megamart.com",
+        "gstNumber": "27ABCDE1234F1Z9"
+      }
+    },
+    {
+      "userId": 43,
+      "seller": {
+        "panNumber": "PQRST1234K",
+        "phone": "9876543251",
+        "businessName": "ValueVille",
+        "businessEmail": "info@valueville.com",
+        "gstNumber": "27ABCDE1234F2Z0"
+      }
+    },
+    {
+      "userId": 44,
+      "seller": {
+        "panNumber": "QRSTU1234J",
+        "phone": "9876543252",
+        "businessName": "TopTrend",
+        "businessEmail": "care@toptrend.com",
+        "gstNumber": "27ABCDE1234F3Z1"
+      }
+    },
+    {
+      "userId": 45,
+      "seller": {
+        "panNumber": "RSTUV1234I",
+        "phone": "9876543253",
+        "businessName": "BestBuy Mart",
+        "businessEmail": "orders@bestbuymart.com",
+        "gstNumber": "27ABCDE1234F4Z2"
+      }
+    },
+    {
+      "userId": 46,
+      "seller": {
+        "panNumber": "STUVW1234H",
+        "phone": "9876543254",
+        "businessName": "EliteEmporium",
+        "businessEmail": "support@eliteemporium.com",
+        "gstNumber": "27ABCDE1234F5Z3"
+      }
+    },
+    {
+      "userId": 47,
+      "seller": {
+        "panNumber": "TUVWX1234G",
+        "phone": "9876543255",
+        "businessName": "NovaNeeds",
+        "businessEmail": "hello@novaneeds.com",
+        "gstNumber": "27ABCDE1234F6Z4"
+      }
+    },
+    {
+      "userId": 48,
+      "seller": {
+        "panNumber": "UVWXY1234F",
+        "phone": "9876543256",
+        "businessName": "PrimeZone",
+        "businessEmail": "team@primezone.com",
+        "gstNumber": "27ABCDE1234F7Z5"
+      }
+    },
+    {
+      "userId": 49,
+      "seller": {
+        "panNumber": "VWXYZ1234E",
+        "phone": "9876543257",
+        "businessName": "SmartSaver",
+        "businessEmail": "info@smartsaver.com",
+        "gstNumber": "27ABCDE1234F8Z6"
+      }
+    },
+    {
+      "userId": 50,
+      "seller": {
+        "panNumber": "WXYZA1234D",
+        "phone": "9876543258",
+        "businessName": "GrandGoods",
+        "businessEmail": "care@grandgoods.com",
+        "gstNumber": "27ABCDE1234F9Z7"
+      }
+    },
+    {
+      "userId": 51,
+      "seller": {
+        "panNumber": "XYZAB1234C",
+        "phone": "9876543259",
+        "businessName": "SuperStore",
+        "businessEmail": "orders@superstore.com",
+        "gstNumber": "27ABCDE1234F0Z8"
+      }
+    },
+    {
+      "userId": 52,
+      "seller": {
+        "panNumber": "YZABC1234B",
+        "phone": "9876543260",
+        "businessName": "MegaDeals",
+        "businessEmail": "support@megadeals.com",
+        "gstNumber": "27ABCDE1234F1Z0"
+      }
+    },
+    {
+      "userId": 53,
+      "seller": {
+        "panNumber": "ZABCD1234A",
+        "phone": "9876543261",
+        "businessName": "PrimeGoods",
+        "businessEmail": "hello@primegoods.com",
+        "gstNumber": "27ABCDE1234F2Z1"
+      }
+    }
+  ]
+}

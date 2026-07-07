@@ -1,0 +1,712 @@
+{
+  "reviews": [
+    {
+      "userId": 2,
+      "itemId": 1,
+      "rating": 5,
+      "review": "Absolutely love this phone! The titanium build feels premium and the camera is outstanding."
+    },
+    {
+      "userId": 3,
+      "itemId": 1,
+      "rating": 4,
+      "review": "Great device but battery could be better. Still highly recommend."
+    },
+    {
+      "userId": 4,
+      "itemId": 2,
+      "rating": 5,
+      "review": "The S Pen integration is fantastic for note-taking. Excellent display."
+    },
+    {
+      "userId": 5,
+      "itemId": 2,
+      "rating": 4,
+      "review": "Powerful phone with great AI features. A bit pricey though."
+    },
+    {
+      "userId": 6,
+      "itemId": 3,
+      "rating": 4,
+      "review": "Clean Android experience and great photos. Solid choice."
+    },
+    {
+      "userId": 7,
+      "itemId": 3,
+      "rating": 5,
+      "review": "Best Pixel yet! Computational photography is magic."
+    },
+    {
+      "userId": 8,
+      "itemId": 4,
+      "rating": 5,
+      "review": "Incredibly thin and light. The M3 chip is blazing fast."
+    },
+    {
+      "userId": 9,
+      "itemId": 4,
+      "rating": 4,
+      "review": "Perfect for students. Wish it had more ports though."
+    },
+    {
+      "userId": 10,
+      "itemId": 5,
+      "rating": 5,
+      "review": "Stunning 4K OLED screen. Worth every penny for creators."
+    },
+    {
+      "userId": 11,
+      "itemId": 5,
+      "rating": 3,
+      "review": "Expensive but powerful. Runs hot under load."
+    },
+    {
+      "userId": 12,
+      "itemId": 6,
+      "rating": 4,
+      "review": "Reliable business laptop with great keyboard."
+    },
+    {
+      "userId": 13,
+      "itemId": 6,
+      "rating": 5,
+      "review": "Lightweight and durable. Perfect travel companion."
+    },
+    {
+      "userId": 14,
+      "itemId": 7,
+      "rating": 5,
+      "review": "Best noise cancellation on the market. Super comfortable."
+    },
+    {
+      "userId": 15,
+      "itemId": 7,
+      "rating": 4,
+      "review": "Premium sound and comfort. Battery life is amazing."
+    },
+    {
+      "userId": 16,
+      "itemId": 8,
+      "rating": 5,
+      "review": "QuietComfort never disappoints. Immersive audio."
+    },
+    {
+      "userId": 17,
+      "itemId": 8,
+      "rating": 4,
+      "review": "Comfortable for long flights. Great ANC."
+    },
+    {
+      "userId": 18,
+      "itemId": 9,
+      "rating": 5,
+      "review": "The USB-C upgrade is welcome. Great fit and sound."
+    },
+    {
+      "userId": 19,
+      "itemId": 9,
+      "rating": 4,
+      "review": "Convenient and compact. Bass is decent."
+    },
+    {
+      "userId": 20,
+      "itemId": 10,
+      "rating": 4,
+      "review": "Loud and durable. Perfect for the beach."
+    },
+    {
+      "userId": 21,
+      "itemId": 10,
+      "rating": 5,
+      "review": "Amazing sound for the size. Waterproof is a plus."
+    },
+    {
+      "userId": 22,
+      "itemId": 11,
+      "rating": 5,
+      "review": "Incredible autofocus and image quality. Pro-grade."
+    },
+    {
+      "userId": 23,
+      "itemId": 11,
+      "rating": 4,
+      "review": "Fantastic camera but the menu could be simpler."
+    },
+    {
+      "userId": 24,
+      "itemId": 12,
+      "rating": 5,
+      "review": "Excellent low-light performance. Great all-rounder."
+    },
+    {
+      "userId": 25,
+      "itemId": 12,
+      "rating": 4,
+      "review": "Solid build and great video. Pricey though."
+    },
+    {
+      "userId": 26,
+      "itemId": 13,
+      "rating": 5,
+      "review": "Best action cam for adventure sports. Stabilization is unreal."
+    },
+    {
+      "userId": 27,
+      "itemId": 13,
+      "rating": 4,
+      "review": "Great footage but battery life is limited."
+    },
+    {
+      "userId": 28,
+      "itemId": 14,
+      "rating": 5,
+      "review": "Lightning fast load times. The DualSense is incredible."
+    },
+    {
+      "userId": 29,
+      "itemId": 14,
+      "rating": 4,
+      "review": "Amazing console. Wish more exclusives were available."
+    },
+    {
+      "userId": 30,
+      "itemId": 15,
+      "rating": 4,
+      "review": "Powerful and quiet. Great for Game Pass."
+    },
+    {
+      "userId": 31,
+      "itemId": 15,
+      "rating": 5,
+      "review": "Best Xbox yet. Quick Resume is a game changer."
+    },
+    {
+      "userId": 32,
+      "itemId": 16,
+      "rating": 5,
+      "review": "Perfect handheld for on-the-go gaming. OLED looks gorgeous."
+    },
+    {
+      "userId": 33,
+      "itemId": 16,
+      "rating": 4,
+      "review": "Great screen but Joy-Cons still drift."
+    },
+    {
+      "userId": 34,
+      "itemId": 17,
+      "rating": 5,
+      "review": "Stunning display and health features. Love it."
+    },
+    {
+      "userId": 35,
+      "itemId": 17,
+      "rating": 4,
+      "review": "Great smartwatch but battery is just okay."
+    },
+    {
+      "userId": 36,
+      "itemId": 18,
+      "rating": 4,
+      "review": "Comfortable and feature-rich. Good value."
+    },
+    {
+      "userId": 37,
+      "itemId": 18,
+      "rating": 5,
+      "review": "Best Android watch. Sleep tracking is accurate."
+    },
+    {
+      "userId": 38,
+      "itemId": 19,
+      "rating": 4,
+      "review": "Affordable fitness tracker with GPS. Great for runners."
+    },
+    {
+      "userId": 39,
+      "itemId": 19,
+      "rating": 5,
+      "review": "7-day battery is legit. Very accurate heart rate."
+    },
+    {
+      "userId": 40,
+      "itemId": 20,
+      "rating": 5,
+      "review": "Saves so much time in the kitchen. Versatile."
+    },
+    {
+      "userId": 41,
+      "itemId": 20,
+      "rating": 4,
+      "review": "Great multi-cooker. Learning curve but worth it."
+    },
+    {
+      "userId": 42,
+      "itemId": 21,
+      "rating": 5,
+      "review": "Powerful suction and the laser is a neat trick."
+    },
+    {
+      "userId": 43,
+      "itemId": 21,
+      "rating": 3,
+      "review": "Expensive but works well. Heavy to use."
+    },
+    {
+      "userId": 44,
+      "itemId": 22,
+      "rating": 4,
+      "review": "Great coffee with minimal effort. Stylish."
+    },
+    {
+      "userId": 45,
+      "itemId": 22,
+      "rating": 5,
+      "review": "Best pod machine. Love the variety of blends."
+    },
+    {
+      "userId": 46,
+      "itemId": 23,
+      "rating": 5,
+      "review": "Heirloom quality. Cooks evenly and looks beautiful."
+    },
+    {
+      "userId": 47,
+      "itemId": 23,
+      "rating": 4,
+      "review": "Heavy but excellent heat retention."
+    },
+    {
+      "userId": 48,
+      "itemId": 24,
+      "rating": 5,
+      "review": "Even heating and easy to clean. Chef's choice."
+    },
+    {
+      "userId": 49,
+      "itemId": 24,
+      "rating": 4,
+      "review": "Quality pan. Handle gets warm though."
+    },
+    {
+      "userId": 50,
+      "itemId": 25,
+      "rating": 4,
+      "review": "Comfortable and affordable. Classic design."
+    },
+    {
+      "userId": 51,
+      "itemId": 25,
+      "rating": 5,
+      "review": "Timeless chair. Cushion is very supportive."
+    },
+    {
+      "userId": 52,
+      "itemId": 26,
+      "rating": 5,
+      "review": "Beautiful sofa, very comfortable. Worth the investment."
+    },
+    {
+      "userId": 53,
+      "itemId": 26,
+      "rating": 4,
+      "review": "Great looking but delivery took a while."
+    },
+    {
+      "userId": 54,
+      "itemId": 27,
+      "rating": 5,
+      "review": "Best sleep I've had in years. Cooling works."
+    },
+    {
+      "userId": 55,
+      "itemId": 27,
+      "rating": 4,
+      "review": "Comfortable but a bit firm at first."
+    },
+    {
+      "userId": 56,
+      "itemId": 28,
+      "rating": 5,
+      "review": "Soft and breathable. Hotel-quality feel."
+    },
+    {
+      "userId": 2,
+      "itemId": 28,
+      "rating": 4,
+      "review": "Nice sheets, wish they came in more colors."
+    },
+    {
+      "userId": 3,
+      "itemId": 29,
+      "rating": 5,
+      "review": "Stylish and comfortable. Great everyday sneaker."
+    },
+    {
+      "userId": 4,
+      "itemId": 29,
+      "rating": 4,
+      "review": "Looks great but runs a bit narrow."
+    },
+    {
+      "userId": 5,
+      "itemId": 30,
+      "rating": 5,
+      "review": "Responsive and comfy for long runs."
+    },
+    {
+      "userId": 6,
+      "itemId": 30,
+      "rating": 4,
+      "review": "Great shoe, laces come loose easily."
+    },
+    {
+      "userId": 7,
+      "itemId": 31,
+      "rating": 5,
+      "review": "Classic style, great polarization. Timeless."
+    },
+    {
+      "userId": 8,
+      "itemId": 31,
+      "rating": 4,
+      "review": "Looks good but scratches easily."
+    },
+    {
+      "userId": 9,
+      "itemId": 32,
+      "rating": 4,
+      "review": "Stylish hybrid smartwatch with good battery."
+    },
+    {
+      "userId": 10,
+      "itemId": 32,
+      "rating": 5,
+      "review": "Love the touchscreen and notifications."
+    },
+    {
+      "userId": 11,
+      "itemId": 33,
+      "rating": 5,
+      "review": "Transformed my damaged hair. Lifesaver!"
+    },
+    {
+      "userId": 12,
+      "itemId": 33,
+      "rating": 4,
+      "review": "Works well but needs consistent use."
+    },
+    {
+      "userId": 13,
+      "itemId": 34,
+      "rating": 5,
+      "review": "My skin glows now. Holy grail serum."
+    },
+    {
+      "userId": 14,
+      "itemId": 34,
+      "rating": 4,
+      "review": "Effective but pricey for the size."
+    },
+    {
+      "userId": 15,
+      "itemId": 35,
+      "rating": 5,
+      "review": "Relieved my back pain. Powerful device."
+    },
+    {
+      "userId": 16,
+      "itemId": 35,
+      "rating": 4,
+      "review": "Effective but loud on highest setting."
+    },
+    {
+      "userId": 17,
+      "itemId": 36,
+      "rating": 5,
+      "review": "Space-saving and solid. Great for home gym."
+    },
+    {
+      "userId": 18,
+      "itemId": 36,
+      "rating": 4,
+      "review": "Easy to adjust but takes up space."
+    },
+    {
+      "userId": 19,
+      "itemId": 37,
+      "rating": 5,
+      "review": "Keeps ice for days on camping trips."
+    },
+    {
+      "userId": 20,
+      "itemId": 37,
+      "rating": 4,
+      "review": "Durable but heavy when full."
+    },
+    {
+      "userId": 21,
+      "itemId": 38,
+      "rating": 5,
+      "review": "Perfect insulation for cold weather. Lightweight."
+    },
+    {
+      "userId": 22,
+      "itemId": 38,
+      "rating": 4,
+      "review": "Great jacket, zippers could be smoother."
+    },
+    {
+      "userId": 23,
+      "itemId": 39,
+      "rating": 5,
+      "review": "Custom fit is perfect. High quality mats."
+    },
+    {
+      "userId": 24,
+      "itemId": 39,
+      "rating": 4,
+      "review": "Good mats but a bit pricey."
+    },
+    {
+      "userId": 25,
+      "itemId": 40,
+      "rating": 5,
+      "review": "Powerful drill with long battery life."
+    },
+    {
+      "userId": 26,
+      "itemId": 40,
+      "rating": 4,
+      "review": "Solid kit, bits are decent quality."
+    },
+    {
+      "userId": 27,
+      "itemId": 41,
+      "rating": 5,
+      "review": "My dog loves this food. Shiny coat now."
+    },
+    {
+      "userId": 28,
+      "itemId": 41,
+      "rating": 4,
+      "review": "Good nutrition but kibble is small."
+    },
+    {
+      "userId": 29,
+      "itemId": 42,
+      "rating": 5,
+      "review": "Indestructible toy. Keeps my pup busy."
+    },
+    {
+      "userId": 30,
+      "itemId": 42,
+      "rating": 4,
+      "review": "Durable but my dog finished it in a week."
+    },
+    {
+      "userId": 31,
+      "itemId": 43,
+      "rating": 5,
+      "review": "Soft and absorbent. Wetness indicator is helpful."
+    },
+    {
+      "userId": 32,
+      "itemId": 43,
+      "rating": 4,
+      "review": "Good diapers, no leaks overnight."
+    },
+    {
+      "userId": 33,
+      "itemId": 44,
+      "rating": 5,
+      "review": "Easy to install and very safe. Highly recommend."
+    },
+    {
+      "userId": 34,
+      "itemId": 44,
+      "rating": 4,
+      "review": "Sturdy seat, my kid is comfortable."
+    },
+    {
+      "userId": 35,
+      "itemId": 45,
+      "rating": 4,
+      "review": "Anti-colic works well. Easy to clean."
+    },
+    {
+      "userId": 36,
+      "itemId": 45,
+      "rating": 5,
+      "review": "No more gas issues. Lifesaver for new parents."
+    },
+    {
+      "userId": 37,
+      "itemId": 46,
+      "rating": 5,
+      "review": "Durable and spacious. Classic look."
+    },
+    {
+      "userId": 38,
+      "itemId": 46,
+      "rating": 4,
+      "review": "Holds up well but straps loosen over time."
+    },
+    {
+      "userId": 39,
+      "itemId": 47,
+      "rating": 5,
+      "review": "Iconic and practical. Water resistant works."
+    },
+    {
+      "userId": 40,
+      "itemId": 47,
+      "rating": 4,
+      "review": "Cute but the straps are a bit thin."
+    },
+    {
+      "userId": 41,
+      "itemId": 48,
+      "rating": 5,
+      "review": "Beautiful tone and playability. Worth it."
+    },
+    {
+      "userId": 42,
+      "itemId": 48,
+      "rating": 4,
+      "review": "Great guitar, setup needed out of box."
+    },
+    {
+      "userId": 43,
+      "itemId": 49,
+      "rating": 5,
+      "review": "Realistic piano feel. Great for practice."
+    },
+    {
+      "userId": 44,
+      "itemId": 49,
+      "rating": 4,
+      "review": "Good entry digital piano. Sounds decent."
+    },
+    {
+      "userId": 45,
+      "itemId": 50,
+      "rating": 5,
+      "review": "Detailed and fun to build. Display worthy."
+    },
+    {
+      "userId": 46,
+      "itemId": 50,
+      "rating": 4,
+      "review": "Challenging build but rewarding."
+    },
+    {
+      "userId": 47,
+      "itemId": 51,
+      "rating": 4,
+      "review": "Relaxing puzzle with crisp pieces."
+    },
+    {
+      "userId": 48,
+      "itemId": 51,
+      "rating": 5,
+      "review": "Beautiful image, great quality."
+    },
+    {
+      "userId": 49,
+      "itemId": 52,
+      "rating": 5,
+      "review": "Thought-provoking and emotional. Loved it."
+    },
+    {
+      "userId": 50,
+      "itemId": 52,
+      "rating": 4,
+      "review": "Great read, slow start but worth it."
+    },
+    {
+      "userId": 51,
+      "itemId": 53,
+      "rating": 5,
+      "review": "Changed my habits for the better. Must read."
+    },
+    {
+      "userId": 52,
+      "itemId": 53,
+      "rating": 4,
+      "review": "Practical advice, easy to apply."
+    },
+    {
+      "userId": 53,
+      "itemId": 54,
+      "rating": 5,
+      "review": "Clear video and easy setup. Peace of mind."
+    },
+    {
+      "userId": 54,
+      "itemId": 54,
+      "rating": 4,
+      "review": "Good doorbell but subscription needed for full features."
+    },
+    {
+      "userId": 55,
+      "itemId": 55,
+      "rating": 5,
+      "review": "Easy smart home setup. Vibrant colors."
+    },
+    {
+      "userId": 56,
+      "itemId": 55,
+      "rating": 4,
+      "review": "Great bulbs, app could be better."
+    },
+    {
+      "userId": 2,
+      "itemId": 56,
+      "rating": 4,
+      "review": "Reliable power bank. Charges phone 4x."
+    },
+    {
+      "userId": 3,
+      "itemId": 56,
+      "rating": 5,
+      "review": "Compact and powerful. Travel essential."
+    },
+    {
+      "userId": 4,
+      "itemId": 57,
+      "rating": 5,
+      "review": "Ergonomic and precise. Best productivity mouse."
+    },
+    {
+      "userId": 5,
+      "itemId": 57,
+      "rating": 4,
+      "review": "Great mouse, scroll wheel is sensitive."
+    },
+    {
+      "userId": 6,
+      "itemId": 58,
+      "rating": 4,
+      "review": "Fast and portable. Perfect for backups."
+    },
+    {
+      "userId": 7,
+      "itemId": 58,
+      "rating": 5,
+      "review": "Tiny but huge capacity. Excellent SSD."
+    },
+    {
+      "userId": 8,
+      "itemId": 59,
+      "rating": 5,
+      "review": "Perfect reading device. Glare-free in sunlight."
+    },
+    {
+      "userId": 9,
+      "itemId": 59,
+      "rating": 4,
+      "review": "Great e-reader, ad version is annoying."
+    }
+  ]
+}

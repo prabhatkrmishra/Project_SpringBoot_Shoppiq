@@ -100,6 +100,9 @@ class AdminControllerTest {
     private CategoryService categoryService;
 
     @MockitoBean
+    private AdminTestDataService testDataService;
+
+    @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @MockitoBean
