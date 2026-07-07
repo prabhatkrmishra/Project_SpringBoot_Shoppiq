@@ -13,6 +13,7 @@ import com.pkmprojects.shoppiq.controller.admin.AdminController;
 import com.pkmprojects.shoppiq.dto.admin.analytics.*;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
 import com.pkmprojects.shoppiq.repository.UserRepository;
@@ -27,6 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -92,6 +95,9 @@ class AdminControllerTest {
 
     @MockitoBean
     private ItemService itemService;
+
+    @MockitoBean
+    private CategoryService categoryService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -276,10 +282,17 @@ class AdminControllerTest {
         @DisplayName("PUT /admin/users/{id}/block - blocks user")
         @WithMockUser(roles = "ADMIN")
         void blockCustomer_returnsUpdated() throws Exception {
-            AdminUserResponse response = mock(AdminUserResponse.class);
-            when(userService.blockCustomer(eq(1L))).thenReturn(response);
+            User adminUser = mock(User.class);
+            when(adminUser.getId()).thenReturn(1L);
+            when(adminUser.getUsername()).thenReturn("admin");
+            when(adminUser.getAuthorities()).thenReturn(List.of());
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(adminUser, null, List.of()));
 
-            mockMvc.perform(put("/api/admin/users/1/block"))
+            AdminUserResponse response = mock(AdminUserResponse.class);
+            when(userService.blockCustomer(eq(2L))).thenReturn(response);
+
+            mockMvc.perform(put("/api/admin/users/2/block"))
                     .andExpect(status().isOk());
         }
 
@@ -287,10 +300,17 @@ class AdminControllerTest {
         @DisplayName("PUT /admin/users/{id}/unblock - unblocks user")
         @WithMockUser(roles = "ADMIN")
         void unblockCustomer_returnsUpdated() throws Exception {
-            AdminUserResponse response = mock(AdminUserResponse.class);
-            when(userService.unblockCustomer(eq(1L))).thenReturn(response);
+            User adminUser = mock(User.class);
+            when(adminUser.getId()).thenReturn(1L);
+            when(adminUser.getUsername()).thenReturn("admin");
+            when(adminUser.getAuthorities()).thenReturn(List.of());
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(adminUser, null, List.of()));
 
-            mockMvc.perform(put("/api/admin/users/1/unblock"))
+            AdminUserResponse response = mock(AdminUserResponse.class);
+            when(userService.unblockCustomer(eq(2L))).thenReturn(response);
+
+            mockMvc.perform(put("/api/admin/users/2/unblock"))
                     .andExpect(status().isOk());
         }
 

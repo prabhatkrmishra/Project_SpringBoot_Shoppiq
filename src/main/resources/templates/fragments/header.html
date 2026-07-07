@@ -21,10 +21,10 @@
             <nav class="header-nav" aria-label="Main navigation">
                 <a th:href="@{/allitems}"><i data-lucide="store" class="icon-sm"></i><span>Shop</span></a>
                 <a th:href="@{/categories}"><i data-lucide="layout-grid" class="icon-sm"></i><span>Categories</span></a>
-                <a sec:authorize="isAuthenticated()" th:href="@{/cart}"><i data-lucide="shopping-cart"
-                                                                           class="icon-sm"></i><span>Cart</span></a>
-                <a sec:authorize="isAuthenticated()" th:href="@{/orders}"><i data-lucide="package"
-                                                                             class="icon-sm"></i><span>Orders</span></a>
+<a sec:authorize="isAuthenticated() and !hasRole('ADMIN')" th:href="@{/cart}"><i data-lucide="shopping-cart"
+                                                                            class="icon-sm"></i><span>Cart</span></a>
+                <a sec:authorize="isAuthenticated() and !hasRole('ADMIN')" th:href="@{/orders}"><i data-lucide="package"
+                                                                              class="icon-sm"></i><span>Orders</span></a>
                 <a sec:authorize="isAuthenticated()" th:href="@{/profile}"><i data-lucide="user"
                                                                               class="icon-sm"></i><span>Profile</span></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}"><i data-lucide="shield"
@@ -49,10 +49,10 @@
         <div class="mobile-menu" aria-hidden="true">
             <a th:href="@{/allitems}"><i data-lucide="store" class="icon-sm"></i><span>Shop</span></a>
             <a th:href="@{/categories}"><i data-lucide="layout-grid" class="icon-sm"></i><span>Categories</span></a>
-            <a sec:authorize="isAuthenticated()" th:href="@{/cart}"><i data-lucide="shopping-cart"
-                                                                       class="icon-sm"></i><span>Cart</span></a>
-            <a sec:authorize="isAuthenticated()" th:href="@{/orders}"><i data-lucide="package"
-                                                                         class="icon-sm"></i><span>Orders</span></a>
+<a sec:authorize="isAuthenticated() and !hasRole('ADMIN')" th:href="@{/cart}"><i data-lucide="shopping-cart"
+                                                                        class="icon-sm"></i><span>Cart</span></a>
+            <a sec:authorize="isAuthenticated() and !hasRole('ADMIN')" th:href="@{/orders}"><i data-lucide="package"
+                                                                          class="icon-sm"></i><span>Orders</span></a>
             <a sec:authorize="isAuthenticated()" th:href="@{/profile}"><i data-lucide="user" class="icon-sm"></i><span>Profile</span></a>
             <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}"><i data-lucide="shield"
                                                                                  class="icon-sm"></i><span>Admin</span></a>
