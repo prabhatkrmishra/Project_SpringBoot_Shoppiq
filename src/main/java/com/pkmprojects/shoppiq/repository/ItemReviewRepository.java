@@ -1,7 +1,10 @@
 package com.pkmprojects.shoppiq.repository;
 
 import com.pkmprojects.shoppiq.entity.ItemReview;
+import com.pkmprojects.shoppiq.enums.ReviewStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -77,4 +80,33 @@ public interface ItemReviewRepository
      * @return list of recent reviews
      */
     List<ItemReview> findTop10ByOrderByCreatedAtDesc();
+
+    /**
+     * Returns APPROVED reviews for an item, plus the specified user's
+     * own PENDING reviews (so the creator can see their review awaiting
+     * approval). REJECTED reviews are hidden from everyone.
+     *
+     * @param itemId item identifier
+     * @param userId current user identifier (may be null for anonymous)
+     * @return ordered review list
+     */
+    @Query("SELECT r FROM ItemReview r WHERE r.item.id = :itemId AND (" +
+            "r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.APPROVED" +
+            " OR (r.user.id = :userId AND r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.PENDING))" +
+            " ORDER BY r.createdAt DESC")
+    List<ItemReview> findVisibleReviewsForUser(
+            @Param("itemId") Long itemId,
+            @Param("userId") Long userId
+    );
+
+    /**
+     * Returns APPROVED reviews for an item (public view, no user context).
+     *
+     * @param itemId item identifier
+     * @return ordered review list
+     */
+    List<ItemReview> findAllByItemIdAndStatusOrderByCreatedAtDesc(
+            Long itemId,
+            ReviewStatus status
+    );
 }

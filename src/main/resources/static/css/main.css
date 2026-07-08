@@ -1378,6 +1378,22 @@ small { font-size: 0.78rem; }
 .text-warning { color: var(--color-warning); }
 .text-danger { color: var(--color-danger); }
 
+/* Review action buttons */
+.review-item { position: relative; }
+.review-actions {
+  position: absolute; top: 10px; right: 0; display: flex; gap: 2px;
+  opacity: 0; transition: opacity 0.15s ease;
+}
+.review-item:hover .review-actions { opacity: 1; }
+.review-action-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 6px; border: none;
+  background: transparent; color: var(--color-text-muted); cursor: pointer;
+  transition: all 0.15s ease;
+}
+.review-action-btn:hover { background: var(--color-bg-alt); color: var(--color-text); }
+.review-action-btn.review-action-danger:hover { background: var(--color-danger-tint); color: var(--color-danger); }
+
 /* Star rating display (admin reviews, etc.) */
 .star-display { display: flex; gap: 2px; align-items: center; }
 .star-rating-display { display: flex; gap: 2px; align-items: center; }

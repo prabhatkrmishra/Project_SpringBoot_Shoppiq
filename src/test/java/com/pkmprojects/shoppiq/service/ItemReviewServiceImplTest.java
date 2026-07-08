@@ -28,6 +28,8 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
+import com.pkmprojects.shoppiq.enums.ReviewStatus;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -202,45 +204,55 @@ class ItemReviewServiceImplTest {
     }
 
     // ---------------------------------------------------------------
-    // getByItem()
+    // getByItemForUser()
     // ---------------------------------------------------------------
 
     @Nested
-    @DisplayName("getByItem()")
-    class GetByItem {
+    @DisplayName("getByItemForUser()")
+    class GetByItemForUser {
 
         @Test
-        @DisplayName("Returns all reviews for an existing item")
-        void getByItem_existingItem_returnsList() {
+        @DisplayName("Returns APPROVED reviews for anonymous user")
+        void getByItemForUser_anonymousUser_returnsApprovedReviews() {
             when(itemRepository.findById(10L)).thenReturn(Optional.of(stubItem));
-            when(itemReviewRepository.findAllByItemIdOrderByCreatedAtDesc(10L))
+            when(itemReviewRepository.findAllByItemIdAndStatusOrderByCreatedAtDesc(10L, ReviewStatus.APPROVED))
                     .thenReturn(List.of(stubReview));
 
-            List<ItemReviewResponse> result = reviewService.getByItem(10L);
+            List<ItemReviewResponse> result = reviewService.getByItemForUser(10L, null);
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).rating()).isEqualTo(4);
         }
 
         @Test
-        @DisplayName("Throws ItemNotFoundException when item does not exist")
-        void getByItem_itemNotFound_throwsException() {
-            when(itemRepository.findById(999L)).thenReturn(Optional.empty());
+        @DisplayName("Returns APPROVED + user's own PENDING reviews")
+        void getByItemForUser_authenticatedUser_returnsApprovedAndOwnPending() {
+            when(itemRepository.findById(10L)).thenReturn(Optional.of(stubItem));
+            when(itemReviewRepository.findVisibleReviewsForUser(10L, 1L))
+                    .thenReturn(List.of(stubReview));
 
-            assertThatThrownBy(() -> reviewService.getByItem(999L))
-                    .isInstanceOf(ItemNotFoundException.class);
+            List<ItemReviewResponse> result = reviewService.getByItemForUser(10L, stubUser);
 
-            verify(itemReviewRepository, never()).findAllByItemIdOrderByCreatedAtDesc(any());
+            assertThat(result).hasSize(1);
         }
 
         @Test
-        @DisplayName("Returns an empty list when an item has no reviews")
-        void getByItem_noReviews_returnsEmptyList() {
+        @DisplayName("Throws ItemNotFoundException when item does not exist")
+        void getByItemForUser_itemNotFound_throwsException() {
+            when(itemRepository.findById(999L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> reviewService.getByItemForUser(999L, null))
+                    .isInstanceOf(ItemNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("Returns an empty list when an item has no visible reviews")
+        void getByItemForUser_noReviews_returnsEmptyList() {
             when(itemRepository.findById(10L)).thenReturn(Optional.of(stubItem));
-            when(itemReviewRepository.findAllByItemIdOrderByCreatedAtDesc(10L))
+            when(itemReviewRepository.findAllByItemIdAndStatusOrderByCreatedAtDesc(10L, ReviewStatus.APPROVED))
                     .thenReturn(List.of());
 
-            List<ItemReviewResponse> result = reviewService.getByItem(10L);
+            List<ItemReviewResponse> result = reviewService.getByItemForUser(10L, null);
 
             assertThat(result).isEmpty();
         }

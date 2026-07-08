@@ -143,18 +143,20 @@
           div.className = 'review-item';
           div.style.cssText = 'border-bottom:1px solid var(--border);padding:1rem 0;';
           div.innerHTML =
+            (isOwner && r.status !== 'PENDING' ? '<div class="review-actions">' +
+              '<button class="review-action-btn edit-review-btn" data-review-id="' + r.id + '" data-rating="' + r.rating + '" data-review="' + escapeAttr(r.review || '') + '" title="Edit review"><i data-lucide="pencil" class="icon-sm"></i></button>' +
+              '<button class="review-action-btn review-action-danger delete-review-btn" data-review-id="' + r.id + '" title="Delete review"><i data-lucide="trash-2" class="icon-sm"></i></button>' +
+              '</div>' : '') +
             '<div>' +
               '<div class="flex items-center gap-sm">' +
                 '<strong>' + escapeHtml(r.reviewerName || r.reviewerUsername || 'Anonymous') + '</strong>' +
                 '<span class="text-sm text-muted">' + formatDate(r.createdAt) + '</span>' +
+                (r.status === 'PENDING' ? '<span class="badge badge-warning" style="font-size:0.65rem;">Pending Approval</span>' : '') +
               '</div>' +
               '<div class="star-rating-display" style="margin-top:8px;">' + starHtml(r.rating || 0, false) + '</div>' +
             '</div>' +
             (r.review ? '<p class="text-sm" style="margin:0.5rem 0 0;">' + escapeHtml(r.review) + '</p>' : '') +
-            (isOwner ? '<div class="mt-sm" style="display:flex;gap:8px;">' +
-              '<button class="btn btn-sm btn-secondary edit-review-btn" data-review-id="' + r.id + '" data-rating="' + r.rating + '" data-review="' + escapeAttr(r.review || '') + '"><i data-lucide="pencil" class="icon-sm"></i> Edit</button>' +
-              '<button class="btn btn-sm btn-danger delete-review-btn" data-review-id="' + r.id + '"><i data-lucide="trash-2" class="icon-sm"></i> Delete</button>' +
-              '</div>' : '');
+            (isOwner && r.status === 'PENDING' ? '<div class="mt-sm"><span class="text-sm text-muted">Your review is awaiting admin approval.</span></div>' : '');
           list.appendChild(div);
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();

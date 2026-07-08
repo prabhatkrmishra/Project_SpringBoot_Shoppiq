@@ -103,7 +103,8 @@ class ItemReviewControllerTest {
     private static ItemReviewResponse stubResponse(int rating, String review) {
         return new ItemReviewResponse(
                 100L, 10L, "Test Product", 1L, "Alice", "alice",
-                rating, review, Instant.now(), Instant.now()
+                rating, review, com.pkmprojects.shoppiq.enums.ReviewStatus.APPROVED,
+                Instant.now(), Instant.now()
         );
     }
 
@@ -247,7 +248,7 @@ class ItemReviewControllerTest {
         @Test
         @DisplayName("Returns 200 with a list of reviews")
         void getByItem_validItem_returnsList() throws Exception {
-            when(itemReviewService.getByItem(1L))
+            when(itemReviewService.getByItemForUser(eq(1L), any()))
                     .thenReturn(List.of(stubResponse(4, "Good"), stubResponse(5, "Great")));
 
             mockMvc.perform(get("/items/1/reviews"))
@@ -258,7 +259,7 @@ class ItemReviewControllerTest {
         @Test
         @DisplayName("Returns 200 with empty list when item has no reviews")
         void getByItem_noReviews_returnsEmptyList() throws Exception {
-            when(itemReviewService.getByItem(1L)).thenReturn(List.of());
+            when(itemReviewService.getByItemForUser(eq(1L), any())).thenReturn(List.of());
 
             mockMvc.perform(get("/items/1/reviews"))
                     .andExpect(status().isOk())
@@ -268,7 +269,7 @@ class ItemReviewControllerTest {
         @Test
         @DisplayName("Returns 404 when item does not exist")
         void getByItem_itemNotFound_returns404() throws Exception {
-            when(itemReviewService.getByItem(99L)).thenThrow(ItemNotFoundException.id(99L));
+            when(itemReviewService.getByItemForUser(eq(99L), any())).thenThrow(ItemNotFoundException.id(99L));
 
             mockMvc.perform(get("/items/99/reviews"))
                     .andExpect(status().isNotFound())

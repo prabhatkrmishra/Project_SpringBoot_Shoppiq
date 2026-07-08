@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.dto.response;
 
 import com.pkmprojects.shoppiq.entity.ItemReview;
+import com.pkmprojects.shoppiq.enums.ReviewStatus;
 
 import java.time.Instant;
 
@@ -73,6 +74,11 @@ public record ItemReviewResponse(
         String review,
 
         /*
+          Moderation status.
+         */
+        ReviewStatus status,
+
+        /*
           Creation timestamp.
          */
         Instant createdAt,
@@ -106,6 +112,7 @@ public record ItemReviewResponse(
                 review.getUser().getUsername(),
                 review.getRating(),
                 review.getReview(),
+                review.getStatus(),
                 review.getCreatedAt(),
                 review.getUpdatedAt());
     }

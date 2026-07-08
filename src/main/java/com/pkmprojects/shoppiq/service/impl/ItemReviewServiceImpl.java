@@ -137,11 +137,22 @@ public class ItemReviewServiceImpl implements ItemReviewService {
      * {@inheritDoc}
      */
     @Override
-    public List<ItemReviewResponse> getByItem(Long itemId) {
+    public List<ItemReviewResponse> getByItemForUser(Long itemId, User currentUser) {
         findItem(itemId);
 
+        Long userId = (currentUser != null) ? currentUser.getId() : null;
+
+        if (userId != null) {
+            return itemReviewRepository
+                    .findVisibleReviewsForUser(itemId, userId)
+                    .stream()
+                    .map(ItemReviewResponse::fromEntity)
+                    .toList();
+        }
+
         return itemReviewRepository
-                .findAllByItemIdOrderByCreatedAtDesc(itemId)
+                .findAllByItemIdAndStatusOrderByCreatedAtDesc(
+                        itemId, com.pkmprojects.shoppiq.enums.ReviewStatus.APPROVED)
                 .stream()
                 .map(ItemReviewResponse::fromEntity)
                 .toList();

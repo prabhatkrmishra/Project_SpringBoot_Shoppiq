@@ -66,12 +66,15 @@ public interface ItemReviewService {
     List<ItemReviewResponse> getByUser(User user);
 
     /**
-     * Retrieves every review belonging to an item.
+     * Retrieves every review belonging to an item visible to the
+     * given user. Returns APPROVED reviews plus the user's own
+     * PENDING/REJECTED reviews.
      *
      * @param itemId item identifier
+     * @param currentUser current user (may be null for anonymous)
      * @return ordered review list
      */
-    List<ItemReviewResponse> getByItem(Long itemId);
+    List<ItemReviewResponse> getByItemForUser(Long itemId, User currentUser);
 
     /**
      * Updates an existing review.

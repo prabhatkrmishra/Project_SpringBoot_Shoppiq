@@ -88,18 +88,22 @@ public class ItemReviewController {
     }
 
     /**
-     * Retrieves every review belonging to an item.
+     * Retrieves every review belonging to an item visible to the
+     * current user. Returns APPROVED reviews plus the user's own
+     * PENDING/REJECTED reviews.
      *
      * @param itemId item identifier — must be a positive number
+     * @param currentUser authenticated user (may be null for anonymous)
      * @return ordered review list
      */
     @GetMapping("/items/{itemId}/reviews")
     public List<ItemReviewResponse> getByItem(
             @PathVariable
             @Positive(message = "Item id must be a positive number")
-            Long itemId
+            Long itemId,
+            @AuthenticationPrincipal User currentUser
     ) {
-        return itemReviewService.getByItem(itemId);
+        return itemReviewService.getByItemForUser(itemId, currentUser);
     }
 
     /**
