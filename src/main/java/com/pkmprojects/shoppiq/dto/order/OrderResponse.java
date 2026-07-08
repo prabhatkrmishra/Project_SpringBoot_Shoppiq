@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.dto.order;
 
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.entity.Order;
+import com.pkmprojects.shoppiq.entity.OrderAddressSnapshot;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -50,12 +51,14 @@ public record OrderResponse(
                 .map(OrderItemResponse::from)
                 .toList();
 
+        AddressResponse address = toAddressResponse(order.getShippingAddress(), order.getAddress());
+
         return new OrderResponse(
                 order.getId(),
                 order.getStatus(),
                 order.getPaymentMethod(),
                 order.getPaymentStatus(),
-                AddressResponse.from(order.getAddress()),
+                address,
                 order.getSubtotal(),
                 order.getShippingFee(),
                 order.getTax(),
@@ -66,5 +69,27 @@ public record OrderResponse(
                 order.getUpdatedAt(),
                 items
         );
+    }
+
+    /**
+     * Builds an {@link AddressResponse} from the snapshot, falling back to
+     * the live address entity for legacy orders that predate the snapshot.
+     */
+    private static AddressResponse toAddressResponse(OrderAddressSnapshot snapshot,
+                                                     com.pkmprojects.shoppiq.entity.Address liveAddress) {
+        if (snapshot != null) {
+            return new AddressResponse(
+                    null, null,
+                    snapshot.getFullName(), snapshot.getPhone(),
+                    snapshot.getLine1(), snapshot.getLine2(),
+                    snapshot.getCity(), snapshot.getState(),
+                    snapshot.getPostalCode(), snapshot.getCountry(),
+                    false, null, null
+            );
+        }
+        if (liveAddress != null) {
+            return AddressResponse.from(liveAddress);
+        }
+        return null;
     }
 }

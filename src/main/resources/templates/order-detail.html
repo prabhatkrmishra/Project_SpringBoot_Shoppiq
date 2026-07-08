@@ -83,6 +83,9 @@
             (a.line1 || '') + (a.line2 ? ', ' + a.line2 : '') + '\n' +
             (a.city || '') + ', ' + (a.state || '') + ' ' + (a.postalCode || '') + '\n' +
             (a.country || '');
+        } else {
+          document.getElementById('order-address-panel').style.display = '';
+          document.getElementById('order-address').textContent = 'Address not available';
         }
         var itemsContainer = document.getElementById('order-items');
         itemsContainer.innerHTML = '';

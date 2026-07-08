@@ -46,15 +46,33 @@ public class Order extends AuditableEntity {
     private User user;
 
     /**
-     * Shipping address selected at checkout.
+     * Shipping address selected at checkout (nullable — deleted by user after order).
      */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "address_id",
-            nullable = false,
             foreignKey = @ForeignKey(name = "fk_orders_address")
     )
     private Address address;
+
+    /**
+     * Snapshot of shipping address captured at checkout time.
+     *
+     * <p>Preserves the address as it was when the order was placed,
+     * independent of any later edits or deletions in the address book.</p>
+     */
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "fullName",  column = @Column(name = "shipping_full_name")),
+            @AttributeOverride(name = "phone",     column = @Column(name = "shipping_phone")),
+            @AttributeOverride(name = "line1",     column = @Column(name = "shipping_line1")),
+            @AttributeOverride(name = "line2",     column = @Column(name = "shipping_line2")),
+            @AttributeOverride(name = "city",      column = @Column(name = "shipping_city")),
+            @AttributeOverride(name = "state",     column = @Column(name = "shipping_state")),
+            @AttributeOverride(name = "postalCode", column = @Column(name = "shipping_postal_code")),
+            @AttributeOverride(name = "country",   column = @Column(name = "shipping_country"))
+    })
+    private OrderAddressSnapshot shippingAddress;
 
     /**
      * Current order lifecycle status.

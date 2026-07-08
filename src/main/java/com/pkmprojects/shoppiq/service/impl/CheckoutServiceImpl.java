@@ -110,6 +110,7 @@ public class CheckoutServiceImpl {
         Order order = Order.builder()
                 .user(user)
                 .address(address)
+                .shippingAddress(OrderAddressSnapshot.from(address))
                 .status(OrderStatus.PLACED)
                 .paymentMethod(request.paymentMethod())
                 .paymentStatus(PaymentStatus.PENDING)
