@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.auth.jwt;
 
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
+import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.exception.auth.JwtAuthenticationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
@@ -98,13 +99,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
+    private final JwtCookieFactory jwtCookieFactory;
     private final UserRepository userRepository;
     private final ProblemDetailResponseWriter responseWriter;
 
     public JwtAuthenticationFilter(JwtAuthenticationUtils jwtAuthenticationUtils,
+                                   JwtCookieFactory jwtCookieFactory,
                                    UserRepository userRepository,
                                    ProblemDetailResponseWriter responseWriter) {
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
+        this.jwtCookieFactory = jwtCookieFactory;
         this.userRepository = userRepository;
         this.responseWriter = responseWriter;
     }
@@ -259,6 +263,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (JwtException ex) {
             SecurityContextHolder.clearContext();
+            clearJwtCookie(response);
             if (isBrowserRequest(request)) {
                 filterChain.doFilter(request, response);
             } else {
@@ -267,6 +272,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (JwtAuthenticationException ex) {
             SecurityContextHolder.clearContext();
+            clearJwtCookie(response);
             if (isBrowserRequest(request)) {
                 filterChain.doFilter(request, response);
             } else {
@@ -309,5 +315,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean isBrowserRequest(HttpServletRequest request) {
         String accept = request.getHeader("Accept");
         return accept != null && accept.contains("text/html");
+    }
+
+    private void clearJwtCookie(HttpServletResponse response) {
+        response.addCookie(jwtCookieFactory.buildJwtCookie("", 0));
     }
 }
