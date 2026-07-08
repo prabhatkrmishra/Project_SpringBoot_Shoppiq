@@ -41,11 +41,11 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + p.itemId + '</td>' +
-        '<td><strong>' + (p.itemName || '') + '</strong><br><span class="text-sm text-muted">' + (p.description || '').substring(0, 60) + '</span></td>' +
+        '<td><strong>' + (p.name || '') + '</strong><br><span class="text-sm text-muted">' + (p.description || '').substring(0, 60) + '</span></td>' +
         '<td class="text-sm"><code>' + (p.sku || '') + '</code></td>' +
         '<td>' + (p.brand || '') + '</td>' +
-        '<td>' + formatCurrency(p.effectivePrice || p.basePrice) + '</td>' +
-        '<td>' + p.stockQuantity + '</td>' +
+        '<td>' + formatCurrency(p.price) + '</td>' +
+        '<td>' + (p.stockQuantity != null ? p.stockQuantity : '') + '</td>' +
         '<td class="text-sm">' + (p.categoryName || '') + '</td>' +
         '<td>' +
           '<button class="btn btn-sm btn-success publish-btn" data-id="' + p.itemId + '">Publish</button> ' +

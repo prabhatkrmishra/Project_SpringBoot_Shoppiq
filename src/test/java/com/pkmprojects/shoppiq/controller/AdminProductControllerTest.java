@@ -13,6 +13,8 @@ import com.pkmprojects.shoppiq.controller.admin.AdminProductController;
 import com.pkmprojects.shoppiq.dto.admin.response.AdminProductResponse;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
+
+import java.math.BigDecimal;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.service.RolesService;
@@ -70,7 +72,8 @@ class AdminProductControllerTest {
     private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
     private static AdminProductResponse stubResponse(Long id, ProductPublishingStatus status) {
-        return new AdminProductResponse(id, "Product " + id, "SKU-" + id,
+        return new AdminProductResponse(id, "Product " + id, "Description " + id, "SKU-" + id,
+                "Brand", new BigDecimal("99.99"), 10, "Electronics",
                 1L, "Test Seller", status);
     }
 
