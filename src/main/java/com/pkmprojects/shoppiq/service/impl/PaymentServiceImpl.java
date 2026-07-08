@@ -16,6 +16,7 @@ import com.pkmprojects.shoppiq.service.PaymentService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -118,6 +119,10 @@ public class PaymentServiceImpl implements PaymentService {
             throw PaymentInvalidStateException.cannotPay(paymentId, payment.getPaymentStatus());
         }
 
+        if (payment.getPaymentStatus() == PaymentStatus.PROCESSING) {
+            return PaymentStatusResponse.from(payment); // idempotent — already initiated
+        }
+
         PaymentGatewayStrategy strategy = gatewayRegistry.resolve(payment.getPaymentMethod());
         strategy.process(payment);
 
@@ -133,19 +138,51 @@ public class PaymentServiceImpl implements PaymentService {
      * {@inheritDoc}
      *
      * <p>
-     * Looks up the payment by transactionId, verifies ownership,
-     * and delegates to the gateway strategy to mark it {@code PAID}.
+     * Resolves the payment by {@code paymentId} (ownership-checked), stamps the
+     * supplied {@code transactionId}, and delegates to the gateway strategy to
+     * mark the payment {@code PAID}.
      * </p>
      */
     @Override
-    public PaymentStatusResponse verifyPayment(User user, String transactionId) {
-        Payment payment = paymentRepository.findByTransactionId(transactionId)
-                .orElseThrow(() -> PaymentNotFoundException.forTransactionId(transactionId));
+    public PaymentStatusResponse verifyPayment(User user, Long paymentId, String transactionId) {
+        Payment payment = findAndAssertOwnership(user, paymentId);
 
-        assertOwnership(user, payment);
+        if (payment.getPaymentStatus() == PaymentStatus.PAID) {
+            return PaymentStatusResponse.from(payment); // idempotent
+        }
+
+        if (payment.getPaymentStatus() != PaymentStatus.PROCESSING) {
+            throw PaymentInvalidStateException.cannotVerify(paymentId, payment.getPaymentStatus());
+        }
 
         PaymentGatewayStrategy strategy = gatewayRegistry.resolve(payment.getPaymentMethod());
         strategy.verify(payment, transactionId);
+
+        paymentRepository.save(payment);
+        return PaymentStatusResponse.from(payment);
+    }
+
+    // =========================================================
+    // Refund
+    // =========================================================
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Admin-only operation. Refunds a {@code PAID} payment, transitioning it
+     * to {@code REFUNDED} and recording the refund timestamp. Ownership is not
+     * enforced because admins may refund any customer's payment.</p>
+     */
+    @Override
+    public PaymentStatusResponse refund(User user, Long paymentId) {
+        Payment payment = findOrThrow(paymentId);
+
+        if (payment.getPaymentStatus() != PaymentStatus.PAID) {
+            throw PaymentInvalidStateException.refundNotAllowed(paymentId, payment.getPaymentStatus());
+        }
+
+        payment.setPaymentStatus(PaymentStatus.REFUNDED);
+        payment.setRefundedAt(Instant.now());
 
         paymentRepository.save(payment);
         return PaymentStatusResponse.from(payment);

@@ -114,7 +114,7 @@ class UserOrderControllerTest {
     }
 
     private CheckoutResponse checkoutResponse(Long orderId) {
-        return new CheckoutResponse(orderId, OrderStatus.PLACED, BigDecimal.valueOf(500));
+        return new CheckoutResponse(orderId, OrderStatus.PLACED, BigDecimal.valueOf(500), 99L);
     }
 
     private OrderResponse orderResponse(Long orderId) {

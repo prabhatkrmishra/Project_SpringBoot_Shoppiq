@@ -19,7 +19,8 @@ public final class PaymentInvalidStateException extends InvalidOperationExceptio
 
     public static PaymentInvalidStateException alreadyPaid(Long paymentId) {
         return new PaymentInvalidStateException(
-                "Payment '%d' has already been paid.".formatted(paymentId));
+                "Payment '%d' has already been paid."
+                        .formatted(paymentId));
     }
 
     public static PaymentInvalidStateException cannotPay(Long paymentId, PaymentStatus current) {
@@ -31,6 +32,12 @@ public final class PaymentInvalidStateException extends InvalidOperationExceptio
     public static PaymentInvalidStateException cannotCancel(Long paymentId, PaymentStatus current) {
         return new PaymentInvalidStateException(
                 "Payment '%d' cannot be cancelled — current status: '%s'."
+                        .formatted(paymentId, current));
+    }
+
+    public static PaymentInvalidStateException cannotVerify(Long paymentId, PaymentStatus current) {
+        return new PaymentInvalidStateException(
+                "Payment '%d' cannot be verified — current status: '%s'. Online payments must be in PROCESSING state to be verified."
                         .formatted(paymentId, current));
     }
 

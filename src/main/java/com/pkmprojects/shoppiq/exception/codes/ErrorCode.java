@@ -347,6 +347,11 @@ public enum ErrorCode {
      */
     PAYMENT_TRANSACTION_NOT_FOUND("PAYMENT-404-002", "No payment found for the given transaction ID."),
 
+    /**
+     * Communication with the external payment gateway failed.
+     */
+    PAYMENT_GATEWAY_ERROR("PAYMENT-502-001", "Communication with the payment gateway failed."),
+
     // =========================================================
     // Admin Errors
     // =========================================================

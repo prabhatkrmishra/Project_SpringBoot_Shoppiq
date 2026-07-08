@@ -106,13 +106,13 @@ class UserPaymentControllerTest {
         return new PaymentResponse(
                 id, 10L, "PAY-20260701-10",
                 PaymentMethod.COD, PaymentStatus.PENDING, PaymentGateway.NONE,
-                BigDecimal.valueOf(500), "INR", null, null,
+                BigDecimal.valueOf(500), "INR", null, null, null,
                 Instant.now(), Instant.now()
         );
     }
 
     private PaymentStatusResponse statusResponse(PaymentStatus status) {
-        return new PaymentStatusResponse(1L, "PAY-20260701-10", status);
+        return new PaymentStatusResponse(1L, "PAY-20260701-10", status, null);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -227,18 +227,18 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("200 OK — payment verified as PAID")
         void verifyPayment_success() throws Exception {
-            when(paymentService.verifyPayment(eq(customer), eq("TXN-001")))
+            when(paymentService.verifyPayment(eq(customer), eq(1L), eq("TXN-001")))
                     .thenReturn(statusResponse(PaymentStatus.PAID));
 
             mockMvc.perform(post("/user/payment/verify")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"transactionId\":\"TXN-001\"}"))
+                            .content("{\"paymentId\":1,\"transactionId\":\"TXN-001\"}"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("PAID"));
         }
 
         @Test
-        @DisplayName("400 Bad Request — missing transactionId")
+        @DisplayName("400 Bad Request — missing paymentId/transactionId")
         void verifyPayment_missingField() throws Exception {
             mockMvc.perform(post("/user/payment/verify")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -247,14 +247,14 @@ class UserPaymentControllerTest {
         }
 
         @Test
-        @DisplayName("404 Not Found — unknown transactionId")
+        @DisplayName("404 Not Found — unknown paymentId")
         void verifyPayment_notFound() throws Exception {
-            when(paymentService.verifyPayment(any(), eq("BAD-ID")))
+            when(paymentService.verifyPayment(any(), eq(1L), eq("BAD-ID")))
                     .thenThrow(PaymentNotFoundException.forTransactionId("BAD-ID"));
 
             mockMvc.perform(post("/user/payment/verify")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"transactionId\":\"BAD-ID\"}"))
+                            .content("{\"paymentId\":1,\"transactionId\":\"BAD-ID\"}"))
                     .andExpect(status().isNotFound());
         }
     }

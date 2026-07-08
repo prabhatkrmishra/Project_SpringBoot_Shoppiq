@@ -15,20 +15,23 @@ public record CheckoutResponse(
 
         Long orderId,
         OrderStatus status,
-        BigDecimal grandTotal
+        BigDecimal grandTotal,
+        Long paymentId
 ) {
 
     /**
      * Constructs a {@link CheckoutResponse} from an {@link Order} entity.
      *
-     * @param order the newly created order
+     * @param order     the newly created order
+     * @param paymentId id of the payment created for this order
      * @return checkout response
      */
-    public static CheckoutResponse from(Order order) {
+    public static CheckoutResponse from(Order order, Long paymentId) {
         return new CheckoutResponse(
                 order.getId(),
                 order.getStatus(),
-                order.getGrandTotal()
+                order.getGrandTotal(),
+                paymentId
         );
     }
 }

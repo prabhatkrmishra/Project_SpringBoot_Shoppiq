@@ -176,12 +176,17 @@ class CheckoutServiceImplTest {
             });
             when(cartRepository.save(any(Cart.class))).thenReturn(cart);
 
+            Payment payment = Payment.builder().build();
+            setId(payment, 77L);
+            when(paymentService.createPayment(any(Order.class))).thenReturn(payment);
+
             // act
             CheckoutResponse response = checkoutService.checkout(user, request);
 
             // assert — response
             assertThat(response.orderId()).isEqualTo(99L);
             assertThat(response.status()).isEqualTo(OrderStatus.PLACED);
+            assertThat(response.paymentId()).isEqualTo(77L);
             assertThat(response.grandTotal()).isEqualByComparingTo("500.00");
 
             // assert — inventory reduced
@@ -293,9 +298,14 @@ class CheckoutServiceImplTest {
             });
             when(cartRepository.save(any())).thenReturn(cart);
 
+            Payment payment = Payment.builder().build();
+            setId(payment, 42L);
+            when(paymentService.createPayment(any(Order.class))).thenReturn(payment);
+
             CheckoutResponse response = checkoutService.checkout(user, new CheckoutRequest(5L, PaymentMethod.COD));
 
             assertThat(response.grandTotal()).isEqualByComparingTo("800.00");
+            assertThat(response.paymentId()).isEqualTo(42L);
         }
     }
 

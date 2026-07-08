@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -62,7 +63,7 @@ class PaymentServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        gatewayRegistry = new PaymentGatewayRegistry(codGateway, onlineGateway);
+        gatewayRegistry = new PaymentGatewayRegistry(List.of(codGateway, onlineGateway));
         paymentService = new PaymentServiceImpl(paymentRepository, gatewayRegistry);
     }
 
@@ -281,10 +282,10 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PROCESSING);
 
-            when(paymentRepository.findByTransactionId("TXN-001")).thenReturn(Optional.of(payment));
+            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
             when(paymentRepository.save(any())).thenReturn(payment);
 
-            PaymentStatusResponse result = paymentService.verifyPayment(user, "TXN-001");
+            PaymentStatusResponse result = paymentService.verifyPayment(user, 1L, "TXN-001");
 
             assertThat(result.status()).isEqualTo(PaymentStatus.PAID);
             assertThat(payment.getTransactionId()).isEqualTo("TXN-001");
@@ -292,12 +293,12 @@ class PaymentServiceImplTest {
         }
 
         @Test
-        @DisplayName("Throws PaymentNotFoundException for unknown transactionId")
+        @DisplayName("Throws PaymentNotFoundException for unknown paymentId")
         void verifyPayment_notFound_throws() throws Exception {
             User user = buildUser(1L);
-            when(paymentRepository.findByTransactionId("BAD-ID")).thenReturn(Optional.empty());
+            when(paymentRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> paymentService.verifyPayment(user, "BAD-ID"))
+            assertThatThrownBy(() -> paymentService.verifyPayment(user, 99L, "BAD-ID"))
                     .isInstanceOf(PaymentNotFoundException.class);
         }
 
@@ -308,10 +309,82 @@ class PaymentServiceImplTest {
             User bob = buildUser(2L);
             Payment payment = buildPayment(1L, bob, PaymentMethod.ONLINE, PaymentStatus.PROCESSING);
 
-            when(paymentRepository.findByTransactionId("TXN-002")).thenReturn(Optional.of(payment));
+            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
 
-            assertThatThrownBy(() -> paymentService.verifyPayment(alice, "TXN-002"))
+            assertThatThrownBy(() -> paymentService.verifyPayment(alice, 1L, "TXN-002"))
                     .isInstanceOf(PaymentAccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("Throws PaymentInvalidStateException when not in PROCESSING (e.g. COD/PENDING)")
+        void verifyPayment_notProcessing_throws() throws Exception {
+            User user = buildUser(1L);
+            Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PENDING);
+
+            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+
+            assertThatThrownBy(() -> paymentService.verifyPayment(user, 1L, "TXN-X"))
+                    .isInstanceOf(PaymentInvalidStateException.class);
+        }
+
+        @Test
+        @DisplayName("Returns PAID idempotently when already verified")
+        void verifyPayment_alreadyPaid_idempotent() throws Exception {
+            User user = buildUser(1L);
+            Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PAID);
+
+            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+
+            PaymentStatusResponse result = paymentService.verifyPayment(user, 1L, "TXN-Y");
+
+            assertThat(result.status()).isEqualTo(PaymentStatus.PAID);
+            verify(paymentRepository, never()).save(any());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // refund()
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("refund()")
+    class RefundTests {
+
+        @Test
+        @DisplayName("Refunds a PAID payment and stamps refundedAt")
+        void refund_paid_success() throws Exception {
+            User user = buildUser(1L);
+            Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PAID);
+
+            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentRepository.save(any())).thenReturn(payment);
+
+            PaymentStatusResponse result = paymentService.refund(user, 1L);
+
+            assertThat(result.status()).isEqualTo(PaymentStatus.REFUNDED);
+            assertThat(payment.getRefundedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Throws PaymentInvalidStateException when not PAID")
+        void refund_notPaid_throws() throws Exception {
+            User user = buildUser(1L);
+            Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PENDING);
+
+            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+
+            assertThatThrownBy(() -> paymentService.refund(user, 1L))
+                    .isInstanceOf(PaymentInvalidStateException.class);
+        }
+
+        @Test
+        @DisplayName("Throws PaymentNotFoundException when payment does not exist")
+        void refund_notFound_throws() throws Exception {
+            User user = buildUser(1L);
+            when(paymentRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> paymentService.refund(user, 99L))
+                    .isInstanceOf(PaymentNotFoundException.class);
         }
     }
 

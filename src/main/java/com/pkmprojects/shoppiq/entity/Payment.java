@@ -125,6 +125,15 @@ public class Payment extends AuditableEntity {
     private String transactionId;
 
     /**
+     * Gateway-assigned order/payment-intent/collect identifier.
+     *
+     * <p>Null until the payment is initiated with the gateway. Used to
+     * reconcile/verify the payment and to make re-initiation idempotent.</p>
+     */
+    @Column(name = "gateway_payment_id", length = 100)
+    private String gatewayPaymentId;
+
+    /**
      * Raw JSON response from the payment gateway, stored for audit purposes.
      *
      * <p>Null for COD orders.</p>
@@ -139,4 +148,12 @@ public class Payment extends AuditableEntity {
      */
     @Column(name = "paid_at")
     private Instant paidAt;
+
+    /**
+     * Timestamp at which the payment was refunded.
+     *
+     * <p>Null until the payment is refunded.</p>
+     */
+    @Column(name = "refunded_at")
+    private Instant refundedAt;
 }

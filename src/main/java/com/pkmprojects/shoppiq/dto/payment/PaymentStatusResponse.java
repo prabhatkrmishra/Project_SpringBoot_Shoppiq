@@ -3,6 +3,8 @@ package com.pkmprojects.shoppiq.dto.payment;
 import com.pkmprojects.shoppiq.entity.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
 
+import java.time.Instant;
+
 /**
  * Lightweight response that returns only the current payment status.
  * Used for verify/cancel/refund operations.
@@ -14,7 +16,8 @@ public record PaymentStatusResponse(
 
         Long paymentId,
         String paymentReference,
-        PaymentStatus status
+        PaymentStatus status,
+        Instant refundedAt
 ) {
 
     /**
@@ -27,7 +30,8 @@ public record PaymentStatusResponse(
         return new PaymentStatusResponse(
                 payment.getId(),
                 payment.getPaymentReference(),
-                payment.getPaymentStatus()
+                payment.getPaymentStatus(),
+                payment.getRefundedAt()
         );
     }
 }

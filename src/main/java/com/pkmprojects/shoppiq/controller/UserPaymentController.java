@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -96,7 +97,7 @@ public class UserPaymentController {
             @AuthenticationPrincipal User user,
             @Valid @RequestBody VerifyPaymentRequest request) {
 
-        return ResponseEntity.ok(paymentService.verifyPayment(user, request.transactionId()));
+        return ResponseEntity.ok(paymentService.verifyPayment(user, request.paymentId(), request.transactionId()));
     }
 
     // =========================================================
@@ -116,5 +117,26 @@ public class UserPaymentController {
             @PathVariable("id") @Positive(message = "Payment id must be a positive number.") Long paymentId) {
 
         return ResponseEntity.ok(paymentService.cancelPayment(user, paymentId));
+    }
+
+    // =========================================================
+    // Refund (ADMIN only)
+    // =========================================================
+
+    /**
+     * Refunds a completed (PAID) payment. Restricted to {@code ADMIN} via
+     * method security; ownership is not enforced (admins may refund any payment).
+     *
+     * @param user      authenticated admin
+     * @param paymentId payment id (must be positive)
+     * @return 200 OK with updated payment status
+     */
+    @PutMapping("/refund/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PaymentStatusResponse> refundPayment(
+            @AuthenticationPrincipal User user,
+            @PathVariable("id") @Positive(message = "Payment id must be a positive number.") Long paymentId) {
+
+        return ResponseEntity.ok(paymentService.refund(user, paymentId));
     }
 }

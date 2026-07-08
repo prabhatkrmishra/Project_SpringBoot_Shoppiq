@@ -41,11 +41,18 @@ public interface PaymentService {
     /**
      * Verifies an online payment using the external transaction ID.
      *
+     * <p>
+     * The payment is resolved by {@code paymentId} (ownership-checked) because
+     * the {@code transactionId} is only stamped during verification. The supplied
+     * transaction ID is then recorded and the payment is marked {@code PAID}.
+     * </p>
+     *
      * @param user          authenticated customer
-     * @param transactionId gateway-issued transaction ID
+     * @param paymentId     id of the payment to verify
+     * @param transactionId gateway-issued (or simulated) transaction ID
      * @return updated payment status response
      */
-    PaymentStatusResponse verifyPayment(User user, String transactionId);
+    PaymentStatusResponse verifyPayment(User user, Long paymentId, String transactionId);
 
     /**
      * Cancels a payment that has not yet been completed.
@@ -55,6 +62,19 @@ public interface PaymentService {
      * @return updated payment status response
      */
     PaymentStatusResponse cancelPayment(User user, Long paymentId);
+
+    /**
+     * Refunds a completed payment.
+     *
+     * <p>Only {@code PAID} payments may be refunded; any other state is rejected.
+     * This is an admin-only operation — ownership is intentionally <em>not</em>
+     * enforced because an admin may refund any customer's payment.</p>
+     *
+     * @param user      authenticated admin
+     * @param paymentId the payment to refund
+     * @return updated payment status response
+     */
+    PaymentStatusResponse refund(User user, Long paymentId);
 
     /**
      * Returns the full payment detail for the given payment id.

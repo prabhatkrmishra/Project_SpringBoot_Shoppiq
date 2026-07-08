@@ -192,6 +192,17 @@
         paymentMethod: paymentMethod.value
       }).then(function (res) {
         showToast('Order placed successfully!', 'success');
+        if (paymentMethod.value !== 'COD' && res.paymentId) {
+          var simulatedTxn = 'TEST-' + res.paymentId + '-' + Date.now();
+          return API.post('/user/payment/verify', {
+            paymentId: res.paymentId,
+            transactionId: simulatedTxn
+          }).catch(function (e) {
+            console.warn('Payment verification skipped:', e.message);
+          }).then(function () { return res; });
+        }
+        return res;
+      }).then(function (res) {
         window.location.href = '/order-detail?id=' + res.orderId;
       }).catch(function (err) {
         showToast(err.message || 'Failed to place order', 'error');

@@ -19,9 +19,9 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope:
-             - openid
-             - profile
-             - email
+              - openid
+              - profile
+              - email
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -55,3 +55,29 @@ logging:
 
 server:
   port: 8090
+
+# ============================================================
+# Payment gateway integrations
+# ============================================================
+shoppiq:
+  payment:
+    gateways:
+      razorpay:
+        base-url: https://api.razorpay.com/v1
+        api-key: ${RAZORPAY_KEY_ID:rzp_test_dummy}
+        api-secret: ${RAZORPAY_KEY_SECRET:rzp_test_secret}
+        enabled: true
+      stripe:
+        base-url: https://api.stripe.com/v1
+        api-key: ${STRIPE_SECRET_KEY:sk_test_dummy}
+        enabled: true
+      paypal:
+        base-url: https://api-m.sandbox.paypal.com
+        api-key: ${PAYPAL_CLIENT_ID:paypal_client_dummy}
+        api-secret: ${PAYPAL_CLIENT_SECRET:paypal_secret_dummy}
+        enabled: true
+      upi:
+        base-url: ${UPI_BASE_URL:https://upi.psp.example/v1}
+        api-key: ${UPI_MERCHANT_KEY:upi_merchant_dummy}
+        merchant-vpa: ${UPI_MERCHANT_VPA:shoppiq@bank}
+        enabled: false

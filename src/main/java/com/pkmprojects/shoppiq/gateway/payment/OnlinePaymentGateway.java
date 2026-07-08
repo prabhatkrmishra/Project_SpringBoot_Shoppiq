@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.gateway.payment;
 
 import com.pkmprojects.shoppiq.entity.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
+import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import org.springframework.stereotype.Component;
 
@@ -46,8 +47,8 @@ public class OnlinePaymentGateway implements PaymentGatewayStrategy {
      */
     @Override
     public PaymentGateway supports() {
-        // Acts as the ONLINE placeholder until a real gateway replaces it
-        return PaymentGateway.NONE;
+        // Acts as the generic ONLINE placeholder until a real gateway replaces it
+        return PaymentGateway.ONLINE;
     }
 
     /**
@@ -59,11 +60,31 @@ public class OnlinePaymentGateway implements PaymentGatewayStrategy {
     @Override
     public void process(Payment payment) {
         payment.setPaymentStatus(PaymentStatus.PROCESSING);
+        payment.setGateway(resolveStoredGateway(payment.getPaymentMethod()));
 
         String paymentUrl = PLACEHOLDER_PAYMENT_URL.formatted(payment.getPaymentReference());
         payment.setGatewayResponse(
                 "{\"status\":\"INITIATED\",\"paymentUrl\":\"%s\"}".formatted(paymentUrl)
         );
+    }
+
+    /**
+     * Resolves the concrete {@link PaymentGateway} to persist for a given method.
+     *
+     * <p>Only methods that map cleanly onto a real gateway enum value are stored
+     * as such; the generic {@code ONLINE} placeholder and {@code CREDIT_CARD}
+     * (no dedicated enum value yet) remain {@code NONE} until a real gateway is
+     * wired in.</p>
+     *
+     * @param method the customer-selected payment method
+     * @return the gateway to record on the payment
+     */
+    private PaymentGateway resolveStoredGateway(PaymentMethod method) {
+        return switch (method) {
+            case PAYPAL -> PaymentGateway.PAYPAL;
+            case STRIPE -> PaymentGateway.STRIPE;
+            default -> PaymentGateway.NONE;
+        };
     }
 
     /**

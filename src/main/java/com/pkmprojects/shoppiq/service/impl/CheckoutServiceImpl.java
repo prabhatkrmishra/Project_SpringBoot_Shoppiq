@@ -147,9 +147,9 @@ public class CheckoutServiceImpl {
         cart.getItems().clear();
         cartRepository.save(cart);
 
-        paymentService.createPayment(order);
+        Payment payment = paymentService.createPayment(order);
 
-        return CheckoutResponse.from(order);
+        return CheckoutResponse.from(order, payment.getId());
     }
 
     // =========================================================

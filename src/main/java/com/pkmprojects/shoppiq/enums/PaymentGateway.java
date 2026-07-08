@@ -23,6 +23,11 @@ public enum PaymentGateway {
     NONE,
 
     /**
+     * Generic online placeholder gateway (used when no real gateway is wired).
+     */
+    ONLINE,
+
+    /**
      * Razorpay payment gateway.
      */
     RAZORPAY,
@@ -35,5 +40,10 @@ public enum PaymentGateway {
     /**
      * PayPal payment gateway.
      */
-    PAYPAL
+    PAYPAL,
+
+    /**
+     * UPI payment gateway (via a PSP such as Razorpay/PhonePe/Cashfree).
+     */
+    UPI
 }

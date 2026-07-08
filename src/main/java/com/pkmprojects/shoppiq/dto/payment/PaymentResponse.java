@@ -26,6 +26,7 @@ public record PaymentResponse(
         String currency,
         String transactionId,
         Instant paidAt,
+        Instant refundedAt,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -48,6 +49,7 @@ public record PaymentResponse(
                 payment.getCurrency(),
                 payment.getTransactionId(),
                 payment.getPaidAt(),
+                payment.getRefundedAt(),
                 payment.getCreatedAt(),
                 payment.getUpdatedAt()
         );
