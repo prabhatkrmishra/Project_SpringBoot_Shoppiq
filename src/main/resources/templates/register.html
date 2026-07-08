@@ -118,6 +118,11 @@
             }
         });
 
+        if (new URLSearchParams(window.location.search).get("seller") === "true") {
+            sellerToggle.checked = true;
+            sellerToggle.dispatchEvent(new Event("change"));
+        }
+
         function isSellerMode() {
             return sellerToggle.checked;
         }
