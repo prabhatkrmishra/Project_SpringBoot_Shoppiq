@@ -77,6 +77,7 @@ public class SellerProductServiceImpl implements SellerProductService {
                 .price(request.price())
                 .stockQuantity(request.stockQuantity())
                 .discountPercentage(request.discountPercentage())
+                .imageUrl(request.imageUrl())
                 .category(category)
                 .build();
 
@@ -132,6 +133,7 @@ public class SellerProductServiceImpl implements SellerProductService {
         details.setPrice(request.price());
         details.setStockQuantity(request.stockQuantity());
         details.setDiscountPercentage(request.discountPercentage());
+        details.setImageUrl(request.imageUrl());
         details.setCategory(category);
 
         if (item.getPublishingStatus() == ProductPublishingStatus.PUBLISHED) {

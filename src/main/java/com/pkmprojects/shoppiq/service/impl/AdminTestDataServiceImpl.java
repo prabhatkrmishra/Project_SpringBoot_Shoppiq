@@ -145,6 +145,7 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
                     .price(itemReq.price())
                     .stockQuantity(itemReq.stockQuantity())
                     .discountPercentage(itemReq.discountPercentage())
+                    .imageUrl(itemReq.imageUrl())
                     .category(category)
                     .build();
 

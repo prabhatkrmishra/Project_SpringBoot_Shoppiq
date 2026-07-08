@@ -88,7 +88,12 @@ public record AdminProductInventoryResponse(
         /**
          * Whether the product is active.
          */
-        boolean active
+        boolean active,
+
+        /**
+         * Product image URL.
+         */
+        String imageUrl
 ) {
 
     /**
@@ -138,7 +143,8 @@ public record AdminProductInventoryResponse(
             BigDecimal discountPercentage,
             int stockQuantity,
             int lowStockThreshold,
-            boolean active
+            boolean active,
+            String imageUrl
     ) {
         BigDecimal effectivePrice = basePrice.multiply(
                 BigDecimal.ONE.subtract(discountPercentage.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP))
@@ -165,7 +171,8 @@ public record AdminProductInventoryResponse(
                 effectivePrice,
                 stockQuantity,
                 stockStatus,
-                active
+                active,
+                imageUrl
         );
     }
 }

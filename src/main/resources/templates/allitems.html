@@ -110,7 +110,7 @@ async function loadItems() {
 }
 
 function renderItemCard(item) {
-  var imgUrl = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop";
+  var imgUrl = item.imageUrl || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop";
   var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
   var stockClass = item.stockQuantity > 10 ? "badge-success" : (item.stockQuantity > 0 ? "badge-warning" : "badge-danger");
   var stockText = item.stockQuantity > 0 ? "In Stock" : "Out of Stock";

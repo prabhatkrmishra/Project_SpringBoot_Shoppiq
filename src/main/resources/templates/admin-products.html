@@ -19,7 +19,7 @@
       <div class="admin-panel-title">Upload File</div>
     </div>
     <div class="admin-panel-body">
-      <p class="text-muted mb-sm">Accepted formats: <strong>.csv</strong>, <strong>.xlsx</strong>. Columns must be: <code>name, description, brand, sku, price, stockQuantity, discountPercentage, categoryId</code></p>
+      <p class="text-muted mb-sm">Accepted formats: <strong>.csv</strong>, <strong>.xlsx</strong>. Columns must be: <code>name, description, brand, sku, price, stockQuantity, discountPercentage, categoryId, imageUrl</code></p>
 
       <div class="flex gap-sm items-center mb-md">
         <input type="file" id="file-input" accept=".csv,.xlsx" class="form-input" style="flex:1">
@@ -47,7 +47,7 @@
         <thead>
           <tr>
             <th>#</th><th>name</th><th>description</th><th>brand</th><th>sku</th>
-            <th>price</th><th>stockQuantity</th><th>discountPercentage</th><th>categoryId</th><th>status</th>
+            <th>price</th><th>stockQuantity</th><th>discountPercentage</th><th>categoryId</th><th>imageUrl</th><th>status</th>
           </tr>
         </thead>
         <tbody id="preview-body"></tbody>
@@ -95,6 +95,7 @@
       price: parseFloat(row.price) || 0,
       stockQuantity: parseInt(row.stockQuantity) || 0,
       discountPercentage: parseFloat(row.discountPercentage) || 0,
+      imageUrl: row.imageUrl ? String(row.imageUrl) : null,
       categoryId: parseInt(row.categoryId) || 0
     };
   }
@@ -117,6 +118,7 @@
         '<td>' + (r.stockQuantity || '') + '</td>' +
         '<td>' + (r.discountPercentage || '') + '</td>' +
         '<td>' + (r.categoryId || '') + '</td>' +
+        '<td class="text-sm">' + esc(r.imageUrl || '') + '</td>' +
         '<td>' + (v.ok
           ? '<span class="badge badge-success">OK</span>'
           : '<span class="badge badge-danger">' + esc(v.msg) + '</span>') +

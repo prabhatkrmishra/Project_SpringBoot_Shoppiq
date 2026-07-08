@@ -89,6 +89,7 @@ class ItemControllerTest {
         return new ItemResponse(
                 ProductPublishingStatus.DRAFT,
                 id, id, ITEM_NAME, ITEM_DESC, BRAND, SKU, PRICE, STOCK, DISCOUNT,
+                null,
                 new CategoryResponse(CATEGORY_ID, "Electronics", "electronics", "Gadgets"),
                 Instant.now(), Instant.now()
         );

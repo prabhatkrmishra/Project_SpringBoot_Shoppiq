@@ -46,6 +46,7 @@ public class ItemServiceImpl implements ItemService {
                 .price(request.price())
                 .stockQuantity(request.stockQuantity())
                 .discountPercentage(request.discountPercentage())
+                .imageUrl(request.imageUrl())
                 .category(category)
                 .build();
 

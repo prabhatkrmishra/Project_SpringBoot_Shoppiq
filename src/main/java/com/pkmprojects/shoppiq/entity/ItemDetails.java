@@ -129,6 +129,15 @@ public class ItemDetails extends AuditableEntity {
     private BigDecimal discountPercentage = BigDecimal.ZERO;
 
     /**
+     * URL to the product image.
+     *
+     * <p>Optional — when absent, the frontend displays a default placeholder.</p>
+     */
+    @Size(max = 500, message = "Image URL cannot exceed 500 characters.")
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
+    /**
      * Product category.
      */
     @NotNull(message = "Category is required.")
@@ -176,6 +185,7 @@ public class ItemDetails extends AuditableEntity {
         this.price = source.getPrice();
         this.stockQuantity = source.getStockQuantity();
         this.discountPercentage = source.getDiscountPercentage();
+        this.imageUrl = source.getImageUrl();
         this.category = source.getCategory();
     }
 }

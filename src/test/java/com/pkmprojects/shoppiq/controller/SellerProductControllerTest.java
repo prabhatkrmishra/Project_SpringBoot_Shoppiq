@@ -100,6 +100,7 @@ class SellerProductControllerTest {
         return new ItemResponse(
                 ProductPublishingStatus.DRAFT,
                 id, id, ITEM_NAME, ITEM_DESC, BRAND, SKU, PRICE, STOCK, DISCOUNT,
+                null,
                 new CategoryResponse(CATEGORY_ID, "Electronics", "electronics", "Gadgets"),
                 Instant.now(), Instant.now()
         );
@@ -128,7 +129,7 @@ class SellerProductControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         validRequest = new ItemRequest(
-                ITEM_NAME, ITEM_DESC, BRAND, SKU, PRICE, STOCK, DISCOUNT, CATEGORY_ID
+                ITEM_NAME, ITEM_DESC, BRAND, SKU, PRICE, STOCK, DISCOUNT, null, CATEGORY_ID
         );
     }
 
@@ -155,7 +156,7 @@ class SellerProductControllerTest {
         @DisplayName("Returns 400 when name is blank")
         void create_blankName_returns400() throws Exception {
             ItemRequest invalid = new ItemRequest(
-                    "", ITEM_DESC, BRAND, SKU, PRICE, STOCK, DISCOUNT, CATEGORY_ID
+                    "", ITEM_DESC, BRAND, SKU, PRICE, STOCK, DISCOUNT, null, CATEGORY_ID
             );
 
             mockMvc.perform(post("/seller/products/create")

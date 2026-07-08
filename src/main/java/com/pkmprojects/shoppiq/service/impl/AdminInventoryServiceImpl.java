@@ -156,7 +156,8 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
                 details.getDiscountPercentage(),
                 details.getStockQuantity(),
                 LOW_STOCK_THRESHOLD,
-                true
+                true,
+                details.getImageUrl()
         );
     }
 

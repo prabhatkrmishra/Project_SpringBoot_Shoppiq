@@ -87,6 +87,12 @@ public record ItemRequest(
         BigDecimal discountPercentage,
 
         /*
+          Product image URL.
+         */
+        @Size(max = 500, message = "Image URL cannot exceed 500 characters.")
+        String imageUrl,
+
+        /*
           Category identifier.
          */
         @NotNull(message = "Category is required.")

@@ -87,6 +87,11 @@ public record ItemResponse(
         BigDecimal discountPercentage,
 
         /*
+          Product image URL.
+         */
+        String imageUrl,
+
+        /*
           Product category.
          */
         CategoryResponse category,
@@ -126,6 +131,7 @@ public record ItemResponse(
                 item.getItemDetails().getPrice(),
                 item.getItemDetails().getStockQuantity(),
                 item.getItemDetails().getDiscountPercentage(),
+                item.getItemDetails().getImageUrl(),
 
                 CategoryResponse.fromEntity(
                         item.getItemDetails().getCategory()

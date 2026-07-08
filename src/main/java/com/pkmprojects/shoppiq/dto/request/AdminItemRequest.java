@@ -37,6 +37,9 @@ public record AdminItemRequest(
         @Digits(integer = 3, fraction = 2)
         BigDecimal discountPercentage,
 
+        @Size(max = 500, message = "Image URL cannot exceed 500 characters.")
+        String imageUrl,
+
         @NotNull(message = "Category is required.")
         Long categoryId,
 

@@ -32,7 +32,8 @@ public record SellerInventoryResponse(
         BigDecimal basePrice,
         int stockQuantity,
         StockStatus stockStatus,
-        ProductPublishingStatus publishingStatus
+        ProductPublishingStatus publishingStatus,
+        String imageUrl
 ) {
 
     public enum StockStatus {
@@ -62,7 +63,8 @@ public record SellerInventoryResponse(
                 details.getPrice(),
                 qty,
                 stockStatus,
-                item.getPublishingStatus()
+                item.getPublishingStatus(),
+                details.getImageUrl()
         );
     }
 }

@@ -116,7 +116,7 @@ async function loadFeaturedProducts() {
       return '<a href="/item/' + item.id + '" class="card-link">' +
         '<article class="card product-card">' +
           '<div class="card-image-wrapper">' +
-            '<img class="card-image" src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
+            '<img class="card-image" src="' + (item.imageUrl || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop') + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
           '</div>' +
           '<div class="card-body">' +
             '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
