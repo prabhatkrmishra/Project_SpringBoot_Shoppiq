@@ -57,6 +57,11 @@ public record DashboardSummaryResponse(
         BigDecimal todaysRevenue,
 
         /**
+         * Total revenue from all paid orders.
+         */
+        BigDecimal totalRevenue,
+
+        /**
          * Number of orders in {@code PLACED} status awaiting confirmation.
          */
         long pendingOrders,
@@ -98,6 +103,7 @@ public record DashboardSummaryResponse(
             long totalOrders,
             long todaysOrders,
             BigDecimal todaysRevenue,
+            BigDecimal totalRevenue,
             long pendingOrders,
             long cancelledOrders,
             long outOfStockProducts,
@@ -108,7 +114,8 @@ public record DashboardSummaryResponse(
                 totalProducts,
                 totalOrders,
                 todaysOrders,
-                todaysRevenue,
+                todaysRevenue != null ? todaysRevenue : BigDecimal.ZERO,
+                totalRevenue != null ? totalRevenue : BigDecimal.ZERO,
                 pendingOrders,
                 cancelledOrders,
                 outOfStockProducts,

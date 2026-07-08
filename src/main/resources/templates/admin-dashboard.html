@@ -13,6 +13,7 @@
 
   <div class="admin-summary-grid">
     <div class="summary-card"><div class="label">Today's Revenue</div><div class="value success" id="stat-revenue">$0</div></div>
+    <div class="summary-card"><div class="label">Total Revenue</div><div class="value success" id="stat-total-revenue">$0</div></div>
     <div class="summary-card"><div class="label">Total Orders</div><div class="value" id="stat-orders">0</div></div>
     <div class="summary-card"><div class="label">Total Products</div><div class="value" id="stat-products">0</div></div>
     <div class="summary-card"><div class="label">Total Customers</div><div class="value" id="stat-customers">0</div></div>
@@ -71,6 +72,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     API.get('/api/admin/dashboard/summary').then(function (d) {
       document.getElementById('stat-revenue').textContent = formatCurrency(d.todaysRevenue);
+      document.getElementById('stat-total-revenue').textContent = formatCurrency(d.totalRevenue);
       document.getElementById('stat-orders').textContent = d.totalOrders || 0;
       document.getElementById('stat-products').textContent = d.totalProducts || 0;
       document.getElementById('stat-customers').textContent = d.totalUsers || 0;
@@ -116,7 +118,7 @@
         recentOrders.forEach(function (o) {
           var tr = document.createElement('tr');
           tr.innerHTML =
-            '<td><a href="/order-detail?id=' + o.orderId + '" class="btn-link">#' + o.orderId + '</a></td>' +
+            '<td><a href="/order-detail?id=' + o.orderId + '&admin=true" class="btn-link">#' + o.orderId + '</a></td>' +
             '<td>' + (o.customerUsername || '') + '</td>' +
             '<td class="text-sm">' + formatDateShort(o.placedAt) + '</td>' +
             '<td><span class="status-badge ' + statusClass(o.status) + '">' + o.status + '</span></td>' +

@@ -83,10 +83,10 @@ public interface AdminInventoryService {
      * Inventory dashboard summary data.
      */
     record InventoryDashboardSummary(
-            long totalProducts,
-            int totalStockUnits,
-            long lowStockProducts,
-            long outOfStockProducts
+            long totalItems,
+            long inStockItems,
+            long lowStockItems,
+            long outOfStockItems
     ) {
     }
 }

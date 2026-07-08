@@ -87,6 +87,9 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         BigDecimal todaysRevenue = paymentRepository.sumAmountByStatusAndDateRange(
                 PaymentStatus.PAID, startOfDay, endOfDay);
 
+        BigDecimal totalRevenue = paymentRepository.sumAmountByPaymentStatus(
+                PaymentStatus.PAID);
+
         long pendingOrders = orderRepository.countByStatus(OrderStatus.PLACED);
         long cancelledOrders = orderRepository.countByStatus(OrderStatus.CANCELLED);
 
@@ -103,7 +106,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 totalProducts,
                 totalOrders,
                 todaysOrders,
-                todaysRevenue != null ? todaysRevenue : BigDecimal.ZERO,
+                todaysRevenue,
+                totalRevenue,
                 pendingOrders,
                 cancelledOrders,
                 outOfStockProducts,
@@ -113,12 +117,17 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     @Override
     public SalesAnalyticsResponse getSalesAnalytics() {
-        LocalDate endDate = LocalDate.now(ZoneId.systemDefault());
-        LocalDate startDate = endDate.minusDays(30);
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        Instant startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant endOfDay = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        LocalDate startDate = today.minusDays(30);
         Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
-        Instant endInstant = endDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant endInstant = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        List<Order> orders = orderRepository.findByPlacedAtBetweenOrderByPlacedAtAsc(startInstant, endInstant);
+        List<Order> orders = orderRepository.findByPlacedAtBetweenOrderByPlacedAtAsc(startInstant, endInstant)
+                .stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED)
+                .toList();
 
         Map<LocalDate, List<Order>> ordersByDate = orders.stream()
                 .collect(Collectors.groupingBy(
@@ -216,9 +225,28 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                         Collectors.reducing(BigDecimal.ZERO, Payment::getAmount, BigDecimal::add)
                 ));
 
+        // Scalar aggregates for the dashboard cards
+        Instant weekStart = today.minusDays(6).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant monthStart = today.withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+
+        BigDecimal todayRevenue = paymentRepository.sumAmountByStatusAndDateRange(
+                PaymentStatus.PAID, startOfDay, endOfDay);
+        BigDecimal weekRevenue = paymentRepository.sumAmountByStatusAndDateRange(
+                PaymentStatus.PAID, weekStart, endOfDay);
+        BigDecimal monthRevenue = paymentRepository.sumAmountByStatusAndDateRange(
+                PaymentStatus.PAID, monthStart, endOfDay);
+
+        long todayOrders = orderRepository.countByPlacedAtBetween(startOfDay, endOfDay);
+        long weekOrders = orderRepository.findByPlacedAtBetweenOrderByPlacedAtAsc(weekStart, endOfDay)
+                .stream().filter(o -> o.getStatus() == OrderStatus.DELIVERED).count();
+        long monthOrders = orderRepository.findByPlacedAtBetweenOrderByPlacedAtAsc(monthStart, endOfDay)
+                .stream().filter(o -> o.getStatus() == OrderStatus.DELIVERED).count();
+
         return new SalesAnalyticsResponse(
                 dailySales, weeklySales, monthlySales,
-                topSellingProducts, topCategories, revenueTrends
+                topSellingProducts, topCategories, revenueTrends,
+                todayRevenue, weekRevenue, monthRevenue,
+                todayOrders, weekOrders, monthOrders
         );
     }
 

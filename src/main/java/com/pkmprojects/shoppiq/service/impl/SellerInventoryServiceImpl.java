@@ -88,7 +88,7 @@ public class SellerInventoryServiceImpl implements SellerInventoryService {
                 .orElseThrow(() -> ItemNotFoundException.id(itemId));
 
         ItemDetails details = item.getItemDetails();
-        int newQuantity = details.getStockQuantity() + quantity;
+        int newQuantity = quantity;
 
         if (newQuantity < 0) {
             throw ItemStockNegativeException.forAdjustment(details.getStockQuantity(), quantity);

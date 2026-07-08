@@ -1378,6 +1378,20 @@ small { font-size: 0.78rem; }
 .text-warning { color: var(--color-warning); }
 .text-danger { color: var(--color-danger); }
 
+/* Star rating display (admin reviews, etc.) */
+.star-display { display: flex; gap: 2px; align-items: center; }
+.star-rating-display { display: flex; gap: 2px; align-items: center; }
+
+/* Star rating input (Lucide icons) */
+.star-icon { color: #d1d5db; }
+.star-icon.filled { color: var(--color-warning, #b8860b); fill: currentColor; }
+
+/* Half-star interactive rating */
+.star-input-item { display: inline-flex; position: relative; cursor: pointer; width: 24px; height: 24px; }
+.star-input-item svg { width: 24px; height: 24px; flex-shrink: 0; }
+.star-half-display { display: inline-flex; position: relative; width: 24px; height: 24px; }
+.star-half-display svg { width: 24px; height: 24px; flex-shrink: 0; }
+
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-left, .reveal-right, .reveal-scale { transition: none; opacity: 1; transform: none; }
   .page-enter { animation: none; }

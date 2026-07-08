@@ -37,6 +37,12 @@ public record SalesAnalyticsResponse(
         List<MonthlySalesData> monthlySales,
         List<TopSellingProductData> topSellingProducts,
         List<TopCategoryData> topCategories,
-        Map<LocalDate, BigDecimal> revenueTrends
+        Map<LocalDate, BigDecimal> revenueTrends,
+        BigDecimal todayRevenue,
+        BigDecimal weekRevenue,
+        BigDecimal monthRevenue,
+        long todayOrders,
+        long weekOrders,
+        long monthOrders
 ) {
 }

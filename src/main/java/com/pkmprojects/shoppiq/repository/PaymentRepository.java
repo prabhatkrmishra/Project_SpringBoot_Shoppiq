@@ -77,7 +77,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @param end    end instant
      * @return total amount or null
      */
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.paymentStatus = :status AND p.createdAt BETWEEN :start AND :end")
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.paymentStatus = :status AND p.paidAt BETWEEN :start AND :end")
     BigDecimal sumAmountByStatusAndDateRange(@Param("status") PaymentStatus status, @Param("start") Instant start, @Param("end") Instant end);
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.order.user = :user AND p.paymentStatus = :status")

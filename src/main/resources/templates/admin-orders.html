@@ -90,7 +90,7 @@
       selectHtml += '</select>';
       var tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><a href="/order-detail?id=' + o.id + '" class="btn-link">#' + o.id + '</a></td>' +
+        '<td><a href="/order-detail?id=' + o.id + '&admin=true" class="btn-link">#' + o.id + '</a></td>' +
         '<td>' + (o.customerUsername || '') + '</td>' +
         '<td class="text-sm">' + formatDate(o.placedAt) + '</td>' +
         '<td>' + itemCount + '</td>' +

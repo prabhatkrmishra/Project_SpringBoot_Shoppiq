@@ -141,20 +141,20 @@ class AdminInventoryServiceImplTest {
 
             AdminProductInventoryResponse result = inventoryService.adjustStock(1L, request);
 
-            assertThat(result.stockQuantity()).isEqualTo(60);
+            assertThat(result.stockQuantity()).isEqualTo(10);
             verify(itemDetailsRepository).save(testItemDetails);
         }
 
         @Test
         @DisplayName("decreases stock successfully")
         void decreasesStockSuccessfully() {
-            StockAdjustmentRequest request = new StockAdjustmentRequest(-10, "Correction");
+            StockAdjustmentRequest request = new StockAdjustmentRequest(30, "Lower stock");
             when(itemRepository.findById(1L)).thenReturn(Optional.of(testItem));
             when(itemDetailsRepository.save(any())).thenReturn(testItemDetails);
 
             AdminProductInventoryResponse result = inventoryService.adjustStock(1L, request);
 
-            assertThat(result.stockQuantity()).isEqualTo(40);
+            assertThat(result.stockQuantity()).isEqualTo(30);
         }
 
         @Test
@@ -213,10 +213,10 @@ class AdminInventoryServiceImplTest {
 
             AdminInventoryService.InventoryDashboardSummary result = inventoryService.getInventoryDashboardSummary();
 
-            assertThat(result.totalProducts()).isEqualTo(1);
-            assertThat(result.totalStockUnits()).isEqualTo(50);
-            assertThat(result.lowStockProducts()).isEqualTo(0);
-            assertThat(result.outOfStockProducts()).isEqualTo(0);
+            assertThat(result.totalItems()).isEqualTo(1);
+            assertThat(result.inStockItems()).isEqualTo(1);
+            assertThat(result.lowStockItems()).isEqualTo(0);
+            assertThat(result.outOfStockItems()).isEqualTo(0);
         }
     }
 }

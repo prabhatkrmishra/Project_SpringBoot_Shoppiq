@@ -2,7 +2,7 @@ package com.pkmprojects.shoppiq.dto.admin.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 
 /**
  * Request DTO for admin stock adjustment operations.
@@ -31,10 +31,10 @@ import jakarta.validation.constraints.Positive;
 public record StockAdjustmentRequest(
 
         /**
-         * Quantity to adjust (positive for addition, negative for reduction).
+         * New stock quantity (absolute replacement, not delta).
          */
         @NotNull(message = "Quantity is required.")
-        @Positive(message = "Quantity must be positive.")
+        @PositiveOrZero(message = "Quantity must be zero or positive.")
         int quantity,
 
         /**

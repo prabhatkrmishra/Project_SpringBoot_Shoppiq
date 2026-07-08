@@ -116,11 +116,13 @@ class AdminControllerTest {
     void setUp() {
         dashboardSummary = DashboardSummaryResponse.from(
                 100L, 50L, 200L, 5L,
-                new BigDecimal("25000.00"), 3L, 2L, 1L, 4L
+                new BigDecimal("25000.00"), new BigDecimal("500000.00"),
+                3L, 2L, 1L, 4L
         );
 
         salesAnalytics = new SalesAnalyticsResponse(
-                List.of(), List.of(), List.of(), List.of(), List.of(), Map.of()
+                List.of(), List.of(), List.of(), List.of(), List.of(), Map.of(),
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0L, 0L, 0L
         );
 
         recentActivity = new RecentActivityResponse(
@@ -226,12 +228,12 @@ class AdminControllerTest {
         @WithMockUser(roles = "ADMIN")
         void getInventorySummary_returnsSummary() throws Exception {
             AdminInventoryService.InventoryDashboardSummary summary =
-                    new AdminInventoryService.InventoryDashboardSummary(50, 1000, 5, 2);
+                    new AdminInventoryService.InventoryDashboardSummary(50, 43, 5, 2);
             when(inventoryService.getInventoryDashboardSummary()).thenReturn(summary);
 
             mockMvc.perform(get("/api/admin/inventory/summary"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalProducts").value(50));
+                    .andExpect(jsonPath("$.totalItems").value(50));
         }
     }
 

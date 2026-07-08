@@ -86,7 +86,7 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
                 .orElseThrow(() -> ItemNotFoundException.id(itemId));
 
         ItemDetails details = item.getItemDetails();
-        int newQuantity = details.getStockQuantity() + request.quantity();
+        int newQuantity = request.quantity();
 
         if (newQuantity < 0) {
             throw ItemStockNegativeException.forAdjustment(details.getStockQuantity(), request.quantity());
@@ -107,7 +107,7 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
                     Item item = itemRepository.findById(itemId)
                             .orElseThrow(() -> ItemNotFoundException.id(itemId));
                     ItemDetails details = item.getItemDetails();
-                    int newQuantity = details.getStockQuantity() + request.quantity();
+                    int newQuantity = request.quantity();
 
                     if (newQuantity < 0) {
                         throw ItemStockNegativeException.forAdjustment(item.getName(), details.getSku(), details.getStockQuantity(), request.quantity());
@@ -126,20 +126,20 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
     @Transactional(readOnly = true)
     public InventoryDashboardSummary getInventoryDashboardSummary() {
         List<ItemDetails> allDetails = itemDetailsRepository.findAll();
-        long totalProducts = allDetails.size();
-        int totalStockUnits = allDetails.stream().mapToInt(ItemDetails::getStockQuantity).sum();
-        long lowStockProducts = allDetails.stream()
-                .filter(d -> d.getStockQuantity() > 0 && d.getStockQuantity() <= LOW_STOCK_THRESHOLD)
-                .count();
-        long outOfStockProducts = allDetails.stream()
+        long totalItems = allDetails.size();
+        long outOfStockItems = allDetails.stream()
                 .filter(d -> d.getStockQuantity() == 0)
                 .count();
+        long lowStockItems = allDetails.stream()
+                .filter(d -> d.getStockQuantity() > 0 && d.getStockQuantity() <= LOW_STOCK_THRESHOLD)
+                .count();
+        long inStockItems = totalItems - outOfStockItems - lowStockItems;
 
         return new InventoryDashboardSummary(
-                totalProducts,
-                totalStockUnits,
-                lowStockProducts,
-                outOfStockProducts
+                totalItems,
+                inStockItems,
+                lowStockItems,
+                outOfStockItems
         );
     }
 

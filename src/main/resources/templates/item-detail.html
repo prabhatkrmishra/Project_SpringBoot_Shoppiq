@@ -37,11 +37,11 @@
                         <div class="form-group">
                             <label class="form-label">Rating</label>
                             <div id="star-rating" class="star-rating" style="display:flex;gap:4px;cursor:pointer;">
-                                <i data-lucide="star" class="icon star-icon" data-rating="1"></i>
-                                <i data-lucide="star" class="icon star-icon" data-rating="2"></i>
-                                <i data-lucide="star" class="icon star-icon" data-rating="3"></i>
-                                <i data-lucide="star" class="icon star-icon" data-rating="4"></i>
-                                <i data-lucide="star" class="icon star-icon" data-rating="5"></i>
+                                <span class="star-input-item" data-star="1" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="1" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="2" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="2" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="3" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="3" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="4" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="4" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="5" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="5" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                             </div>
                             <input type="hidden" id="review-rating" value="0">
                         </div>
@@ -65,11 +65,11 @@
                         <div class="form-group">
                             <label class="form-label">Rating</label>
                             <div id="edit-star-rating" class="star-rating" style="display:flex;gap:4px;cursor:pointer;">
-                                <i data-lucide="star" class="icon star-icon" data-rating="1"></i>
-                                <i data-lucide="star" class="icon star-icon" data-rating="2"></i>
-                                <i data-lucide="star" class="icon star-icon" data-rating="3"></i>
-                                <i data-lucide="star" class="icon star-icon" data-rating="4"></i>
-                                <i data-lucide="star" class="icon star-icon" data-rating="5"></i>
+                                <span class="star-input-item" data-star="1" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="1" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="2" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="2" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="3" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="3" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="4" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="4" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="5" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="5" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                             </div>
                             <input type="hidden" id="edit-review-rating" value="0">
                         </div>
@@ -106,11 +106,22 @@
       function starHtml(rating, interactive) {
         var html = '';
         for (var i = 1; i <= 5; i++) {
-          var cls = i <= rating ? 'star-icon filled' : 'star-icon';
           if (interactive) {
-            html += '<i data-lucide="star" class="icon ' + cls + '" data-rating="' + i + '" style="cursor:pointer;"></i>';
+            html += '<span class="star-input-item" data-star="' + i + '" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;">' +
+              '<i data-lucide="star" class="icon star-icon"></i>' +
+              '<i data-lucide="star" class="icon star-icon filled" data-star-fg="' + i + '" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i>' +
+              '</span>';
           } else {
-            html += '<i data-lucide="star" class="icon ' + cls + '"></i>';
+            if (i <= Math.floor(rating)) {
+              html += '<i data-lucide="star" class="icon star-icon filled"></i>';
+            } else if ((i - 0.5) <= rating) {
+              html += '<span class="star-half-display" style="display:inline-flex;position:relative;width:24px;height:24px;">' +
+                '<i data-lucide="star" class="icon star-icon"></i>' +
+                '<i data-lucide="star" class="icon star-icon filled" style="position:absolute;top:0;left:0;clip-path:inset(0 50% 0 0);pointer-events:none;"></i>' +
+                '</span>';
+            } else {
+              html += '<i data-lucide="star" class="icon star-icon"></i>';
+            }
           }
         }
         return html;
@@ -132,12 +143,12 @@
           div.className = 'review-item';
           div.style.cssText = 'border-bottom:1px solid var(--border);padding:1rem 0;';
           div.innerHTML =
-            '<div class="flex items-center justify-between mb-sm">' +
+            '<div>' +
               '<div class="flex items-center gap-sm">' +
                 '<strong>' + escapeHtml(r.reviewerName || r.reviewerUsername || 'Anonymous') + '</strong>' +
                 '<span class="text-sm text-muted">' + formatDate(r.createdAt) + '</span>' +
               '</div>' +
-              '<div class="star-rating-display">' + starHtml(r.rating || 0, false) + '</div>' +
+              '<div class="star-rating-display" style="margin-top:8px;">' + starHtml(r.rating || 0, false) + '</div>' +
             '</div>' +
             (r.review ? '<p class="text-sm" style="margin:0.5rem 0 0;">' + escapeHtml(r.review) + '</p>' : '') +
             (isOwner ? '<div class="mt-sm" style="display:flex;gap:8px;">' +
@@ -151,7 +162,7 @@
         list.querySelectorAll('.edit-review-btn').forEach(function (btn) {
           btn.addEventListener('click', function () {
             editingReviewId = this.dataset.reviewId;
-            editSelectedRating = parseInt(this.dataset.rating) || 0;
+            editSelectedRating = parseFloat(this.dataset.rating) || 0;
             document.getElementById('edit-review-rating').value = editSelectedRating;
             document.getElementById('edit-review-text').value = this.dataset.review || '';
             updateEditStars();
@@ -178,21 +189,32 @@
       function updateEditStars() {
         var container = document.getElementById('edit-star-rating');
         if (!container) return;
-        container.querySelectorAll('.star-icon').forEach(function (s, i) {
-          if (i < editSelectedRating) { s.classList.add('filled'); s.style.color = 'var(--color-warning, #f59e0b)'; }
-          else { s.classList.remove('filled'); s.style.color = ''; }
+        container.querySelectorAll('.star-input-item').forEach(function (item) {
+          var starN = parseInt(item.dataset.star) || 0;
+          var fg = item.querySelector('[data-star-fg]');
+          if (!fg) return;
+          if (starN <= Math.floor(editSelectedRating)) {
+            fg.style.clipPath = 'inset(0 0% 0 0)';
+          } else if ((starN - 0.5) <= editSelectedRating) {
+            fg.style.clipPath = 'inset(0 50% 0 0)';
+          } else {
+            fg.style.clipPath = 'inset(0 100% 0 0)';
+          }
         });
       }
 
       function setupEditStarRating() {
         var container = document.getElementById('edit-star-rating');
         if (!container) return;
-        container.querySelectorAll('.star-icon').forEach(function (star) {
-          star.addEventListener('click', function () {
-            editSelectedRating = parseInt(this.dataset.rating) || 0;
-            document.getElementById('edit-review-rating').value = editSelectedRating;
-            updateEditStars();
-          });
+        container.addEventListener('click', function (e) {
+          var item = e.target.closest('.star-input-item');
+          if (!item) return;
+          var starN = parseInt(item.dataset.star) || 0;
+          var rect = item.getBoundingClientRect();
+          var x = e.clientX - rect.left;
+          editSelectedRating = x < rect.width / 2 ? starN - 0.5 : starN;
+          document.getElementById('edit-review-rating').value = editSelectedRating;
+          updateEditStars();
         });
       }
 
@@ -209,40 +231,48 @@
       function setupStarRating() {
         var container = document.getElementById('star-rating');
         if (!container) return;
-        container.querySelectorAll('.star-icon').forEach(function (star) {
-          star.addEventListener('click', function () {
-            selectedRating = parseInt(this.dataset.rating) || 0;
-            document.getElementById('review-rating').value = selectedRating;
-            container.querySelectorAll('.star-icon').forEach(function (s, i) {
-              if (i < selectedRating) {
-                s.classList.add('filled');
-              } else {
-                s.classList.remove('filled');
-              }
-            });
+        function highlightStars(upTo) {
+          container.querySelectorAll('.star-input-item').forEach(function (item) {
+            var starN = parseInt(item.dataset.star) || 0;
+            var fg = item.querySelector('[data-star-fg]');
+            if (!fg) return;
+            if (starN <= Math.floor(upTo)) {
+              fg.style.clipPath = 'inset(0 0% 0 0)';
+            } else if ((starN - 0.5) <= upTo) {
+              fg.style.clipPath = 'inset(0 50% 0 0)';
+            } else {
+              fg.style.clipPath = 'inset(0 100% 0 0)';
+            }
           });
-          star.addEventListener('mouseenter', function () {
-            var hover = parseInt(this.dataset.rating) || 0;
-            container.querySelectorAll('.star-icon').forEach(function (s, i) {
-              if (i < hover) s.style.color = 'var(--color-warning, #f59e0b)';
-              else s.style.color = '';
-            });
-          });
-          star.addEventListener('mouseleave', function () {
-            container.querySelectorAll('.star-icon').forEach(function (s, i) {
-              if (i < selectedRating) {
-                s.style.color = 'var(--color-warning, #f59e0b)';
-              } else {
-                s.style.color = '';
-              }
-            });
-          });
+        }
+        container.addEventListener('click', function (e) {
+          var item = e.target.closest('.star-input-item');
+          if (!item) return;
+          var starN = parseInt(item.dataset.star) || 0;
+          var rect = item.getBoundingClientRect();
+          var x = e.clientX - rect.left;
+          selectedRating = x < rect.width / 2 ? starN - 0.5 : starN;
+          document.getElementById('review-rating').value = selectedRating;
+          highlightStars(selectedRating);
+        });
+        container.addEventListener('mousemove', function (e) {
+          var item = e.target.closest('.star-input-item');
+          if (!item) { highlightStars(selectedRating); return; }
+          var starN = parseInt(item.dataset.star) || 0;
+          var rect = item.getBoundingClientRect();
+          var x = e.clientX - rect.left;
+          var hoverVal = x < rect.width / 2 ? starN - 0.5 : starN;
+          highlightStars(hoverVal);
+        });
+        container.addEventListener('mouseleave', function () {
+          highlightStars(selectedRating);
         });
       }
 
       document.addEventListener('DOMContentLoaded', function () {
         var usernameEl = document.getElementById('currentUsername');
         if (usernameEl) currentUsername = usernameEl.value || '';
+        var isAuthenticated = usernameEl !== null;
 
         var pathParts = window.location.pathname.split('/');
         var itemId = pathParts[pathParts.length - 1];
@@ -280,40 +310,44 @@
             '<div class="item-detail-meta-row"><i data-lucide="package" class="icon-sm text-muted"></i><span class="text-muted">Stock:</span><span class="' + stockClass + '">' + stockText + '</span></div>' +
             '</div>' +
             (item.description ? '<div class="item-detail-description"><h3>Description</h3><p>' + escapeHtml(item.description) + '</p></div>' : '') +
-            '<div class="item-detail-actions" sec:authorize="isAuthenticated()">' +
-            '<form class="item-detail-form" id="add-to-cart-form">' +
-            '<div class="qty-controls">' +
-            '<button type="button" class="qty-minus" aria-label="Decrease quantity"><i data-lucide="minus" class="icon-sm"></i></button>' +
-            '<input type="number" id="qtyInput" name="quantity" value="1" min="1" max="99" class="form-input qty-input" aria-label="Quantity">' +
-            '<button type="button" class="qty-plus" aria-label="Increase quantity"><i data-lucide="plus" class="icon-sm"></i></button>' +
-            '</div>' +
-            '<button type="submit" class="btn btn-primary btn-lg"' + (item.stockQuantity == null || item.stockQuantity == 0 ? ' disabled' : '') + '><i data-lucide="shopping-cart" class="icon-sm"></i> Add to Cart</button>' +
-            '</form>' +
-            '</div>' +
-            '<div class="item-detail-actions" sec:authorize="!isAuthenticated()">' +
-            '<a href="/login" class="btn btn-primary btn-lg btn-block"><i data-lucide="log-in" class="icon-sm"></i> Sign in to Purchase</a>' +
-            '</div>' +
+            (isAuthenticated ?
+              '<div class="item-detail-actions">' +
+              '<form class="item-detail-form" id="add-to-cart-form">' +
+              '<div class="qty-controls">' +
+              '<button type="button" class="qty-minus" aria-label="Decrease quantity"><i data-lucide="minus" class="icon-sm"></i></button>' +
+              '<input type="number" id="qtyInput" name="quantity" value="1" min="1" max="99" class="form-input qty-input" aria-label="Quantity">' +
+              '<button type="button" class="qty-plus" aria-label="Increase quantity"><i data-lucide="plus" class="icon-sm"></i></button>' +
+              '</div>' +
+              '<button type="submit" class="btn btn-primary btn-lg"' + (item.stockQuantity == null || item.stockQuantity == 0 ? ' disabled' : '') + '><i data-lucide="shopping-cart" class="icon-sm"></i> Add to Cart</button>' +
+              '</form>' +
+              '</div>' :
+              '<div class="item-detail-actions">' +
+              '<a href="/login" class="btn btn-primary btn-lg btn-block"><i data-lucide="log-in" class="icon-sm"></i> Sign in to Purchase</a>' +
+              '</div>') +
             '</div>' +
             '</div>';
 
           document.getElementById('itemDetail').style.display = '';
           if (typeof lucide !== 'undefined') lucide.createIcons();
 
-          document.getElementById('add-to-cart-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            var qty = parseInt(document.getElementById('qtyInput').value) || 1;
-            API.post('/user/cart/create', { itemDetailsId: item.itemDetailsId, quantity: qty }).then(function () {
-              showToast('Added to cart', 'success');
-            }).catch(function (err) {
-              showToast(err.message || 'Could not add to cart', 'error');
+          var addToCartForm = document.getElementById('add-to-cart-form');
+          if (addToCartForm) {
+            addToCartForm.addEventListener('submit', function (e) {
+              e.preventDefault();
+              var qty = parseInt(document.getElementById('qtyInput').value) || 1;
+              API.post('/user/cart/create', { itemDetailsId: item.itemDetailsId, quantity: qty }).then(function () {
+                showToast('Added to cart', 'success');
+              }).catch(function (err) {
+                showToast(err.message || 'Could not add to cart', 'error');
+              });
             });
-          });
 
-          var qtyInput = document.getElementById('qtyInput');
-          var minusBtn = document.querySelector('.qty-minus');
-          var plusBtn = document.querySelector('.qty-plus');
-          if (minusBtn) minusBtn.addEventListener('click', function () { qtyInput.value = Math.max(1, parseInt(qtyInput.value) - 1); });
-          if (plusBtn) plusBtn.addEventListener('click', function () { qtyInput.value = Math.min(99, parseInt(qtyInput.value) + 1); });
+            var qtyInput = document.getElementById('qtyInput');
+            var minusBtn = document.querySelector('.qty-minus');
+            var plusBtn = document.querySelector('.qty-plus');
+            if (minusBtn) minusBtn.addEventListener('click', function () { qtyInput.value = Math.max(1, parseInt(qtyInput.value) - 1); });
+            if (plusBtn) plusBtn.addEventListener('click', function () { qtyInput.value = Math.min(99, parseInt(qtyInput.value) + 1); });
+          }
 
           loadReviews();
           setupStarRating();
@@ -324,51 +358,63 @@
           document.getElementById('loadingState').style.display = 'none';
         });
 
-        document.getElementById('review-form').addEventListener('submit', function (e) {
-          e.preventDefault();
-          if (selectedRating < 1) { showToast('Please select a rating', 'error'); return; }
-          var btn = document.getElementById('review-submit-btn');
-          setButtonLoading(btn, true);
-          API.post('/items/' + currentItemId + '/create/review', {
-            rating: selectedRating,
-            review: document.getElementById('review-text').value.trim()
-          }).then(function () {
-            showToast('Review submitted!', 'success');
-            document.getElementById('review-text').value = '';
-            selectedRating = 0;
-            document.getElementById('review-rating').value = 0;
-            document.getElementById('star-rating').querySelectorAll('.star-icon').forEach(function (s) { s.classList.remove('filled'); s.style.color = ''; });
-            loadReviews();
-            setButtonLoading(btn, false);
-          }).catch(function (err) {
-            showToast(err.message || 'Failed to submit review', 'error');
-            setButtonLoading(btn, false);
+        var reviewForm = document.getElementById('review-form');
+        if (reviewForm) {
+          reviewForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (selectedRating < 0.5) { showToast('Please select a rating', 'error'); return; }
+            var btn = document.getElementById('review-submit-btn');
+            setButtonLoading(btn, true);
+            API.post('/items/' + currentItemId + '/create/review', {
+              rating: selectedRating,
+              review: document.getElementById('review-text').value.trim()
+            }).then(function () {
+              showToast('Review submitted!', 'success');
+              document.getElementById('review-text').value = '';
+              selectedRating = 0;
+              document.getElementById('review-rating').value = 0;
+              document.getElementById('star-rating').querySelectorAll('[data-star-fg]').forEach(function (s) { s.style.clipPath = 'inset(0 100% 0 0)'; });
+              loadReviews();
+              setButtonLoading(btn, false);
+            }).catch(function (err) {
+              showToast(err.message || 'Failed to submit review', 'error');
+              setButtonLoading(btn, false);
+            });
           });
-        });
+        }
 
-        document.getElementById('editReviewClose').addEventListener('click', function () {
-          document.getElementById('editReviewModal').classList.remove('active');
-        });
-        document.getElementById('editReviewCancel').addEventListener('click', function () {
-          document.getElementById('editReviewModal').classList.remove('active');
-        });
-        document.getElementById('editReviewSave').addEventListener('click', function () {
-          if (editSelectedRating < 1) { showToast('Please select a rating', 'error'); return; }
-          var btn = this;
-          setButtonLoading(btn, true);
-          API.put('/reviews/' + editingReviewId + '/update', {
-            rating: editSelectedRating,
-            review: document.getElementById('edit-review-text').value.trim()
-          }).then(function () {
-            showToast('Review updated!', 'success');
+        var editReviewClose = document.getElementById('editReviewClose');
+        if (editReviewClose) {
+          editReviewClose.addEventListener('click', function () {
             document.getElementById('editReviewModal').classList.remove('active');
-            setButtonLoading(btn, false);
-            loadReviews();
-          }).catch(function (err) {
-            showToast(err.message || 'Failed to update review', 'error');
-            setButtonLoading(btn, false);
           });
-        });
+        }
+        var editReviewCancel = document.getElementById('editReviewCancel');
+        if (editReviewCancel) {
+          editReviewCancel.addEventListener('click', function () {
+            document.getElementById('editReviewModal').classList.remove('active');
+          });
+        }
+        var editReviewSave = document.getElementById('editReviewSave');
+        if (editReviewSave) {
+          editReviewSave.addEventListener('click', function () {
+            if (editSelectedRating < 0.5) { showToast('Please select a rating', 'error'); return; }
+            var btn = this;
+            setButtonLoading(btn, true);
+            API.put('/reviews/' + editingReviewId + '/update', {
+              rating: editSelectedRating,
+              review: document.getElementById('edit-review-text').value.trim()
+            }).then(function () {
+              showToast('Review updated!', 'success');
+              document.getElementById('editReviewModal').classList.remove('active');
+              setButtonLoading(btn, false);
+              loadReviews();
+            }).catch(function (err) {
+              showToast(err.message || 'Failed to update review', 'error');
+              setButtonLoading(btn, false);
+            });
+          });
+        }
       });
     })();
     </script>

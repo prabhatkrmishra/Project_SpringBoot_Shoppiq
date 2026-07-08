@@ -39,7 +39,8 @@
                 </div>
 
                 <div class="mt-lg flex gap-sm">
-                    <a href="/orders" class="btn btn-secondary">&larr; Back to Orders</a>
+                    <a id="admin-back-link" href="/admin/orders" class="btn btn-secondary" style="display:none;">&larr; Back to Order Management</a>
+                    <a id="back-link" href="/orders" class="btn btn-secondary">&larr; Back to Orders</a>
                     <button id="cancel-order-btn" class="btn btn-danger" style="display:none;">Cancel Order</button>
                     <button id="return-order-btn" class="btn btn-warning" style="display:none;">Request Return</button>
                 </div>
@@ -59,6 +60,8 @@
       }
       function renderOrder(order) {
         document.getElementById('order-loading').style.display = 'none';
+        document.getElementById('cancel-order-btn').style.display = 'none';
+        document.getElementById('return-order-btn').style.display = 'none';
         document.getElementById('order-content').style.display = '';
         document.getElementById('order-id').textContent = order.id;
         var statusEl = document.getElementById('order-status');
@@ -96,7 +99,7 @@
             '<div class="item-price">' + formatCurrency(item.subtotal) + '</div>';
           itemsContainer.appendChild(div);
         });
-        if (order.status === 'PLACED') {
+        if (order.status === 'PLACED' && new URLSearchParams(window.location.search).get('admin') !== 'true') {
           var cancelBtn = document.getElementById('cancel-order-btn');
           cancelBtn.style.display = '';
           cancelBtn.addEventListener('click', function () {
@@ -113,7 +116,7 @@
             });
           });
         }
-        if (order.status === 'DELIVERED') {
+        if (order.status === 'DELIVERED' && new URLSearchParams(window.location.search).get('admin') !== 'true') {
           var returnBtn = document.getElementById('return-order-btn');
           returnBtn.style.display = '';
           returnBtn.addEventListener('click', function () {
@@ -132,11 +135,18 @@
         }
       }
       document.addEventListener('DOMContentLoaded', function () {
-        var id = new URLSearchParams(window.location.search).get('id');
+        var params = new URLSearchParams(window.location.search);
+        var id = params.get('id');
         if (!id) {
           document.getElementById('order-loading').style.display = 'none';
           showToast('No order ID specified', 'error');
           return;
+        }
+        if (params.get('admin') === 'true') {
+          document.getElementById('admin-back-link').style.display = '';
+          document.getElementById('back-link').style.display = 'none';
+          document.getElementById('cancel-order-btn').style.display = 'none';
+          document.getElementById('return-order-btn').style.display = 'none';
         }
         API.get('/user/order/get/' + id).then(renderOrder).catch(function (err) {
           document.getElementById('order-loading').style.display = 'none';

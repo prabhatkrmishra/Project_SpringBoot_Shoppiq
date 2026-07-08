@@ -180,7 +180,9 @@ public class CheckoutServiceImpl {
     @Transactional(readOnly = true)
     public OrderResponse getMyOrder(User user, Long orderId) {
         Order order = findOrderOrThrow(orderId);
-        assertOwnership(user, order);
+        if (!isAdmin(user)) {
+            assertOwnership(user, order);
+        }
         return OrderResponse.from(order);
     }
 
@@ -250,5 +252,10 @@ public class CheckoutServiceImpl {
         if (!order.getUser().getId().equals(user.getId())) {
             throw OrderAccessDeniedException.forOrder(order.getId());
         }
+    }
+
+    private boolean isAdmin(User user) {
+        return user.getRoles().stream()
+                .anyMatch(r -> "ROLE_ADMIN".equals(r.getRoleName()));
     }
 }
