@@ -35,4 +35,16 @@ public final class ItemReviewAccessDeniedException
                         .formatted(reviewId)
         );
     }
+
+    public static ItemReviewAccessDeniedException sellerCannotReview() {
+        return new ItemReviewAccessDeniedException(
+                "Sellers are not allowed to create reviews."
+        );
+    }
+
+    public static ItemReviewAccessDeniedException adminCannotReview() {
+        return new ItemReviewAccessDeniedException(
+                "Admins are not allowed to create reviews."
+        );
+    }
 }

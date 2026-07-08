@@ -31,7 +31,7 @@
                     <div id="reviews-empty" class="text-center text-muted text-sm" style="display:none;padding:1rem;">No reviews yet. Be the first to review this product!</div>
                 </div>
 
-                <div sec:authorize="isAuthenticated()" class="panel mt-lg">
+                <div sec:authorize="isAuthenticated() and !hasRole('SELLER') and !hasRole('ADMIN')" class="panel mt-lg">
                     <div class="panel-title">Write a Review</div>
                     <form id="review-form">
                         <div class="form-group">

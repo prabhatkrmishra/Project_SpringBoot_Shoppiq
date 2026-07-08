@@ -105,6 +105,20 @@ public class ItemReviewServiceImpl implements ItemReviewService {
             throw UserNotFoundException.unknown("Creating new item response");
         }
 
+        boolean isSeller = (currentUser.getRoles() != null) &&
+                currentUser.getRoles().stream()
+                        .anyMatch(role -> "ROLE_SELLER".equals(role.getRoleName()));
+        if (isSeller) {
+            throw ItemReviewAccessDeniedException.sellerCannotReview();
+        }
+
+        boolean isAdmin = (currentUser.getRoles() != null) &&
+                currentUser.getRoles().stream()
+                        .anyMatch(role -> "ROLE_ADMIN".equals(role.getRoleName()));
+        if (isAdmin) {
+            throw ItemReviewAccessDeniedException.adminCannotReview();
+        }
+
         if (itemReviewRepository.existsByUserIdAndItemId(currentUser.getId(), itemId)) {
             throw DuplicateItemReviewException.userId(currentUser.getId());
         }
