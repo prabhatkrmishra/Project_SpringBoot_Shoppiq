@@ -225,10 +225,14 @@ public class CartServiceImpl implements CartService {
         BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
         String itemName = details.getItem() != null ? details.getItem().getName() : "";
+        Long itemId = details.getItem() != null ? details.getItem().getId() : null;
+        String itemSlug = details.getItem() != null ? details.getItem().getSlug() : "";
 
         return new CartItemResponse(
                 cartItem.getId(),
                 details.getId(),
+                itemId,
+                itemSlug,
                 itemName,
                 details.getBrand(),
                 details.getSku(),

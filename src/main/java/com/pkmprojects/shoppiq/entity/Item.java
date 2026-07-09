@@ -70,6 +70,14 @@ public class Item extends AuditableEntity {
     private String name;
 
     /**
+     * URL-friendly slug derived from the product name.
+     */
+    @NotBlank(message = "Item slug is required.")
+    @Size(max = 200, message = "Item slug cannot exceed 200 characters.")
+    @Column(nullable = false, length = 200, unique = true)
+    private String slug;
+
+    /**
      * Short product description.
      */
     @NotBlank(message = "Item description is required.")

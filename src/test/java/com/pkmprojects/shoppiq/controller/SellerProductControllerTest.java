@@ -99,7 +99,7 @@ class SellerProductControllerTest {
     private static ItemResponse stubResponse(Long id) {
         return new ItemResponse(
                 ProductPublishingStatus.DRAFT,
-                id, id, ITEM_NAME, ITEM_DESC, BRAND, SKU, PRICE, STOCK, DISCOUNT,
+                id, id, ITEM_NAME, "test-slug", ITEM_DESC, BRAND, SKU, PRICE, STOCK, DISCOUNT,
                 null,
                 new CategoryResponse(CATEGORY_ID, "Electronics", "electronics", "Gadgets"),
                 Instant.now(), Instant.now()

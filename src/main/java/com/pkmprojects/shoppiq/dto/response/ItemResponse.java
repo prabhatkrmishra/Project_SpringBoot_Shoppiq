@@ -57,6 +57,11 @@ public record ItemResponse(
         String name,
 
         /*
+          URL-friendly slug derived from product name.
+         */
+        String slug,
+
+        /*
           Product description.
          */
         String description,
@@ -125,6 +130,7 @@ public record ItemResponse(
                 item.getId(),
                 item.getItemDetails().getId(),
                 item.getName(),
+                item.getSlug(),
                 item.getDescription(),
                 item.getItemDetails().getBrand(),
                 item.getItemDetails().getSku(),

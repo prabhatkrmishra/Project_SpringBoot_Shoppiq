@@ -86,7 +86,7 @@ public class FrontEndController {
         return "order-detail";
     }
 
-    @GetMapping("/item/{id}")
+    @GetMapping("/item/{slug}")
     public String itemDetailPage() {
         return "item-detail";
     }

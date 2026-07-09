@@ -114,7 +114,7 @@ function renderItemCard(item) {
   var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
   var stockClass = item.stockQuantity > 10 ? "badge-success" : (item.stockQuantity > 0 ? "badge-warning" : "badge-danger");
   var stockText = item.stockQuantity > 0 ? "In Stock" : "Out of Stock";
-  return '<a href="/item/' + item.id + '" class="card-link">' +
+  return '<a href="/item/' + item.slug + '" class="card-link">' +
     '<article class="card product-card">' +
       '<div class="card-image-wrapper">' +
         '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +

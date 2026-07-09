@@ -277,10 +277,10 @@
         var isAuthenticated = usernameEl !== null;
 
         var pathParts = window.location.pathname.split('/');
-        var itemId = pathParts[pathParts.length - 1];
-        currentItemId = itemId;
+        var slug = pathParts[pathParts.length - 1];
 
-        API.get('/items/' + itemId).then(function (item) {
+        API.get('/items/slug/' + slug).then(function (item) {
+          currentItemId = item.id;
           document.title = escapeHtml(item.name) + ' — Shoppiq';
           var imgUrl = item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=600&fit=crop';
           var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;

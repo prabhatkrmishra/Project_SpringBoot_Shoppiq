@@ -20,6 +20,7 @@ import com.pkmprojects.shoppiq.repository.CategoryRepository;
 import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
 import com.pkmprojects.shoppiq.service.seller.SellerProductService;
+import com.pkmprojects.shoppiq.util.SlugUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,6 +84,7 @@ public class SellerProductServiceImpl implements SellerProductService {
 
         Item item = Item.builder()
                 .name(request.name())
+                .slug(generateUniqueSlug(request.name()))
                 .description(request.description())
                 .seller(seller)
                 .publishingStatus(ProductPublishingStatus.DRAFT)
@@ -126,6 +128,10 @@ public class SellerProductServiceImpl implements SellerProductService {
 
         item.setName(request.name());
         item.setDescription(request.description());
+
+        if (!item.getName().equalsIgnoreCase(request.name())) {
+            item.setSlug(generateUniqueSlug(request.name()));
+        }
 
         ItemDetails details = item.getItemDetails();
         details.setBrand(request.brand());
@@ -195,5 +201,24 @@ public class SellerProductServiceImpl implements SellerProductService {
         if (itemRepository.existsByItemDetailsSkuAndIdNot(sku, id)) {
             throw DuplicateItemException.sku(sku);
         }
+    }
+
+    /**
+     * Generates a unique URL-friendly slug.
+     *
+     * @param itemName item name
+     * @return unique slug
+     */
+    private String generateUniqueSlug(String itemName) {
+        String baseSlug = SlugUtil.toSlug(itemName);
+        String slug = baseSlug;
+        int counter = 2;
+
+        while (itemRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter;
+            counter++;
+        }
+
+        return slug;
     }
 }

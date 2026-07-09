@@ -42,4 +42,9 @@ public class ItemController {
     ) {
         return itemService.getById(id);
     }
+
+    @GetMapping("/slug/{slug}")
+    public ItemResponse getBySlug(@PathVariable String slug) {
+        return itemService.getBySlug(slug);
+    }
 }

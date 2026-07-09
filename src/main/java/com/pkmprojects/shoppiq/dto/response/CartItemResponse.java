@@ -22,6 +22,8 @@ import java.math.BigDecimal;
 public record CartItemResponse(
         Long cartItemId,
         Long itemDetailsId,
+        Long itemId,
+        String itemSlug,
         String itemName,
         String brand,
         String sku,

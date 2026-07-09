@@ -95,4 +95,20 @@ public interface ItemRepository
      */
     @Query("SELECT id.sku FROM ItemDetails id WHERE id.sku IN :skus")
     Set<String> findExistingSkus(@Param("skus") Set<String> skus);
+
+    /**
+     * Finds an item by its slug.
+     *
+     * @param slug URL-friendly identifier
+     * @return matching item if present
+     */
+    Optional<Item> findBySlug(String slug);
+
+    /**
+     * Checks whether an item with the given slug exists.
+     *
+     * @param slug URL-friendly identifier
+     * @return true if an item with this slug exists
+     */
+    boolean existsBySlug(String slug);
 }

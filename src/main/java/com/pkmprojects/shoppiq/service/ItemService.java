@@ -30,6 +30,14 @@ public interface ItemService {
     ItemResponse getById(Long id);
 
     /**
+     * Retrieves a product by its slug.
+     *
+     * @param slug URL-friendly identifier
+     * @return matching product
+     */
+    ItemResponse getBySlug(String slug);
+
+    /**
      * Retrieves every product in the catalog.
      *
      * @return ordered product list

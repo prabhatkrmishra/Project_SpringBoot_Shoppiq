@@ -66,4 +66,17 @@ public final class ItemNotFoundException extends ResourceNotFoundException {
                 "Item with SKU '%s' was not found.".formatted(sku)
         );
     }
+
+    /**
+     * Creates an exception indicating that no item exists with the
+     * supplied slug.
+     *
+     * @param slug item slug
+     * @return item not found exception
+     */
+    public static ItemNotFoundException slug(String slug) {
+        return new ItemNotFoundException(
+                "Item with slug '%s' was not found.".formatted(slug)
+        );
+    }
 }

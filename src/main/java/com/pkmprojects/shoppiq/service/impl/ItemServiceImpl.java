@@ -11,6 +11,7 @@ import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
 import com.pkmprojects.shoppiq.repository.CategoryRepository;
 import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.service.ItemService;
+import com.pkmprojects.shoppiq.util.SlugUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +53,7 @@ public class ItemServiceImpl implements ItemService {
 
         Item item = Item.builder()
                 .name(request.name())
+                .slug(generateUniqueSlug(request.name()))
                 .description(request.description())
                 .itemDetails(itemDetails)
                 .build();
@@ -112,10 +114,50 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    public ItemResponse getBySlug(String slug) {
+        Item item = itemRepository.findBySlug(slug)
+                .orElseThrow(() -> ItemNotFoundException.slug(slug));
+        return ItemResponse.fromEntity(item);
+    }
+
+    @Override
     public List<ItemResponse> getAll() {
         return itemRepository.findAllByOrderByNameAsc()
                 .stream()
                 .map(ItemResponse::fromEntity)
                 .toList();
+    }
+
+    /**
+     * Generates a unique URL-friendly slug.
+     *
+     * <p>
+     * The initial slug is produced by {@link SlugUtil}. If another item
+     * already uses the same slug, numeric suffixes are appended until a
+     * unique slug is found.
+     * </p>
+     *
+     * <h4>Example</h4>
+     *
+     * <pre>
+     * iphone-15-pro
+     * iphone-15-pro-2
+     * iphone-15-pro-3
+     * </pre>
+     *
+     * @param itemName item name
+     * @return unique slug
+     */
+    private String generateUniqueSlug(String itemName) {
+        String baseSlug = SlugUtil.toSlug(itemName);
+        String slug = baseSlug;
+        int counter = 2;
+
+        while (itemRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter;
+            counter++;
+        }
+
+        return slug;
     }
 }

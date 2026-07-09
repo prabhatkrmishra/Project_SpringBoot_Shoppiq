@@ -84,7 +84,7 @@
       div.innerHTML =
         '<img class="cart-item-image" src="' + imgUrl + '" alt="" loading="lazy" width="100" height="100">' +
         '<div class="cart-item-details">' +
-          '<div class="cart-item-name"><a href="/item/' + item.itemDetailsId + '">' + (item.itemName || 'Product') + '</a></div>' +
+          '<div class="cart-item-name"><a href="/item/' + item.itemSlug + '">' + (item.itemName || 'Product') + '</a></div>' +
           '<div class="cart-item-price">' + formatCurrency(item.unitPrice) + '</div>' +
           '<div class="cart-item-actions">' +
             '<div class="quantity-control">' +

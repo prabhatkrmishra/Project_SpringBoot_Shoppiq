@@ -77,7 +77,7 @@ async function loadCategory(slug) {
       document.getElementById("itemGrid").innerHTML = items.map(function (item) {
         var stockClass = item.stockQuantity > 10 ? "badge-success" : (item.stockQuantity > 0 ? "badge-warning" : "badge-danger");
         var stockText = item.stockQuantity > 0 ? "In Stock" : "Out of Stock";
-        return '<a href="/item/' + item.id + '" class="card-link"><article class="card product-card">' +
+        return '<a href="/item/' + item.slug + '" class="card-link"><article class="card product-card">' +
           '<div class="card-image-wrapper">' +
             '<img class="card-image" src="' + (item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop') + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
           '</div>' +

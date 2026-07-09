@@ -113,7 +113,7 @@ async function loadFeaturedProducts() {
       return;
     }
     document.getElementById("featuredGrid").innerHTML = featured.map(function (item) {
-      return '<a href="/item/' + item.id + '" class="card-link">' +
+      return '<a href="/item/' + item.slug + '" class="card-link">' +
         '<article class="card product-card">' +
           '<div class="card-image-wrapper">' +
             '<img class="card-image" src="' + (item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop') + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +

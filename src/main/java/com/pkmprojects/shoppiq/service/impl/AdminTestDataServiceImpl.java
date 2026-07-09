@@ -20,6 +20,7 @@ import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.RolesService;
 import com.pkmprojects.shoppiq.service.admin.AdminTestDataService;
+import com.pkmprojects.shoppiq.util.SlugUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -151,6 +152,7 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
 
             Item item = Item.builder()
                     .name(itemReq.name())
+                    .slug(generateUniqueSlug(itemReq.name()))
                     .description(itemReq.description())
                     .seller(seller)
                     .publishingStatus(ProductPublishingStatus.PUBLISHED)
@@ -409,10 +411,14 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
                 java.math.BigDecimal.valueOf(cartItem.getQuantity()));
 
         String itemName = details.getItem() != null ? details.getItem().getName() : "";
+        Long itemId = details.getItem() != null ? details.getItem().getId() : null;
+        String itemSlug = details.getItem() != null ? details.getItem().getSlug() : "";
 
         return new CartItemResponse(
                 cartItem.getId(),
                 details.getId(),
+                itemId,
+                itemSlug,
                 itemName,
                 details.getBrand(),
                 details.getSku(),
@@ -436,5 +442,24 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         return itemDetails.getPrice()
                 .multiply(java.math.BigDecimal.ONE.subtract(discount))
                 .setScale(2, java.math.RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Generates a unique URL-friendly slug.
+     *
+     * @param itemName item name
+     * @return unique slug
+     */
+    private String generateUniqueSlug(String itemName) {
+        String baseSlug = SlugUtil.toSlug(itemName);
+        String slug = baseSlug;
+        int counter = 2;
+
+        while (itemRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter;
+            counter++;
+        }
+
+        return slug;
     }
 }

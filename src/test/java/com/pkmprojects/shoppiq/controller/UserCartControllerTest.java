@@ -112,7 +112,7 @@ class UserCartControllerTest {
         BigDecimal unit = new BigDecimal("90.00");
         BigDecimal lineTotal = unit.multiply(BigDecimal.valueOf(qty));
         return new CartItemResponse(
-                100L, 10L,
+                100L, 10L, 1L, "test-slug",
                 "Test Product", "BrandX", "SKU-001",
                 unit, new BigDecimal("100.00"), new BigDecimal("10.00"),
                 qty, lineTotal, null
