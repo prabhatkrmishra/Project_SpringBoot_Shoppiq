@@ -402,6 +402,34 @@ public enum ErrorCode {
     PROMO_CODE_MIN_ORDER_AMOUNT_NOT_MET("PROMO-400-006", "Order subtotal does not meet the promo code minimum."),
 
     // =========================================================
+    // Email Errors
+    // =========================================================
+
+    /**
+     * Email failed to send.
+     */
+    EMAIL_SEND_FAILED("EMAIL-502-001", "Failed to send email."),
+
+    // =========================================================
+    // Verification Code Errors
+    // =========================================================
+
+    /**
+     * Verification code is invalid.
+     */
+    VERIFICATION_CODE_INVALID("VERIFY-400-001", "Invalid verification code."),
+
+    /**
+     * Verification code has expired.
+     */
+    VERIFICATION_CODE_EXPIRED("VERIFY-400-002", "Verification code has expired."),
+
+    /**
+     * Maximum verification attempts exceeded.
+     */
+    VERIFICATION_CODE_MAX_ATTEMPTS("VERIFY-429-001", "Maximum verification attempts exceeded."),
+
+    // =========================================================
     // Admin Errors
     // =========================================================
 

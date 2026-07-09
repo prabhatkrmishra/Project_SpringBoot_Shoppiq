@@ -27,3 +27,9 @@ jwt:
 app:
   security:
     secure-cookie: false
+
+shoppiq:
+  email:
+    provider: console
+    from: test@shoppiq.com
+    enabled: true
