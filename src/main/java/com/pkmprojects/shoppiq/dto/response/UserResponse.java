@@ -1,5 +1,7 @@
 package com.pkmprojects.shoppiq.dto.response;
 
+import com.pkmprojects.shoppiq.dto.address.AddressResponse;
+import com.pkmprojects.shoppiq.entity.Address;
 import com.pkmprojects.shoppiq.entity.User;
 
 import java.time.Instant;
@@ -21,15 +23,17 @@ import java.time.Instant;
  * <h2>Design Notes</h2>
  * <ul>
  *     <li>Immutable through Java record semantics.</li>
- *     <li>Created using {@link #fromEntity(User)}.</li>
+ *     <li>Created using {@link #fromEntity(User)} or {@link #of(User, Address, boolean)}.</li>
  *     <li>Does not expose the password or security tokens.</li>
  * </ul>
  *
- * @param id        user identifier
- * @param name      full name of the user
- * @param email     email address
- * @param username  username used during authentication
- * @param createdAt account creation timestamp
+ * @param id            user identifier
+ * @param name          full name of the user
+ * @param email         email address
+ * @param username      username used during authentication
+ * @param createdAt     account creation timestamp
+ * @param defaultAddress the user's default address, or {@code null} if none
+ * @param hasPassword   whether the account has a password set (false for OAuth-only accounts)
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
@@ -38,7 +42,9 @@ public record UserResponse(
         String name,
         String email,
         String username,
-        Instant createdAt
+        Instant createdAt,
+        AddressResponse defaultAddress,
+        boolean hasPassword
 ) {
     public static UserResponse fromEntity(User user) {
         return new UserResponse(
@@ -46,7 +52,30 @@ public record UserResponse(
                 user.getName(),
                 user.getEmail(),
                 user.getUsername(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                null,
+                false
+        );
+    }
+
+    /**
+     * Builds a response enriched with the user's default address and
+     * password-presence flag.
+     *
+     * @param user           source entity
+     * @param defaultAddress the user's default address, or {@code null}
+     * @param hasPassword    whether the account has a password set
+     * @return response DTO
+     */
+    public static UserResponse of(User user, Address defaultAddress, boolean hasPassword) {
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getCreatedAt(),
+                defaultAddress != null ? AddressResponse.from(defaultAddress) : null,
+                hasPassword
         );
     }
 }

@@ -1,12 +1,19 @@
 package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
+import com.pkmprojects.shoppiq.dto.response.UserResponse;
+import com.pkmprojects.shoppiq.dto.user.ChangePasswordRequest;
+import com.pkmprojects.shoppiq.dto.user.UpdateProfileRequest;
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
+import com.pkmprojects.shoppiq.entity.Address;
 import com.pkmprojects.shoppiq.entity.Seller;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 import com.pkmprojects.shoppiq.exception.DuplicateUserException;
+import com.pkmprojects.shoppiq.exception.business.CurrentPasswordIncorrectException;
+import com.pkmprojects.shoppiq.exception.business.PasswordChangeException;
+import com.pkmprojects.shoppiq.repository.AddressRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import org.slf4j.Logger;
@@ -48,12 +55,14 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RolesService rolesService;
     private final SellerRepository sellerRepository;
+    private final AddressRepository addressRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RolesService rolesService, SellerRepository sellerRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RolesService rolesService, SellerRepository sellerRepository, AddressRepository addressRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.rolesService = rolesService;
         this.sellerRepository = sellerRepository;
+        this.addressRepository = addressRepository;
     }
 
     /**
@@ -147,6 +156,73 @@ public class UserService {
             logger.warn("Google user creation failed due to constraint violation for username: {}", username);
             throw DuplicateUserException.unknown();
         }
+    }
+
+    /**
+     * Returns the profile for the given user, including default address and password-presence flag.
+     *
+     * @param user the requesting (authenticated) user
+     * @return profile response DTO
+     */
+    public UserResponse getProfile(User user) {
+        Address defaultAddress = addressRepository.findByUserAndIsDefaultTrue(user).orElse(null);
+        boolean hasPassword = user.getPassword() != null;
+        return UserResponse.of(user, defaultAddress, hasPassword);
+    }
+
+    /**
+     * Updates the current user's editable profile fields.
+     *
+     * <p>Only the display name may be changed; email and username are locked.</p>
+     *
+     * @param user the requesting (authenticated) user
+     * @param request the profile update payload
+     */
+    @Transactional
+    public void updateProfile(User user, UpdateProfileRequest request) {
+        user.setName(request.getName());
+        userRepository.save(user);
+        logger.info("Profile updated for username: {}", user.getUsername());
+    }
+
+    /**
+     * Changes the current user's password.
+     *
+     * <p>
+     * For credential-based accounts the supplied current password must match
+     * the stored value. For OAuth-only accounts (no stored password) the
+     * current-password check is skipped and the new password is simply set,
+     * enabling password login for that account.
+     * </p>
+     *
+     * <p>Changing a password invalidates all previously issued JWTs by
+     * bumping the user's token version.</p>
+     *
+     * @param user the requesting (authenticated) user
+     * @param request the password change payload
+     * @throws CurrentPasswordIncorrectException if the current password does not match
+     * @throws InvalidOperationException if inputs are invalid
+     */
+    @Transactional
+    public void changePassword(User user, ChangePasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new PasswordChangeException("New password and confirmation do not match.");
+        }
+
+        String currentEncoded = user.getPassword();
+        if (currentEncoded != null) {
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                throw new PasswordChangeException("Current password is required.");
+            }
+            if (!passwordEncoder.matches(request.getCurrentPassword(), currentEncoded)) {
+                throw new CurrentPasswordIncorrectException();
+            }
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
+        logger.info("Password changed for username: {}", user.getUsername());
     }
 
 }

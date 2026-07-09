@@ -120,6 +120,11 @@ public enum ErrorCode {
      */
     USER_NOT_FOUND("USER-404-001", "Requested user was not found."),
 
+    /**
+     * The supplied current password does not match the stored password.
+     */
+    CURRENT_PASSWORD_INCORRECT("USER-400-001", "Current password is incorrect."),
+
     // =========================================================
     // Category Errors
     // =========================================================
