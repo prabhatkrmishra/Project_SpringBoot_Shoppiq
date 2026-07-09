@@ -282,7 +282,7 @@
 
         API.get('/items/' + itemId).then(function (item) {
           document.title = escapeHtml(item.name) + ' — Shoppiq';
-          var imgUrl = item.imageUrl || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop';
+          var imgUrl = item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=600&fit=crop';
           var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
           var stockClass = item.stockQuantity > 10 ? 'text-success' : (item.stockQuantity > 0 ? 'text-warning' : 'text-danger');
           var stockText = item.stockQuantity > 10 ? 'In Stock (' + item.stockQuantity + ' available)' : (item.stockQuantity > 0 ? 'Low Stock (' + item.stockQuantity + ' left)' : 'Out of Stock');
