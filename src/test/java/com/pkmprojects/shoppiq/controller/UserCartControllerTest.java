@@ -115,7 +115,7 @@ class UserCartControllerTest {
                 100L, 10L,
                 "Test Product", "BrandX", "SKU-001",
                 unit, new BigDecimal("100.00"), new BigDecimal("10.00"),
-                qty, lineTotal
+                qty, lineTotal, null
         );
     }
 

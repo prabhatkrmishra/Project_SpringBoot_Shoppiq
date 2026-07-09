@@ -77,7 +77,7 @@
     var container = document.getElementById('cart-items');
     container.innerHTML = '';
     items.forEach(function (item) {
-      var imgUrl = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop';
+      var imgUrl = item.imageUrl || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop';
       var div = document.createElement('div');
       div.className = 'cart-item';
       div.dataset.cartItemId = item.cartItemId;

@@ -17,7 +17,8 @@ public record OrderItemResponse(
         String itemNameSnapshot,
         BigDecimal unitPriceSnapshot,
         Integer quantity,
-        BigDecimal subtotal
+        BigDecimal subtotal,
+        String imageUrl
 ) {
 
     /**
@@ -27,13 +28,18 @@ public record OrderItemResponse(
      * @return response DTO
      */
     public static OrderItemResponse from(OrderItem orderItem) {
+        String imageUrl = null;
+        if (orderItem.getItemDetails() != null) {
+            imageUrl = orderItem.getItemDetails().getImageUrl();
+        }
         return new OrderItemResponse(
                 orderItem.getId(),
                 orderItem.getItemDetails() != null ? orderItem.getItemDetails().getId() : null,
                 orderItem.getItemNameSnapshot(),
                 orderItem.getUnitPriceSnapshot(),
                 orderItem.getQuantity(),
-                orderItem.getSubtotal()
+                orderItem.getSubtotal(),
+                imageUrl
         );
     }
 }

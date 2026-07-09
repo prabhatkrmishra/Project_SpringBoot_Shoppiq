@@ -29,5 +29,6 @@ public record CartItemResponse(
         BigDecimal originalPrice,
         BigDecimal discountPct,
         Integer quantity,
-        BigDecimal lineTotal
+        BigDecimal lineTotal,
+        String imageUrl
 ) {}

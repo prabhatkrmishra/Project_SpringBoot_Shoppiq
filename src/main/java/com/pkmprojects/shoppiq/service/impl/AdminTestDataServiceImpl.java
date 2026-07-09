@@ -420,7 +420,8 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
                 details.getPrice(),
                 details.getDiscountPercentage(),
                 cartItem.getQuantity(),
-                lineTotal
+                lineTotal,
+                details.getImageUrl()
         );
     }
 
