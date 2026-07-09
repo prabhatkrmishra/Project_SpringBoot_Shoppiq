@@ -363,6 +363,45 @@ public enum ErrorCode {
     PAYMENT_GATEWAY_ERROR("PAYMENT-502-001", "Communication with the payment gateway failed."),
 
     // =========================================================
+    // Promo Code Errors
+    // =========================================================
+
+    /**
+     * Requested promo code could not be found.
+     */
+    PROMO_CODE_NOT_FOUND("PROMO-404-001", "Requested promo code was not found."),
+
+    /**
+     * Promo code has expired.
+     */
+    PROMO_CODE_EXPIRED("PROMO-400-001", "Promo code has expired."),
+
+    /**
+     * Promo code is not yet valid.
+     */
+    PROMO_CODE_NOT_YET_VALID("PROMO-400-002", "Promo code is not yet valid."),
+
+    /**
+     * Promo code is inactive.
+     */
+    PROMO_CODE_INACTIVE("PROMO-400-003", "Promo code is currently inactive."),
+
+    /**
+     * Promo code global usage limit exceeded.
+     */
+    PROMO_CODE_USAGE_LIMIT_EXCEEDED("PROMO-400-004", "Promo code usage limit has been reached."),
+
+    /**
+     * Promo code per-user usage limit exceeded.
+     */
+    PROMO_CODE_USER_USAGE_LIMIT_EXCEEDED("PROMO-400-005", "You have reached the usage limit for this promo code."),
+
+    /**
+     * Order subtotal below promo code minimum.
+     */
+    PROMO_CODE_MIN_ORDER_AMOUNT_NOT_MET("PROMO-400-006", "Order subtotal does not meet the promo code minimum."),
+
+    // =========================================================
     // Admin Errors
     // =========================================================
 

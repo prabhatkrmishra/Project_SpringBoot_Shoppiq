@@ -36,9 +36,10 @@
           <span id="cart-total">$0.00</span>
         </div>
         <div class="cart-promo">
-          <input type="text" class="form-input" placeholder="Promo code" aria-label="Promo code">
-          <button class="btn btn-sm btn-secondary">Apply</button>
+          <input type="text" id="cart-promo-input" class="form-input" placeholder="Promo code" aria-label="Promo code">
+          <button type="button" id="cart-promo-apply" class="btn btn-sm btn-secondary">Apply</button>
         </div>
+        <div id="cart-promo-msg" style="display:none;" class="text-sm mt-sm"></div>
         <div class="cart-actions">
           <a href="/checkout" class="btn btn-primary btn-lg">Proceed to Checkout</a>
           <a href="/allitems" class="btn btn-secondary">Continue Shopping</a>
@@ -58,6 +59,7 @@
 (function () {
   'use strict';
   var cartData = null;
+  var appliedPromoCode = null;
 
   function renderCart(cart) {
     cartData = cart;
@@ -141,7 +143,46 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', loadCart);
+  function applyPromoCode() {
+    var input = document.getElementById('cart-promo-input');
+    var msgEl = document.getElementById('cart-promo-msg');
+    var code = input.value.trim();
+    if (!code) {
+      msgEl.style.display = 'block';
+      msgEl.innerHTML = '<span class="text-danger">Please enter a promo code</span>';
+      return;
+    }
+    var btn = document.getElementById('cart-promo-apply');
+    setButtonLoading(btn, true);
+    API.post('/api/promo-codes/validate', { code: code, subtotal: cartData.subtotal }).then(function (res) {
+      appliedPromoCode = code;
+      sessionStorage.setItem('promoCode', code);
+      msgEl.style.display = 'block';
+      msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(res.discount) + '</span>';
+      if (cartData) {
+        document.getElementById('cart-subtotal').textContent = formatCurrency(cartData.subtotal - res.discount);
+        document.getElementById('cart-total').textContent = formatCurrency(cartData.subtotal - res.discount);
+      }
+      setButtonLoading(btn, false);
+      btn.textContent = 'Applied';
+      btn.disabled = true;
+    }).catch(function (err) {
+      appliedPromoCode = null;
+      sessionStorage.removeItem('promoCode');
+      msgEl.style.display = 'block';
+      msgEl.innerHTML = '<span class="text-danger">' + (err.message || 'Invalid promo code') + '</span>';
+      setButtonLoading(btn, false);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadCart();
+    var savedPromo = sessionStorage.getItem('promoCode');
+    if (savedPromo) {
+      document.getElementById('cart-promo-input').value = savedPromo;
+    }
+    document.getElementById('cart-promo-apply').addEventListener('click', applyPromoCode);
+  });
 })();
 </script>
 </body>

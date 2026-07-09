@@ -384,7 +384,8 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
             cartRepository.save(cart);
 
             responses.add(new CheckoutResponse(
-                    order.getId(), order.getStatus(), order.getGrandTotal(), null));
+                    order.getId(), order.getStatus(), order.getSubtotal(),
+                    order.getDiscount(), order.getGrandTotal(), null, null));
         }
 
         return responses;

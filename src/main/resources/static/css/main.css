@@ -1582,10 +1582,11 @@ small { font-size: 0.78rem; }
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   display: none;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
   padding: var(--space-md);
+  overflow-y: auto;
 }
 .modal-overlay.active {
   display: flex;
@@ -1597,6 +1598,7 @@ small { font-size: 0.78rem; }
   max-width: 440px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   animation: modal-in 0.2s ease;
+  margin: auto 0;
 }
 @keyframes modal-in {
   from { opacity: 0; transform: scale(0.95) translateY(8px); }
@@ -1646,6 +1648,11 @@ small { font-size: 0.78rem; }
   margin-top: var(--space-xs);
   font-size: 0.75rem;
   color: var(--color-text-muted);
+}
+.modal-body input[type="datetime-local"] {
+  max-width: 100%;
+  width: 100%;
+  font-size: 0.9rem;
 }
 .modal-footer {
   display: flex;

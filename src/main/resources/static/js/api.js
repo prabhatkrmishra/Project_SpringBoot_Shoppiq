@@ -35,6 +35,7 @@ window.API = (function () {
     get: function (url) { return request(url, { method: "GET" }); },
     post: function (url, body) { return request(url, { method: "POST", body: body }); },
     put: function (url, body) { return request(url, { method: "PUT", body: body }); },
+    patch: function (url, body) { return request(url, { method: "PATCH", body: body }); },
     del: function (url) { return request(url, { method: "DELETE" }); },
     getBlob: function (url) {
       return fetch(url, { credentials: "include", headers: { "Accept": "*/*" } })

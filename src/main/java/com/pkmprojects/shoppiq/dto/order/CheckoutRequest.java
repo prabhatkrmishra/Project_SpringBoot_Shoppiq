@@ -15,6 +15,8 @@ public record CheckoutRequest(
         Long addressId,
 
         @NotNull(message = "Payment method is required.")
-        PaymentMethod paymentMethod
+        PaymentMethod paymentMethod,
+
+        String promoCode
 ) {
 }

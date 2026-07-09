@@ -126,6 +126,18 @@ public class Order extends AuditableEntity {
     private BigDecimal grandTotal;
 
     /**
+     * Promo code applied at checkout, if any.
+     *
+     * <p>Snapshot reference preserved for historical orders.</p>
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "promo_code_id",
+            foreignKey = @ForeignKey(name = "fk_orders_promo_code")
+    )
+    private PromoCode promoCode;
+
+    /**
      * Timestamp when the order was placed.
      */
     @Column(name = "placed_at", nullable = false)

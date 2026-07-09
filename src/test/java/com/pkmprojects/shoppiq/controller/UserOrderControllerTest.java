@@ -114,7 +114,7 @@ class UserOrderControllerTest {
     }
 
     private CheckoutResponse checkoutResponse(Long orderId) {
-        return new CheckoutResponse(orderId, OrderStatus.PLACED, BigDecimal.valueOf(500), 99L);
+        return new CheckoutResponse(orderId, OrderStatus.PLACED, BigDecimal.valueOf(500), BigDecimal.ZERO, BigDecimal.valueOf(500), 99L, null);
     }
 
     private OrderResponse orderResponse(Long orderId) {
@@ -143,7 +143,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("201 Created — successful checkout")
         void checkout_success() throws Exception {
-            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD);
+            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
             when(checkoutService.checkout(eq(customer), any(CheckoutRequest.class)))
                     .thenReturn(checkoutResponse(25L));
 
@@ -159,7 +159,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — empty cart")
         void checkout_emptyCart() throws Exception {
-            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD);
+            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
             when(checkoutService.checkout(any(), any())).thenThrow(new CartEmptyException());
 
             mockMvc.perform(post("/user/order/checkout")
@@ -171,7 +171,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("404 Not Found — invalid address")
         void checkout_invalidAddress() throws Exception {
-            CheckoutRequest request = new CheckoutRequest(99L, PaymentMethod.COD);
+            CheckoutRequest request = new CheckoutRequest(99L, PaymentMethod.COD, null);
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(AddressNotFoundException.id(99L));
 
@@ -184,7 +184,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("403 Forbidden — address belongs to different user")
         void checkout_addressWrongOwner() throws Exception {
-            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD);
+            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, null);
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
 
@@ -197,7 +197,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — insufficient stock")
         void checkout_insufficientStock() throws Exception {
-            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD);
+            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(InsufficientStockException.forItem("SKU-1", 3, 1));
 

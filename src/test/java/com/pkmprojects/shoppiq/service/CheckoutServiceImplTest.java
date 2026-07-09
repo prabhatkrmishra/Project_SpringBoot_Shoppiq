@@ -58,6 +58,8 @@ class CheckoutServiceImplTest {
     private OrderRepository orderRepository;
     @Mock
     private PaymentService paymentService;
+    @Mock
+    private PromoCodeService promoCodeService;
 
     @InjectMocks
     private CheckoutServiceImpl checkoutService;
@@ -165,7 +167,7 @@ class CheckoutServiceImplTest {
             CartItem cartItem = buildCartItem(details, 2);
             Cart cart = buildCart(user, List.of(cartItem));
 
-            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD);
+            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, null);
 
             when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
@@ -206,7 +208,7 @@ class CheckoutServiceImplTest {
             when(cartRepository.findByUser(user)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD))
+                    checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD, null))
             ).isInstanceOf(CartEmptyException.class);
         }
 
@@ -218,7 +220,7 @@ class CheckoutServiceImplTest {
             when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD))
+                    checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD, null))
             ).isInstanceOf(CartEmptyException.class);
         }
 
@@ -233,7 +235,7 @@ class CheckoutServiceImplTest {
             when(addressRepository.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(user, new CheckoutRequest(99L, PaymentMethod.COD))
+                    checkoutService.checkout(user, new CheckoutRequest(99L, PaymentMethod.COD, null))
             ).isInstanceOf(AddressNotFoundException.class);
         }
 
@@ -250,7 +252,7 @@ class CheckoutServiceImplTest {
             when(addressRepository.findById(5L)).thenReturn(Optional.of(bobsAddress));
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(alice, new CheckoutRequest(5L, PaymentMethod.COD))
+                    checkoutService.checkout(alice, new CheckoutRequest(5L, PaymentMethod.COD, null))
             ).isInstanceOf(AddressAccessDeniedException.class);
         }
 
@@ -268,7 +270,7 @@ class CheckoutServiceImplTest {
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(user, new CheckoutRequest(5L, PaymentMethod.COD))
+                    checkoutService.checkout(user, new CheckoutRequest(5L, PaymentMethod.COD, null))
             ).isInstanceOf(InsufficientStockException.class);
 
             // Inventory must NOT have been modified
@@ -302,7 +304,7 @@ class CheckoutServiceImplTest {
             setId(payment, 42L);
             when(paymentService.createPayment(any(Order.class))).thenReturn(payment);
 
-            CheckoutResponse response = checkoutService.checkout(user, new CheckoutRequest(5L, PaymentMethod.COD));
+            CheckoutResponse response = checkoutService.checkout(user, new CheckoutRequest(5L, PaymentMethod.COD, null));
 
             assertThat(response.grandTotal()).isEqualByComparingTo("800.00");
             assertThat(response.paymentId()).isEqualTo(42L);

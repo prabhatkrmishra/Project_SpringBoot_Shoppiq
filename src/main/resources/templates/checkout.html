@@ -80,8 +80,14 @@
         <div class="checkout-section">
           <div class="cart-summary-title">Order Summary</div>
           <div class="cart-summary-row"><span>Subtotal</span><span id="checkout-subtotal">$0.00</span></div>
+          <div id="checkout-discount-row" class="cart-summary-row" style="display:none;"><span>Discount</span><span id="checkout-discount" class="text-success">-$0.00</span></div>
           <div class="cart-summary-row"><span>Shipping</span><span>Calculated at checkout</span></div>
           <div class="cart-summary-row total"><span>Total</span><span id="checkout-total">$0.00</span></div>
+          <div class="cart-promo">
+            <input type="text" id="checkout-promo-input" class="form-input" placeholder="Promo code" aria-label="Promo code">
+            <button type="button" id="checkout-promo-apply" class="btn btn-sm btn-secondary">Apply</button>
+          </div>
+          <div id="checkout-promo-msg" style="display:none;" class="text-sm mt-sm"></div>
           <div class="cart-actions">
             <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg btn-block">Place Order</button>
           </div>
@@ -96,6 +102,9 @@
 (function () {
   'use strict';
   var selectedAddressId = null;
+  var appliedPromoCode = null;
+  var cartSubtotal = 0;
+  var discountAmount = 0;
 
   function renderAddresses(addresses) {
     var list = document.getElementById('address-list');
@@ -152,6 +161,47 @@
     });
     document.getElementById('checkout-subtotal').textContent = formatCurrency(cart.subtotal);
     document.getElementById('checkout-total').textContent = formatCurrency(cart.subtotal);
+    cartSubtotal = cart.subtotal;
+    var savedPromo = sessionStorage.getItem('promoCode');
+    if (savedPromo) {
+      document.getElementById('checkout-promo-input').value = savedPromo;
+      applyPromoCode();
+    }
+  }
+
+  function applyPromoCode() {
+    var input = document.getElementById('checkout-promo-input');
+    var msgEl = document.getElementById('checkout-promo-msg');
+    var code = input.value.trim();
+    if (!code) {
+      msgEl.style.display = 'block';
+      msgEl.innerHTML = '<span class="text-danger">Please enter a promo code</span>';
+      return;
+    }
+    var btn = document.getElementById('checkout-promo-apply');
+    setButtonLoading(btn, true);
+    API.post('/api/promo-codes/validate', { code: code, subtotal: cartSubtotal }).then(function (res) {
+      appliedPromoCode = code;
+      sessionStorage.setItem('promoCode', code);
+      discountAmount = parseFloat(res.discount);
+      msgEl.style.display = 'block';
+      msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(res.discount) + '</span>';
+      document.getElementById('checkout-discount-row').style.display = '';
+      document.getElementById('checkout-discount').textContent = '-' + formatCurrency(res.discount);
+      document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal - discountAmount);
+      setButtonLoading(btn, false);
+      btn.textContent = 'Applied';
+      btn.disabled = true;
+    }).catch(function (err) {
+      appliedPromoCode = null;
+      sessionStorage.removeItem('promoCode');
+      discountAmount = 0;
+      msgEl.style.display = 'block';
+      msgEl.innerHTML = '<span class="text-danger">' + (err.message || 'Invalid promo code') + '</span>';
+      document.getElementById('checkout-discount-row').style.display = 'none';
+      document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal);
+      setButtonLoading(btn, false);
+    });
   }
 
   function init() {
@@ -174,6 +224,8 @@
       init();
     });
 
+    document.getElementById('checkout-promo-apply').addEventListener('click', applyPromoCode);
+
     document.getElementById('checkout-form').addEventListener('submit', function (e) {
       e.preventDefault();
       if (!selectedAddressId) {
@@ -189,9 +241,11 @@
       setButtonLoading(btn, true);
       API.post('/user/order/checkout', {
         addressId: selectedAddressId,
-        paymentMethod: paymentMethod.value
+        paymentMethod: paymentMethod.value,
+        promoCode: appliedPromoCode
       }).then(function (res) {
         showToast('Order placed successfully!', 'success');
+        sessionStorage.removeItem('promoCode');
         if (paymentMethod.value !== 'COD' && res.paymentId) {
           var simulatedTxn = 'TEST-' + res.paymentId + '-' + Date.now();
           return API.post('/user/payment/verify', {

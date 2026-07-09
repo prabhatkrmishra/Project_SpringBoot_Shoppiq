@@ -9,6 +9,7 @@ import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.PaymentService;
+import com.pkmprojects.shoppiq.service.PromoCodeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,17 +44,20 @@ public class CheckoutServiceImpl {
     private final OrderRepository orderRepository;
     private final ItemDetailsRepository itemDetailsRepository;
     private final PaymentService paymentService;
+    private final PromoCodeService promoCodeService;
 
     public CheckoutServiceImpl(CartRepository cartRepository,
                                AddressRepository addressRepository,
                                OrderRepository orderRepository,
                                ItemDetailsRepository itemDetailsRepository,
-                               PaymentService paymentService) {
+                               PaymentService paymentService,
+                               PromoCodeService promoCodeService) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
         this.orderRepository = orderRepository;
         this.itemDetailsRepository = itemDetailsRepository;
         this.paymentService = paymentService;
+        this.promoCodeService = promoCodeService;
     }
 
     // =========================================================
@@ -105,6 +109,14 @@ public class CheckoutServiceImpl {
         BigDecimal shippingFee = BigDecimal.ZERO;
         BigDecimal tax = BigDecimal.ZERO;
         BigDecimal discount = BigDecimal.ZERO;
+        PromoCode appliedPromoCode = null;
+
+        if (request.promoCode() != null && !request.promoCode().isBlank()) {
+            appliedPromoCode = promoCodeService.validateAndCalculate(
+                    request.promoCode(), user, subtotal);
+            discount = promoCodeService.calculateDiscount(appliedPromoCode, subtotal);
+        }
+
         BigDecimal grandTotal = subtotal.add(shippingFee).add(tax).subtract(discount);
 
         Order order = Order.builder()
@@ -119,6 +131,7 @@ public class CheckoutServiceImpl {
                 .tax(tax)
                 .discount(discount)
                 .grandTotal(grandTotal)
+                .promoCode(appliedPromoCode)
                 .placedAt(Instant.now())
                 .build();
 
@@ -147,6 +160,10 @@ public class CheckoutServiceImpl {
 
         cart.getItems().clear();
         cartRepository.save(cart);
+
+        if (appliedPromoCode != null) {
+            promoCodeService.recordUsage(appliedPromoCode, user, order);
+        }
 
         Payment payment = paymentService.createPayment(order);
 

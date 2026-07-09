@@ -196,6 +196,11 @@ public class FrontEndController {
         return "admin-roles";
     }
 
+    @GetMapping("/admin/promo-codes")
+    public String adminPromoCodesPage() {
+        return "admin-promo-codes";
+    }
+
     @GetMapping("/seller-panel/dashboard")
     public String sellerDashboardPage() {
         return "seller/dashboard";

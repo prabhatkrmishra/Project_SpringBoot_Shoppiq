@@ -15,8 +15,11 @@ public record CheckoutResponse(
 
         Long orderId,
         OrderStatus status,
+        BigDecimal subtotal,
+        BigDecimal discount,
         BigDecimal grandTotal,
-        Long paymentId
+        Long paymentId,
+        String promoCode
 ) {
 
     /**
@@ -30,8 +33,11 @@ public record CheckoutResponse(
         return new CheckoutResponse(
                 order.getId(),
                 order.getStatus(),
+                order.getSubtotal(),
+                order.getDiscount(),
                 order.getGrandTotal(),
-                paymentId
+                paymentId,
+                order.getPromoCode() != null ? order.getPromoCode().getCode() : null
         );
     }
 }
