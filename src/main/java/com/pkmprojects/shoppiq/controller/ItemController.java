@@ -47,4 +47,14 @@ public class ItemController {
     public ItemResponse getBySlug(@PathVariable String slug) {
         return itemService.getBySlug(slug);
     }
+
+    @GetMapping("/new-arrivals")
+    public List<ItemResponse> getNewArrivals() {
+        return itemService.getNewArrivals();
+    }
+
+    @GetMapping("/sale")
+    public List<ItemResponse> getSaleItems() {
+        return itemService.getSaleItems();
+    }
 }

@@ -214,6 +214,48 @@ public class AdminController {
         return inventoryService.bulkUpdateStock(adjustments);
     }
 
+    @PutMapping("/inventory/{itemId}/on-sale")
+    public AdminProductInventoryResponse toggleOnSale(
+            @PathVariable @Min(1) Long itemId,
+            @RequestBody Map<String, Boolean> body
+    ) {
+        boolean onSale = body.getOrDefault("onSale", false);
+        return inventoryService.toggleOnSale(itemId, onSale);
+    }
+
+    @PutMapping("/inventory/{itemId}/discount")
+    public AdminProductInventoryResponse updateDiscount(
+            @PathVariable @Min(1) Long itemId,
+            @RequestBody Map<String, java.math.BigDecimal> body
+    ) {
+        java.math.BigDecimal discountPercentage = body.get("discountPercentage");
+        return inventoryService.updateDiscount(itemId, discountPercentage);
+    }
+
+    @PutMapping("/inventory/{itemId}/put-on-sale")
+    public AdminProductInventoryResponse putOnSale(
+            @PathVariable @Min(1) Long itemId,
+            @RequestBody Map<String, java.math.BigDecimal> body
+    ) {
+        java.math.BigDecimal discountPercentage = body.get("discountPercentage");
+        return inventoryService.putOnSale(itemId, discountPercentage);
+    }
+
+    @PutMapping("/inventory/bulk-on-sale")
+    public List<AdminProductInventoryResponse> bulkToggleOnSale(
+            @RequestBody Map<String, Object> body
+    ) {
+        @SuppressWarnings("unchecked")
+        List<Long> itemIds = ((List<Number>) body.get("itemIds")).stream()
+                .map(Number::longValue)
+                .toList();
+        boolean onSale = (Boolean) body.getOrDefault("onSale", false);
+        java.math.BigDecimal discountPercentage = body.get("discountPercentage") != null
+                ? new java.math.BigDecimal(body.get("discountPercentage").toString())
+                : null;
+        return inventoryService.bulkToggleOnSale(itemIds, onSale, discountPercentage);
+    }
+
     @GetMapping("/inventory/summary")
     public AdminInventoryService.InventoryDashboardSummary getInventorySummary() {
         return inventoryService.getInventoryDashboardSummary();

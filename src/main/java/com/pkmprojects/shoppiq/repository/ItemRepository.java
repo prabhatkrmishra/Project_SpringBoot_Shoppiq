@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.repository;
 
 import com.pkmprojects.shoppiq.entity.Item;
+import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -111,4 +112,24 @@ public interface ItemRepository
      * @return true if an item with this slug exists
      */
     boolean existsBySlug(String slug);
+
+    /**
+     * Retrieves the latest published items ordered by creation date.
+     *
+     * @param status publishing status filter
+     * @param pageable pagination parameters
+     * @return list of latest items
+     */
+    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
+           "WHERE i.publishingStatus = :status ORDER BY i.createdAt DESC")
+    List<Item> findNewArrivals(@Param("status") ProductPublishingStatus status, org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * Retrieves all published items that are marked as on sale.
+     *
+     * @return list of on-sale items
+     */
+    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
+           "WHERE i.publishingStatus = 'PUBLISHED' AND id.onSale = true ORDER BY i.createdAt DESC")
+    List<Item> findOnSaleItems();
 }

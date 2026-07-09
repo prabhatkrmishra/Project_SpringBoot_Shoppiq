@@ -143,11 +143,78 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         );
     }
 
+    @Override
+    public AdminProductInventoryResponse toggleOnSale(Long itemId, boolean onSale) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> ItemNotFoundException.id(itemId));
+
+        ItemDetails details = item.getItemDetails();
+        if (onSale && Boolean.TRUE.equals(details.getOnSale())) {
+            throw ProductAlreadyOnSaleException.forItem(item.getName());
+        }
+        details.setOnSale(onSale);
+        itemDetailsRepository.save(details);
+
+        return mapToInventoryResponse(item);
+    }
+
+    @Override
+    public AdminProductInventoryResponse updateDiscount(Long itemId, java.math.BigDecimal discountPercentage) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> ItemNotFoundException.id(itemId));
+
+        ItemDetails details = item.getItemDetails();
+        details.setDiscountPercentage(discountPercentage);
+        itemDetailsRepository.save(details);
+
+        return mapToInventoryResponse(item);
+    }
+
+    @Override
+    public List<AdminProductInventoryResponse> bulkToggleOnSale(List<Long> itemIds, boolean onSale, java.math.BigDecimal discountPercentage) {
+        List<AdminProductInventoryResponse> results = itemIds.stream()
+                .map(itemId -> {
+                    Item item = itemRepository.findById(itemId)
+                            .orElseThrow(() -> ItemNotFoundException.id(itemId));
+
+                    ItemDetails details = item.getItemDetails();
+                    if (onSale && Boolean.TRUE.equals(details.getOnSale())) {
+                        return mapToInventoryResponse(item);
+                    }
+                    details.setOnSale(onSale);
+                    if (discountPercentage != null) {
+                        details.setDiscountPercentage(discountPercentage);
+                    }
+                    itemDetailsRepository.save(details);
+
+                    return mapToInventoryResponse(item);
+                })
+                .collect(Collectors.toList());
+
+        return results;
+    }
+
+    @Override
+    public AdminProductInventoryResponse putOnSale(Long itemId, java.math.BigDecimal discountPercentage) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> ItemNotFoundException.id(itemId));
+
+        ItemDetails details = item.getItemDetails();
+        details.setOnSale(true);
+        if (discountPercentage != null) {
+            details.setDiscountPercentage(discountPercentage);
+        }
+        itemDetailsRepository.save(details);
+
+        return mapToInventoryResponse(item);
+    }
+
     private AdminProductInventoryResponse mapToInventoryResponse(Item item) {
         ItemDetails details = item.getItemDetails();
         return AdminProductInventoryResponse.from(
                 item.getId(),
                 item.getName(),
+                item.getSlug(),
                 item.getDescription(),
                 details.getCategory().getName(),
                 details.getSku(),
@@ -157,7 +224,8 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
                 details.getStockQuantity(),
                 LOW_STOCK_THRESHOLD,
                 true,
-                details.getImageUrl()
+                details.getImageUrl(),
+                Boolean.TRUE.equals(details.getOnSale())
         );
     }
 

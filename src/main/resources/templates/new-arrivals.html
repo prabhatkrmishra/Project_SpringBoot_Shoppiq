@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('New Arrivals')}"></head>
+<body>
+<th:block th:replace="~{fragments/header :: header}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="page">
+  <div class="container">
+    <div class="page-header">
+      <h1>New Arrivals</h1>
+      <p>Check out the latest products just added to our store</p>
+    </div>
+
+    <div id="emptyState" class="cart-empty" style="display:none;">
+      <h2>No new arrivals yet</h2>
+      <p>Check back soon for the latest products.</p>
+      <a href="/allitems" class="btn btn-primary">Browse All Products</a>
+    </div>
+
+    <div id="loadingState" class="text-center" style="padding:48px 0;">
+      <div class="spinner"></div>
+      <p class="text-muted mt-md">Loading new arrivals...</p>
+    </div>
+
+    <div id="itemGrid" class="grid-4" style="display:none;"></div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  loadNewArrivals();
+});
+
+async function loadNewArrivals() {
+  var grid = document.getElementById("itemGrid");
+  var empty = document.getElementById("emptyState");
+  var loading = document.getElementById("loadingState");
+  loading.style.display = "";
+  grid.style.display = "none";
+  empty.style.display = "none";
+
+  try {
+    var items = await API.get("/items/new-arrivals");
+    if (!items || items.length === 0) {
+      empty.style.display = "";
+      grid.style.display = "none";
+    } else {
+      grid.innerHTML = items.map(function (item) {
+        var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop";
+        var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
+        var stockClass = item.stockQuantity > 10 ? "badge-success" : (item.stockQuantity > 0 ? "badge-warning" : "badge-danger");
+        var stockText = item.stockQuantity > 0 ? "In Stock" : "Out of Stock";
+        return '<a href="/item/' + item.slug + '" class="card-link">' +
+          '<article class="card product-card">' +
+            '<div class="card-image-wrapper">' +
+              '<img class="card-image" src="' + imgUrl + '" alt="' + item.name + '" loading="lazy" width="300" height="300">' +
+              (hasDiscount ? '<span class="card-badge badge badge-success">New</span>' : '') +
+            '</div>' +
+            '<div class="card-body">' +
+              '<h3 class="card-title">' + item.name + '</h3>' +
+              '<p class="card-text">' + (item.description || '') + '</p>' +
+              '<div class="card-price">' +
+                '<span>$' + item.price + '</span>' +
+                (hasDiscount ? ' <span class="badge badge-success">' + item.discountPercentage + '% Off</span>' : '') +
+              '</div>' +
+              '<div class="card-meta"><span class="badge ' + stockClass + '">' + stockText + '</span></div>' +
+            '</div>' +
+          '</article>' +
+        '</a>';
+      }).join("");
+      grid.style.display = "";
+      empty.style.display = "none";
+    }
+  } catch (e) {
+    empty.style.display = "";
+    empty.querySelector("h2").textContent = "Could not load new arrivals";
+    empty.querySelector("p").textContent = e.message || "Please try again later.";
+  } finally {
+    loading.style.display = "none";
+  }
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+</script>
+</body>
+</html>

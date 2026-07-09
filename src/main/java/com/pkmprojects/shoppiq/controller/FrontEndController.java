@@ -31,6 +31,16 @@ public class FrontEndController {
         return "allitems";
     }
 
+    @GetMapping("/new-arrivals")
+    public String newArrivalsPage() {
+        return "new-arrivals";
+    }
+
+    @GetMapping("/sale")
+    public String salePage() {
+        return "sale";
+    }
+
     @GetMapping("/categories")
     public String categoriesPage() {
         return "categories";
@@ -169,6 +179,11 @@ public class FrontEndController {
     @GetMapping("/admin/pending")
     public String adminPendingPage() {
         return "admin-pending";
+    }
+
+    @GetMapping("/admin/sale")
+    public String adminSalePage() {
+        return "admin-sale";
     }
 
     @GetMapping("/admin/products")

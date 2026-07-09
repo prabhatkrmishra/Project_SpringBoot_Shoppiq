@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Admin: Sale Management')}"></head>
+<body>
+<th:block th:replace="~{fragments/admin-header :: admin-header('sale')}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="admin-main">
+  <div class="page-header flex-between items-center">
+    <div>
+      <h1>Sale Management</h1>
+      <p>Put products on sale and manage discounts</p>
+    </div>
+    <div class="flex gap-sm">
+      <a href="/sale" class="btn btn-secondary btn-sm" target="_blank">View Sale Page</a>
+    </div>
+  </div>
+
+  <div class="admin-summary-grid">
+    <div class="summary-card"><div class="label">Total Products</div><div class="value" id="stat-total">0</div></div>
+    <div class="summary-card"><div class="label">On Sale</div><div class="value success" id="stat-on-sale">0</div></div>
+    <div class="summary-card"><div class="label">Not on Sale</div><div class="value" id="stat-not-on-sale">0</div></div>
+  </div>
+
+  <div class="admin-filters flex-between items-center">
+    <select id="saleFilter">
+      <option value="">All Products</option>
+      <option value="ON_SALE">On Sale</option>
+      <option value="NOT_ON_SALE">Not on Sale</option>
+    </select>
+    <div class="flex gap-sm">
+      <button class="btn btn-sm btn-primary" id="bulkOnSaleBtn" disabled>
+        <i data-lucide="tag" class="icon-sm"></i> Put Selected on Sale
+      </button>
+      <button class="btn btn-sm btn-secondary" id="bulkOffSaleBtn" disabled>
+        <i data-lucide="tag-off" class="icon-sm"></i> Remove Selected from Sale
+      </button>
+    </div>
+  </div>
+
+  <div class="admin-panel">
+    <div class="admin-panel-header">
+      <div class="admin-panel-title">Products</div>
+      <div id="selectedCount" class="text-sm text-muted"></div>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" aria-label="Select all"></th>
+            <th>Product</th>
+            <th>SKU</th>
+            <th>Price</th>
+            <th>Discount %</th>
+            <th>Sale Price</th>
+            <th>On Sale</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="products-body">
+          <tr><td colspan="8" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+(function () {
+  'use strict';
+  var allItems = [];
+  var currentFilter = '';
+  var editedIds = new Set();
+
+  function formatCurrency(val) {
+    return '$' + parseFloat(val || 0).toFixed(2);
+  }
+
+  function computeSalePrice(basePrice, discountPct) {
+    if (!discountPct || parseFloat(discountPct) <= 0) return null;
+    return (parseFloat(basePrice) * (1 - parseFloat(discountPct) / 100)).toFixed(2);
+  }
+
+  function getSelectedIds() {
+    var ids = [];
+    document.querySelectorAll('.item-checkbox:checked').forEach(function (cb) {
+      ids.push(parseInt(cb.dataset.itemId));
+    });
+    return ids;
+  }
+
+  function updateBulkBar() {
+    var count = getSelectedIds().length;
+    document.getElementById('bulkOnSaleBtn').disabled = count === 0;
+    document.getElementById('bulkOffSaleBtn').disabled = count === 0;
+    document.getElementById('selectedCount').textContent = count > 0 ? count + ' selected' : '';
+    var selectAll = document.getElementById('selectAll');
+    var allCheckboxes = document.querySelectorAll('.item-checkbox');
+    selectAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === count;
+  }
+
+  function renderRows(items) {
+    var tbody = document.getElementById('products-body');
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No products found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    items.forEach(function (item) {
+      var tr = document.createElement('tr');
+      var onSaleBadge = item.onSale
+        ? '<span class="status-badge in-stock">On Sale</span>'
+        : '<span class="text-muted text-sm">—</span>';
+      var salePriceVal = computeSalePrice(item.basePrice, item.discountPercentage);
+      var salePriceCell = salePriceVal
+        ? '<span class="text-success fw-bold">' + formatCurrency(salePriceVal) + '</span>'
+        : '<span class="text-muted text-sm">—</span>';
+      var actionsHtml;
+      if (item.onSale) {
+        actionsHtml =
+          '<button class="btn btn-sm btn-ghost toggle-sale-btn" data-item-id="' + item.itemId + '" data-on-sale="true" title="Remove from Sale">' +
+            '<i data-lucide="tag-off" class="icon-sm"></i>' +
+          '</button>';
+      } else {
+        actionsHtml =
+          '<button class="btn btn-sm btn-ghost toggle-sale-btn" data-item-id="' + item.itemId + '" data-on-sale="false" title="Put on Sale">' +
+            '<i data-lucide="tag" class="icon-sm"></i>' +
+          '</button>';
+      }
+      tr.innerHTML =
+        '<td><input type="checkbox" class="item-checkbox" data-item-id="' + item.itemId + '" aria-label="Select"></td>' +
+        '<td><a href="/item/' + item.slug + '" class="btn-link">' + (item.itemName || '') + '</a></td>' +
+        '<td class="text-sm text-muted">' + (item.sku || '') + '</td>' +
+        '<td>' + formatCurrency(item.basePrice) + '</td>' +
+        '<td class="discount-cell" data-item-id="' + item.itemId + '" data-discount="' + (item.discountPercentage || 0) + '" style="cursor:pointer;" title="Click to edit">' +
+          '<span class="discount-display">' + (item.discountPercentage > 0 ? item.discountPercentage + '%' : '0%') + '</span>' +
+        '</td>' +
+        '<td>' + salePriceCell + '</td>' +
+        '<td>' + onSaleBadge + '</td>' +
+        '<td class="admin-table-actions">' + actionsHtml + '</td>';
+      tbody.appendChild(tr);
+    });
+    initIcons();
+
+    tbody.querySelectorAll('.item-checkbox').forEach(function (cb) {
+      cb.addEventListener('change', updateBulkBar);
+    });
+    tbody.querySelectorAll('.discount-cell').forEach(function (cell) {
+      cell.addEventListener('click', function () {
+        var itemId = parseInt(this.dataset.itemId);
+        var currentDiscount = this.dataset.discount;
+        showInlineDiscountEdit(this, itemId, currentDiscount);
+      });
+    });
+    tbody.querySelectorAll('.toggle-sale-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var itemId = parseInt(this.dataset.itemId);
+        var currentlyOnSale = this.dataset.onSale === 'true';
+        if (currentlyOnSale) {
+          toggleSale(itemId, false);
+        } else if (editedIds.has(itemId)) {
+          toggleSale(itemId, true);
+        } else {
+          showPutOnSaleModal(itemId);
+        }
+      });
+    });
+    updateBulkBar();
+  }
+
+  function showInlineDiscountEdit(cell, itemId, currentDiscount) {
+    var display = cell.querySelector('.discount-display');
+    var currentVal = currentDiscount || 0;
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.max = '100';
+    input.step = '0.5';
+    input.value = currentVal;
+    input.style.cssText = 'width:60px;padding:2px 6px;border:1px solid #3b82f6;border-radius:4px;font-size:13px;text-align:center;';
+
+    display.replaceWith(input);
+    input.focus();
+    input.select();
+
+    function save() {
+      var newVal = parseFloat(input.value) || 0;
+      if (newVal < 0) newVal = 0;
+      if (newVal > 100) newVal = 100;
+      API.put('/api/admin/inventory/' + itemId + '/discount', { discountPercentage: newVal }).then(function () {
+        editedIds.add(itemId);
+        showToast('Discount updated to ' + newVal + '%', 'success');
+        loadProducts();
+      }).catch(function (e) {
+        showToast(e.message || 'Failed to update discount', 'error');
+        loadProducts();
+      });
+    }
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); save(); }
+      if (e.key === 'Escape') { loadProducts(); }
+    });
+  }
+
+  function showPutOnSaleModal(itemId) {
+    var item = allItems.find(function (i) { return i.itemId === itemId; });
+    var name = item ? item.itemName : '';
+    var basePrice = item ? item.basePrice : 0;
+    var currentDiscount = item ? (item.discountPercentage || 0) : 0;
+
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;';
+    overlay.innerHTML =
+      '<div class="modal-content" style="background:#fff;border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.15);">' +
+        '<h3 style="margin:0 0 4px;">Put on Sale</h3>' +
+        '<p class="text-muted text-sm" style="margin:0 0 16px;">' + name + ' — Base price: ' + formatCurrency(basePrice) + '</p>' +
+        '<label for="discountInput" class="form-label" style="font-weight:500;display:block;margin-bottom:4px;">Discount (%)</label>' +
+        '<input type="number" id="discountInput" class="form-control" min="0" max="100" step="0.5" value="' + currentDiscount + '" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:8px;">' +
+        '<p id="discountPreview" class="text-sm text-muted" style="margin:0 0 16px;"></p>' +
+        '<div class="flex gap-sm" style="justify-content:flex-end;">' +
+          '<button class="btn btn-secondary btn-sm modal-cancel">Cancel</button>' +
+          '<button class="btn btn-primary btn-sm modal-confirm">Put on Sale</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+    var input = document.getElementById('discountInput');
+    var preview = document.getElementById('discountPreview');
+
+    function updatePreview() {
+      var pct = parseFloat(input.value);
+      if (!isNaN(pct) && pct > 0 && pct <= 100) {
+        var salePrice = (parseFloat(basePrice) * (1 - pct / 100)).toFixed(2);
+        preview.textContent = 'Sale price: ' + formatCurrency(salePrice) + ' (you save ' + formatCurrency((parseFloat(basePrice) - parseFloat(salePrice)).toFixed(2)) + ')';
+        preview.classList.remove('text-muted');
+        preview.classList.add('text-success');
+      } else {
+        preview.textContent = 'No discount — full price shown on Sale page';
+        preview.classList.remove('text-success');
+        preview.classList.add('text-muted');
+      }
+    }
+    input.addEventListener('input', updatePreview);
+    updatePreview();
+    input.focus();
+
+    overlay.querySelector('.modal-cancel').addEventListener('click', function () { overlay.remove(); });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+    overlay.querySelector('.modal-confirm').addEventListener('click', function () {
+      var discount = parseFloat(input.value) || 0;
+      overlay.remove();
+      putOnSaleWithDiscount(itemId, discount);
+    });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        var discount = parseFloat(input.value) || 0;
+        overlay.remove();
+        putOnSaleWithDiscount(itemId, discount);
+      }
+    });
+  }
+
+  function putOnSaleWithDiscount(itemId, discount) {
+    API.put('/api/admin/inventory/' + itemId + '/put-on-sale', { discountPercentage: discount }).then(function () {
+      showToast('Product put on sale', 'success');
+      loadProducts();
+    }).catch(function (e) {
+      showToast(e.message || 'Failed to put product on sale', 'error');
+    });
+  }
+
+  function toggleSale(itemId, onSale) {
+    API.put('/api/admin/inventory/' + itemId + '/on-sale', { onSale: onSale }).then(function () {
+      showToast(onSale ? 'Product put on sale' : 'Product removed from sale', 'success');
+      loadProducts();
+    }).catch(function (e) {
+      showToast(e.message || 'Failed to update sale status', 'error');
+    });
+  }
+
+  function filterItems(items) {
+    if (!currentFilter) return items;
+    if (currentFilter === 'ON_SALE') return items.filter(function (i) { return i.onSale; });
+    if (currentFilter === 'NOT_ON_SALE') return items.filter(function (i) { return !i.onSale; });
+    return items;
+  }
+
+  function renderInventory(items) {
+    allItems = items || [];
+    var onSaleCount = allItems.filter(function (i) { return i.onSale; }).length;
+    document.getElementById('stat-total').textContent = allItems.length;
+    document.getElementById('stat-on-sale').textContent = onSaleCount;
+    document.getElementById('stat-not-on-sale').textContent = allItems.length - onSaleCount;
+    renderRows(filterItems(allItems));
+  }
+
+  function loadProducts() {
+    API.get('/api/admin/inventory').then(renderInventory).catch(function () {
+      document.getElementById('products-body').innerHTML =
+        '<tr><td colspan="8" class="text-center text-muted">Failed to load products</td></tr>';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadProducts();
+
+    document.getElementById('saleFilter').addEventListener('change', function () {
+      currentFilter = this.value;
+      renderRows(filterItems(allItems));
+    });
+
+    document.getElementById('selectAll').addEventListener('change', function () {
+      var checked = this.checked;
+      document.querySelectorAll('.item-checkbox').forEach(function (cb) { cb.checked = checked; });
+      updateBulkBar();
+    });
+
+    document.getElementById('bulkOnSaleBtn').addEventListener('click', function () {
+      var ids = getSelectedIds();
+      if (ids.length === 0) return;
+      showBulkOnSaleModal(ids);
+    });
+
+    document.getElementById('bulkOffSaleBtn').addEventListener('click', function () {
+      var ids = getSelectedIds();
+      if (ids.length === 0) return;
+      API.put('/api/admin/inventory/bulk-on-sale', { itemIds: ids, onSale: false }).then(function () {
+        showToast(ids.length + ' products removed from sale', 'success');
+        document.querySelectorAll('.item-checkbox').forEach(function (cb) { cb.checked = false; });
+        document.getElementById('selectAll').checked = false;
+        updateBulkBar();
+        loadProducts();
+      }).catch(function (e) { showToast(e.message, 'error'); });
+    });
+  });
+
+  function showBulkOnSaleModal(ids) {
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;';
+    overlay.innerHTML =
+      '<div class="modal-content" style="background:#fff;border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.15);">' +
+        '<h3 style="margin:0 0 4px;">Put ' + ids.length + ' Products on Sale</h3>' +
+        '<p class="text-muted text-sm" style="margin:0 0 16px;">Set the discount for all selected products.</p>' +
+        '<label for="bulkDiscountInput" class="form-label" style="font-weight:500;display:block;margin-bottom:4px;">Discount (%)</label>' +
+        '<input type="number" id="bulkDiscountInput" class="form-control" min="0" max="100" step="0.5" placeholder="e.g. 25" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:16px;">' +
+        '<div class="flex gap-sm" style="justify-content:flex-end;">' +
+          '<button class="btn btn-secondary btn-sm modal-cancel">Cancel</button>' +
+          '<button class="btn btn-primary btn-sm modal-confirm">Put on Sale</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+    var input = document.getElementById('bulkDiscountInput');
+    input.focus();
+
+    overlay.querySelector('.modal-cancel').addEventListener('click', function () { overlay.remove(); });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+    overlay.querySelector('.modal-confirm').addEventListener('click', function () {
+      var discount = parseFloat(input.value) || 0;
+      overlay.remove();
+      API.put('/api/admin/inventory/bulk-on-sale', { itemIds: ids, onSale: true, discountPercentage: discount }).then(function () {
+        showToast(ids.length + ' products put on sale', 'success');
+        document.querySelectorAll('.item-checkbox').forEach(function (cb) { cb.checked = false; });
+        document.getElementById('selectAll').checked = false;
+        updateBulkBar();
+        loadProducts();
+      }).catch(function (e) { showToast(e.message, 'error'); });
+    });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        var discount = parseFloat(input.value) || 0;
+        overlay.remove();
+        API.put('/api/admin/inventory/bulk-on-sale', { itemIds: ids, onSale: true, discountPercentage: discount }).then(function () {
+          showToast(ids.length + ' products put on sale', 'success');
+          document.querySelectorAll('.item-checkbox').forEach(function (cb) { cb.checked = false; });
+          document.getElementById('selectAll').checked = false;
+          updateBulkBar();
+          loadProducts();
+        }).catch(function (e) { showToast(e.message, 'error'); });
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>

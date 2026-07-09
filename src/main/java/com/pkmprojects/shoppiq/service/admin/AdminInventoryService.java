@@ -80,6 +80,43 @@ public interface AdminInventoryService {
     InventoryDashboardSummary getInventoryDashboardSummary();
 
     /**
+     * Toggles the on-sale flag for a single product.
+     *
+     * @param itemId product identifier
+     * @param onSale whether the product is on sale
+     * @return updated product inventory response
+     */
+    AdminProductInventoryResponse toggleOnSale(Long itemId, boolean onSale);
+
+    /**
+     * Updates the discount percentage for a single product.
+     *
+     * @param itemId             product identifier
+     * @param discountPercentage new discount percentage
+     * @return updated product inventory response
+     */
+    AdminProductInventoryResponse updateDiscount(Long itemId, java.math.BigDecimal discountPercentage);
+
+    /**
+     * Bulk toggles the on-sale flag and sets discount for multiple products.
+     *
+     * @param itemIds            list of product identifiers
+     * @param onSale             whether the products are on sale
+     * @param discountPercentage discount percentage to set (nullable, keeps existing if null)
+     * @return list of updated product inventory responses
+     */
+    List<AdminProductInventoryResponse> bulkToggleOnSale(List<Long> itemIds, boolean onSale, java.math.BigDecimal discountPercentage);
+
+    /**
+     * Atomically puts a product on sale with the given discount percentage.
+     *
+     * @param itemId             product identifier
+     * @param discountPercentage discount percentage to set
+     * @return updated product inventory response
+     */
+    AdminProductInventoryResponse putOnSale(Long itemId, java.math.BigDecimal discountPercentage);
+
+    /**
      * Inventory dashboard summary data.
      */
     record InventoryDashboardSummary(

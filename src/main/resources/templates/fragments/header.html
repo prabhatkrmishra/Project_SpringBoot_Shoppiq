@@ -20,6 +20,8 @@
             <a th:href="@{/}" class="header-brand" aria-label="Shoppiq Home">Shoppiq</a>
             <nav class="header-nav" aria-label="Main navigation">
                 <a th:href="@{/allitems}"><i data-lucide="store" class="icon-sm"></i><span>Shop</span></a>
+                <a th:href="@{/new-arrivals}"><i data-lucide="sparkles" class="icon-sm"></i><span>New Arrivals</span></a>
+                <a th:href="@{/sale}"><i data-lucide="tag" class="icon-sm"></i><span>Sale</span></a>
                 <a th:href="@{/categories}"><i data-lucide="layout-grid" class="icon-sm"></i><span>Categories</span></a>
 <a sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('SELLER')" th:href="@{/cart}"><i data-lucide="shopping-cart"
                                                                             class="icon-sm"></i><span>Cart</span></a>
@@ -48,6 +50,8 @@
         </div>
         <div class="mobile-menu" aria-hidden="true">
             <a th:href="@{/allitems}"><i data-lucide="store" class="icon-sm"></i><span>Shop</span></a>
+            <a th:href="@{/new-arrivals}"><i data-lucide="sparkles" class="icon-sm"></i><span>New Arrivals</span></a>
+            <a th:href="@{/sale}"><i data-lucide="tag" class="icon-sm"></i><span>Sale</span></a>
             <a th:href="@{/categories}"><i data-lucide="layout-grid" class="icon-sm"></i><span>Categories</span></a>
 <a sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('SELLER')" th:href="@{/cart}"><i data-lucide="shopping-cart"
                                                                         class="icon-sm"></i><span>Cart</span></a>

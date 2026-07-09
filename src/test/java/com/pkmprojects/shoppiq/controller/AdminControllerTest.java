@@ -210,9 +210,9 @@ class AdminControllerTest {
         void adjustStock_returnsUpdated() throws Exception {
             StockAdjustmentRequest request = new StockAdjustmentRequest(10, "New shipment");
             AdminProductInventoryResponse response = AdminProductInventoryResponse.from(
-                    1L, "Product A", "Desc", "Category", "SKU-001", "Brand",
+                    1L, "Product A", "product-a", "Desc", "Category", "SKU-001", "Brand",
                     new BigDecimal("99.99"), BigDecimal.ZERO,
-                    60, 5, true, null
+                    60, 5, true, null, false
             );
             when(inventoryService.adjustStock(eq(1L), any())).thenReturn(response);
 

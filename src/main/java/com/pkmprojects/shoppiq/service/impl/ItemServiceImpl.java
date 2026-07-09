@@ -5,6 +5,7 @@ import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.entity.Category;
 import com.pkmprojects.shoppiq.entity.Item;
 import com.pkmprojects.shoppiq.entity.ItemDetails;
+import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import com.pkmprojects.shoppiq.exception.CategoryNotFoundException;
 import com.pkmprojects.shoppiq.exception.DuplicateItemException;
 import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
@@ -123,6 +124,24 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemResponse> getAll() {
         return itemRepository.findAllByOrderByNameAsc()
+                .stream()
+                .map(ItemResponse::fromEntity)
+                .toList();
+    }
+
+    @Override
+    public List<ItemResponse> getNewArrivals() {
+        return itemRepository.findNewArrivals(
+                        ProductPublishingStatus.PUBLISHED,
+                        org.springframework.data.domain.PageRequest.of(0, 20))
+                .stream()
+                .map(ItemResponse::fromEntity)
+                .toList();
+    }
+
+    @Override
+    public List<ItemResponse> getSaleItems() {
+        return itemRepository.findOnSaleItems()
                 .stream()
                 .map(ItemResponse::fromEntity)
                 .toList();

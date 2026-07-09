@@ -158,6 +158,11 @@ public enum ErrorCode {
      */
     ITEM_NOT_PUBLISHED("ITEM-400-002", "Product is not yet published."),
 
+    /**
+     * Product is already on sale.
+     */
+    ITEM_ALREADY_ON_SALE("ITEM-400-003", "Product is already on sale."),
+
     // =========================================================
     // ItemDetails Errors
     // =========================================================

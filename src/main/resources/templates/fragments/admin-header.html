@@ -3,6 +3,7 @@
   <nav class="admin-nav">
     <a th:href="@{/admin/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active' : ''">Dashboard</a>
     <a th:href="@{/admin/inventory}" th:classappend="${activePage == 'inventory'} ? 'active' : ''">Inventory</a>
+    <a th:href="@{/admin/sale}" th:classappend="${activePage == 'sale'} ? 'active' : ''">Sale</a>
     <a th:href="@{/admin/orders}" th:classappend="${activePage == 'orders'} ? 'active' : ''">Orders</a>
     <a th:href="@{/admin/users}" th:classappend="${activePage == 'users'} ? 'active' : ''">Customers</a>
     <a th:href="@{/admin/payments}" th:classappend="${activePage == 'payments'} ? 'active' : ''">Payments</a>

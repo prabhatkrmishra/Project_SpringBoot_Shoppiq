@@ -43,4 +43,18 @@ public interface ItemService {
      * @return ordered product list
      */
     List<ItemResponse> getAll();
+
+    /**
+     * Retrieves the latest products ordered by creation date.
+     *
+     * @return list of newest products
+     */
+    List<ItemResponse> getNewArrivals();
+
+    /**
+     * Retrieves all products currently marked as on sale.
+     *
+     * @return list of on-sale products
+     */
+    List<ItemResponse> getSaleItems();
 }

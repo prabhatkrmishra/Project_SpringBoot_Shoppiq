@@ -138,6 +138,18 @@ public class ItemDetails extends AuditableEntity {
     private String imageUrl;
 
     /**
+     * Whether this product is currently on sale.
+     *
+     * <p>
+     * Admin-controlled flag used to mark products for promotional
+     * sale events. When true, the product appears on the Sale page.
+     * </p>
+     */
+    @Builder.Default
+    @Column(name = "on_sale", nullable = false)
+    private Boolean onSale = false;
+
+    /**
      * Product category.
      */
     @NotNull(message = "Category is required.")
@@ -186,6 +198,7 @@ public class ItemDetails extends AuditableEntity {
         this.stockQuantity = source.getStockQuantity();
         this.discountPercentage = source.getDiscountPercentage();
         this.imageUrl = source.getImageUrl();
+        this.onSale = source.getOnSale();
         this.category = source.getCategory();
     }
 }

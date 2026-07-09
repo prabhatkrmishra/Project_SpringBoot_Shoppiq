@@ -41,6 +41,11 @@ public record AdminProductInventoryResponse(
         String itemName,
 
         /**
+         * SEO-friendly slug.
+         */
+        String slug,
+
+        /**
          * Product description.
          */
         String description,
@@ -93,7 +98,12 @@ public record AdminProductInventoryResponse(
         /**
          * Product image URL.
          */
-        String imageUrl
+        String imageUrl,
+
+        /**
+         * Whether the product is currently on sale.
+         */
+        boolean onSale
 ) {
 
     /**
@@ -130,11 +140,14 @@ public record AdminProductInventoryResponse(
      * @param stockQuantity      current stock
      * @param lowStockThreshold  low stock threshold
      * @param active             active status
+     * @param imageUrl           product image URL
+     * @param onSale             whether the product is on sale
      * @return populated response DTO
      */
     public static AdminProductInventoryResponse from(
             Long itemId,
             String itemName,
+            String slug,
             String description,
             String categoryName,
             String sku,
@@ -144,7 +157,8 @@ public record AdminProductInventoryResponse(
             int stockQuantity,
             int lowStockThreshold,
             boolean active,
-            String imageUrl
+            String imageUrl,
+            boolean onSale
     ) {
         BigDecimal effectivePrice = basePrice.multiply(
                 BigDecimal.ONE.subtract(discountPercentage.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP))
@@ -162,6 +176,7 @@ public record AdminProductInventoryResponse(
         return new AdminProductInventoryResponse(
                 itemId,
                 itemName,
+                slug,
                 description,
                 categoryName,
                 sku,
@@ -172,7 +187,8 @@ public record AdminProductInventoryResponse(
                 stockQuantity,
                 stockStatus,
                 active,
-                imageUrl
+                imageUrl,
+                onSale
         );
     }
 }
