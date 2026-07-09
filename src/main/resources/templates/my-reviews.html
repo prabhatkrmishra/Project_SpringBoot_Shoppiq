@@ -76,7 +76,8 @@
             reviews.forEach(function (r) {
                 var stars = '';
                 for (var i = 1; i <= 5; i++) {
-                    stars += '<span class="star-icon">' + (i <= r.rating ? '&#9733;' : '&#9734;') + '</span>';
+                    var filled = i <= r.rating ? ' filled' : '';
+                    stars += '<span class="star-icon' + filled + '">' + (i <= r.rating ? '&#9733;' : '&#9734;') + '</span>';
                 }
                 html += '<div class="card mb-md">' +
                     '<div class="card-body">' +
