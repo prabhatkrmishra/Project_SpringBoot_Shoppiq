@@ -16,6 +16,16 @@ public class FrontEndController {
         return "login";
     }
 
+    @GetMapping("/forgot-password")
+    public String forgotPasswordPage() {
+        return "forgot-password";
+    }
+
+    @GetMapping("/reset-password")
+    public String resetPasswordPage() {
+        return "reset-password";
+    }
+
     @GetMapping("/register")
     public String registerPage() {
         return "register";
@@ -199,6 +209,11 @@ public class FrontEndController {
     @GetMapping("/admin/promo-codes")
     public String adminPromoCodesPage() {
         return "admin-promo-codes";
+    }
+
+    @GetMapping("/admin/mail")
+    public String adminMailPage() {
+        return "admin-mail";
     }
 
     @GetMapping("/seller-panel/dashboard")

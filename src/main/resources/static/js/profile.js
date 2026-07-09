@@ -7,6 +7,7 @@
     initSecurityTab();
     initNotificationsTab();
     initAddressesTab();
+    initEmailVerification();
   });
 
   function initTabs() {
@@ -196,7 +197,7 @@
         showSuccess('Password updated. Please sign in again.');
         setTimeout(() => window.location.href = '/login', 1500);
       } catch (err) {
-        if (err.status === 400 && err.message.includes('current password')) {
+        if (err.status === 400 && err.message.toLowerCase().includes('current password')) {
           showError(document.getElementById('currentPassword'), 'Current password is incorrect');
         } else {
           showError(form, err.message || 'Failed to update password');
@@ -270,5 +271,76 @@
     toast.textContent = msg;
     document.getElementById('toast-container')?.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
+  }
+
+  function initEmailVerification() {
+    const badge = document.getElementById('verification-badge');
+    const verifyBtn = document.getElementById('verify-email-btn');
+    const modal = document.getElementById('verify-email-modal');
+    const closeBtn = document.getElementById('close-verify-modal');
+    const cancelBtn = document.getElementById('cancel-verify-modal');
+    const submitBtn = document.getElementById('submit-verify-btn');
+    const codeInput = document.getElementById('verifyCode');
+
+    if (!badge) return;
+
+    loadVerificationStatus();
+
+    async function loadVerificationStatus() {
+      try {
+        const profile = await API.get('/user/profile');
+        if (profile.emailVerified) {
+          badge.textContent = 'Verified';
+          badge.className = 'status-badge active';
+          verifyBtn?.classList.add('hidden');
+        } else {
+          badge.textContent = 'Not Verified';
+          badge.className = 'status-badge pending';
+          verifyBtn?.classList.remove('hidden');
+        }
+      } catch {
+        badge.textContent = 'Unknown';
+        badge.className = 'status-badge';
+      }
+    }
+
+    verifyBtn?.addEventListener('click', async () => {
+      try {
+        const profile = await API.get('/user/profile');
+        await API.post('/auth/verify-email', { email: profile.email });
+        showToast('Verification code sent to your email', 'success');
+        modal.classList.add('active');
+        codeInput.focus();
+      } catch {
+        showToast('Failed to send verification code', 'error');
+      }
+    });
+
+    const closeModal = () => {
+      modal.classList.remove('active');
+      codeInput.value = '';
+      document.getElementById('verifyCode-error').textContent = '';
+    };
+
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    submitBtn?.addEventListener('click', async () => {
+      const code = codeInput.value.trim();
+      if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
+        document.getElementById('verifyCode-error').textContent = 'Please enter a valid 6-digit code';
+        return;
+      }
+      try {
+        const profile = await API.get('/user/profile');
+        await API.post('/auth/confirm-email', { email: profile.email, code });
+        showToast('Email verified successfully', 'success');
+        closeModal();
+        loadVerificationStatus();
+      } catch (err) {
+        document.getElementById('verifyCode-error').textContent = err.message || 'Invalid verification code';
+      }
+    });
   }
 })();

@@ -35,7 +35,22 @@ public enum EmailType {
     /**
      * Welcome email after successful registration.
      */
-    WELCOME("welcome", "Welcome to Shoppiq");
+    WELCOME("welcome", "Welcome to Shoppiq"),
+
+    /**
+     * Promotional emails (deals, discounts, offers).
+     */
+    PROMOTION("promotion", "Special offer for you"),
+
+    /**
+     * Review and engagement emails (review requests, community updates).
+     */
+    REVIEW_ENGAGEMENT("review-engagement", "We'd love your feedback"),
+
+    /**
+     * Admin-sent emails (custom messages from administrators).
+     */
+    ADMIN_MAIL("promotion", "Message from Shoppiq Admin");
 
     private final String templateName;
     private final String defaultSubject;

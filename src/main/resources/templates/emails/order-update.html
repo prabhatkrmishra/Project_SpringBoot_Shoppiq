@@ -40,8 +40,12 @@
                                         <p style="color: #166534; font-size: 14px; margin: 0 0 10px 0;">
                                             <strong>Status:</strong> <span th:text="${orderStatus} ?: 'Unknown'">Unknown</span>
                                         </p>
-                                        <p style="color: #166534; font-size: 14px; margin: 0;" th:if="${orderTotal}">
+                                        <p style="color: #166534; font-size: 14px; margin: 0 0 10px 0;" th:if="${orderTotal}">
                                             <strong>Total:</strong> <span th:text="${orderTotal}">N/A</span>
+                                        </p>
+                                        <p style="color: #166534; font-size: 14px; margin: 0;" th:if="${isDelivered} and ${deliveryAddress}">
+                                            <strong>Delivered to:</strong><br>
+                                            <span th:text="${deliveryAddress}">Address</span>
                                         </p>
                                     </td>
                                 </tr>

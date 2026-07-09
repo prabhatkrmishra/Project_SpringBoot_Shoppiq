@@ -13,6 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -133,6 +134,19 @@ public class User extends AuditableEntity
     @Builder.Default
     @Column(nullable = false)
     private boolean enabled = true;
+
+    /**
+     * Whether the user's email address has been verified.
+     */
+    @Builder.Default
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
+    /**
+     * Timestamp when the email was verified.
+     */
+    @Column(name = "email_verified_at")
+    private LocalDateTime emailVerifiedAt;
 
     /**
      * Security roles assigned to this user.

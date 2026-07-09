@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Admin - Mail')}"></head>
+<body>
+    <th:block th:replace="~{fragments/admin-header :: admin-header('mail')}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+    <main class="admin-main">
+        <div class="container">
+            <div class="admin-panel">
+                <div class="admin-panel-title">Send Email</div>
+
+                <div class="grid-2" style="grid-template-columns: 1fr 2fr; gap: var(--space-lg);">
+                    <!-- Search Section -->
+                    <div>
+                        <div class="panel">
+                            <div class="panel-title">Recipients</div>
+                            <div class="form-group">
+                                <label class="form-label" style="display: flex; align-items: center; gap: var(--space-sm); cursor: pointer;">
+                                    <input type="checkbox" id="sendToAll" class="form-checkbox">
+                                    <span>Send to all users</span>
+                                </label>
+                            </div>
+                            <div id="userSearchSection">
+                                <div class="form-group">
+                                    <label for="searchInput" class="form-label">Search by ID, Name, Email, or Username</label>
+                                    <input type="text" id="searchInput" class="form-input" placeholder="Search users..." autocomplete="off">
+                                </div>
+                                <div id="searchResults" class="search-results"></div>
+                            </div>
+                        </div>
+
+                        <!-- Selected User -->
+                        <div class="panel mt-lg" id="selected-user-panel" style="display: none;">
+                            <div class="panel-title">Selected User</div>
+                            <div id="selected-user-info"></div>
+                        </div>
+
+                        <!-- All Users Info -->
+                        <div class="panel mt-lg" id="all-users-panel" style="display: none;">
+                            <div class="panel-title">All Users</div>
+                            <p class="text-sm text-muted">This email will be sent to all registered users. Users who have opted out of this notification type will not receive the email.</p>
+                        </div>
+                    </div>
+
+                    <!-- Compose Section -->
+                    <div>
+                        <div class="panel">
+                            <div class="panel-title">Compose Email</div>
+                            <form id="mailForm" novalidate>
+                                <div class="form-group">
+                                    <label for="emailType" class="form-label">Email Type</label>
+                                    <select id="emailType" class="form-input">
+                                        <option value="ADMIN_MAIL">General Message</option>
+                                        <option value="PROMOTION">Promotion/Offer</option>
+                                        <option value="REVIEW_ENGAGEMENT">Review/Engagement</option>
+                                    </select>
+                                    <div class="form-hint text-xs text-muted">"General Message" bypasses user notification preferences.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="mailSubject" class="form-label">Subject</label>
+                                    <input type="text" id="mailSubject" class="form-input" placeholder="Email subject" required maxlength="255">
+                                    <div class="form-error" id="mailSubject-error"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Body</label>
+                                    <div id="editor-container" style="height: 300px; border: 1px solid var(--color-border); border-radius: var(--radius-sm);"></div>
+                                    <div class="form-error" id="mailBody-error"></div>
+                                </div>
+                                <div class="btn-row">
+                                    <button type="button" class="btn btn-ghost" id="preview-btn">Preview</button>
+                                    <button type="submit" class="btn btn-primary" id="send-btn">Send Email</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Preview Modal -->
+    <div class="modal-overlay" id="preview-modal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>Email Preview</h3>
+                <button type="button" class="modal-close" id="close-preview-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="preview-content" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-md); background: #fff;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" id="cancel-preview-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        (() => {
+            const quill = new Quill('#editor-container', {
+                theme: 'snow',
+                placeholder: 'Compose your email here...'
+            });
+
+            let selectedUser = null;
+            let searchTimeout = null;
+            let sendToAll = false;
+
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            const selectedUserPanel = document.getElementById('selected-user-panel');
+            const selectedUserInfo = document.getElementById('selected-user-info');
+            const allUsersPanel = document.getElementById('all-users-panel');
+            const userSearchSection = document.getElementById('userSearchSection');
+            const sendToAllCheckbox = document.getElementById('sendToAll');
+            const mailForm = document.getElementById('mailForm');
+            const previewModal = document.getElementById('preview-modal');
+
+            sendToAllCheckbox.addEventListener('change', () => {
+                sendToAll = sendToAllCheckbox.checked;
+                userSearchSection.style.display = sendToAll ? 'none' : 'block';
+                allUsersPanel.style.display = sendToAll ? 'block' : 'none';
+                if (sendToAll) {
+                    selectedUser = null;
+                    selectedUserPanel.style.display = 'none';
+                    searchInput.value = '';
+                    searchResults.innerHTML = '';
+                }
+            });
+
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                const query = searchInput.value.trim();
+                if (query.length < 2) {
+                    searchResults.innerHTML = '';
+                    return;
+                }
+                searchTimeout = setTimeout(() => searchUsers(query), 300);
+            });
+
+            async function searchUsers(query) {
+                try {
+                    const res = await API.get(`/api/admin/mail/search?q=${encodeURIComponent(query)}`);
+                    if (res.length === 0) {
+                        searchResults.innerHTML = '<p class="text-sm text-muted">No users found</p>';
+                        return;
+                    }
+                    searchResults.innerHTML = res.map(user => `
+                        <div class="search-result-item" data-user='${JSON.stringify(user)}' style="padding: var(--space-sm); border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: var(--space-xs); cursor: pointer;">
+                            <div class="text-sm"><strong>${escapeHtml(user.name)}</strong></div>
+                            <div class="text-xs text-muted">${escapeHtml(user.email)}</div>
+                        </div>
+                    `).join('');
+
+                    searchResults.querySelectorAll('.search-result-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            selectedUser = JSON.parse(item.dataset.user);
+                            selectUser(selectedUser);
+                        });
+                    });
+                } catch {
+                    searchResults.innerHTML = '<p class="text-sm text-muted">Search failed</p>';
+                }
+            }
+
+            function selectUser(user) {
+                selectedUserInfo.innerHTML = `
+                    <div class="profile-detail-row">
+                        <span class="profile-detail-label">Name</span>
+                        <span class="profile-detail-value">${escapeHtml(user.name)}</span>
+                    </div>
+                    <div class="profile-detail-row">
+                        <span class="profile-detail-label">Email</span>
+                        <span class="profile-detail-value">${escapeHtml(user.email)}</span>
+                    </div>
+                    <div class="profile-detail-row">
+                        <span class="profile-detail-label">Username</span>
+                        <span class="profile-detail-value">${escapeHtml(user.username)}</span>
+                    </div>
+                `;
+                selectedUserPanel.style.display = 'block';
+                searchResults.innerHTML = '';
+                searchInput.value = '';
+            }
+
+            document.getElementById('preview-btn').addEventListener('click', () => {
+                const subject = document.getElementById('mailSubject').value || '(No subject)';
+                const body = quill.root.innerHTML;
+                document.getElementById('preview-content').innerHTML = `
+                    <h3 style="margin: 0 0 var(--space-md) 0;">${escapeHtml(subject)}</h3>
+                    <div>${body}</div>
+                `;
+                previewModal.classList.add('active');
+            });
+
+            document.getElementById('close-preview-modal')?.addEventListener('click', () => previewModal.classList.remove('active'));
+            document.getElementById('cancel-preview-modal')?.addEventListener('click', () => previewModal.classList.remove('active'));
+            previewModal?.addEventListener('click', (e) => { if (e.target === previewModal) previewModal.classList.remove('active'); });
+
+            mailForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                clearErrors(mailForm);
+
+                if (!sendToAll && !selectedUser) {
+                    showToast('Please select a user or check "Send to all users"', 'error');
+                    return;
+                }
+                const subject = document.getElementById('mailSubject').value.trim();
+                const body = quill.getText().trim();
+                if (!subject) {
+                    showError(document.getElementById('mailSubject'), 'Subject is required');
+                    return;
+                }
+                if (!body) {
+                    showError(document.getElementById('mailBody-error'), 'Body is required');
+                    return;
+                }
+
+                const btn = document.getElementById('send-btn');
+                btn.disabled = true;
+                btn.textContent = 'Sending...';
+                try {
+                    const payload = {
+                        toEmail: sendToAll ? null : selectedUser.email,
+                        subject: subject,
+                        body: quill.root.innerHTML,
+                        emailType: document.getElementById('emailType').value,
+                        sendToAll: sendToAll
+                    };
+                    await API.post('/api/admin/mail/send', payload);
+                    showToast(sendToAll ? 'Email sent to all users' : 'Email sent successfully', 'success');
+                    mailForm.reset();
+                    quill.setContents([]);
+                    selectedUser = null;
+                    selectedUserPanel.style.display = 'none';
+                    sendToAllCheckbox.checked = false;
+                    sendToAll = false;
+                    userSearchSection.style.display = 'block';
+                    allUsersPanel.style.display = 'none';
+                } catch (err) {
+                    showToast(err.message || 'Failed to send email', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Send Email';
+                }
+            });
+
+            function showError(el, msg) {
+                if (el.classList) el.classList.add('is-invalid');
+                const errorEl = document.getElementById(`${el.id}-error`);
+                if (errorEl) errorEl.textContent = msg;
+            }
+
+            function clearErrors(form) {
+                form.querySelectorAll('.form-error').forEach(e => e.textContent = '');
+                form.querySelectorAll('.is-invalid').forEach(e => e.classList.remove('is-invalid'));
+            }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+        })();
+        /*]]>*/
+    </script>
+</body>
+</html>

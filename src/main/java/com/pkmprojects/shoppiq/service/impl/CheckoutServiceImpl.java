@@ -8,6 +8,7 @@ import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
+import com.pkmprojects.shoppiq.service.OrderEmailService;
 import com.pkmprojects.shoppiq.service.PaymentService;
 import com.pkmprojects.shoppiq.service.PromoCodeService;
 import org.springframework.stereotype.Service;
@@ -45,19 +46,22 @@ public class CheckoutServiceImpl {
     private final ItemDetailsRepository itemDetailsRepository;
     private final PaymentService paymentService;
     private final PromoCodeService promoCodeService;
+    private final OrderEmailService orderEmailService;
 
     public CheckoutServiceImpl(CartRepository cartRepository,
                                AddressRepository addressRepository,
                                OrderRepository orderRepository,
                                ItemDetailsRepository itemDetailsRepository,
                                PaymentService paymentService,
-                               PromoCodeService promoCodeService) {
+                               PromoCodeService promoCodeService,
+                               OrderEmailService orderEmailService) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
         this.orderRepository = orderRepository;
         this.itemDetailsRepository = itemDetailsRepository;
         this.paymentService = paymentService;
         this.promoCodeService = promoCodeService;
+        this.orderEmailService = orderEmailService;
     }
 
     // =========================================================
@@ -166,6 +170,12 @@ public class CheckoutServiceImpl {
         }
 
         Payment payment = paymentService.createPayment(order);
+
+        try {
+            orderEmailService.sendOrderStatusEmail(order, OrderStatus.PLACED);
+        } catch (Exception e) {
+            // Don't fail checkout if email fails
+        }
 
         return CheckoutResponse.from(order, payment.getId());
     }

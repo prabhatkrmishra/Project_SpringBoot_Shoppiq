@@ -5,6 +5,7 @@ import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
+import com.pkmprojects.shoppiq.service.OrderEmailService;
 import com.pkmprojects.shoppiq.service.admin.AdminOrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,9 +47,11 @@ import java.util.List;
 public class AdminOrderServiceImpl implements AdminOrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderEmailService orderEmailService;
 
-    public AdminOrderServiceImpl(OrderRepository orderRepository) {
+    public AdminOrderServiceImpl(OrderRepository orderRepository, OrderEmailService orderEmailService) {
         this.orderRepository = orderRepository;
+        this.orderEmailService = orderEmailService;
     }
 
     @Override
@@ -104,6 +107,12 @@ public class AdminOrderServiceImpl implements AdminOrderService {
 
         order.setStatus(newStatus);
         orderRepository.save(order);
+
+        try {
+            orderEmailService.sendOrderStatusEmail(order, newStatus);
+        } catch (Exception e) {
+            // Don't fail the status update if email fails
+        }
 
         return AdminOrderResponse.fromEntity(order);
     }

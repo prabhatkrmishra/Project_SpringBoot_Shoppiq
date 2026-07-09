@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -138,6 +139,10 @@ public class EmailAuthController {
                         ErrorCode.VERIFICATION_CODE_INVALID, "Invalid email or verification code."));
 
         verificationCodeService.validateCode(user.getId(), request.code(), EmailType.VERIFICATION);
+
+        user.setEmailVerified(true);
+        user.setEmailVerifiedAt(LocalDateTime.now());
+        userRepository.save(user);
 
         return ResponseEntity.ok(Map.of(
                 "message", "Email verified successfully."

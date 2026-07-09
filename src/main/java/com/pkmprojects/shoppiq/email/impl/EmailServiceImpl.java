@@ -93,7 +93,9 @@ public class EmailServiceImpl implements EmailService {
         return switch (emailType) {
             case ORDER_UPDATE -> preference.isOrderUpdates();
             case SECURITY_ALERT, PASSWORD_RESET, VERIFICATION -> preference.isAccountSecurity();
-            case WELCOME -> true;
+            case PROMOTION -> preference.isPromotions();
+            case REVIEW_ENGAGEMENT -> preference.isReviewsEngagement();
+            case WELCOME, ADMIN_MAIL -> true;
         };
     }
 

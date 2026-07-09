@@ -57,7 +57,7 @@ server:
   port: 8090
 
 # ============================================================
-# Payment gateway integrations
+# Payment & email gateway integrations
 # ============================================================
 shoppiq:
   email:

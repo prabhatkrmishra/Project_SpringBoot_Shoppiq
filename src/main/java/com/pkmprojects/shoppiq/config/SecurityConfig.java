@@ -186,6 +186,8 @@ public class SecurityConfig {
                                 "/",
                                 "/login",
                                 "/register",
+                                "/forgot-password",
+                                "/reset-password",
                                 "/allitems",
                                 "/categories",
                                 "/category/**",
@@ -223,7 +225,8 @@ public class SecurityConfig {
                                 "/admin/pending",
                                 "/admin/products",
                                 "/admin/roles",
-                                "/admin/promo-codes"
+                                "/admin/promo-codes",
+                                "/admin/mail"
                         ).hasRole("ADMIN")
 
                         // Admin API endpoints

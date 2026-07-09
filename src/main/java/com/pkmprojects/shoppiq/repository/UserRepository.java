@@ -66,7 +66,31 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * Counts users created after a given instant.
      *
      * @param instant start instant
-     * @return count of new users
+     * @return count of users
      */
     long countByCreatedAtAfter(Instant instant);
+
+    /**
+     * Finds users whose name contains the given string (case-insensitive).
+     *
+     * @param name the name to search for
+     * @return list of matching users
+     */
+    List<User> findByNameContainingIgnoreCase(String name);
+
+    /**
+     * Finds users whose email contains the given string (case-insensitive).
+     *
+     * @param email the email to search for
+     * @return list of matching users
+     */
+    List<User> findByEmailContainingIgnoreCase(String email);
+
+    /**
+     * Finds users whose username contains the given string (case-insensitive).
+     *
+     * @param username the username to search for
+     * @return list of matching users
+     */
+    List<User> findByUsernameContainingIgnoreCase(String username);
 }

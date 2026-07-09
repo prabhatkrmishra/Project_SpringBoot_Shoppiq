@@ -5,6 +5,9 @@ import com.pkmprojects.shoppiq.dto.response.UserResponse;
 import com.pkmprojects.shoppiq.dto.user.ChangePasswordRequest;
 import com.pkmprojects.shoppiq.dto.user.UpdateProfileRequest;
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
+import com.pkmprojects.shoppiq.email.EmailService;
+import com.pkmprojects.shoppiq.email.EmailType;
+import com.pkmprojects.shoppiq.email.dto.EmailMessage;
 import com.pkmprojects.shoppiq.entity.Address;
 import com.pkmprojects.shoppiq.entity.Seller;
 import com.pkmprojects.shoppiq.entity.User;
@@ -16,14 +19,20 @@ import com.pkmprojects.shoppiq.exception.business.PasswordChangeException;
 import com.pkmprojects.shoppiq.repository.AddressRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
 import com.pkmprojects.shoppiq.repository.UserRepository;
+import com.pkmprojects.shoppiq.verification.VerificationCodeService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -56,13 +65,19 @@ public class UserService {
     private final RolesService rolesService;
     private final SellerRepository sellerRepository;
     private final AddressRepository addressRepository;
+    private final EmailService emailService;
+    private final VerificationCodeService verificationCodeService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RolesService rolesService, SellerRepository sellerRepository, AddressRepository addressRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RolesService rolesService,
+                       SellerRepository sellerRepository, AddressRepository addressRepository,
+                       EmailService emailService, VerificationCodeService verificationCodeService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.rolesService = rolesService;
         this.sellerRepository = sellerRepository;
         this.addressRepository = addressRepository;
+        this.emailService = emailService;
+        this.verificationCodeService = verificationCodeService;
     }
 
     /**
@@ -91,6 +106,8 @@ public class UserService {
             }
 
             User savedUser = userRepository.save(newUser);
+
+            sendVerificationEmail(savedUser);
 
             if (newUserRequest.isSellerRegistration()) {
                 Seller seller = Seller.builder()
@@ -147,6 +164,8 @@ public class UserService {
             user.setUsername(username);
             user.setPassword(passwordEncoder.encode(password));
             user.setRoles(Set.of(rolesService.getCustomerRole()));
+            user.setEmailVerified(true);
+            user.setEmailVerifiedAt(java.time.LocalDateTime.now());
 
             User savedUser = userRepository.save(user);
 
@@ -223,6 +242,58 @@ public class UserService {
         user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
         logger.info("Password changed for username: {}", user.getUsername());
+
+        sendSecurityAlertEmail(user, "Password Changed", "Your password was recently changed. If you did not make this change, please contact support immediately.", "password_change");
+    }
+
+    private void sendVerificationEmail(User user) {
+        try {
+            String code = verificationCodeService.generateCode(user, EmailType.VERIFICATION);
+            emailService.sendEmail(EmailMessage.builder()
+                    .to(user.getEmail())
+                    .subject("Verify Your Email Address")
+                    .templateName(EmailType.VERIFICATION.getTemplateName())
+                    .emailType(EmailType.VERIFICATION)
+                    .userId(user.getId())
+                    .variables(Map.of(
+                            "userName", user.getName(),
+                            "verificationCode", code
+                    ))
+                    .build());
+        } catch (Exception e) {
+            logger.warn("Failed to send verification email to {}: {}", user.getEmail(), e.getMessage());
+        }
+    }
+
+    private void sendSecurityAlertEmail(User user, String alertTitle, String alertMessage, String alertType) {
+        try {
+            String ipAddress = "Unknown";
+            String userAgent = "Unknown";
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                HttpServletRequest request = attrs.getRequest();
+                ipAddress = request.getRemoteAddr();
+                userAgent = request.getHeader("User-Agent") != null ? request.getHeader("User-Agent") : "Unknown";
+            }
+
+            emailService.sendEmail(EmailMessage.builder()
+                    .to(user.getEmail())
+                    .subject("Security Alert: " + alertTitle)
+                    .templateName(EmailType.SECURITY_ALERT.getTemplateName())
+                    .emailType(EmailType.SECURITY_ALERT)
+                    .userId(user.getId())
+                    .variables(Map.of(
+                            "userName", user.getName(),
+                            "alertTitle", alertTitle,
+                            "alertMessage", alertMessage,
+                            "alertType", alertType,
+                            "alertTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' hh:mm a")),
+                            "ipAddress", ipAddress
+                    ))
+                    .build());
+        } catch (Exception e) {
+            logger.warn("Failed to send security alert email to {}: {}", user.getEmail(), e.getMessage());
+        }
     }
 
 }

@@ -15,6 +15,7 @@ import com.pkmprojects.shoppiq.exception.SellerNotVerifiedException;
 import com.pkmprojects.shoppiq.exception.SellerSuspendedException;
 import com.pkmprojects.shoppiq.repository.OrderRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
+import com.pkmprojects.shoppiq.service.OrderEmailService;
 import com.pkmprojects.shoppiq.service.seller.SellerOrderService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,11 +40,14 @@ public class SellerOrderServiceImpl implements SellerOrderService {
 
     private final SellerRepository sellerRepository;
     private final OrderRepository orderRepository;
+    private final OrderEmailService orderEmailService;
 
     public SellerOrderServiceImpl(SellerRepository sellerRepository,
-                                  OrderRepository orderRepository) {
+                                  OrderRepository orderRepository,
+                                  OrderEmailService orderEmailService) {
         this.sellerRepository = sellerRepository;
         this.orderRepository = orderRepository;
+        this.orderEmailService = orderEmailService;
     }
 
     @Override
@@ -91,6 +95,12 @@ public class SellerOrderServiceImpl implements SellerOrderService {
 
         order.setStatus(newStatus);
         orderRepository.save(order);
+
+        try {
+            orderEmailService.sendOrderStatusEmail(order, newStatus);
+        } catch (Exception e) {
+            // Don't fail the status update if email fails
+        }
 
         return SellerOrderResponse.from(order, seller.getId());
     }

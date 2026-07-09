@@ -34,6 +34,7 @@ import java.time.Instant;
  * @param createdAt     account creation timestamp
  * @param defaultAddress the user's default address, or {@code null} if none
  * @param hasPassword   whether the account has a password set (false for OAuth-only accounts)
+ * @param emailVerified whether the user's email address has been verified
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
@@ -44,7 +45,8 @@ public record UserResponse(
         String username,
         Instant createdAt,
         AddressResponse defaultAddress,
-        boolean hasPassword
+        boolean hasPassword,
+        boolean emailVerified
 ) {
     public static UserResponse fromEntity(User user) {
         return new UserResponse(
@@ -54,7 +56,8 @@ public record UserResponse(
                 user.getUsername(),
                 user.getCreatedAt(),
                 null,
-                false
+                false,
+                user.isEmailVerified()
         );
     }
 
@@ -75,7 +78,8 @@ public record UserResponse(
                 user.getUsername(),
                 user.getCreatedAt(),
                 defaultAddress != null ? AddressResponse.from(defaultAddress) : null,
-                hasPassword
+                hasPassword,
+                user.isEmailVerified()
         );
     }
 }
