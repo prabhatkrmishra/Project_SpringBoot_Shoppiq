@@ -69,4 +69,13 @@ public class ItemController {
         size = Math.min(size, pagination.maxPageSize());
         return itemService.getSaleItems(page, size);
     }
+
+    @GetMapping("/category/{slug}")
+    public PageResponse<ItemResponse> getByCategorySlug(
+            @PathVariable String slug,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "12") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return itemService.getByCategorySlug(slug, page, size);
+    }
 }

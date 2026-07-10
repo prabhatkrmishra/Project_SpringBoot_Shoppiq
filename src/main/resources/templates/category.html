@@ -35,6 +35,7 @@
       </div>
 
       <div id="itemGrid" class="grid-4" style="display:none;"></div>
+      <div id="category-pagination"></div>
     </div>
   </div>
 </main>
@@ -42,39 +43,55 @@
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
 
+<script th:src="@{/js/pagination.js}"></script>
 <script>
+var currentPage = 0;
+var PAGE_SIZE = 12;
+var categorySlug = null;
+
 document.addEventListener("DOMContentLoaded", function () {
-  var slug = window.location.pathname.split("/").pop();
-  loadCategory(slug);
+  categorySlug = window.location.pathname.split("/").pop();
+  loadCategoryInfo(categorySlug);
+  loadItems(0);
 });
 
-async function loadCategory(slug) {
-  var loading = document.getElementById("loadingState");
-  var error = document.getElementById("errorState");
-  var content = document.getElementById("categoryContent");
-
-  try {
-    var category = await API.get("/categories/slug/" + slug);
-    document.title = escapeHtml(category.name) + " — Shoppiq";
-
+function loadCategoryInfo(slug) {
+  API.get("/categories/slug/" + slug).then(function (category) {
+    document.title = escapeHtml(category.name) + " \u2014 Shoppiq";
     document.getElementById("breadcrumbs").innerHTML =
       '<a href="/">Home</a><span class="separator"><i data-lucide="chevron-right" class="icon-sm"></i></span>' +
       '<a href="/categories">Categories</a><span class="separator"><i data-lucide="chevron-right" class="icon-sm"></i></span>' +
       '<span class="current">' + escapeHtml(category.name) + '</span>';
     document.getElementById("categoryName").textContent = category.name;
     if (category.description) document.getElementById("categoryDesc").textContent = category.description;
+  }).catch(function () {
+    document.getElementById("loadingState").style.display = "none";
+    document.getElementById("errorState").style.display = "";
+  });
+}
 
-    var allItems = await API.get("/items/all");
-    var items = allItems.filter(function (item) {
-      return item.category && item.category.slug === slug;
-    });
+function loadItems(page) {
+  if (page != null) currentPage = page;
+  var grid = document.getElementById("itemGrid");
+  var empty = document.getElementById("emptyItems");
+  var content = document.getElementById("categoryContent");
+  var loading = document.getElementById("loadingState");
 
-    document.getElementById("itemCount").textContent = items.length + " products in this category";
+  loading.style.display = "";
+  grid.style.display = "none";
+  empty.style.display = "none";
+
+  API.get("/items/category/" + categorySlug + "?page=" + currentPage + "&size=" + PAGE_SIZE).then(function (data) {
+    var items = data.content || [];
+
+    document.getElementById("itemCount").textContent = (data.totalElements || 0) + " products in this category";
 
     if (items.length === 0) {
-      document.getElementById("emptyItems").style.display = "";
+      content.style.display = "";
+      empty.style.display = "";
+      grid.style.display = "none";
     } else {
-      document.getElementById("itemGrid").innerHTML = items.map(function (item) {
+      grid.innerHTML = items.map(function (item) {
         var imgUrl = item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop';
         var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
         var priceHtml = '<span class="price-new">$' + escapeHtml(String(item.price)) + '</span>';
@@ -99,15 +116,23 @@ async function loadCategory(slug) {
           '</div>' +
         '</article></a>';
       }).join("");
-      document.getElementById("itemGrid").style.display = "";
+      content.style.display = "";
+      grid.style.display = "";
+      empty.style.display = "none";
     }
 
+    Pagination.render("category-pagination", data, loadItems, {
+      onPageSizeChange: function (newSize) {
+        PAGE_SIZE = newSize;
+        loadItems(0);
+      }
+    });
+  }).catch(function () {
     content.style.display = "";
-  } catch (e) {
-    error.style.display = "";
-  } finally {
-    loading.style.display = "none";
-  }
+    document.getElementById("loadingState").style.display = "none";
+  }).finally(function () {
+    document.getElementById("loadingState").style.display = "none";
+  });
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 

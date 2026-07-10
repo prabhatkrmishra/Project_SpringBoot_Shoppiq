@@ -167,4 +167,51 @@ class ItemControllerTest {
                     .andExpect(jsonPath("$.errorCode").value("ITEM-404-001"));
         }
     }
+
+    @Nested
+    @DisplayName("GET /items/category/{slug}")
+    class GetByCategorySlug {
+
+        @Test
+        @DisplayName("Returns 200 with paginated items for valid slug")
+        void getByCategorySlug_validSlug_returnsPage() throws Exception {
+            when(itemService.getByCategorySlug(eq("electronics"), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(
+                            List.of(stubResponse(1L), stubResponse(2L)),
+                            0, 12, 2, 1, true, true));
+
+            mockMvc.perform(get("/items/category/electronics?page=0&size=12"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].category.slug").value("electronics"))
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.totalElements").value(2));
+        }
+
+        @Test
+        @DisplayName("Returns 200 with empty content when category has no items")
+        void getByCategorySlug_emptyCategory_returnsEmptyPage() throws Exception {
+            when(itemService.getByCategorySlug(eq("empty-cat"), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(
+                            List.of(), 0, 12, 0, 0, true, true));
+
+            mockMvc.perform(get("/items/category/empty-cat?page=0&size=12"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(0))
+                    .andExpect(jsonPath("$.totalElements").value(0));
+        }
+
+        @Test
+        @DisplayName("Uses default page=0 and size=12 when no params provided")
+        void getByCategorySlug_defaultParams_usesDefaults() throws Exception {
+            when(itemService.getByCategorySlug(eq("electronics"), eq(0), eq(12)))
+                    .thenReturn(new PageResponse<>(
+                            List.of(), 0, 12, 0, 0, true, true));
+
+            mockMvc.perform(get("/items/category/electronics"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.size").value(12));
+        }
+    }
 }

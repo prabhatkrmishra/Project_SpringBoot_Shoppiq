@@ -151,4 +151,8 @@ public interface ItemRepository
     @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
            "WHERE i.publishingStatus = 'PUBLISHED' AND id.onSale = true ORDER BY i.createdAt DESC")
     Page<Item> findOnSaleItemsPage(Pageable pageable);
+
+    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
+           "WHERE id.category.slug = :slug")
+    Page<Item> findByCategorySlug(@Param("slug") String slug, Pageable pageable);
 }

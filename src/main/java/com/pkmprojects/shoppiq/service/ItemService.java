@@ -64,4 +64,14 @@ public interface ItemService {
      * @return paginated on-sale products
      */
     PageResponse<ItemResponse> getSaleItems(int page, int size);
+
+    /**
+     * Retrieves all products in a given category, paginated.
+     *
+     * @param slug category URL slug
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated products belonging to the category
+     */
+    PageResponse<ItemResponse> getByCategorySlug(String slug, int page, int size);
 }

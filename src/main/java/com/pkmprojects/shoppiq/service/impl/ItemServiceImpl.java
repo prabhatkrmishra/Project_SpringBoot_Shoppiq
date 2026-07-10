@@ -147,6 +147,13 @@ public class ItemServiceImpl implements ItemService {
         return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
+    @Override
+    public PageResponse<ItemResponse> getByCategorySlug(String slug, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        var itemPage = itemRepository.findByCategorySlug(slug, pageable);
+        return PageResponse.of(itemPage, ItemResponse::fromEntity);
+    }
+
     /**
      * Generates a unique URL-friendly slug.
      *
