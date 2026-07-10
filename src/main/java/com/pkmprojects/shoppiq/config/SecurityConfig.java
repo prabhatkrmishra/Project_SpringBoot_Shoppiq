@@ -226,7 +226,8 @@ public class SecurityConfig {
                                 "/admin/products",
                                 "/admin/roles",
                                 "/admin/promo-codes",
-                                "/admin/mail"
+                                "/admin/mail",
+                                "/admin/messages"
                         ).hasRole("ADMIN")
 
                         // Admin API endpoints

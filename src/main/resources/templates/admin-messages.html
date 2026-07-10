@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Contact Messages')}"></head>
+<body>
+<th:block th:replace="~{fragments/admin-header :: admin-header('messages')}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<style>
+  .messages-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    height: calc(100vh - 140px);
+    min-height: 500px;
+  }
+  @media (min-width: 768px) {
+    .messages-layout { grid-template-columns: 380px 1fr; }
+  }
+  .msg-list-panel {
+    border-right: 1px solid var(--color-border);
+    display: flex; flex-direction: column;
+    background: #fff; border: 1px solid var(--color-border);
+  }
+  .msg-list-header {
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .msg-list-header h2 {
+    font-size: 0.78rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin: 0; color: var(--color-text);
+  }
+  .msg-list-header .badge-count {
+    background: var(--color-primary); color: #fff;
+    font-size: 0.7rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 9999px;
+    min-width: 20px; text-align: center;
+    display: inline-flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .msg-list-header .badge-count.hidden { display: none; }
+  .msg-list {
+    flex: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0;
+  }
+  .msg-item {
+    display: flex; gap: var(--space-sm); align-items: flex-start;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--color-border-light);
+    cursor: pointer; transition: background var(--transition-fast);
+    position: relative;
+  }
+  .msg-item:hover { background: var(--color-hover-bg); }
+  .msg-item.active { background: var(--color-primary-tint); }
+  .msg-item.unread .msg-item-name { font-weight: 700; }
+  .msg-item.unread .msg-item-subject { font-weight: 600; color: var(--color-text); }
+  .msg-item .unread-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--color-primary); flex-shrink: 0; margin-top: 6px;
+  }
+  .msg-item .unread-dot.read { background: transparent; }
+  .msg-item-body { flex: 1; min-width: 0; }
+  .msg-item-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 2px;
+  }
+  .msg-item-name {
+    font-size: 0.85rem; font-weight: 500;
+    color: var(--color-text); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .msg-item-time {
+    font-size: 0.7rem; color: var(--color-text-muted);
+    white-space: nowrap; flex-shrink: 0; margin-left: var(--space-sm);
+  }
+  .msg-item-subject {
+    font-size: 0.78rem; color: var(--color-text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .msg-detail-panel {
+    display: flex; flex-direction: column;
+    background: #fff; border: 1px solid var(--color-border);
+  }
+  .msg-detail-empty {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: var(--color-text-muted); gap: var(--space-md);
+  }
+  .msg-detail-empty i { width: 48px; height: 48px; opacity: 0.3; }
+  .msg-detail-empty p { font-size: 0.92rem; margin: 0; }
+  .msg-detail-header {
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+  .msg-detail-subject {
+    font-size: 1.1rem; font-weight: 600;
+    color: var(--color-text); margin-bottom: var(--space-sm);
+  }
+  .msg-detail-meta {
+    display: flex; align-items: center; gap: var(--space-md);
+    font-size: 0.78rem; color: var(--color-text-muted);
+    flex-wrap: wrap;
+  }
+  .msg-detail-meta .sender-name { font-weight: 600; color: var(--color-text); }
+  .msg-detail-actions {
+    display: flex; gap: var(--space-sm); padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--color-border-light);
+    flex-shrink: 0;
+  }
+  .msg-detail-body {
+    flex: 1; padding: var(--space-lg);
+    overflow-y: auto; font-size: 0.92rem;
+    line-height: 1.7; color: var(--color-text-secondary);
+    white-space: pre-wrap;
+  }
+  @media (max-width: 767px) {
+    .messages-layout { height: auto; min-height: auto; }
+    .msg-list-panel { max-height: 40vh; }
+    .msg-detail-panel { min-height: 50vh; }
+  }
+</style>
+
+<main class="admin-main">
+  <div class="page-header">
+    <h1>Contact Messages</h1>
+    <p>View and manage messages from the contact form</p>
+  </div>
+
+  <div class="messages-layout">
+    <!-- Left: Message List -->
+    <div class="msg-list-panel">
+      <div class="msg-list-header">
+        <h2>Inbox</h2>
+        <span class="badge-count hidden" id="unread-badge">0</span>
+      </div>
+      <div class="msg-list" id="msg-list">
+        <div style="padding: var(--space-xl); text-align:center; color: var(--color-text-muted); font-size: 0.85rem;">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Right: Message Detail -->
+    <div class="msg-detail-panel" id="msg-detail-panel">
+      <div class="msg-detail-empty" id="msg-empty-state">
+        <i data-lucide="mail-open"></i>
+        <p>Select a message to read</p>
+      </div>
+      <div id="msg-detail-content" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
+        <div class="msg-detail-header">
+          <div class="msg-detail-subject" id="detail-subject"></div>
+          <div class="msg-detail-meta">
+            <span>From: <span class="sender-name" id="detail-sender"></span></span>
+            <span id="detail-email"></span>
+            <span id="detail-date"></span>
+          </div>
+        </div>
+        <div class="msg-detail-actions" id="detail-actions"></div>
+        <div class="msg-detail-body" id="detail-body"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+(function () {
+  'use strict';
+
+  var allMessages = [];
+  var selectedId = null;
+
+  function relativeTime(iso) {
+    if (!iso) return '';
+    var now = Date.now();
+    var then = new Date(iso).getTime();
+    var diff = Math.floor((now - then) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return formatDate(iso);
+  }
+
+  function renderList(messages) {
+    allMessages = messages || [];
+    var list = document.getElementById('msg-list');
+    var unreadCount = allMessages.filter(function (m) { return m.status === 'PENDING'; }).length;
+    var badge = document.getElementById('unread-badge');
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+
+    if (allMessages.length === 0) {
+      list.innerHTML = '<div style="padding:var(--space-xl);text-align:center;color:var(--color-text-muted);font-size:0.85rem;"><i data-lucide="inbox" style="width:32px;height:32px;margin:0 auto var(--space-sm);display:block;opacity:0.3;"></i>No messages yet</div>';
+      initIcons();
+      return;
+    }
+
+    var sorted = allMessages.slice().sort(function (a, b) {
+      if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+      if (a.status !== 'PENDING' && b.status === 'PENDING') return 1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    list.innerHTML = '';
+    sorted.forEach(function (m) {
+      var isUnread = m.status === 'PENDING';
+      var isActive = m.id === selectedId;
+      var div = document.createElement('div');
+      div.className = 'msg-item' + (isUnread ? ' unread' : '') + (isActive ? ' active' : '');
+      div.setAttribute('data-id', m.id);
+      div.innerHTML =
+        '<div class="unread-dot' + (isUnread ? '' : ' read') + '"></div>' +
+        '<div class="msg-item-body">' +
+          '<div class="msg-item-header">' +
+            '<span class="msg-item-name">' + escapeHtml(m.email) + '</span>' +
+            '<span class="msg-item-time">' + relativeTime(m.createdAt) + '</span>' +
+          '</div>' +
+          '<div class="msg-item-subject">' + escapeHtml(m.subject) + '</div>' +
+        '</div>';
+      div.addEventListener('click', function () {
+        openMessage(m.id);
+      });
+      list.appendChild(div);
+    });
+    initIcons();
+  }
+
+  function openMessage(id) {
+    selectedId = id;
+    document.getElementById('msg-empty-state').style.display = 'none';
+    var content = document.getElementById('msg-detail-content');
+    content.style.display = 'flex';
+    document.getElementById('detail-body').textContent = 'Loading...';
+
+    // Highlight active item in list
+    document.querySelectorAll('.msg-item').forEach(function (el) {
+      el.classList.toggle('active', parseInt(el.getAttribute('data-id')) === id);
+    });
+
+    API.get('/api/admin/messages/' + id).then(function (msg) {
+      document.getElementById('detail-subject').textContent = msg.subject;
+      document.getElementById('detail-sender').textContent = msg.name;
+      document.getElementById('detail-email').textContent = '<' + msg.email + '>';
+      document.getElementById('detail-date').textContent = formatDateTime(msg.createdAt);
+      document.getElementById('detail-body').textContent = msg.message;
+
+      var actionsEl = document.getElementById('detail-actions');
+      var isRead = msg.status === 'READ';
+      actionsEl.innerHTML =
+        '<button class="btn btn-sm btn-secondary" id="btn-toggle-read">' +
+          '<i data-lucide="' + (isRead ? 'eye-off' : 'eye') + '" class="icon-sm"></i> ' +
+          (isRead ? 'Mark as Unread' : 'Mark as Read') +
+        '</button>' +
+        '<button class="btn btn-sm btn-danger" id="btn-delete">' +
+          '<i data-lucide="trash-2" class="icon-sm"></i> Delete' +
+        '</button>';
+      initIcons();
+
+      document.getElementById('btn-toggle-read').addEventListener('click', function () {
+        var endpoint = isRead
+          ? '/api/admin/messages/' + id + '/unread'
+          : '/api/admin/messages/' + id + '/read';
+        API.put(endpoint).then(function () {
+          showToast(isRead ? 'Marked as unread' : 'Marked as read', 'success');
+          loadMessages();
+          if (!isRead) {
+            openMessage(id);
+          } else {
+            document.getElementById('msg-empty-state').style.display = 'flex';
+            content.style.display = 'none';
+            selectedId = null;
+          }
+        }).catch(function (e) { showToast(e.message, 'error'); });
+      });
+
+      document.getElementById('btn-delete').addEventListener('click', function () {
+        showConfirmModal({
+          title: 'Delete Message',
+          message: 'Are you sure you want to delete this message from the inbox? This action cannot be undone.',
+          confirmText: 'Delete',
+          danger: true
+        }).then(function (confirmed) {
+          if (!confirmed) return;
+          API.del('/api/admin/messages/' + id).then(function () {
+            showToast('Message deleted', 'success');
+            selectedId = null;
+            document.getElementById('msg-empty-state').style.display = 'flex';
+            content.style.display = 'none';
+            loadMessages();
+          }).catch(function (e) { showToast(e.message, 'error'); });
+        });
+      });
+    }).catch(function () {
+      document.getElementById('detail-body').textContent = 'Failed to load message.';
+    });
+  }
+
+  function loadMessages() {
+    API.get('/api/admin/messages').then(function (data) {
+      renderList(data);
+    }).catch(function () {
+      document.getElementById('msg-list').innerHTML =
+        '<div style="padding:var(--space-xl);text-align:center;color:var(--color-text-muted);font-size:0.85rem;">Failed to load messages</div>';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadMessages();
+  });
+})();
+</script>
+</body>
+</html>

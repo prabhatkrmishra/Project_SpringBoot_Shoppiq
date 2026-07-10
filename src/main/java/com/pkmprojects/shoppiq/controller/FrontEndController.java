@@ -216,6 +216,11 @@ public class FrontEndController {
         return "admin-mail";
     }
 
+    @GetMapping("/admin/messages")
+    public String adminMessagesPage() {
+        return "admin-messages";
+    }
+
     @GetMapping("/seller-panel/dashboard")
     public String sellerDashboardPage() {
         return "seller/dashboard";

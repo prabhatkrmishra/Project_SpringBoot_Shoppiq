@@ -430,6 +430,15 @@ public enum ErrorCode {
     VERIFICATION_CODE_MAX_ATTEMPTS("VERIFY-429-001", "Maximum verification attempts exceeded."),
 
     // =========================================================
+    // Contact Message Errors
+    // =========================================================
+
+    /**
+     * Requested contact message could not be found.
+     */
+    CONTACT_MESSAGE_NOT_FOUND("CONTACT_MESSAGE-404-001", "Requested contact message was not found."),
+
+    // =========================================================
     // Admin Errors
     // =========================================================
 

@@ -1,8 +1,11 @@
 package com.pkmprojects.shoppiq.repository;
 
 import com.pkmprojects.shoppiq.entity.ContactMessage;
+import com.pkmprojects.shoppiq.enums.ContactMessageStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * Repository for {@link ContactMessage} persistence operations.
@@ -12,4 +15,8 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ContactMessageRepository extends JpaRepository<ContactMessage, Long> {
+
+    List<ContactMessage> findAllByOrderByCreatedAtDesc();
+
+    long countByStatus(ContactMessageStatus status);
 }
