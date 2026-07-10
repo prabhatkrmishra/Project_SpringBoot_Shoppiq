@@ -475,11 +475,15 @@ small { font-size: 0.78rem; }
 .card {
   background: #fff; border: 1px solid var(--color-border);
   border-radius: var(--radius-md); transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  display: flex; flex-direction: column; height: 100%;
 }
 .card:hover { box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
-.card-link { display: block; color: inherit; text-decoration: none; }
+.card-link { display: flex; color: inherit; text-decoration: none; }
 .card-link:hover .card { box-shadow: 0 2px 8px rgba(0,0,0,0.08); transform: translateY(-2px); }
-.card-body { padding: 16px; }
+.card-body { 
+  padding: 16px; 
+  display: flex; flex-direction: column; flex: 1;
+}
 @media (min-width: 768px) { .card-body { padding: 24px; } }
 .card-image {
   width: 100%; aspect-ratio: 1; object-fit: cover;
@@ -492,10 +496,20 @@ small { font-size: 0.78rem; }
 }
 .card-text {
   font-size: 0.78rem; color: var(--color-text-secondary); line-height: 1.5;
-  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
-  -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  height: 3.85rem; min-height: 3.85rem; max-height: 3.85rem;
+  overflow: hidden; margin-bottom: var(--space-xs);
 }
-.card-price { font-size: 1.2rem; font-weight: 700; color: var(--color-primary); margin-bottom: var(--space-xs); }
+.card-price { 
+  font-size: 1.2rem; font-weight: 700; color: var(--color-primary); 
+  margin: var(--space-sm) 0; 
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.price-old { text-decoration: line-through; color: var(--color-text-muted); font-size: 0.9rem; font-weight: 400; }
+.price-new { color: var(--color-primary); }
+.price-discount { 
+  font-size: 0.7rem; background: var(--color-danger-tint); color: var(--color-danger); 
+  padding: 2px 6px; border-radius: var(--radius-sm); font-weight: 600; 
+}
 .card-meta { font-size: 0.78rem; color: var(--color-text-muted); display: flex; align-items: center; gap: var(--space-xs); }
 .card-footer {
   padding: var(--space-sm) var(--space-md); border-top: 1px solid var(--color-border-light);

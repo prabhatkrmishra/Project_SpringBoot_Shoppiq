@@ -58,21 +58,25 @@ function loadNewArrivals(page) {
       grid.innerHTML = items.map(function (item) {
         var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop";
         var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
+        var priceHtml = '<span class="price-new">$' + item.price + '</span>';
+        if (hasDiscount) {
+          var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
+          priceHtml = '<span class="price-old">$' + item.price + '</span> ' +
+                      '<span class="price-new">$' + salePrice + '</span> ' +
+                      '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
+        }
         var stockClass = item.stockQuantity > 10 ? "badge-success" : (item.stockQuantity > 0 ? "badge-warning" : "badge-danger");
         var stockText = item.stockQuantity > 0 ? "In Stock" : "Out of Stock";
         return '<a href="/item/' + item.slug + '" class="card-link">' +
           '<article class="card product-card">' +
             '<div class="card-image-wrapper">' +
               '<img class="card-image" src="' + imgUrl + '" alt="' + item.name + '" loading="lazy" width="300" height="300">' +
-              (hasDiscount ? '<span class="card-badge badge badge-success">New</span>' : '') +
+              (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
             '</div>' +
             '<div class="card-body">' +
               '<h3 class="card-title">' + item.name + '</h3>' +
-              '<p class="card-text">' + (item.description || '') + '</p>' +
-              '<div class="card-price">' +
-                '<span>$' + item.price + '</span>' +
-                (hasDiscount ? ' <span class="badge badge-success">' + item.discountPercentage + '% Off</span>' : '') +
-              '</div>' +
+              '<p class="card-text">' + truncateWords(item.description || '', 12) + '</p>' +
+              '<div class="card-price">' + priceHtml + '</div>' +
               '<div class="card-meta"><span class="badge ' + stockClass + '">' + stockText + '</span></div>' +
             '</div>' +
           '</article>' +
@@ -96,6 +100,7 @@ function loadNewArrivals(page) {
     if (typeof lucide !== "undefined") lucide.createIcons();
   });
 }
+function truncateWords(str, max) { if (!str) return ''; var w = str.trim().split(/\s+/); return w.length <= max ? str : w.slice(0, max).join(' ') + '...'; }
 </script>
 </body>
 </html>
