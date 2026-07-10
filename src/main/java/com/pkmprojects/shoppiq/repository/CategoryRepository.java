@@ -4,6 +4,8 @@ import com.pkmprojects.shoppiq.entity.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -68,4 +70,19 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     Page<Category> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
             String name, String description, Pageable pageable);
+
+    @Query(value = "SELECT c.id, c.name, c.slug, c.description, SUM(oi.quantity) AS total_qty " +
+            "FROM categories c " +
+            "JOIN item_details idt ON idt.category_id = c.id " +
+            "JOIN order_items oi ON oi.item_details_id = idt.id " +
+            "JOIN orders o ON o.id = oi.order_id " +
+            "WHERE o.status = 'DELIVERED' AND o.placed_at >= :since " +
+            "GROUP BY c.id, c.name, c.slug, c.description " +
+            "ORDER BY total_qty DESC " +
+            "LIMIT :limit",
+            nativeQuery = true)
+    List<Object[]> findTopSellingCategoryIds(
+            @Param("since") java.time.Instant since,
+            @Param("limit") int limit
+    );
 }

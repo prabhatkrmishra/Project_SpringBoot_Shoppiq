@@ -20,6 +20,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -152,6 +154,26 @@ public class ItemServiceImpl implements ItemService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
         var itemPage = itemRepository.findByCategorySlug(slug, pageable);
         return PageResponse.of(itemPage, ItemResponse::fromEntity);
+    }
+
+    @Override
+    public List<ItemResponse> getTopSelling(int size) {
+        Instant since = Instant.now().minus(30, ChronoUnit.DAYS);
+        List<Object[]> rows = itemRepository.findTopSellingItemIds(since, size);
+        if (rows.isEmpty()) {
+            return List.of();
+        }
+        List<Long> itemIds = rows.stream()
+                .map(row -> ((Number) row[0]).longValue())
+                .toList();
+        List<Item> items = itemRepository.findAllById(itemIds);
+        Map<Long, Item> itemMap = items.stream()
+                .collect(Collectors.toMap(Item::getId, Function.identity()));
+        return itemIds.stream()
+                .map(itemMap::get)
+                .filter(Objects::nonNull)
+                .map(ItemResponse::fromEntity)
+                .toList();
     }
 
     /**

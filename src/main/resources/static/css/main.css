@@ -701,6 +701,8 @@ small { font-size: 0.78rem; }
   .hero-image { display: block; border-radius: 12px; overflow: hidden; }
   .hero-image img { width: 100%; height: auto; display: block; }
 }
+.home-section { padding: 48px 0; }
+@media (min-width: 768px) { .home-section { padding: 64px 0; } }
 .hero .btn-primary { background: #fff; color: #1a1a1a; border-color: #fff; }
 .hero .btn-primary:hover { background: rgba(255,255,255,0.9); }
 .hero .btn-secondary {
@@ -735,6 +737,36 @@ small { font-size: 0.78rem; }
 .feature-item .feature-icon { width: 40px; height: 40px; color: var(--color-primary); margin: 0 auto var(--space-md); }
 .feature-item h3 { font-size: 0.92rem; margin-bottom: var(--space-xs); }
 .feature-item p { font-size: 0.78rem; color: var(--color-text-muted); margin: 0; }
+
+/* ─── Offers Banners ─────────────────────────────────── */
+.offers-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 768px) { .offers-grid { grid-template-columns: 1fr 1fr; } }
+.offers-grid > :last-child { grid-column: 1 / -1; }
+@media (min-width: 768px) { .offers-grid > :last-child { grid-column: auto; } }
+
+.offer-banner {
+  display: flex; align-items: flex-end; padding: 24px 24px;
+  border-radius: var(--radius-md); text-decoration: none;
+  color: #fff; min-height: 160px; transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden; position: relative;
+}
+.offer-banner:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+.offer-banner-primary { background: linear-gradient(135deg, #e11d48, #be123c); }
+.offer-banner-secondary { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+.offer-banner-accent { background: linear-gradient(135deg, #059669, #047857); }
+
+.offer-content { position: relative; z-index: 1; }
+.offer-tag {
+  display: inline-block; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  background: rgba(255,255,255,0.2); padding: 4px 10px;
+  border-radius: 999px; margin-bottom: 12px;
+}
+.offer-content h3 { font-size: 1.3rem; font-weight: 700; margin: 0 0 6px 0; color: #fff; }
+.offer-content p { font-size: 0.82rem; color: rgba(255,255,255,0.85); margin: 0 0 12px 0; }
+
+.btn-white { background: #fff; color: #1a1a1a; border-color: #fff; font-weight: 600; }
+.btn-white:hover { background: rgba(255,255,255,0.9); }
 
 .newsletter { background: var(--color-bg-alt); padding: var(--space-2xl) 0; text-align: center; }
 .newsletter-inner { max-width: 520px; margin: 0 auto; padding: 0 16px; }

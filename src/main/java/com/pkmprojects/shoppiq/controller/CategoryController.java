@@ -146,4 +146,11 @@ public class CategoryController {
         size = Math.min(size, pagination.maxPageSize());
         return categoryService.getAll(page, size, search);
     }
+
+    @GetMapping("/top-selling")
+    public List<CategoryResponse> getTopSelling(
+            @RequestParam(defaultValue = "8") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return categoryService.getTopSelling(size);
+    }
 }

@@ -155,4 +155,26 @@ public interface ItemRepository
     @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
            "WHERE id.category.slug = :slug")
     Page<Item> findByCategorySlug(@Param("slug") String slug, Pageable pageable);
+
+    /**
+     * Returns item IDs ranked by total quantity sold in delivered orders
+     * since the given date, limited to the specified count.
+     *
+     * @param since  cutoff timestamp (inclusive)
+     * @param limit  max number of results
+     * @return list of {@code Object[]{itemId, totalQuantity}} tuples
+     */
+    @Query(value = "SELECT i.id AS item_id, SUM(oi.quantity) AS total_qty " +
+           "FROM items i " +
+           "JOIN order_items oi ON oi.item_details_id = i.item_details_id " +
+           "JOIN orders o ON o.id = oi.order_id " +
+           "WHERE o.status = 'DELIVERED' AND o.placed_at >= :since " +
+           "GROUP BY i.id " +
+           "ORDER BY total_qty DESC " +
+           "LIMIT :limit",
+           nativeQuery = true)
+    List<Object[]> findTopSellingItemIds(
+            @Param("since") java.time.Instant since,
+            @Param("limit") int limit
+    );
 }

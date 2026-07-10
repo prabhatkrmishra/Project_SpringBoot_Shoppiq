@@ -15,6 +15,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 
@@ -85,17 +87,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryResponse> createBulk(List<CategoryRequest> requests) {
-        return requests.stream()
-                .map(this::create)
-                .toList();
+        return requests.stream().map(this::create).toList();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public CategoryResponse update(Long id,
-                                   CategoryRequest request) {
+    public CategoryResponse update(Long id, CategoryRequest request) {
 
         Objects.requireNonNull(request, "Category request cannot be null.");
 
@@ -145,9 +144,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public CategoryResponse getById(Long id) {
-        return CategoryResponse.fromEntity(
-                getCategoryOrThrow(id)
-        );
+        return CategoryResponse.fromEntity(getCategoryOrThrow(id));
     }
 
     /**
@@ -157,8 +154,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional(readOnly = true)
     public CategoryResponse getBySlug(String slug) {
 
-        Category category = categoryRepository.findBySlug(slug)
-                .orElseThrow(() -> CategoryNotFoundException.slug(slug));
+        Category category = categoryRepository.findBySlug(slug).orElseThrow(() -> CategoryNotFoundException.slug(slug));
 
         return CategoryResponse.fromEntity(category);
     }
@@ -170,10 +166,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional(readOnly = true)
     public java.util.List<CategoryResponse> getAll() {
 
-        return categoryRepository.findAllByOrderByNameAsc()
-                .stream()
-                .map(CategoryResponse::fromEntity)
-                .toList();
+        return categoryRepository.findAllByOrderByNameAsc().stream().map(CategoryResponse::fromEntity).toList();
     }
 
     /**
@@ -184,10 +177,7 @@ public class CategoryServiceImpl implements CategoryService {
     public PageResponse<CategoryResponse> getAll(int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
-        return PageResponse.of(
-                categoryRepository.findAllByOrderByNameAsc(pageable),
-                CategoryResponse::fromEntity
-        );
+        return PageResponse.of(categoryRepository.findAllByOrderByNameAsc(pageable), CategoryResponse::fromEntity);
     }
 
     /**
@@ -198,10 +188,18 @@ public class CategoryServiceImpl implements CategoryService {
     public PageResponse<CategoryResponse> getAll(int page, int size, String search) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
-        var categoryPage = (search != null && !search.isBlank())
-                ? categoryRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search, pageable)
-                : categoryRepository.findAllByOrderByNameAsc(pageable);
+        var categoryPage = (search != null && !search.isBlank()) ? categoryRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search, pageable) : categoryRepository.findAllByOrderByNameAsc(pageable);
         return PageResponse.of(categoryPage, CategoryResponse::fromEntity);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<CategoryResponse> getTopSelling(int size) {
+        Instant since = Instant.now().minus(30, ChronoUnit.DAYS);
+        List<Object[]> rows = categoryRepository.findTopSellingCategoryIds(since, size);
+        return rows.stream().map(row -> new CategoryResponse(((Number) row[0]).longValue(), (String) row[1], (String) row[2], (String) row[3])).toList();
     }
 
     /**
@@ -218,8 +216,7 @@ public class CategoryServiceImpl implements CategoryService {
      */
     private Category getCategoryOrThrow(Long id) {
 
-        return categoryRepository.findById(id)
-                .orElseThrow(() -> CategoryNotFoundException.id(id));
+        return categoryRepository.findById(id).orElseThrow(() -> CategoryNotFoundException.id(id));
     }
 
     /**
@@ -282,9 +279,6 @@ public class CategoryServiceImpl implements CategoryService {
      * @return new category entity
      */
     private Category buildCategory(CategoryRequest request) {
-        return Category.builder()
-                .name(request.name())
-                .description(request.description())
-                .build();
+        return Category.builder().name(request.name()).description(request.description()).build();
     }
 }

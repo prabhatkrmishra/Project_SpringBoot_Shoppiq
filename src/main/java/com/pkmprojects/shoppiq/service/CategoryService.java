@@ -151,4 +151,12 @@ public interface CategoryService {
      * @return paginated category responses
      */
     PageResponse<CategoryResponse> getAll(int page, int size, String search);
+
+    /**
+     * Retrieves the top-selling categories from the last 30 days of delivered orders.
+     *
+     * @param size number of categories to return
+     * @return ordered list of top-selling categories
+     */
+    List<CategoryResponse> getTopSelling(int size);
 }

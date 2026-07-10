@@ -22,21 +22,25 @@
     </div>
   </section>
 
-  <section class="page" style="padding-top:48px;">
+  <div class="home-section">
     <div class="container">
-      <div class="page-header" id="catHeader" style="display:none;">
-        <h2>Shop by Category</h2>
-        <p>Find exactly what you're looking for</p>
+      <div class="page-header" id="topSellingHeader" style="display:none;">
+        <h2>Most Bought</h2>
+        <p>What everyone's been buying this month</p>
       </div>
-      <div id="categoryGrid" class="categories-grid"></div>
+      <div id="topSellingGrid" class="grid-4"></div>
+      <div id="topSellingEmpty" class="text-center mt-xl" style="display:none;">
+        <p class="text-muted">No sales data yet. Be the first to shop!</p>
+        <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse All Products</a>
+      </div>
     </div>
-  </section>
+  </div>
 
-  <section class="page" style="padding-top:0;">
+  <div class="home-section">
     <div class="container">
-      <div class="page-header">
+      <div class="page-header" id="featuredHeader" style="display:none;">
         <h2>Featured Products</h2>
-        <p>Handpicked just for you</p>
+        <p>Handpicked deals just for you</p>
       </div>
       <div id="featuredGrid" class="grid-4"></div>
       <div id="featuredEmpty" class="text-center mt-xl" style="display:none;">
@@ -44,7 +48,51 @@
         <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse All Products</a>
       </div>
     </div>
-  </section>
+  </div>
+
+  <div class="home-section">
+    <div class="container">
+      <div class="page-header">
+        <h2>Sales &amp; Offers</h2>
+        <p>Deals you don't want to miss</p>
+      </div>
+      <div class="offers-grid">
+        <a th:href="@{/sale}" class="offer-banner offer-banner-primary">
+          <div class="offer-content">
+            <span class="offer-tag">Limited Time</span>
+            <h3>Up to 50% Off</h3>
+            <p>Grab today's hottest deals before they're gone.</p>
+            <span class="btn btn-sm btn-white">Shop Sale</span>
+          </div>
+        </a>
+        <a th:href="@{/new-arrivals}" class="offer-banner offer-banner-secondary">
+          <div class="offer-content">
+            <span class="offer-tag">Just In</span>
+            <h3>New Arrivals</h3>
+            <p>Fresh drops just landed. Stay ahead of the curve.</p>
+            <span class="btn btn-sm btn-white">Explore</span>
+          </div>
+        </a>
+        <div class="offer-banner offer-banner-accent">
+          <div class="offer-content">
+            <span class="offer-tag">Perks</span>
+            <h3>Free Shipping</h3>
+            <p>On all orders over $50. No codes needed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-section">
+    <div class="container">
+      <div class="page-header" id="catHeader" style="display:none;">
+        <h2>Most Bought Category</h2>
+        <p>Top categories our customers love</p>
+      </div>
+      <div id="categoryGrid" class="categories-grid"></div>
+    </div>
+  </div>
 
   <section class="features">
     <div class="container">
@@ -86,13 +134,74 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  loadHomepageCategories();
+  loadTopSelling();
   loadFeaturedProducts();
+  loadHomepageCategories();
 });
+
+function renderProductCard(item) {
+  var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop";
+  var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
+  var priceHtml = '<span class="price-new">$' + escapeHtml(String(item.price)) + '</span>';
+  if (hasDiscount) {
+    var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
+    priceHtml = '<span class="price-old">$' + escapeHtml(String(item.price)) + '</span> ' +
+                '<span class="price-new">$' + salePrice + '</span> ' +
+                '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
+  }
+  return '<a href="/item/' + item.slug + '" class="card-link">' +
+    '<article class="card product-card">' +
+      '<div class="card-image-wrapper">' +
+        '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
+        (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
+      '</div>' +
+      '<div class="card-body">' +
+        '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
+        '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
+        '<div class="card-price">' + priceHtml + '</div>' +
+      '</div>' +
+    '</article>' +
+  '</a>';
+}
+
+async function loadTopSelling() {
+  try {
+    var items = await API.get("/items/top-selling?size=8");
+    if (!items || items.length === 0) {
+      document.getElementById("topSellingEmpty").style.display = "";
+      return;
+    }
+    document.getElementById("topSellingHeader").style.display = "";
+    document.getElementById("topSellingGrid").innerHTML = items.map(renderProductCard).join("");
+  } catch (e) {
+    document.getElementById("topSellingEmpty").style.display = "";
+  }
+}
+
+async function loadFeaturedProducts() {
+  try {
+    var data = await API.get("/items/all?page=0&size=20");
+    var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+    var featured = items.filter(function (item) {
+      return item.discountPercentage && parseFloat(item.discountPercentage) > 0;
+    }).slice(0, 4);
+    if (featured.length === 0) {
+      featured = items.slice(0, 4);
+    }
+    if (featured.length === 0) {
+      document.getElementById("featuredEmpty").style.display = "";
+      return;
+    }
+    document.getElementById("featuredHeader").style.display = "";
+    document.getElementById("featuredGrid").innerHTML = featured.map(renderProductCard).join("");
+  } catch (e) {
+    document.getElementById("featuredEmpty").style.display = "";
+  }
+}
 
 async function loadHomepageCategories() {
   try {
-    var cats = await API.get("/categories/all");
+    var cats = await API.get("/categories/top-selling?size=8");
     if (!cats || cats.length === 0) return;
     document.getElementById("catHeader").style.display = "";
     document.getElementById("categoryGrid").innerHTML = cats.map(function (cat) {
@@ -104,44 +213,8 @@ async function loadHomepageCategories() {
   } catch (e) { /* silent */ }
 }
 
-async function loadFeaturedProducts() {
-  try {
-    var data = await API.get("/items/all?page=0&size=8");
-    var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
-    var featured = items.slice(0, 4);
-    if (featured.length === 0) {
-      document.getElementById("featuredEmpty").style.display = "";
-      return;
-    }
-    document.getElementById("featuredGrid").innerHTML = featured.map(function (item) {
-      var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
-      var priceHtml = '<span class="price-new">$' + escapeHtml(String(item.price)) + '</span>';
-      if (hasDiscount) {
-        var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
-        priceHtml = '<span class="price-old">$' + escapeHtml(String(item.price)) + '</span> ' +
-                    '<span class="price-new">$' + salePrice + '</span> ' +
-                    '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
-      }
-      return '<a href="/item/' + item.slug + '" class="card-link">' +
-        '<article class="card product-card">' +
-          '<div class="card-image-wrapper">' +
-            '<img class="card-image" src="' + (item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop') + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
-          '</div>' +
-          '<div class="card-body">' +
-            '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
-            '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
-            '<div class="card-price">' + priceHtml + '</div>' +
-          '</div>' +
-        '</article>' +
-      '</a>';
-    }).join("");
-  } catch (e) {
-    document.getElementById("featuredEmpty").style.display = "";
-  }
-}
-
-function escapeHtml(str) { var d = document.createElement("div"); d.appendChild(document.createTextNode(str)); return d.innerHTML; }
-function escapeAttr(str) { return str.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escapeHtml(str) { var d = document.createElement("div"); d.appendChild(document.createTextNode(str || "")); return d.innerHTML; }
+function escapeAttr(str) { return (str || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function truncateWords(str, max) { if (!str) return ''; var w = str.trim().split(/\s+/); return w.length <= max ? str : w.slice(0, max).join(' ') + '...'; }
 </script>
 </body>

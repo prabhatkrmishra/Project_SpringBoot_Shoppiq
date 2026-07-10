@@ -74,4 +74,12 @@ public interface ItemService {
      * @return paginated products belonging to the category
      */
     PageResponse<ItemResponse> getByCategorySlug(String slug, int page, int size);
+
+    /**
+     * Retrieves the top-selling products from the last 30 days of delivered orders.
+     *
+     * @param size number of products to return
+     * @return ordered list of top-selling products
+     */
+    List<ItemResponse> getTopSelling(int size);
 }

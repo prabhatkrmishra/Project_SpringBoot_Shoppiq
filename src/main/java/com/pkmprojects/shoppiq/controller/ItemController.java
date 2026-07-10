@@ -9,6 +9,8 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * REST controller responsible for managing catalog items.
  *
@@ -77,5 +79,12 @@ public class ItemController {
             @RequestParam(defaultValue = "12") @Min(1) int size) {
         size = Math.min(size, pagination.maxPageSize());
         return itemService.getByCategorySlug(slug, page, size);
+    }
+
+    @GetMapping("/top-selling")
+    public List<ItemResponse> getTopSelling(
+            @RequestParam(defaultValue = "8") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return itemService.getTopSelling(size);
     }
 }
