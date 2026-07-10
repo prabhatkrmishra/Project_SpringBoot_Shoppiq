@@ -106,7 +106,8 @@ async function loadHomepageCategories() {
 
 async function loadFeaturedProducts() {
   try {
-    var items = await API.get("/items/all");
+    var data = await API.get("/items/all?page=0&size=8");
+    var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
     var featured = items.slice(0, 4);
     if (featured.length === 0) {
       document.getElementById("featuredEmpty").style.display = "";
