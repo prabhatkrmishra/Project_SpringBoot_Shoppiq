@@ -131,17 +131,19 @@ public class CategoryController {
     /**
      * Retrieves all available categories, paginated.
      *
-     * <p>Used by the admin categories panel.</p>
+     * <p>Used by the admin categories panel and the public categories page.</p>
      *
-     * @param page zero-based page index
-     * @param size requested page size
+     * @param page   zero-based page index
+     * @param size   requested page size
+     * @param search optional search term to filter by name or description
      * @return paginated category responses
      */
     @GetMapping("/all/paged")
     public PageResponse<CategoryResponse> getAllPaginated(
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) int size) {
+            @RequestParam(defaultValue = "20") @Min(1) int size,
+            @RequestParam(required = false) String search) {
         size = Math.min(size, pagination.maxPageSize());
-        return categoryService.getAll(page, size);
+        return categoryService.getAll(page, size, search);
     }
 }

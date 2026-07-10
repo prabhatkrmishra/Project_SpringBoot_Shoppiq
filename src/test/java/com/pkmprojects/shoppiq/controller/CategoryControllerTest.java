@@ -354,7 +354,7 @@ class CategoryControllerTest {
             );
 
             when(paginationProperties.maxPageSize()).thenReturn(100);
-            when(categoryService.getAll(0, 20)).thenReturn(pageResponse);
+            when(categoryService.getAll(0, 20, null)).thenReturn(pageResponse);
 
             mockMvc.perform(get("/categories/all/paged")
                             .param("page", "0")
@@ -376,7 +376,7 @@ class CategoryControllerTest {
             );
 
             when(paginationProperties.maxPageSize()).thenReturn(100);
-            when(categoryService.getAll(0, 20)).thenReturn(emptyPage);
+            when(categoryService.getAll(0, 20, null)).thenReturn(emptyPage);
 
             mockMvc.perform(get("/categories/all/paged")
                             .param("page", "0")
@@ -395,14 +395,14 @@ class CategoryControllerTest {
             );
 
             when(paginationProperties.maxPageSize()).thenReturn(100);
-            when(categoryService.getAll(0, 20)).thenReturn(pageResponse);
+            when(categoryService.getAll(0, 20, null)).thenReturn(pageResponse);
 
             mockMvc.perform(get("/categories/all/paged"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.page").value(0))
                     .andExpect(jsonPath("$.size").value(20));
 
-            verify(categoryService).getAll(0, 20);
+            verify(categoryService).getAll(0, 20, null);
         }
     }
 }

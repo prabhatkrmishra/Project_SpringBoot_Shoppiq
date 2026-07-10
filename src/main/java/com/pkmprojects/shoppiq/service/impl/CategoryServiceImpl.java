@@ -191,6 +191,20 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CategoryResponse> getAll(int page, int size, String search) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        var categoryPage = (search != null && !search.isBlank())
+                ? categoryRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search, pageable)
+                : categoryRepository.findAllByOrderByNameAsc(pageable);
+        return PageResponse.of(categoryPage, CategoryResponse::fromEntity);
+    }
+
+    /**
      * Retrieves a category by its identifier.
      *
      * <p>

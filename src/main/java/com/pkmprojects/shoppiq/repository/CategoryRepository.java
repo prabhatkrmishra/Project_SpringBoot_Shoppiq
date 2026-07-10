@@ -65,4 +65,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findAllByOrderByNameAsc();
 
     Page<Category> findAllByOrderByNameAsc(Pageable pageable);
+
+    Page<Category> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
+            String name, String description, Pageable pageable);
 }

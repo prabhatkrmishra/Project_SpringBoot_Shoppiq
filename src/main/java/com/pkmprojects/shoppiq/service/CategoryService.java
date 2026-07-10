@@ -141,4 +141,14 @@ public interface CategoryService {
      * @return paginated category responses
      */
     PageResponse<CategoryResponse> getAll(int page, int size);
+
+    /**
+     * Retrieves categories, paginated and optionally filtered by name or description.
+     *
+     * @param page   page number (0-based)
+     * @param size   page size
+     * @param search optional search term to filter by name or description
+     * @return paginated category responses
+     */
+    PageResponse<CategoryResponse> getAll(int page, int size, String search);
 }
