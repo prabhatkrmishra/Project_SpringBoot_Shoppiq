@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -63,8 +64,13 @@ public class AdminMailController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<Map<String, String>> sendMail(@Valid @RequestBody AdminMailRequest request) {
-        adminMailService.sendMail(request);
+    public ResponseEntity<Map<String, String>> sendMail(
+            @Valid @RequestBody AdminMailRequest request,
+            @AuthenticationPrincipal User admin) {
+        adminMailService.sendMail(request, admin.getEmail());
+        if (Boolean.TRUE.equals(request.sendToAll())) {
+            return ResponseEntity.ok(Map.of("message", "Email is being sent in the background. You can continue working."));
+        }
         return ResponseEntity.ok(Map.of("message", "Email sent successfully."));
     }
 }
