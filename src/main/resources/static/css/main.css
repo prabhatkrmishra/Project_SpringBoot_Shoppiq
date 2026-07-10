@@ -774,6 +774,7 @@ small { font-size: 0.78rem; }
 .newsletter-inner p { margin-bottom: 24px; }
 .newsletter-form { display: flex; gap: 12px; max-width: 440px; margin: 0 auto; }
 .newsletter-form input { flex: 1; }
+.newsletter-success { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--color-primary); font-weight: 600; font-size: 1rem; }
 
 /* \u2500\u2500\u2500 Cart Page \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
 .cart-page { display: flex; flex-direction: column; gap: 24px; }

@@ -245,6 +245,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/contact").permitAll()
 
+                        // Newsletter: public subscribe + unsubscribe
+                        .requestMatchers(HttpMethod.POST, "/api/newsletter/subscribe").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/newsletter/unsubscribe").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/items/all").permitAll()
                         .requestMatchers(HttpMethod.GET, "/items/*").permitAll()
 

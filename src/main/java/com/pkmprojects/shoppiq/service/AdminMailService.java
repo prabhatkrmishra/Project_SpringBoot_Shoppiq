@@ -4,15 +4,16 @@ import com.pkmprojects.shoppiq.dto.admin.request.AdminMailRequest;
 import com.pkmprojects.shoppiq.email.EmailService;
 import com.pkmprojects.shoppiq.email.EmailType;
 import com.pkmprojects.shoppiq.email.dto.EmailMessage;
+import com.pkmprojects.shoppiq.entity.NewsletterSubscriber;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.repository.NewsletterSubscriberRepository;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Service for admin mail functionality.
@@ -27,6 +28,7 @@ public class AdminMailService {
 
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final NewsletterSubscriberRepository subscriberRepository;
 
     /**
      * Sends an email from admin to a user or all users.
@@ -42,7 +44,7 @@ public class AdminMailService {
         } else {
             Long userId = userRepository.findUserByEmail(request.toEmail())
                     .map(User::getId).orElse(null);
-            sendSingleEmail(request.toEmail(), request.subject(), request.body(), emailType, templateName, userId);
+            sendSingleEmail(request.toEmail(), request.subject(), request.body(), emailType, templateName, userId, "/profile");
         }
     }
 
@@ -53,7 +55,7 @@ public class AdminMailService {
 
         for (User user : allUsers) {
             try {
-                sendSingleEmail(user.getEmail(), request.subject(), request.body(), emailType, templateName, user.getId());
+                sendSingleEmail(user.getEmail(), request.subject(), request.body(), emailType, templateName, user.getId(), "/profile");
                 sent++;
             } catch (Exception e) {
                 skipped++;
@@ -61,14 +63,39 @@ public class AdminMailService {
             }
         }
 
-        log.info("Admin bulk mail completed: sent={}, skipped={}, type={}", sent, skipped, emailType);
+        Set<String> registeredEmails = allUsers.stream()
+                .map(User::getEmail)
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+
+        List<NewsletterSubscriber> activeSubscribers = subscriberRepository.findAllByActiveTrue();
+        int subscribersSent = 0;
+        int subscribersSkipped = 0;
+
+        for (NewsletterSubscriber subscriber : activeSubscribers) {
+            if (registeredEmails.contains(subscriber.getEmail().toLowerCase())) {
+                continue;
+            }
+            try {
+                String unsubscribeUrl = "/api/newsletter/unsubscribe?token=" + subscriber.getToken();
+                sendSingleEmail(subscriber.getEmail(), request.subject(), request.body(), emailType, templateName, null, unsubscribeUrl);
+                subscribersSent++;
+            } catch (Exception e) {
+                subscribersSkipped++;
+                log.error("Failed to send admin mail to newsletter subscriber {}: {}", subscriber.getEmail(), e.getMessage());
+            }
+        }
+
+        log.info("Admin bulk mail completed: users(sent={}, skipped={}), subscribers(sent={}, skipped={}), type={}",
+                sent, skipped, subscribersSent, subscribersSkipped, emailType);
     }
 
-    private void sendSingleEmail(String toEmail, String subject, String body, EmailType emailType, String templateName, Long userId) {
+    private void sendSingleEmail(String toEmail, String subject, String body, EmailType emailType, String templateName, Long userId, String unsubscribeUrl) {
         Map<String, Object> vars = new HashMap<>();
         vars.put("userName", "Customer");
         vars.put("title", subject);
         vars.put("body", body);
+        vars.put("unsubscribeUrl", unsubscribeUrl != null ? unsubscribeUrl : "/profile");
 
         EmailMessage message = EmailMessage.builder()
                 .to(toEmail)
