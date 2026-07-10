@@ -1,10 +1,9 @@
 package com.pkmprojects.shoppiq.service.seller;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.entity.User;
-
-import java.util.List;
 
 /**
  * Business contract for seller product management.
@@ -53,12 +52,14 @@ public interface SellerProductService {
     ItemResponse createProduct(ItemRequest request, User user);
 
     /**
-     * Retrieves all products belonging to the authenticated seller.
+     * Retrieves all products belonging to the authenticated seller, paginated.
      *
      * @param user the authenticated user
-     * @return list of the seller's products
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated seller's products
      */
-    List<ItemResponse> getMyProducts(User user);
+    PageResponse<ItemResponse> getMyProducts(User user, int page, int size);
 
     /**
      * Retrieves a specific product belonging to the authenticated seller.

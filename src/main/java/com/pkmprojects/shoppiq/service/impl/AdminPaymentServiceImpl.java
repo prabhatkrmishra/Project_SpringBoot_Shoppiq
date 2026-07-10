@@ -1,12 +1,12 @@
 package com.pkmprojects.shoppiq.service.impl;
 
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.admin.AdminPaymentService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -58,23 +57,11 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     public PageResponse<AdminPaymentResponse> getAllPayments(PaymentStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Payment> paymentPage = (status != null)
+        var paymentPage = (status != null)
                 ? paymentRepository.findByPaymentStatus(status, pageable)
                 : paymentRepository.findAll(pageable);
 
-        List<AdminPaymentResponse> content = paymentPage.getContent().stream()
-                .map(AdminPaymentResponse::fromEntity)
-                .toList();
-
-        return new PageResponse<>(
-                content,
-                paymentPage.getNumber(),
-                paymentPage.getSize(),
-                paymentPage.getTotalElements(),
-                paymentPage.getTotalPages(),
-                paymentPage.isFirst(),
-                paymentPage.isLast()
-        );
+        return PageResponse.of(paymentPage, AdminPaymentResponse::fromEntity);
     }
 
     @Override

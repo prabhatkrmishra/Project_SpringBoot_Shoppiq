@@ -2,6 +2,8 @@ package com.pkmprojects.shoppiq.repository;
 
 import com.pkmprojects.shoppiq.entity.Seller;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -46,6 +48,8 @@ public interface SellerRepository extends JpaRepository<Seller, Long> {
      * @return list of matching sellers
      */
     List<Seller> findByVerificationStatus(VerificationStatus status);
+
+    Page<Seller> findByVerificationStatus(VerificationStatus status, Pageable pageable);
 
     /**
      * Counts sellers by verification status.

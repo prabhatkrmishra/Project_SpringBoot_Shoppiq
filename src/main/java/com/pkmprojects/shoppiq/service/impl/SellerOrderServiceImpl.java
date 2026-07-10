@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.impl;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
 import com.pkmprojects.shoppiq.entity.Order;
 import com.pkmprojects.shoppiq.entity.Seller;
@@ -17,10 +18,11 @@ import com.pkmprojects.shoppiq.repository.OrderRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
 import com.pkmprojects.shoppiq.service.OrderEmailService;
 import com.pkmprojects.shoppiq.service.seller.SellerOrderService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Default implementation of {@link SellerOrderService}.
@@ -52,12 +54,11 @@ public class SellerOrderServiceImpl implements SellerOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SellerOrderResponse> getOrders(User user) {
+    public PageResponse<SellerOrderResponse> getOrders(User user, int page, int size) {
         Seller seller = findActiveSeller(user);
-        return orderRepository.findDistinctBySellerIdOrderByPlacedAtDesc(seller.getId())
-                .stream()
-                .map(order -> SellerOrderResponse.from(order, seller.getId()))
-                .toList();
+        Pageable pageable = PageRequest.of(page, size);
+        var orderPage = orderRepository.findDistinctBySellerId(seller.getId(), pageable);
+        return PageResponse.of(orderPage, order -> SellerOrderResponse.from(order, seller.getId()));
     }
 
     @Override

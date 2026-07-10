@@ -1,11 +1,11 @@
 package com.pkmprojects.shoppiq.service.impl;
 
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.admin.AdminUserService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -66,23 +65,11 @@ public class AdminUserServiceImpl implements AdminUserService {
     public PageResponse<AdminUserResponse> getAllCustomers(Boolean enabled, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<User> userPage = (enabled != null)
+        var userPage = (enabled != null)
                 ? userRepository.findByEnabled(enabled, pageable)
                 : userRepository.findAll(pageable);
 
-        List<AdminUserResponse> content = userPage.getContent().stream()
-                .map(this::mapToUserResponse)
-                .toList();
-
-        return new PageResponse<>(
-                content,
-                userPage.getNumber(),
-                userPage.getSize(),
-                userPage.getTotalElements(),
-                userPage.getTotalPages(),
-                userPage.isFirst(),
-                userPage.isLast()
-        );
+        return PageResponse.of(userPage, this::mapToUserResponse);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.impl;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
@@ -11,6 +12,9 @@ import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.OrderEmailService;
 import com.pkmprojects.shoppiq.service.PaymentService;
 import com.pkmprojects.shoppiq.service.PromoCodeService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -196,6 +200,13 @@ public class CheckoutServiceImpl {
                 .stream()
                 .map(OrderResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<OrderResponse> getMyOrders(User user, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "placedAt"));
+        var orderPage = orderRepository.findAllByUserOrderByPlacedAtDesc(user, pageable);
+        return PageResponse.of(orderPage, OrderResponse::from);
     }
 
     /**

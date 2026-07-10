@@ -51,6 +51,8 @@
     </div>
   </div>
 
+  <div id="inventory-pagination"></div>
+
   <div id="bulkActionBar" class="bulk-action-bar" style="display:none;">
     <span id="selectedCount">0</span> items selected
     <div class="bulk-action-bar-controls">
@@ -72,10 +74,13 @@
 }
 .bulk-action-bar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 </style>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
   var allItems = [];
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
 
   function stockBadge(status) {
     if (status === 'IN_STOCK') return '<span class="status-badge in-stock">In Stock</span>';
@@ -157,18 +162,40 @@
     renderRows(allItems);
   }
 
-  function loadFiltered(filter) {
+  function loadFiltered(page) {
+    if (page != null) currentPage = page;
+    var filter = document.getElementById('stockFilter').value;
     var url = '/api/admin/inventory';
     if (filter === 'LOW_STOCK') url = '/api/admin/inventory/low-stock';
     else if (filter === 'OUT_OF_STOCK') url = '/api/admin/inventory/out-of-stock';
-    API.get(url).then(renderRows).catch(function () {
+    url += '?page=' + currentPage + '&size=' + PAGE_SIZE;
+    API.get(url).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderRows(items);
+      Pagination.render('inventory-pagination', data, loadFiltered, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadFiltered(0);
+        }
+      });
+    }).catch(function () {
       document.getElementById('inventory-body').innerHTML =
         '<tr><td colspan="7" class="text-center text-muted">Failed to load inventory</td></tr>';
     });
   }
 
-  function loadInventory() {
-    API.get('/api/admin/inventory').then(renderInventory).catch(function () {
+  function loadInventory(page) {
+    if (page != null) currentPage = page;
+    API.get('/api/admin/inventory?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderInventory(items);
+      Pagination.render('inventory-pagination', data, loadInventory, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadInventory(0);
+        }
+      });
+    }).catch(function () {
       document.getElementById('inventory-body').innerHTML =
         '<tr><td colspan="7" class="text-center text-muted">Failed to load inventory</td></tr>';
     });
@@ -177,7 +204,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     loadInventory();
     document.getElementById('stockFilter').addEventListener('change', function () {
-      loadFiltered(this.value);
+      loadFiltered(0);
     });
     document.getElementById('selectAll').addEventListener('change', function () {
       var checked = this.checked;

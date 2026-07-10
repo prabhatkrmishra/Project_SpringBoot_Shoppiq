@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.CategoryRequest;
 import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
 
@@ -127,4 +128,17 @@ public interface CategoryService {
      * @return list of all categories
      */
     List<CategoryResponse> getAll();
+
+    /**
+     * Retrieves all categories, paginated.
+     *
+     * <p>
+     * The returned page is ordered alphabetically by category name.
+     * </p>
+     *
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated category responses
+     */
+    PageResponse<CategoryResponse> getAll(int page, int size);
 }

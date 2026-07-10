@@ -41,12 +41,16 @@
       </table>
     </div>
   </div>
+  <div id="reviews-pagination"></div>
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
   var allReviews = [];
 
   function statusClass(s) {
@@ -119,10 +123,17 @@
     });
   }
 
-  function loadReviews() {
-    API.get('/api/admin/reviews?page=0&size=100').then(function (data) {
+  function loadReviews(page) {
+    if (page != null) currentPage = page;
+    API.get('/api/admin/reviews?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
       var reviews = data && data.content ? data.content : (Array.isArray(data) ? data : []);
       renderReviews(reviews);
+      Pagination.render('reviews-pagination', data, loadReviews, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadReviews(0);
+        }
+      });
     }).catch(function () {
       document.getElementById('reviews-body').innerHTML =
         '<tr><td colspan="7" class="text-center text-muted">Failed to load reviews</td></tr>';
@@ -132,7 +143,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     loadReviews();
     document.getElementById('statusFilter').addEventListener('change', function () {
-      renderReviews(allReviews);
+      loadReviews(0);
     });
   });
 })();

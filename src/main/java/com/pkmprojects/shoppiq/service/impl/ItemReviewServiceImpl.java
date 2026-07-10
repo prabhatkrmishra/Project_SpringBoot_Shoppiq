@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.impl;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
 import com.pkmprojects.shoppiq.entity.Item;
@@ -14,6 +15,9 @@ import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.repository.ItemReviewRepository;
 import com.pkmprojects.shoppiq.service.ItemReviewService;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -172,6 +176,16 @@ public class ItemReviewServiceImpl implements ItemReviewService {
                 .toList();
     }
 
+    @Override
+    public PageResponse<ItemReviewResponse> getByItemForUser(Long itemId, User currentUser, int page, int size) {
+        List<ItemReviewResponse> all = getByItemForUser(itemId, currentUser);
+        int start = Math.min(page * size, all.size());
+        int end = Math.min(start + size, all.size());
+        List<ItemReviewResponse> content = all.subList(start, end);
+        int totalPages = (all.isEmpty()) ? 0 : (int) Math.ceil((double) all.size() / size);
+        return new PageResponse<>(content, page, size, all.size(), totalPages, page == 0, page >= totalPages - 1);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -182,6 +196,13 @@ public class ItemReviewServiceImpl implements ItemReviewService {
                 .stream()
                 .map(ItemReviewResponse::fromEntity)
                 .toList();
+    }
+
+    @Override
+    public PageResponse<ItemReviewResponse> getByUser(User user, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var reviewPage = itemReviewRepository.findAllByUserIdOrderByCreatedAtDesc(user.getId(), pageable);
+        return PageResponse.of(reviewPage, ItemReviewResponse::fromEntity);
     }
 
     /**

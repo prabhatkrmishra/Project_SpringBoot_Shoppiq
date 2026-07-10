@@ -24,18 +24,24 @@
     </div>
 
     <div id="itemGrid" class="grid-4" style="display:none;"></div>
+    <div id="sale-pagination"></div>
   </div>
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
 
+<script th:src="@{/js/pagination.js}"></script>
 <script>
+var currentPage = 0;
+var PAGE_SIZE = 12;
+
 document.addEventListener("DOMContentLoaded", function () {
-  loadSaleItems();
+  loadSaleItems(0);
 });
 
-async function loadSaleItems() {
+function loadSaleItems(page) {
+  if (page != null) currentPage = page;
   var grid = document.getElementById("itemGrid");
   var empty = document.getElementById("emptyState");
   var loading = document.getElementById("loadingState");
@@ -43,9 +49,9 @@ async function loadSaleItems() {
   grid.style.display = "none";
   empty.style.display = "none";
 
-  try {
-    var items = await API.get("/items/sale");
-    if (!items || items.length === 0) {
+  API.get("/items/sale?page=" + currentPage + "&size=" + PAGE_SIZE).then(function (data) {
+    var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+    if (items.length === 0) {
       empty.style.display = "";
       grid.style.display = "none";
     } else {
@@ -80,14 +86,20 @@ async function loadSaleItems() {
       grid.style.display = "";
       empty.style.display = "none";
     }
-  } catch (e) {
+    Pagination.render("sale-pagination", data, loadSaleItems, {
+      onPageSizeChange: function (newSize) {
+        PAGE_SIZE = newSize;
+        loadSaleItems(0);
+      }
+    });
+  }).catch(function (e) {
     empty.style.display = "";
     empty.querySelector("h2").textContent = "Could not load sale items";
     empty.querySelector("p").textContent = e.message || "Please try again later.";
-  } finally {
+  }).finally(function () {
     loading.style.display = "none";
-  }
-  if (typeof lucide !== "undefined") lucide.createIcons();
+    if (typeof lucide !== "undefined") lucide.createIcons();
+  });
 }
 </script>
 </body>

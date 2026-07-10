@@ -1,9 +1,8 @@
 package com.pkmprojects.shoppiq.service.seller;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
 import com.pkmprojects.shoppiq.entity.User;
-
-import java.util.List;
 
 /**
  * Business contract for seller inventory management.
@@ -29,28 +28,34 @@ import java.util.List;
 public interface SellerInventoryService {
 
     /**
-     * Retrieves the full inventory for the authenticated seller.
+     * Retrieves the full inventory for the authenticated seller, paginated.
      *
      * @param user the authenticated user
-     * @return list of seller's products with inventory info
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated seller's products with inventory info
      */
-    List<SellerInventoryResponse> getInventory(User user);
+    PageResponse<SellerInventoryResponse> getInventory(User user, int page, int size);
 
     /**
-     * Retrieves low stock products for the authenticated seller.
+     * Retrieves low stock products for the authenticated seller, paginated.
      *
      * @param user the authenticated user
-     * @return list of low stock products
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated low stock products
      */
-    List<SellerInventoryResponse> getLowStockProducts(User user);
+    PageResponse<SellerInventoryResponse> getLowStockProducts(User user, int page, int size);
 
     /**
-     * Retrieves out of stock products for the authenticated seller.
+     * Retrieves out of stock products for the authenticated seller, paginated.
      *
      * @param user the authenticated user
-     * @return list of out of stock products
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated out of stock products
      */
-    List<SellerInventoryResponse> getOutOfStockProducts(User user);
+    PageResponse<SellerInventoryResponse> getOutOfStockProducts(User user, int page, int size);
 
     /**
      * Adjusts the stock quantity for a product owned by the seller.

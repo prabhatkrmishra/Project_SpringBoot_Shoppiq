@@ -22,6 +22,7 @@
             </div>
 
             <div id="reviews-list" style="display:none;"></div>
+            <div id="reviews-pagination"></div>
         </div>
     </main>
 
@@ -56,20 +57,22 @@
     </div>
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:src="@{/js/pagination.js}"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         var loading = document.getElementById('reviews-loading');
         var empty = document.getElementById('reviews-empty');
         var list = document.getElementById('reviews-list');
-        var allReviews = [];
+        var currentPage = 0;
+        var PAGE_SIZE = 20;
 
         function renderReviews(reviews) {
             if (!reviews || reviews.length === 0) {
                 loading.style.display = 'none';
                 empty.style.display = '';
+                list.style.display = 'none';
                 return;
             }
-            allReviews = reviews;
             loading.style.display = 'none';
             list.style.display = '';
             var html = '';
@@ -111,7 +114,7 @@
                         if (!confirmed) return;
                         API.del('/reviews/' + reviewId + '/delete').then(function () {
                             showToast('Review deleted', 'success');
-                            loadReviews();
+                            loadReviews(currentPage);
                         }).catch(function (e) { showToast(e.message || 'Failed to delete', 'error'); });
                     });
                 });
@@ -131,17 +134,27 @@
             document.getElementById('edit-review-modal').classList.remove('active');
         }
 
-        function loadReviews() {
+        function loadReviews(page) {
+            if (page != null) currentPage = page;
             loading.style.display = '';
             empty.style.display = 'none';
             list.style.display = 'none';
-            API.get('/user/reviews').then(renderReviews).catch(function () {
+            API.get('/user/reviews?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+                var reviews = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+                renderReviews(reviews);
+                Pagination.render('reviews-pagination', data, loadReviews, {
+                    onPageSizeChange: function (newSize) {
+                        PAGE_SIZE = newSize;
+                        loadReviews(0);
+                    }
+                });
+            }).catch(function () {
                 loading.style.display = 'none';
                 empty.style.display = '';
             });
         }
 
-        loadReviews();
+        loadReviews(0);
 
         document.getElementById('edit-review-close').addEventListener('click', closeModal);
         document.getElementById('edit-review-cancel').addEventListener('click', closeModal);
@@ -159,7 +172,7 @@
                 showToast('Review updated', 'success');
                 closeModal();
                 setButtonLoading(btn, false);
-                loadReviews();
+                loadReviews(currentPage);
             }).catch(function (err) {
                 showToast(err.message || 'Failed to update', 'error');
                 setButtonLoading(btn, false);

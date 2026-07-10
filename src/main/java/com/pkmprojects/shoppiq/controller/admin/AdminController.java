@@ -4,12 +4,14 @@ import com.pkmprojects.shoppiq.dto.admin.analytics.*;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.request.*;
 import com.pkmprojects.shoppiq.dto.response.*;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.exception.business.AdminCannotBlockSelfException;
 import com.pkmprojects.shoppiq.service.ItemService;
 import com.pkmprojects.shoppiq.service.CategoryService;
@@ -70,6 +72,7 @@ public class AdminController {
     private final ItemService itemService;
     private final CategoryService categoryService;
     private final AdminTestDataService testDataService;
+    private final PaginationProperties pagination;
 
     public AdminController(AdminDashboardService dashboardService,
                            AdminInventoryService inventoryService,
@@ -80,7 +83,8 @@ public class AdminController {
                            AdminReportService reportService,
                            ItemService itemService,
                            CategoryService categoryService,
-                           AdminTestDataService testDataService) {
+                           AdminTestDataService testDataService,
+                           PaginationProperties pagination) {
         this.dashboardService = dashboardService;
         this.inventoryService = inventoryService;
         this.orderService = orderService;
@@ -91,6 +95,7 @@ public class AdminController {
         this.itemService = itemService;
         this.categoryService = categoryService;
         this.testDataService = testDataService;
+        this.pagination = pagination;
     }
 
     // =========================================================
@@ -185,8 +190,12 @@ public class AdminController {
     // =========================================================
 
     @GetMapping("/inventory")
-    public List<AdminProductInventoryResponse> getAllInventory() {
-        return inventoryService.getAllProductInventory();
+    public PageResponse<AdminProductInventoryResponse> getAllInventory(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) int size
+    ) {
+        size = Math.min(size, pagination.maxPageSize());
+        return inventoryService.getAllProductInventory(page, size);
     }
 
     @GetMapping("/inventory/low-stock")
@@ -266,11 +275,12 @@ public class AdminController {
     // =========================================================
 
     @GetMapping("/orders")
-    public AdminOrderService.PageResponse<AdminOrderResponse> getAllOrders(
+    public PageResponse<AdminOrderResponse> getAllOrders(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @jakarta.validation.constraints.Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) int size
     ) {
+        size = Math.min(size, pagination.maxPageSize());
         return orderService.getAllOrders(status, page, size);
     }
 
@@ -292,11 +302,12 @@ public class AdminController {
     // =========================================================
 
     @GetMapping("/users")
-    public AdminUserService.PageResponse<AdminUserResponse> getAllCustomers(
+    public PageResponse<AdminUserResponse> getAllCustomers(
             @RequestParam(required = false) Boolean enabled,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @jakarta.validation.constraints.Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) int size
     ) {
+        size = Math.min(size, pagination.maxPageSize());
         return userService.getAllCustomers(enabled, page, size);
     }
 
@@ -335,11 +346,12 @@ public class AdminController {
     // =========================================================
 
     @GetMapping("/payments")
-    public AdminPaymentService.PageResponse<AdminPaymentResponse> getAllPayments(
+    public PageResponse<AdminPaymentResponse> getAllPayments(
             @RequestParam(required = false) PaymentStatus status,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @jakarta.validation.constraints.Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) int size
     ) {
+        size = Math.min(size, pagination.maxPageSize());
         return paymentService.getAllPayments(status, page, size);
     }
 
@@ -363,10 +375,11 @@ public class AdminController {
     // =========================================================
 
     @GetMapping("/reviews")
-    public AdminReviewService.PageResponse<AdminReviewResponse> getAllReviews(
+    public PageResponse<AdminReviewResponse> getAllReviews(
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @jakarta.validation.constraints.Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) int size
     ) {
+        size = Math.min(size, pagination.maxPageSize());
         return reviewService.getAllReviews(page, size);
     }
 

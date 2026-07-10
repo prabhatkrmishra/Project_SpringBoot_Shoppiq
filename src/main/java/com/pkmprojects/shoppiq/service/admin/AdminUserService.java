@@ -1,9 +1,9 @@
 package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.admin.response.AdminUserResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Business contract for admin customer management.
@@ -85,22 +85,6 @@ public interface AdminUserService {
             long newCustomersThisMonth,
             BigDecimal totalRevenue,
             BigDecimal averageOrderValue
-    ) {
-    }
-
-    /**
-     * Page response wrapper.
-     *
-     * @param <T> content type
-     */
-    record PageResponse<T>(
-            List<T> content,
-            int page,
-            int size,
-            long totalElements,
-            int totalPages,
-            boolean first,
-            boolean last
     ) {
     }
 }

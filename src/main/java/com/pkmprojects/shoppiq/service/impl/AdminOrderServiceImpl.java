@@ -1,20 +1,18 @@
 package com.pkmprojects.shoppiq.service.impl;
 
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.OrderEmailService;
 import com.pkmprojects.shoppiq.service.admin.AdminOrderService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Default implementation of {@link AdminOrderService}.
@@ -59,23 +57,11 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     public PageResponse<AdminOrderResponse> getAllOrders(OrderStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "placedAt"));
 
-        Page<Order> orderPage = (status != null)
+        var orderPage = (status != null)
                 ? orderRepository.findByStatus(status, pageable)
                 : orderRepository.findAll(pageable);
 
-        List<AdminOrderResponse> content = orderPage.getContent().stream()
-                .map(AdminOrderResponse::fromEntity)
-                .toList();
-
-        return new PageResponse<>(
-                content,
-                orderPage.getNumber(),
-                orderPage.getSize(),
-                orderPage.getTotalElements(),
-                orderPage.getTotalPages(),
-                orderPage.isFirst(),
-                orderPage.isLast()
-        );
+        return PageResponse.of(orderPage, AdminOrderResponse::fromEntity);
     }
 
     @Override

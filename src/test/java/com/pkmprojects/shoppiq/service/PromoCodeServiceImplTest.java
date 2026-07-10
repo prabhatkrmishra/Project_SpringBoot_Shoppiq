@@ -7,6 +7,7 @@ import com.pkmprojects.shoppiq.entity.PromoCode;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.enums.DiscountType;
 import com.pkmprojects.shoppiq.exception.*;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.repository.PromoCodeRepository;
 import com.pkmprojects.shoppiq.repository.PromoCodeUsageRepository;
 import com.pkmprojects.shoppiq.service.impl.PromoCodeServiceImpl;
@@ -21,6 +22,11 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -421,13 +427,15 @@ class PromoCodeServiceImplTest {
                     BigDecimal.valueOf(25), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
-            when(promoCodeRepository.findAll()).thenReturn(List.of(pc1, pc2));
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<PromoCode> page = new PageImpl<>(List.of(pc1, pc2), pageable, 2);
+            when(promoCodeRepository.findAll(any(Pageable.class))).thenReturn(page);
 
-            List<PromoCodeResponse> result = promoCodeService.findAll();
+            PageResponse<PromoCodeResponse> result = promoCodeService.findAll(0, 20);
 
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).code()).isEqualTo("CODE1");
-            assertThat(result.get(1).code()).isEqualTo("CODE2");
+            assertThat(result.content()).hasSize(2);
+            assertThat(result.content().get(0).code()).isEqualTo("CODE1");
+            assertThat(result.content().get(1).code()).isEqualTo("CODE2");
         }
     }
 

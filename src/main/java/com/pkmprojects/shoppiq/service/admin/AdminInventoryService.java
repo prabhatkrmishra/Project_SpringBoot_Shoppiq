@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 
 import java.util.List;
 
@@ -35,11 +36,13 @@ import java.util.List;
 public interface AdminInventoryService {
 
     /**
-     * Retrieves all products with inventory details.
+     * Retrieves all products with inventory details, paginated.
      *
-     * @return list of product inventory responses
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated product inventory responses
      */
-    List<AdminProductInventoryResponse> getAllProductInventory();
+    PageResponse<AdminProductInventoryResponse> getAllProductInventory(int page, int size);
 
     /**
      * Retrieves products with low stock (below threshold but > 0).

@@ -43,6 +43,7 @@
         </tbody>
       </table>
     </div>
+    <div id="orders-pagination"></div>
   </div>
   <div id="orderModal" class="modal-overlay">
     <div class="modal" style="max-width:600px;width:90%;">
@@ -58,10 +59,12 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
-  var allOrders = [];
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
 
   function statusClass(s) {
     if (s === 'DELIVERED' || s === 'COMPLETED') return 'active';
@@ -71,9 +74,8 @@
   }
 
   function renderOrders(orders) {
-    allOrders = orders || [];
     var filter = document.getElementById('statusFilter').value;
-    var filtered = filter ? allOrders.filter(function (o) { return o.status === filter; }) : allOrders;
+    var filtered = filter ? orders.filter(function (o) { return o.status === filter; }) : orders;
     var tbody = document.getElementById('orders-body');
     if (filtered.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No orders found</td></tr>';
@@ -141,10 +143,20 @@
     });
   }
 
-  function loadOrders() {
-    API.get('/api/admin/orders?page=0&size=100').then(function (data) {
+  function loadOrders(page) {
+    if (page != null) currentPage = page;
+    var status = document.getElementById('statusFilter').value;
+    var url = '/api/admin/orders?page=' + currentPage + '&size=' + PAGE_SIZE;
+    if (status) url += '&status=' + status;
+    API.get(url).then(function (data) {
       var orders = data && data.content ? data.content : (Array.isArray(data) ? data : []);
       renderOrders(orders);
+      Pagination.render('orders-pagination', data, loadOrders, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadOrders(0);
+        }
+      });
     }).catch(function () {
       document.getElementById('orders-body').innerHTML =
         '<tr><td colspan="7" class="text-center text-muted">Failed to load orders</td></tr>';
@@ -152,9 +164,9 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    loadOrders();
+    loadOrders(0);
     document.getElementById('statusFilter').addEventListener('change', function () {
-      renderOrders(allOrders);
+      loadOrders(0);
     });
     document.getElementById('order-modal-close').addEventListener('click', function () {
       document.getElementById('orderModal').classList.remove('active');

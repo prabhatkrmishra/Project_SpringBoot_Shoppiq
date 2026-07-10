@@ -1,10 +1,13 @@
 package com.pkmprojects.shoppiq.controller.seller;
 
+import com.pkmprojects.shoppiq.config.PaginationProperties;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.service.seller.SellerProductService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +20,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * REST controller for seller product management.
@@ -49,9 +51,11 @@ import java.util.List;
 public class SellerProductController {
 
     private final SellerProductService sellerProductService;
+    private final PaginationProperties pagination;
 
-    public SellerProductController(SellerProductService sellerProductService) {
+    public SellerProductController(SellerProductService sellerProductService, PaginationProperties pagination) {
         this.sellerProductService = sellerProductService;
+        this.pagination = pagination;
     }
 
     @PostMapping("/create")
@@ -63,9 +67,12 @@ public class SellerProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemResponse>> getMyProducts(
-            @AuthenticationPrincipal User currentUser) {
-        List<ItemResponse> products = sellerProductService.getMyProducts(currentUser);
+    public ResponseEntity<PageResponse<ItemResponse>> getMyProducts(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "15") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        PageResponse<ItemResponse> products = sellerProductService.getMyProducts(currentUser, page, size);
         return ResponseEntity.ok(products);
     }
 

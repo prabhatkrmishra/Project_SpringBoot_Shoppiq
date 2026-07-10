@@ -1,10 +1,13 @@
 package com.pkmprojects.shoppiq.controller;
 
+import com.pkmprojects.shoppiq.config.PaginationProperties;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.service.ItemReviewService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -49,6 +52,7 @@ public class ItemReviewController {
      * Item review service.
      */
     private final ItemReviewService itemReviewService;
+    private final PaginationProperties pagination;
 
     /**
      * Creates a new review for an item.
@@ -81,10 +85,13 @@ public class ItemReviewController {
      * @return ordered review list
      */
     @GetMapping("/user/reviews")
-    public List<ItemReviewResponse> getByUser(
-            @AuthenticationPrincipal User currentUser
+    public PageResponse<ItemReviewResponse> getByUser(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) int size
     ) {
-        return itemReviewService.getByUser(currentUser);
+        size = Math.min(size, pagination.maxPageSize());
+        return itemReviewService.getByUser(currentUser, page, size);
     }
 
     /**
@@ -97,13 +104,16 @@ public class ItemReviewController {
      * @return ordered review list
      */
     @GetMapping("/items/{itemId}/reviews")
-    public List<ItemReviewResponse> getByItem(
+    public PageResponse<ItemReviewResponse> getByItem(
             @PathVariable
             @Positive(message = "Item id must be a positive number")
             Long itemId,
-            @AuthenticationPrincipal User currentUser
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) int size
     ) {
-        return itemReviewService.getByItemForUser(itemId, currentUser);
+        size = Math.min(size, pagination.maxPageSize());
+        return itemReviewService.getByItemForUser(itemId, currentUser, page, size);
     }
 
     /**

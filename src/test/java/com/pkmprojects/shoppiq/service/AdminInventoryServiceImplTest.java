@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
@@ -19,6 +20,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -73,24 +79,28 @@ class AdminInventoryServiceImplTest {
         @Test
         @DisplayName("returns list of inventory items")
         void returnsListOfItems() {
-            when(itemRepository.findAllWithItemDetails()).thenReturn(List.of(testItem));
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<Item> page = new PageImpl<>(List.of(testItem), pageable, 1);
+            when(itemRepository.findAll(any(Pageable.class))).thenReturn(page);
 
-            List<AdminProductInventoryResponse> result = inventoryService.getAllProductInventory();
+            PageResponse<AdminProductInventoryResponse> result = inventoryService.getAllProductInventory(0, 20);
 
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).itemName()).isEqualTo("Test Product");
-            assertThat(result.get(0).sku()).isEqualTo("SKU-001");
-            assertThat(result.get(0).stockQuantity()).isEqualTo(50);
+            assertThat(result.content()).hasSize(1);
+            assertThat(result.content().get(0).itemName()).isEqualTo("Test Product");
+            assertThat(result.content().get(0).sku()).isEqualTo("SKU-001");
+            assertThat(result.content().get(0).stockQuantity()).isEqualTo(50);
         }
 
         @Test
         @DisplayName("returns empty list when no items")
         void returnsEmptyList() {
-            when(itemRepository.findAllWithItemDetails()).thenReturn(List.of());
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<Item> page = new PageImpl<>(List.of(), pageable, 0);
+            when(itemRepository.findAll(any(Pageable.class))).thenReturn(page);
 
-            List<AdminProductInventoryResponse> result = inventoryService.getAllProductInventory();
+            PageResponse<AdminProductInventoryResponse> result = inventoryService.getAllProductInventory(0, 20);
 
-            assertThat(result).isEmpty();
+            assertThat(result.content()).isEmpty();
         }
     }
 

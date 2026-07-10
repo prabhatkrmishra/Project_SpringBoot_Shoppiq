@@ -1,15 +1,17 @@
 package com.pkmprojects.shoppiq.service.impl;
 
 import com.pkmprojects.shoppiq.dto.admin.response.AdminProductResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.Item;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
 import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.service.admin.AdminProductService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Default implementation of {@link AdminProductService}.
@@ -34,11 +36,10 @@ public class AdminProductServiceImpl implements AdminProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdminProductResponse> getPendingProducts() {
-        return itemRepository.findAll().stream()
-                .filter(item -> item.getPublishingStatus() == ProductPublishingStatus.DRAFT)
-                .map(AdminProductResponse::from)
-                .toList();
+    public PageResponse<AdminProductResponse> getPendingProducts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var itemPage = itemRepository.findByPublishingStatus(ProductPublishingStatus.DRAFT, pageable);
+        return PageResponse.of(itemPage, AdminProductResponse::from);
     }
 
     @Override

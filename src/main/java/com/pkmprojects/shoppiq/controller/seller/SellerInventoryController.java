@@ -1,8 +1,11 @@
 package com.pkmprojects.shoppiq.controller.seller;
 
+import com.pkmprojects.shoppiq.config.PaginationProperties;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.service.seller.SellerInventoryService;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -16,8 +19,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * REST controller for seller inventory management.
@@ -46,30 +47,38 @@ import java.util.List;
 public class SellerInventoryController {
 
     private final SellerInventoryService sellerInventoryService;
+    private final PaginationProperties pagination;
 
-    public SellerInventoryController(SellerInventoryService sellerInventoryService) {
+    public SellerInventoryController(SellerInventoryService sellerInventoryService, PaginationProperties pagination) {
         this.sellerInventoryService = sellerInventoryService;
+        this.pagination = pagination;
     }
 
     @GetMapping
-    public ResponseEntity<List<SellerInventoryResponse>> getInventory(
-            @AuthenticationPrincipal User currentUser) {
-        List<SellerInventoryResponse> inventory = sellerInventoryService.getInventory(currentUser);
-        return ResponseEntity.ok(inventory);
+    public ResponseEntity<PageResponse<SellerInventoryResponse>> getInventory(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "15") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return ResponseEntity.ok(sellerInventoryService.getInventory(currentUser, page, size));
     }
 
     @GetMapping("/low-stock")
-    public ResponseEntity<List<SellerInventoryResponse>> getLowStock(
-            @AuthenticationPrincipal User currentUser) {
-        List<SellerInventoryResponse> lowStock = sellerInventoryService.getLowStockProducts(currentUser);
-        return ResponseEntity.ok(lowStock);
+    public ResponseEntity<PageResponse<SellerInventoryResponse>> getLowStock(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "15") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return ResponseEntity.ok(sellerInventoryService.getLowStockProducts(currentUser, page, size));
     }
 
     @GetMapping("/out-of-stock")
-    public ResponseEntity<List<SellerInventoryResponse>> getOutOfStock(
-            @AuthenticationPrincipal User currentUser) {
-        List<SellerInventoryResponse> outOfStock = sellerInventoryService.getOutOfStockProducts(currentUser);
-        return ResponseEntity.ok(outOfStock);
+    public ResponseEntity<PageResponse<SellerInventoryResponse>> getOutOfStock(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "15") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return ResponseEntity.ok(sellerInventoryService.getOutOfStockProducts(currentUser, page, size));
     }
 
     @PutMapping("/{id}/adjust")

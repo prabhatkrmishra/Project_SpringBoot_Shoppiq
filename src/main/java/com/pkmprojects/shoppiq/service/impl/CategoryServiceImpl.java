@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.impl;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.CategoryRequest;
 import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
 import com.pkmprojects.shoppiq.entity.Category;
@@ -8,6 +9,9 @@ import com.pkmprojects.shoppiq.exception.DuplicateCategoryException;
 import com.pkmprojects.shoppiq.repository.CategoryRepository;
 import com.pkmprojects.shoppiq.service.CategoryService;
 import com.pkmprojects.shoppiq.util.SlugUtil;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -170,6 +174,20 @@ public class CategoryServiceImpl implements CategoryService {
                 .stream()
                 .map(CategoryResponse::fromEntity)
                 .toList();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CategoryResponse> getAll(int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        return PageResponse.of(
+                categoryRepository.findAllByOrderByNameAsc(pageable),
+                CategoryResponse::fromEntity
+        );
     }
 
     /**

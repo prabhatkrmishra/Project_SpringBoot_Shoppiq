@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.impl;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.entity.Category;
@@ -21,10 +22,11 @@ import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
 import com.pkmprojects.shoppiq.service.seller.SellerProductService;
 import com.pkmprojects.shoppiq.util.SlugUtil;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Default implementation of {@link SellerProductService}.
@@ -98,12 +100,11 @@ public class SellerProductServiceImpl implements SellerProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ItemResponse> getMyProducts(User user) {
+    public PageResponse<ItemResponse> getMyProducts(User user, int page, int size) {
         Seller seller = findActiveSeller(user);
-        return itemRepository.findBySellerId(seller.getId())
-                .stream()
-                .map(ItemResponse::fromEntity)
-                .toList();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var itemPage = itemRepository.findBySellerId(seller.getId(), pageable);
+        return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
     @Override

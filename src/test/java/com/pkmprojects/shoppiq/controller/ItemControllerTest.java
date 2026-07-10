@@ -9,6 +9,7 @@ import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.entity.User;
@@ -37,6 +38,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -127,14 +129,14 @@ class ItemControllerTest {
         @Test
         @DisplayName("Returns 200 with list of items")
         void getAll_returnsList() throws Exception {
-            when(itemService.getAll())
-                    .thenReturn(List.of(stubResponse(1L), stubResponse(2L)));
+            when(itemService.getAll(anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(stubResponse(1L), stubResponse(2L)), 0, 20, 2, 1, true, false));
 
-            mockMvc.perform(get("/items/all"))
+            mockMvc.perform(get("/items/all?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].id").value(1))
-                    .andExpect(jsonPath("$[1].id").value(2));
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].id").value(1))
+                    .andExpect(jsonPath("$.content[1].id").value(2));
         }
     }
 

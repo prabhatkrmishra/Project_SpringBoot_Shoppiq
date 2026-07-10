@@ -10,6 +10,7 @@ import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.controller.seller.SellerInventoryController;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
@@ -125,35 +126,35 @@ class SellerInventoryControllerTest {
         @Test
         @DisplayName("Returns 200 with inventory list")
         void getInventory_returnsList() throws Exception {
-            when(sellerInventoryService.getInventory(any(User.class)))
-                    .thenReturn(List.of(stubResponse(1L, 10), stubResponse(2L, 0)));
+            when(sellerInventoryService.getInventory(any(User.class), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(stubResponse(1L, 10), stubResponse(2L, 0)), 0, 20, 2, 1, true, false));
 
-            mockMvc.perform(get("/seller/inventory"))
+            mockMvc.perform(get("/seller/inventory?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].itemId").value(1))
-                    .andExpect(jsonPath("$[0].stockStatus").value("IN_STOCK"))
-                    .andExpect(jsonPath("$[1].stockStatus").value("OUT_OF_STOCK"));
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].itemId").value(1))
+                    .andExpect(jsonPath("$.content[0].stockStatus").value("IN_STOCK"))
+                    .andExpect(jsonPath("$.content[1].stockStatus").value("OUT_OF_STOCK"));
         }
 
         @Test
         @DisplayName("Returns 200 with empty list when seller has no products")
         void getInventory_emptyList() throws Exception {
-            when(sellerInventoryService.getInventory(any(User.class)))
-                    .thenReturn(List.of());
+            when(sellerInventoryService.getInventory(any(User.class), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, false));
 
-            mockMvc.perform(get("/seller/inventory"))
+            mockMvc.perform(get("/seller/inventory?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.content.length()").value(0));
         }
 
         @Test
         @DisplayName("Returns 404 when seller profile does not exist")
         void getInventory_sellerNotFound_returns404() throws Exception {
-            when(sellerInventoryService.getInventory(any(User.class)))
+            when(sellerInventoryService.getInventory(any(User.class), anyInt(), anyInt()))
                     .thenThrow(SellerNotFoundException.userId(1L));
 
-            mockMvc.perform(get("/seller/inventory"))
+            mockMvc.perform(get("/seller/inventory?page=0&size=20"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("SELLER-404-001"));
         }
@@ -166,25 +167,25 @@ class SellerInventoryControllerTest {
         @Test
         @DisplayName("Returns 200 with low stock products")
         void getLowStock_returnsList() throws Exception {
-            when(sellerInventoryService.getLowStockProducts(any(User.class)))
-                    .thenReturn(List.of(stubResponse(3L, 3), stubResponse(4L, 1)));
+            when(sellerInventoryService.getLowStockProducts(any(User.class), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(stubResponse(3L, 3), stubResponse(4L, 1)), 0, 20, 2, 1, true, false));
 
-            mockMvc.perform(get("/seller/inventory/low-stock"))
+            mockMvc.perform(get("/seller/inventory/low-stock?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].stockStatus").value("LOW_STOCK"))
-                    .andExpect(jsonPath("$[1].stockStatus").value("LOW_STOCK"));
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].stockStatus").value("LOW_STOCK"))
+                    .andExpect(jsonPath("$.content[1].stockStatus").value("LOW_STOCK"));
         }
 
         @Test
         @DisplayName("Returns 200 with empty list when no low stock products")
         void getLowStock_emptyList() throws Exception {
-            when(sellerInventoryService.getLowStockProducts(any(User.class)))
-                    .thenReturn(List.of());
+            when(sellerInventoryService.getLowStockProducts(any(User.class), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, false));
 
-            mockMvc.perform(get("/seller/inventory/low-stock"))
+            mockMvc.perform(get("/seller/inventory/low-stock?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.content.length()").value(0));
         }
     }
 
@@ -195,13 +196,13 @@ class SellerInventoryControllerTest {
         @Test
         @DisplayName("Returns 200 with out of stock products")
         void getOutOfStock_returnsList() throws Exception {
-            when(sellerInventoryService.getOutOfStockProducts(any(User.class)))
-                    .thenReturn(List.of(stubResponse(5L, 0)));
+            when(sellerInventoryService.getOutOfStockProducts(any(User.class), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(stubResponse(5L, 0)), 0, 20, 1, 1, true, false));
 
-            mockMvc.perform(get("/seller/inventory/out-of-stock"))
+            mockMvc.perform(get("/seller/inventory/out-of-stock?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].stockStatus").value("OUT_OF_STOCK"));
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].stockStatus").value("OUT_OF_STOCK"));
         }
     }
 

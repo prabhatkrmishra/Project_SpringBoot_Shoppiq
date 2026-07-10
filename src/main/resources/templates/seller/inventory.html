@@ -48,14 +48,19 @@
         </tbody>
       </table>
     </div>
+    <div id="inventory-pagination"></div>
   </div>
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
   var allItems = [];
+  var currentPage = 0;
+  var PAGE_SIZE = 15;
+  var currentFilter = 'all';
 
   function stockBadge(status) {
     if (status === 'IN_STOCK') return '<span class="status-badge in-stock">In Stock</span>';
@@ -113,18 +118,41 @@
     renderRows(allItems);
   }
 
-  function loadFiltered(filter) {
+  function loadFiltered(filter, page) {
+    if (page != null) currentPage = page;
+    currentFilter = filter;
     var url = '/seller/inventory';
     if (filter === 'low') url = '/seller/inventory/low-stock';
     else if (filter === 'out') url = '/seller/inventory/out-of-stock';
-    API.get(url).then(renderRows).catch(function () {
+    url += '?page=' + currentPage + '&size=' + PAGE_SIZE;
+    API.get(url).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderRows(items);
+      Pagination.render('inventory-pagination', data, function (p) { loadFiltered(currentFilter, p); }, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadFiltered(currentFilter, 0);
+        }
+      });
+    }).catch(function () {
       document.getElementById('inventory-body').innerHTML =
         '<tr><td colspan="5" class="text-center text-muted">Failed to load inventory</td></tr>';
     });
   }
 
-  function loadInventory() {
-    API.get('/seller/inventory').then(renderInventory).catch(function () {
+  function loadInventory(page) {
+    if (page != null) currentPage = page;
+    currentFilter = 'all';
+    API.get('/seller/inventory?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderInventory(items);
+      Pagination.render('inventory-pagination', data, loadInventory, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadInventory(0);
+        }
+      });
+    }).catch(function () {
       document.getElementById('inventory-body').innerHTML =
         '<tr><td colspan="5" class="text-center text-muted">Failed to load inventory</td></tr>';
     });
@@ -133,7 +161,12 @@
   document.addEventListener('DOMContentLoaded', function () {
     loadInventory();
     document.getElementById('stock-filter').addEventListener('change', function () {
-      loadFiltered(this.value);
+      currentPage = 0;
+      if (this.value === 'all') {
+        loadInventory(0);
+      } else {
+        loadFiltered(this.value, 0);
+      }
     });
   });
 })();

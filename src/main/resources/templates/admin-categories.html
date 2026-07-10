@@ -33,6 +33,8 @@
     </div>
   </div>
 
+  <div id="categories-pagination"></div>
+
   <div id="category-modal" class="modal-overlay">
     <div class="modal" role="dialog" aria-labelledby="cat-modal-title">
       <div class="modal-header">
@@ -59,10 +61,13 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
   var editingId = null;
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
 
   function openModal(cat) {
     editingId = cat ? cat.id : null;
@@ -120,8 +125,18 @@
     });
   }
 
-  function loadCategories() {
-    API.get('/categories/all').then(renderCategories).catch(function () {
+  function loadCategories(page) {
+    if (page != null) currentPage = page;
+    API.get('/categories/all/paged?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderCategories(items);
+      Pagination.render('categories-pagination', data, loadCategories, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadCategories(0);
+        }
+      });
+    }).catch(function () {
       document.getElementById('categories-body').innerHTML =
         '<tr><td colspan="5" class="text-center text-muted">Failed to load</td></tr>';
     });
@@ -147,7 +162,7 @@
       promise.then(function () {
         showToast(editingId ? 'Category updated' : 'Category created', 'success');
         closeModal();
-        loadCategories();
+        loadCategories(0);
       }).catch(function (err) {
         showToast(err.message || 'Failed to save', 'error');
         setButtonLoading(btn, false);

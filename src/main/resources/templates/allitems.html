@@ -24,7 +24,7 @@
             <option value="">All Categories</option>
           </select>
         </div>
-        <button type="button" class="btn btn-primary" onclick="loadItems()">Search</button>
+        <button type="button" class="btn btn-primary" onclick="loadItems(0)">Search</button>
       </form>
     </div>
 
@@ -40,21 +40,24 @@
     </div>
 
     <div id="itemGrid" class="grid-4" style="display:none;"></div>
+    <div id="items-pagination"></div>
   </div>
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
 
+<script th:src="@{/js/pagination.js}"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
-var allItems = [];
+var currentPage = 0;
+var PAGE_SIZE = 12;
 
 document.addEventListener("DOMContentLoaded", function () {
   loadCategories();
-  loadItems();
-  document.getElementById("search").addEventListener("keyup", debounce(loadItems, 300));
-  document.getElementById("categoryFilter").addEventListener("change", loadItems);
+  loadItems(0);
+  document.getElementById("search").addEventListener("keyup", debounce(function () { loadItems(0); }, 300));
+  document.getElementById("categoryFilter").addEventListener("change", function () { loadItems(0); });
 });
 
 async function loadCategories() {
@@ -70,7 +73,8 @@ async function loadCategories() {
   } catch (e) { /* silent */ }
 }
 
-async function loadItems() {
+async function loadItems(page) {
+  if (page != null) currentPage = page;
   var grid = document.getElementById("itemGrid");
   var empty = document.getElementById("emptyState");
   var loading = document.getElementById("loadingState");
@@ -79,17 +83,20 @@ async function loadItems() {
   empty.style.display = "none";
 
   try {
-    allItems = await API.get("/items/all");
     var search = document.getElementById("search").value.toLowerCase();
     var catId = document.getElementById("categoryFilter").value;
 
-    var filtered = allItems.filter(function (item) {
+    var url = "/items/all?page=" + currentPage + "&size=" + PAGE_SIZE;
+    var data = await API.get(url);
+    var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+
+    var filtered = items.filter(function (item) {
       var matchSearch = !search || item.name.toLowerCase().indexOf(search) !== -1 || (item.description && item.description.toLowerCase().indexOf(search) !== -1);
       var matchCat = !catId || (item.category && String(item.category.id) === catId);
       return matchSearch && matchCat;
     });
 
-    document.getElementById("itemCount").textContent = filtered.length + " products available";
+    document.getElementById("itemCount").textContent = (data.totalElements || filtered.length) + " products available";
 
     if (filtered.length === 0) {
       empty.style.display = "";
@@ -99,6 +106,13 @@ async function loadItems() {
       grid.style.display = "";
       empty.style.display = "none";
     }
+
+    Pagination.render("items-pagination", data, loadItems, {
+      onPageSizeChange: function (newSize) {
+        PAGE_SIZE = newSize;
+        loadItems(0);
+      }
+    });
   } catch (e) {
     empty.style.display = "";
     empty.querySelector("h2").textContent = "Could not load products";
@@ -135,7 +149,7 @@ function renderItemCard(item) {
 function resetFilters() {
   document.getElementById("search").value = "";
   document.getElementById("categoryFilter").value = "";
-  loadItems();
+  loadItems(0);
 }
 
 function escapeHtml(str) { var d = document.createElement("div"); d.appendChild(document.createTextNode(str)); return d.innerHTML; }

@@ -1,9 +1,12 @@
 package com.pkmprojects.shoppiq.controller;
 
+import com.pkmprojects.shoppiq.config.PaginationProperties;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.CategoryRequest;
 import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
 import com.pkmprojects.shoppiq.service.CategoryService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
@@ -52,6 +55,8 @@ public class CategoryController {
      * Service responsible for category operations.
      */
     private final CategoryService categoryService;
+
+    private final PaginationProperties pagination;
 
     /**
      * Creates a new category.
@@ -121,5 +126,22 @@ public class CategoryController {
     @GetMapping("/all")
     public List<CategoryResponse> getAll() {
         return categoryService.getAll();
+    }
+
+    /**
+     * Retrieves all available categories, paginated.
+     *
+     * <p>Used by the admin categories panel.</p>
+     *
+     * @param page zero-based page index
+     * @param size requested page size
+     * @return paginated category responses
+     */
+    @GetMapping("/all/paged")
+    public PageResponse<CategoryResponse> getAllPaginated(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return categoryService.getAll(page, size);
     }
 }

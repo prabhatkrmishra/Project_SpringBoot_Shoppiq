@@ -63,15 +63,20 @@
       </table>
     </div>
   </div>
+
+  <div id="sale-pagination"></div>
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
   var allItems = [];
   var currentFilter = '';
   var editedIds = new Set();
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
 
   function formatCurrency(val) {
     return '$' + parseFloat(val || 0).toFixed(2);
@@ -298,8 +303,18 @@
     renderRows(filterItems(allItems));
   }
 
-  function loadProducts() {
-    API.get('/api/admin/inventory').then(renderInventory).catch(function () {
+  function loadProducts(page) {
+    if (page != null) currentPage = page;
+    API.get('/api/admin/inventory?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderInventory(items);
+      Pagination.render('sale-pagination', data, loadProducts, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadProducts(0);
+        }
+      });
+    }).catch(function () {
       document.getElementById('products-body').innerHTML =
         '<tr><td colspan="8" class="text-center text-muted">Failed to load products</td></tr>';
     });
@@ -310,7 +325,7 @@
 
     document.getElementById('saleFilter').addEventListener('change', function () {
       currentFilter = this.value;
-      renderRows(filterItems(allItems));
+      loadProducts(0);
     });
 
     document.getElementById('selectAll').addEventListener('change', function () {

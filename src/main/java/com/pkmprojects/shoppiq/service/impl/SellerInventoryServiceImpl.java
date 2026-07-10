@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.impl;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
 import com.pkmprojects.shoppiq.entity.Item;
 import com.pkmprojects.shoppiq.entity.ItemDetails;
@@ -16,6 +17,9 @@ import com.pkmprojects.shoppiq.repository.ItemDetailsRepository;
 import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
 import com.pkmprojects.shoppiq.service.seller.SellerInventoryService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,34 +55,37 @@ public class SellerInventoryServiceImpl implements SellerInventoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SellerInventoryResponse> getInventory(User user) {
+    public PageResponse<SellerInventoryResponse> getInventory(User user, int page, int size) {
         Seller seller = findActiveSeller(user);
-        return itemRepository.findBySellerId(seller.getId())
-                .stream()
-                .map(SellerInventoryResponse::from)
-                .toList();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        var itemPage = itemRepository.findBySellerId(seller.getId(), pageable);
+        return PageResponse.of(itemPage, SellerInventoryResponse::from);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<SellerInventoryResponse> getLowStockProducts(User user) {
+    public PageResponse<SellerInventoryResponse> getLowStockProducts(User user, int page, int size) {
         Seller seller = findActiveSeller(user);
-        return itemDetailsRepository.findLowStockProductsBySellerId(LOW_STOCK_THRESHOLD, seller.getId())
+        List<SellerInventoryResponse> content = itemDetailsRepository
+                .findLowStockProductsBySellerId(LOW_STOCK_THRESHOLD, seller.getId())
                 .stream()
                 .map(ItemDetails::getItem)
                 .map(SellerInventoryResponse::from)
                 .toList();
+        return new PageResponse<>(content, 0, content.size(), content.size(), 1, true, true);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<SellerInventoryResponse> getOutOfStockProducts(User user) {
+    public PageResponse<SellerInventoryResponse> getOutOfStockProducts(User user, int page, int size) {
         Seller seller = findActiveSeller(user);
-        return itemDetailsRepository.findOutOfStockProductsBySellerId(seller.getId())
+        List<SellerInventoryResponse> content = itemDetailsRepository
+                .findOutOfStockProductsBySellerId(seller.getId())
                 .stream()
                 .map(ItemDetails::getItem)
                 .map(SellerInventoryResponse::from)
                 .toList();
+        return new PageResponse<>(content, 0, content.size(), content.size(), 1, true, true);
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.controller.admin.AdminSellerController;
 import com.pkmprojects.shoppiq.dto.admin.response.AdminSellerResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 import com.pkmprojects.shoppiq.exception.SellerApprovalInvalidException;
@@ -34,7 +35,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -92,41 +95,41 @@ class AdminSellerControllerTest {
         @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 200 with all sellers when no status filter")
         void getSellers_noFilter_returnsAll() throws Exception {
-            when(adminSellerService.getAllSellers())
-                    .thenReturn(List.of(
+            when(adminSellerService.getAllSellers(anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(
                             stubResponse(1L, VerificationStatus.PENDING),
                             stubResponse(2L, VerificationStatus.APPROVED)
-                    ));
+                    ), 0, 20, 2, 1, true, false));
 
-            mockMvc.perform(get("/api/admin/sellers"))
+            mockMvc.perform(get("/api/admin/sellers?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].verificationStatus").value("PENDING"))
-                    .andExpect(jsonPath("$[1].verificationStatus").value("APPROVED"));
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].verificationStatus").value("PENDING"))
+                    .andExpect(jsonPath("$.content[1].verificationStatus").value("APPROVED"));
         }
 
         @Test
         @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 200 filtered by status")
         void getSellers_withStatusFilter_returnsFiltered() throws Exception {
-            when(adminSellerService.getSellersByStatus(VerificationStatus.PENDING))
-                    .thenReturn(List.of(stubResponse(1L, VerificationStatus.PENDING)));
+            when(adminSellerService.getSellersByStatus(eq(VerificationStatus.PENDING), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(stubResponse(1L, VerificationStatus.PENDING)), 0, 20, 1, 1, true, false));
 
-            mockMvc.perform(get("/api/admin/sellers?status=PENDING"))
+            mockMvc.perform(get("/api/admin/sellers?status=PENDING&page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].verificationStatus").value("PENDING"));
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].verificationStatus").value("PENDING"));
         }
 
         @Test
         @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 200 with empty list when no sellers exist")
         void getSellers_emptyList() throws Exception {
-            when(adminSellerService.getAllSellers()).thenReturn(List.of());
+            when(adminSellerService.getAllSellers(anyInt(), anyInt())).thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, false));
 
-            mockMvc.perform(get("/api/admin/sellers"))
+            mockMvc.perform(get("/api/admin/sellers?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.content.length()").value(0));
         }
 
         @Test

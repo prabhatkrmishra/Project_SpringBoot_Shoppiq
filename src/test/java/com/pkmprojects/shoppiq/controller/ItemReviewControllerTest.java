@@ -10,6 +10,7 @@ import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
 import com.pkmprojects.shoppiq.entity.User;
@@ -40,6 +41,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -248,30 +250,31 @@ class ItemReviewControllerTest {
         @Test
         @DisplayName("Returns 200 with a list of reviews")
         void getByItem_validItem_returnsList() throws Exception {
-            when(itemReviewService.getByItemForUser(eq(1L), any()))
-                    .thenReturn(List.of(stubResponse(4, "Good"), stubResponse(5, "Great")));
+            when(itemReviewService.getByItemForUser(eq(1L), any(), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(stubResponse(4, "Good"), stubResponse(5, "Great")), 0, 20, 2, 1, true, false));
 
-            mockMvc.perform(get("/items/1/reviews"))
+            mockMvc.perform(get("/items/1/reviews?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2));
+                    .andExpect(jsonPath("$.content.length()").value(2));
         }
 
         @Test
         @DisplayName("Returns 200 with empty list when item has no reviews")
         void getByItem_noReviews_returnsEmptyList() throws Exception {
-            when(itemReviewService.getByItemForUser(eq(1L), any())).thenReturn(List.of());
+            when(itemReviewService.getByItemForUser(eq(1L), any(), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, true));
 
-            mockMvc.perform(get("/items/1/reviews"))
+            mockMvc.perform(get("/items/1/reviews?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.content.length()").value(0));
         }
 
         @Test
         @DisplayName("Returns 404 when item does not exist")
         void getByItem_itemNotFound_returns404() throws Exception {
-            when(itemReviewService.getByItemForUser(eq(99L), any())).thenThrow(ItemNotFoundException.id(99L));
+            when(itemReviewService.getByItemForUser(eq(99L), any(), anyInt(), anyInt())).thenThrow(ItemNotFoundException.id(99L));
 
-            mockMvc.perform(get("/items/99/reviews"))
+            mockMvc.perform(get("/items/99/reviews?page=0&size=20"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("ITEM-404-001"));
         }

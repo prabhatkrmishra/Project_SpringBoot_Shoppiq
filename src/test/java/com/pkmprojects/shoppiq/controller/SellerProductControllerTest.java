@@ -11,6 +11,7 @@ import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.controller.seller.SellerProductController;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemRequest;
 import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
@@ -45,6 +46,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -228,25 +230,25 @@ class SellerProductControllerTest {
         @Test
         @DisplayName("Returns 200 with list of products")
         void getMyProducts_returnsList() throws Exception {
-            when(sellerProductService.getMyProducts(any(User.class)))
-                    .thenReturn(List.of(stubResponse(1L), stubResponse(2L)));
+            when(sellerProductService.getMyProducts(any(User.class), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(stubResponse(1L), stubResponse(2L)), 0, 20, 2, 1, true, false));
 
-            mockMvc.perform(get("/seller/products"))
+            mockMvc.perform(get("/seller/products?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].id").value(1))
-                    .andExpect(jsonPath("$[1].id").value(2));
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].id").value(1))
+                    .andExpect(jsonPath("$.content[1].id").value(2));
         }
 
         @Test
         @DisplayName("Returns 200 with empty list when seller has no products")
         void getMyProducts_emptyList() throws Exception {
-            when(sellerProductService.getMyProducts(any(User.class)))
-                    .thenReturn(List.of());
+            when(sellerProductService.getMyProducts(any(User.class), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, false));
 
-            mockMvc.perform(get("/seller/products"))
+            mockMvc.perform(get("/seller/products?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.content.length()").value(0));
         }
     }
 

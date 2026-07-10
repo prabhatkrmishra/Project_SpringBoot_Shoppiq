@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.exception.*;
@@ -88,7 +89,7 @@ class AdminOrderServiceImplTest {
             Page<Order> page = new PageImpl<>(List.of(testOrder), pageable, 1);
             when(orderRepository.findAll(any(Pageable.class))).thenReturn(page);
 
-            AdminOrderService.PageResponse<AdminOrderResponse> result = orderService.getAllOrders(null, 0, 20);
+            PageResponse<AdminOrderResponse> result = orderService.getAllOrders(null, 0, 20);
 
             assertThat(result.content()).hasSize(1);
             assertThat(result.page()).isEqualTo(0);
@@ -102,7 +103,7 @@ class AdminOrderServiceImplTest {
             Page<Order> page = new PageImpl<>(List.of(testOrder), pageable, 1);
             when(orderRepository.findByStatus(eq(OrderStatus.PLACED), any(Pageable.class))).thenReturn(page);
 
-            AdminOrderService.PageResponse<AdminOrderResponse> result = orderService.getAllOrders(OrderStatus.PLACED, 0, 20);
+            PageResponse<AdminOrderResponse> result = orderService.getAllOrders(OrderStatus.PLACED, 0, 20);
 
             assertThat(result.content()).hasSize(1);
             verify(orderRepository).findByStatus(eq(OrderStatus.PLACED), any(Pageable.class));

@@ -2,6 +2,8 @@ package com.pkmprojects.shoppiq.repository;
 
 import com.pkmprojects.shoppiq.entity.Item;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,6 +33,8 @@ public interface ItemRepository
      * @return list of items belonging to the seller
      */
     List<Item> findBySellerId(Long sellerId);
+
+    Page<Item> findBySellerId(Long sellerId, Pageable pageable);
 
     /**
      * Counts the number of items owned by a specific seller.
@@ -80,6 +84,8 @@ public interface ItemRepository
      */
     List<Item> findAllByOrderByNameAsc();
 
+    Page<Item> findAllByOrderByNameAsc(Pageable pageable);
+
     /**
      * Retrieves all items with their item details eagerly fetched.
      *
@@ -87,6 +93,11 @@ public interface ItemRepository
      */
     @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category")
     List<Item> findAllWithItemDetails();
+
+    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category")
+    Page<Item> findAllWithItemDetails(Pageable pageable);
+
+    Page<Item> findByPublishingStatus(ProductPublishingStatus status, Pageable pageable);
 
     /**
      * Returns the subset of the given SKUs that already exist in the database.
@@ -124,6 +135,10 @@ public interface ItemRepository
            "WHERE i.publishingStatus = :status ORDER BY i.createdAt DESC")
     List<Item> findNewArrivals(@Param("status") ProductPublishingStatus status, org.springframework.data.domain.Pageable pageable);
 
+    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
+           "WHERE i.publishingStatus = :status ORDER BY i.createdAt DESC")
+    Page<Item> findNewArrivalsPage(@Param("status") ProductPublishingStatus status, Pageable pageable);
+
     /**
      * Retrieves all published items that are marked as on sale.
      *
@@ -132,4 +147,8 @@ public interface ItemRepository
     @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
            "WHERE i.publishingStatus = 'PUBLISHED' AND id.onSale = true ORDER BY i.createdAt DESC")
     List<Item> findOnSaleItems();
+
+    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
+           "WHERE i.publishingStatus = 'PUBLISHED' AND id.onSale = true ORDER BY i.createdAt DESC")
+    Page<Item> findOnSaleItemsPage(Pageable pageable);
 }

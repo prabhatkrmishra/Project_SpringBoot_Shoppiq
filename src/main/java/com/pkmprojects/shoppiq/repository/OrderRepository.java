@@ -25,6 +25,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findAllByUserOrderByPlacedAtDesc(User user);
 
+    Page<Order> findAllByUserOrderByPlacedAtDesc(User user, Pageable pageable);
+
     Page<Order> findAll(Pageable pageable);
 
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
@@ -51,6 +53,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     @Query("SELECT DISTINCT o FROM Order o JOIN o.orderItems oi JOIN oi.itemDetails id JOIN id.item i JOIN i.seller s WHERE s.id = :sellerId ORDER BY o.placedAt DESC")
     List<Order> findDistinctBySellerIdOrderByPlacedAtDesc(@Param("sellerId") Long sellerId);
+
+    @Query("SELECT DISTINCT o FROM Order o JOIN o.orderItems oi JOIN oi.itemDetails id JOIN id.item i JOIN i.seller s WHERE s.id = :sellerId ORDER BY o.placedAt DESC")
+    Page<Order> findDistinctBySellerId(@Param("sellerId") Long sellerId, Pageable pageable);
 
     /**
      * Counts the distinct orders that contain items belonging to a specific seller.

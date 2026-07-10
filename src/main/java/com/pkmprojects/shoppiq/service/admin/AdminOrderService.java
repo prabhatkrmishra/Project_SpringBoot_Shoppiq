@@ -1,9 +1,8 @@
 package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.admin.response.AdminOrderResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
-
-import java.util.List;
 
 /**
  * Business contract for admin order management.
@@ -64,20 +63,4 @@ public interface AdminOrderService {
      * @return updated order response
      */
     AdminOrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus);
-
-    /**
-     * Page response wrapper.
-     *
-     * @param <T> content type
-     */
-    record PageResponse<T>(
-            List<T> content,
-            int page,
-            int size,
-            long totalElements,
-            int totalPages,
-            boolean first,
-            boolean last
-    ) {
-    }
 }

@@ -2,14 +2,19 @@ package com.pkmprojects.shoppiq.service.impl;
 
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.admin.AdminInventoryService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -55,11 +60,10 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdminProductInventoryResponse> getAllProductInventory() {
-        List<Item> items = itemRepository.findAllWithItemDetails();
-        return items.stream()
-                .map(this::mapToInventoryResponse)
-                .collect(Collectors.toList());
+    public PageResponse<AdminProductInventoryResponse> getAllProductInventory(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        var itemPage = itemRepository.findAll(pageable);
+        return PageResponse.of(itemPage, this::mapToInventoryResponse);
     }
 
     @Override

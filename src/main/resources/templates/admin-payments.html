@@ -40,6 +40,7 @@
       </table>
     </div>
   </div>
+  <div id="payments-pagination"></div>
   <div id="paymentModal" class="modal-overlay">
     <div class="modal" style="max-width:550px;width:90%;">
       <div class="modal-header">
@@ -54,9 +55,12 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
   function statusClass(s) {
     if (s === 'COMPLETED' || s === 'SUCCESS') return 'active';
     if (s === 'REFUNDED') return 'inactive';
@@ -78,15 +82,17 @@
       if (e.target === this) this.classList.remove('active');
     });
 
-    API.get('/api/admin/payments?page=0&size=100').then(function (data) {
-      var payments = data && data.content ? data.content : (Array.isArray(data) ? data : []);
-      var tbody = document.getElementById('payments-body');
-      if (payments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No payments found</td></tr>';
-        return;
-      }
-      tbody.innerHTML = '';
-      payments.forEach(function (p) {
+    function loadPayments(page) {
+      if (page != null) currentPage = page;
+      API.get('/api/admin/payments?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+        var payments = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+        var tbody = document.getElementById('payments-body');
+        if (payments.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No payments found</td></tr>';
+          return;
+        }
+        tbody.innerHTML = '';
+        payments.forEach(function (p) {
         var canRefund = p.paymentStatus === 'COMPLETED' || p.paymentStatus === 'SUCCESS';
         var actions = '<button class="btn btn-sm btn-secondary view-payment-btn" data-payment-id="' + p.id + '">View</button>';
         if (canRefund) {
@@ -140,10 +146,18 @@
           });
         });
       });
-    }).catch(function () {
-      document.getElementById('payments-body').innerHTML =
-        '<tr><td colspan="8" class="text-center text-muted">Failed to load payments</td></tr>';
-    });
+      Pagination.render('payments-pagination', data, loadPayments, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadPayments(0);
+        }
+      });
+      }).catch(function () {
+        document.getElementById('payments-body').innerHTML =
+          '<tr><td colspan="8" class="text-center text-muted">Failed to load payments</td></tr>';
+      });
+    }
+    loadPayments();
   });
 })();
 </script>

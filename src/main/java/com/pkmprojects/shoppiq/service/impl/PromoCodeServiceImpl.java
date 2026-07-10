@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.impl;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeRequest;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeResponse;
 import com.pkmprojects.shoppiq.entity.Order;
@@ -11,13 +12,15 @@ import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.PromoCodeRepository;
 import com.pkmprojects.shoppiq.repository.PromoCodeUsageRepository;
 import com.pkmprojects.shoppiq.service.PromoCodeService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
-import java.util.List;
 
 /**
  * Handles promo code validation, discount calculation and admin management.
@@ -166,10 +169,10 @@ public class PromoCodeServiceImpl implements PromoCodeService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PromoCodeResponse> findAll() {
-        return promoCodeRepository.findAll().stream()
-                .map(PromoCodeResponse::from)
-                .toList();
+    public PageResponse<PromoCodeResponse> findAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var promoPage = promoCodeRepository.findAll(pageable);
+        return PageResponse.of(promoPage, PromoCodeResponse::from);
     }
 
     @Override

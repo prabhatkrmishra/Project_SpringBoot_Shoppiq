@@ -2,6 +2,8 @@ package com.pkmprojects.shoppiq.repository;
 
 import com.pkmprojects.shoppiq.entity.ItemReview;
 import com.pkmprojects.shoppiq.enums.ReviewStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -48,6 +50,8 @@ public interface ItemReviewRepository
      * @return ordered review list
      */
     List<ItemReview> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+
+    Page<ItemReview> findAllByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     /**
      * Finds a review written by a user for a specific item.

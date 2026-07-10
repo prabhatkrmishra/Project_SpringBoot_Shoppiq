@@ -9,7 +9,9 @@ import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
+import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.CategoryRequest;
 import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
 import com.pkmprojects.shoppiq.exception.CategoryNotFoundException;
@@ -78,6 +80,9 @@ class CategoryControllerTest {
 
     @MockitoBean
     private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+
+    @MockitoBean
+    private PaginationProperties paginationProperties;
 
     private static CategoryResponse stubResponse(Long id, String name, String slug) {
         return new CategoryResponse(id, name, slug, "Description of " + name);
@@ -328,6 +333,76 @@ class CategoryControllerTest {
             mockMvc.perform(get("/categories/all"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.length()").value(0));
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // GET /categories/all/paged
+    // ---------------------------------------------------------------
+
+    @Nested
+    @DisplayName("GET /categories/all/paged")
+    class GetAllPaginated {
+
+        @Test
+        @WithMockUser
+        @DisplayName("Returns 200 with paged category data")
+        void getAllPaginated_withData_returns200() throws Exception {
+            PageResponse<CategoryResponse> pageResponse = new PageResponse<>(
+                    List.of(stubResponse(1L, "Electronics", "electronics")),
+                    0, 20, 1, 1, true, false
+            );
+
+            when(paginationProperties.maxPageSize()).thenReturn(100);
+            when(categoryService.getAll(0, 20)).thenReturn(pageResponse);
+
+            mockMvc.perform(get("/categories/all/paged")
+                            .param("page", "0")
+                            .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].name").value("Electronics"))
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.size").value(20))
+                    .andExpect(jsonPath("$.totalElements").value(1));
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("Returns 200 with empty content when no categories exist")
+        void getAllPaginated_empty_returns200() throws Exception {
+            PageResponse<CategoryResponse> emptyPage = new PageResponse<>(
+                    List.of(), 0, 20, 0, 0, true, true
+            );
+
+            when(paginationProperties.maxPageSize()).thenReturn(100);
+            when(categoryService.getAll(0, 20)).thenReturn(emptyPage);
+
+            mockMvc.perform(get("/categories/all/paged")
+                            .param("page", "0")
+                            .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(0))
+                    .andExpect(jsonPath("$.totalElements").value(0));
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("Uses default page=0 and size=20 when no params provided")
+        void getAllPaginated_defaultParams_returns200() throws Exception {
+            PageResponse<CategoryResponse> pageResponse = new PageResponse<>(
+                    List.of(), 0, 20, 0, 0, true, true
+            );
+
+            when(paginationProperties.maxPageSize()).thenReturn(100);
+            when(categoryService.getAll(0, 20)).thenReturn(pageResponse);
+
+            mockMvc.perform(get("/categories/all/paged"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.size").value(20));
+
+            verify(categoryService).getAll(0, 20);
         }
     }
 }

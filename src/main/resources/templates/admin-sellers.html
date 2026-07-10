@@ -34,12 +34,16 @@
       </table>
     </div>
   </div>
+  <div id="sellers-pagination"></div>
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
   function statusBadge(s) {
     if (s === 'APPROVED') return 'badge-success';
     if (s === 'REJECTED') return 'badge-danger';
@@ -122,17 +126,27 @@
       });
     });
   }
-  function loadSellers() {
+  function loadSellers(page) {
+    if (page != null) currentPage = page;
     var status = document.getElementById('status-filter').value;
-    var url = '/api/admin/sellers' + (status ? '?status=' + status : '');
-    API.get(url).then(renderSellers).catch(function () {
+    var url = '/api/admin/sellers?page=' + currentPage + '&size=' + PAGE_SIZE + (status ? '&status=' + status : '');
+    API.get(url).then(function (data) {
+      var sellers = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+      renderSellers(sellers);
+      Pagination.render('sellers-pagination', data, loadSellers, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadSellers(0);
+        }
+      });
+    }).catch(function () {
       document.getElementById('sellers-body').innerHTML =
         '<tr><td colspan="9" class="text-center text-muted">Failed to load</td></tr>';
     });
   }
   document.addEventListener('DOMContentLoaded', function () {
     loadSellers();
-    document.getElementById('status-filter').addEventListener('change', loadSellers);
+    document.getElementById('status-filter').addEventListener('change', function () { loadSellers(0); });
   });
 })();
 </script>

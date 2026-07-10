@@ -13,6 +13,7 @@ import com.pkmprojects.shoppiq.controller.admin.AdminController;
 import com.pkmprojects.shoppiq.dto.admin.analytics.*;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
@@ -187,11 +188,12 @@ class AdminControllerTest {
         @DisplayName("GET /admin/inventory - returns inventory list")
         @WithMockUser(roles = "ADMIN")
         void getAllInventory_returnsList() throws Exception {
-            when(inventoryService.getAllProductInventory()).thenReturn(List.of());
+            when(inventoryService.getAllProductInventory(anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, false));
 
-            mockMvc.perform(get("/api/admin/inventory"))
+            mockMvc.perform(get("/api/admin/inventory?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray());
+                    .andExpect(jsonPath("$.content").isArray());
         }
 
         @Test
@@ -245,11 +247,10 @@ class AdminControllerTest {
         @DisplayName("GET /admin/orders - returns paginated orders")
         @WithMockUser(roles = "ADMIN")
         void getAllOrders_returnsPage() throws Exception {
-            AdminOrderService.PageResponse<AdminOrderResponse> pageResponse =
-                    new AdminOrderService.PageResponse<>(List.of(), 0, 20, 0, 0, true, true);
-            when(orderService.getAllOrders(isNull(), eq(0), eq(20))).thenReturn(pageResponse);
+            when(orderService.getAllOrders(isNull(), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, false));
 
-            mockMvc.perform(get("/api/admin/orders"))
+            mockMvc.perform(get("/api/admin/orders?page=0&size=20"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content").isArray());
         }
@@ -275,11 +276,10 @@ class AdminControllerTest {
         @DisplayName("GET /admin/users - returns paginated users")
         @WithMockUser(roles = "ADMIN")
         void getAllCustomers_returnsPage() throws Exception {
-            AdminUserService.PageResponse<AdminUserResponse> pageResponse =
-                    new AdminUserService.PageResponse<>(List.of(), 0, 20, 0, 0, true, true);
-            when(userService.getAllCustomers(isNull(), eq(0), eq(20))).thenReturn(pageResponse);
+            when(userService.getAllCustomers(isNull(), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, false));
 
-            mockMvc.perform(get("/api/admin/users"))
+            mockMvc.perform(get("/api/admin/users?page=0&size=20"))
                     .andExpect(status().isOk());
         }
 
@@ -342,11 +342,10 @@ class AdminControllerTest {
         @DisplayName("GET /admin/payments - returns paginated payments")
         @WithMockUser(roles = "ADMIN")
         void getAllPayments_returnsPage() throws Exception {
-            AdminPaymentService.PageResponse<AdminPaymentResponse> pageResponse =
-                    new AdminPaymentService.PageResponse<>(List.of(), 0, 20, 0, 0, true, true);
-            when(paymentService.getAllPayments(isNull(), eq(0), eq(20))).thenReturn(pageResponse);
+            when(paymentService.getAllPayments(isNull(), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, false));
 
-            mockMvc.perform(get("/api/admin/payments"))
+            mockMvc.perform(get("/api/admin/payments?page=0&size=20"))
                     .andExpect(status().isOk());
         }
 
@@ -384,11 +383,10 @@ class AdminControllerTest {
         @DisplayName("GET /admin/reviews - returns paginated reviews")
         @WithMockUser(roles = "ADMIN")
         void getAllReviews_returnsPage() throws Exception {
-            AdminReviewService.PageResponse<AdminReviewResponse> pageResponse =
-                    new AdminReviewService.PageResponse<>(List.of(), 0, 20, 0, 0, true, true);
-            when(reviewService.getAllReviews(eq(0), eq(20))).thenReturn(pageResponse);
+            when(reviewService.getAllReviews(anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, false));
 
-            mockMvc.perform(get("/api/admin/reviews"))
+            mockMvc.perform(get("/api/admin/reviews?page=0&size=20"))
                     .andExpect(status().isOk());
         }
 
@@ -411,19 +409,19 @@ class AdminControllerTest {
             mockMvc.perform(get("/api/admin/dashboard/summary"))
                     .andExpect(status().isUnauthorized());
 
-            mockMvc.perform(get("/api/admin/inventory"))
+            mockMvc.perform(get("/api/admin/inventory?page=0&size=20"))
                     .andExpect(status().isUnauthorized());
 
-            mockMvc.perform(get("/api/admin/orders"))
+            mockMvc.perform(get("/api/admin/orders?page=0&size=20"))
                     .andExpect(status().isUnauthorized());
 
-            mockMvc.perform(get("/api/admin/users"))
+            mockMvc.perform(get("/api/admin/users?page=0&size=20"))
                     .andExpect(status().isUnauthorized());
 
-            mockMvc.perform(get("/api/admin/payments"))
+            mockMvc.perform(get("/api/admin/payments?page=0&size=20"))
                     .andExpect(status().isUnauthorized());
 
-            mockMvc.perform(get("/api/admin/reviews"))
+            mockMvc.perform(get("/api/admin/reviews?page=0&size=20"))
                     .andExpect(status().isUnauthorized());
         }
     }

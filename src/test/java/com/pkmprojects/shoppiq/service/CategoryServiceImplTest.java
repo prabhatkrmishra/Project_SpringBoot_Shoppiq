@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.CategoryRequest;
 import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
 import com.pkmprojects.shoppiq.entity.Category;
@@ -16,6 +17,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -319,6 +324,58 @@ class CategoryServiceImplTest {
             List<CategoryResponse> result = categoryService.getAll();
 
             assertThat(result).isEmpty();
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // getAll(int page, int size) — paginated
+    // ---------------------------------------------------------------
+
+    @Nested
+    @DisplayName("getAll(page, size)")
+    class GetAllPaginated {
+
+        @Test
+        @DisplayName("Returns a PageResponse with the correct page content")
+        void getAllPaginated_withData_returnsPageResponse() throws Exception {
+            Category fashion = Category.builder()
+                    .name("Fashion")
+                    .slug("fashion")
+                    .description("Clothing")
+                    .build();
+            setId(fashion, 2L);
+
+            Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "name"));
+            var page = new PageImpl<>(List.of(stubCategory, fashion), pageable, 2);
+
+            when(categoryRepository.findAllByOrderByNameAsc(pageable)).thenReturn(page);
+
+            PageResponse<CategoryResponse> result = categoryService.getAll(0, 20);
+
+            assertThat(result.content()).hasSize(2);
+            assertThat(result.content().get(0).name()).isEqualTo("Electronics");
+            assertThat(result.content().get(1).name()).isEqualTo("Fashion");
+            assertThat(result.page()).isEqualTo(0);
+            assertThat(result.size()).isEqualTo(20);
+            assertThat(result.totalElements()).isEqualTo(2);
+            assertThat(result.totalPages()).isEqualTo(1);
+            assertThat(result.first()).isTrue();
+            assertThat(result.last()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns an empty PageResponse when no categories exist")
+        void getAllPaginated_empty_returnsEmptyPageResponse() {
+            Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "name"));
+            var page = new PageImpl<Category>(List.of(), pageable, 0);
+
+            when(categoryRepository.findAllByOrderByNameAsc(pageable)).thenReturn(page);
+
+            PageResponse<CategoryResponse> result = categoryService.getAll(0, 20);
+
+            assertThat(result.content()).isEmpty();
+            assertThat(result.totalElements()).isEqualTo(0);
+            assertThat(result.totalPages()).isEqualTo(0);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.impl;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.entity.Category;
@@ -14,6 +15,9 @@ import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.service.ItemService;
 import com.pkmprojects.shoppiq.util.SlugUtil;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -122,29 +126,25 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemResponse> getAll() {
-        return itemRepository.findAllByOrderByNameAsc()
-                .stream()
-                .map(ItemResponse::fromEntity)
-                .toList();
+    public PageResponse<ItemResponse> getAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        var itemPage = itemRepository.findAllByOrderByNameAsc(pageable);
+        return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
     @Override
-    public List<ItemResponse> getNewArrivals() {
-        return itemRepository.findNewArrivals(
-                        ProductPublishingStatus.PUBLISHED,
-                        org.springframework.data.domain.PageRequest.of(0, 20))
-                .stream()
-                .map(ItemResponse::fromEntity)
-                .toList();
+    public PageResponse<ItemResponse> getNewArrivals(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var itemPage = itemRepository.findNewArrivalsPage(
+                ProductPublishingStatus.PUBLISHED, pageable);
+        return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
     @Override
-    public List<ItemResponse> getSaleItems() {
-        return itemRepository.findOnSaleItems()
-                .stream()
-                .map(ItemResponse::fromEntity)
-                .toList();
+    public PageResponse<ItemResponse> getSaleItems(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var itemPage = itemRepository.findOnSaleItemsPage(pageable);
+        return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
     /**

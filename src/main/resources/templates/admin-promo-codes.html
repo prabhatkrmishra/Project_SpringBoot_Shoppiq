@@ -44,6 +44,8 @@
     </div>
   </div>
 
+  <div id="promo-pagination"></div>
+
   <div id="promo-modal" class="modal-overlay">
     <div class="modal" role="dialog" aria-labelledby="promo-modal-title" style="max-width:560px;">
       <div class="modal-header">
@@ -118,10 +120,13 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
   var editingId = null;
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
 
   function toLocalDateTime(iso) {
     if (!iso) return '';
@@ -228,8 +233,18 @@
     });
   }
 
-  function loadPromoCodes() {
-    API.get('/api/admin/promo-codes').then(renderPromoCodes).catch(function () {
+  function loadPromoCodes(page) {
+    if (page != null) currentPage = page;
+    API.get('/api/admin/promo-codes?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderPromoCodes(items);
+      Pagination.render('promo-pagination', data, loadPromoCodes, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadPromoCodes(0);
+        }
+      });
+    }).catch(function () {
       document.getElementById('promo-body').innerHTML =
         '<tr><td colspan="11" class="text-center text-muted">Failed to load promo codes</td></tr>';
     });

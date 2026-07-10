@@ -11,7 +11,9 @@ import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.User;
@@ -239,24 +241,25 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("200 OK — returns list of orders")
         void getMyOrders_success() throws Exception {
-            when(checkoutService.getMyOrders(customer))
-                    .thenReturn(List.of(orderResponse(1L), orderResponse(2L)));
+            when(checkoutService.getMyOrders(eq(customer), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(orderResponse(1L), orderResponse(2L)), 0, 20, 2, 1, true, false));
 
-            mockMvc.perform(get("/user/order/get/all"))
+            mockMvc.perform(get("/user/order/get/all?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].id").value(1))
-                    .andExpect(jsonPath("$[1].id").value(2));
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].id").value(1))
+                    .andExpect(jsonPath("$.content[1].id").value(2));
         }
 
         @Test
         @DisplayName("200 OK — empty list when no orders")
         void getMyOrders_empty() throws Exception {
-            when(checkoutService.getMyOrders(customer)).thenReturn(List.of());
+            when(checkoutService.getMyOrders(eq(customer), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, true));
 
-            mockMvc.perform(get("/user/order/get/all"))
+            mockMvc.perform(get("/user/order/get/all?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.content.length()").value(0));
         }
     }
 

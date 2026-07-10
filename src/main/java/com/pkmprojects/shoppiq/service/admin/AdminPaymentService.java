@@ -1,10 +1,10 @@
 package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.admin.response.AdminPaymentResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Business contract for admin payment management.
@@ -79,22 +79,6 @@ public interface AdminPaymentService {
             long pendingPayments,
             BigDecimal totalRevenue,
             BigDecimal refundedAmount
-    ) {
-    }
-
-    /**
-     * Page response wrapper.
-     *
-     * @param <T> content type
-     */
-    record PageResponse<T>(
-            List<T> content,
-            int page,
-            int size,
-            long totalElements,
-            int totalPages,
-            boolean first,
-            boolean last
     ) {
     }
 }

@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeRequest;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeResponse;
 import com.pkmprojects.shoppiq.entity.Order;
@@ -7,7 +8,6 @@ import com.pkmprojects.shoppiq.entity.PromoCode;
 import com.pkmprojects.shoppiq.entity.User;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Contract for promo code validation, application and admin management.
@@ -71,11 +71,13 @@ public interface PromoCodeService {
     void delete(Long id);
 
     /**
-     * Returns all promo codes.
+     * Returns all promo codes, paginated.
      *
-     * @return list of promo code responses
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated promo code responses
      */
-    List<PromoCodeResponse> findAll();
+    PageResponse<PromoCodeResponse> findAll(int page, int size);
 
     /**
      * Returns a single promo code by ID.

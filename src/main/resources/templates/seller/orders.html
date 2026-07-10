@@ -44,14 +44,18 @@
         </tbody>
       </table>
     </div>
+    <div id="orders-pagination"></div>
   </div>
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
   var allOrders = [];
+  var currentPage = 0;
+  var PAGE_SIZE = 15;
 
   function statusClass(s) {
     if (s === 'DELIVERED' || s === 'COMPLETED') return 'active';
@@ -99,10 +103,17 @@
     });
   }
 
-  function loadOrders() {
-    API.get('/seller/orders').then(function (orders) {
-      allOrders = orders || [];
+  function loadOrders(page) {
+    if (page != null) currentPage = page;
+    API.get('/seller/orders?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+      allOrders = data && data.content ? data.content : [];
       renderOrders(allOrders);
+      Pagination.render('orders-pagination', data, loadOrders, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadOrders(0);
+        }
+      });
     }).catch(function () {
       document.getElementById('orders-body').innerHTML =
         '<tr><td colspan="6" class="text-center text-muted">Failed to load orders</td></tr>';
@@ -112,7 +123,8 @@
   document.addEventListener('DOMContentLoaded', function () {
     loadOrders();
     document.getElementById('statusFilter').addEventListener('change', function () {
-      renderOrders(allOrders);
+      currentPage = 0;
+      loadOrders(0);
     });
   });
 })();

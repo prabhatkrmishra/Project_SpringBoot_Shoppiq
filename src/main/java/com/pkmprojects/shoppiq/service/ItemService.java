@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 
@@ -38,23 +39,29 @@ public interface ItemService {
     ItemResponse getBySlug(String slug);
 
     /**
-     * Retrieves every product in the catalog.
+     * Retrieves every product in the catalog, paginated.
      *
-     * @return ordered product list
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated product list
      */
-    List<ItemResponse> getAll();
+    PageResponse<ItemResponse> getAll(int page, int size);
 
     /**
-     * Retrieves the latest products ordered by creation date.
+     * Retrieves the latest products ordered by creation date, paginated.
      *
-     * @return list of newest products
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated newest products
      */
-    List<ItemResponse> getNewArrivals();
+    PageResponse<ItemResponse> getNewArrivals(int page, int size);
 
     /**
-     * Retrieves all products currently marked as on sale.
+     * Retrieves all products currently marked as on sale, paginated.
      *
-     * @return list of on-sale products
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated on-sale products
      */
-    List<ItemResponse> getSaleItems();
+    PageResponse<ItemResponse> getSaleItems(int page, int size);
 }

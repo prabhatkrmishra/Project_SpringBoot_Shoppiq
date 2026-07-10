@@ -1,14 +1,15 @@
 package com.pkmprojects.shoppiq.controller.admin;
 
+import com.pkmprojects.shoppiq.config.PaginationProperties;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.response.ContactMessageResponse;
 import com.pkmprojects.shoppiq.service.ContactMessageService;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * REST controller for admin contact message management.
@@ -16,6 +17,7 @@ import java.util.Map;
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
+@Validated
 @RestController
 @RequestMapping("/api/admin/messages")
 @PreAuthorize("hasRole('ADMIN')")
@@ -23,15 +25,19 @@ import java.util.Map;
 public class AdminContactMessageController {
 
     private final ContactMessageService contactMessageService;
+    private final PaginationProperties pagination;
 
     @GetMapping("/unread-count")
-    public ResponseEntity<Map<String, Long>> getUnreadCount() {
-        return ResponseEntity.ok(Map.of("count", contactMessageService.countUnreadMessages()));
+    public ResponseEntity<java.util.Map<String, Long>> getUnreadCount() {
+        return ResponseEntity.ok(java.util.Map.of("count", contactMessageService.countUnreadMessages()));
     }
 
     @GetMapping
-    public ResponseEntity<List<ContactMessageResponse>> getAllMessages() {
-        return ResponseEntity.ok(contactMessageService.getAllMessages());
+    public ResponseEntity<PageResponse<ContactMessageResponse>> getAllMessages(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return ResponseEntity.ok(contactMessageService.getAllMessages(page, size));
     }
 
     @GetMapping("/{id}")

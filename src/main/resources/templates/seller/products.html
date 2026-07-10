@@ -33,6 +33,7 @@
         </tbody>
       </table>
     </div>
+    <div id="products-pagination"></div>
   </div>
 
   <div class="admin-panel" id="add-product-panel" style="display:none;">
@@ -90,11 +91,14 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
   var categories = [];
   var editingId = null;
+  var currentPage = 0;
+  var PAGE_SIZE = 15;
 
   function statusClass(enabled) { return enabled ? 'active' : 'inactive'; }
   function stockClass(qty) { return qty > 10 ? 'badge badge-success' : (qty > 0 ? 'badge badge-warning' : 'badge badge-danger'); }
@@ -169,8 +173,18 @@
     });
   }
 
-  function loadProducts() {
-    API.get('/seller/products').then(renderProducts).catch(function (e) {
+  function loadProducts(page) {
+    if (page != null) currentPage = page;
+    API.get('/seller/products?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderProducts(items);
+      Pagination.render('products-pagination', data, loadProducts, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadProducts(0);
+        }
+      });
+    }).catch(function (e) {
       document.getElementById('products-body').innerHTML =
         '<tr><td colspan="6" class="text-center text-muted">Failed to load products</td></tr>';
     });

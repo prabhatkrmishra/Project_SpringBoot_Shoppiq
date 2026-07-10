@@ -159,15 +159,20 @@
       </div>
     </div>
   </div>
+
+  <div id="messages-pagination"></div>
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
   'use strict';
 
   var allMessages = [];
   var selectedId = null;
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
 
   function relativeTime(iso) {
     if (!iso) return '';
@@ -299,9 +304,17 @@
     });
   }
 
-  function loadMessages() {
-    API.get('/api/admin/messages').then(function (data) {
-      renderList(data);
+  function loadMessages(page) {
+    if (page != null) currentPage = page;
+    API.get('/api/admin/messages?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderList(items);
+      Pagination.render('messages-pagination', data, loadMessages, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadMessages(0);
+        }
+      });
     }).catch(function () {
       document.getElementById('msg-list').innerHTML =
         '<div style="padding:var(--space-xl);text-align:center;color:var(--color-text-muted);font-size:0.85rem;">Failed to load messages</div>';

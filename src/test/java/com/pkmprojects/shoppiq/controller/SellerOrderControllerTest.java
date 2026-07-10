@@ -10,6 +10,7 @@ import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.controller.seller.SellerOrderController;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderItemResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
 import com.pkmprojects.shoppiq.entity.User;
@@ -44,6 +45,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -120,38 +122,44 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with order list")
         void getOrders_returnsList() throws Exception {
-            when(sellerOrderService.getOrders(any(User.class)))
-                    .thenReturn(List.of(
-                            stubResponse(1L, OrderStatus.PLACED),
-                            stubResponse(2L, OrderStatus.SHIPPED)
+            when(sellerOrderService.getOrders(any(User.class), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(
+                            List.of(
+                                    stubResponse(1L, OrderStatus.PLACED),
+                                    stubResponse(2L, OrderStatus.SHIPPED)
+                            ),
+                            0, 20, 2, 1, true, false
                     ));
 
-            mockMvc.perform(get("/seller/orders"))
+            mockMvc.perform(get("/seller/orders?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].id").value(1))
-                    .andExpect(jsonPath("$[0].status").value("PLACED"))
-                    .andExpect(jsonPath("$[1].status").value("SHIPPED"));
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].id").value(1))
+                    .andExpect(jsonPath("$.content[0].status").value("PLACED"))
+                    .andExpect(jsonPath("$.content[1].status").value("SHIPPED"));
         }
 
         @Test
         @DisplayName("Returns 200 with empty list when no orders")
         void getOrders_emptyList() throws Exception {
-            when(sellerOrderService.getOrders(any(User.class)))
-                    .thenReturn(List.of());
+            when(sellerOrderService.getOrders(any(User.class), anyInt(), anyInt()))
+                    .thenReturn(new PageResponse<>(
+                            List.of(),
+                            0, 20, 0, 1, true, false
+                    ));
 
-            mockMvc.perform(get("/seller/orders"))
+            mockMvc.perform(get("/seller/orders?page=0&size=20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.content.length()").value(0));
         }
 
         @Test
         @DisplayName("Returns 404 when seller profile does not exist")
         void getOrders_sellerNotFound_returns404() throws Exception {
-            when(sellerOrderService.getOrders(any(User.class)))
+            when(sellerOrderService.getOrders(any(User.class), anyInt(), anyInt()))
                     .thenThrow(SellerNotFoundException.userId(1L));
 
-            mockMvc.perform(get("/seller/orders"))
+            mockMvc.perform(get("/seller/orders?page=0&size=20"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("SELLER-404-001"));
         }

@@ -1,9 +1,8 @@
 package com.pkmprojects.shoppiq.service;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ContactMessageRequest;
 import com.pkmprojects.shoppiq.dto.response.ContactMessageResponse;
-
-import java.util.List;
 
 /**
  * Service for contact message operations.
@@ -22,11 +21,13 @@ public interface ContactMessageService {
     ContactMessageResponse create(ContactMessageRequest request);
 
     /**
-     * Returns all contact messages ordered by creation date descending.
+     * Returns all contact messages ordered by creation date descending, paginated.
      *
-     * @return list of all messages
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated message responses
      */
-    List<ContactMessageResponse> getAllMessages();
+    PageResponse<ContactMessageResponse> getAllMessages(int page, int size);
 
     /**
      * Returns a single message by ID and marks it as READ.

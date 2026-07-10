@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.impl;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ContactMessageRequest;
 import com.pkmprojects.shoppiq.dto.response.ContactMessageResponse;
 import com.pkmprojects.shoppiq.entity.ContactMessage;
@@ -7,10 +8,11 @@ import com.pkmprojects.shoppiq.enums.ContactMessageStatus;
 import com.pkmprojects.shoppiq.exception.ContactMessageNotFoundException;
 import com.pkmprojects.shoppiq.repository.ContactMessageRepository;
 import com.pkmprojects.shoppiq.service.ContactMessageService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Default implementation of {@link ContactMessageService}.
@@ -43,10 +45,10 @@ public class ContactMessageServiceImpl implements ContactMessageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ContactMessageResponse> getAllMessages() {
-        return contactMessageRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(ContactMessageResponse::fromEntity)
-                .toList();
+    public PageResponse<ContactMessageResponse> getAllMessages(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var messagePage = contactMessageRepository.findAllByOrderByCreatedAtDesc(pageable);
+        return PageResponse.of(messagePage, ContactMessageResponse::fromEntity);
     }
 
     @Override

@@ -1,9 +1,8 @@
 package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.admin.response.AdminSellerResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
-
-import java.util.List;
 
 /**
  * Admin service for seller management.
@@ -21,19 +20,23 @@ import java.util.List;
 public interface AdminSellerService {
 
     /**
-     * Retrieves all sellers.
+     * Retrieves all sellers with pagination.
      *
-     * @return list of all sellers
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated seller responses
      */
-    List<AdminSellerResponse> getAllSellers();
+    PageResponse<AdminSellerResponse> getAllSellers(int page, int size);
 
     /**
-     * Retrieves all sellers with the given verification status.
+     * Retrieves all sellers with the given verification status, paginated.
      *
      * @param status the verification status to filter by
-     * @return list of matching sellers
+     * @param page   page number (0-based)
+     * @param size   page size
+     * @return paginated matching sellers
      */
-    List<AdminSellerResponse> getSellersByStatus(VerificationStatus status);
+    PageResponse<AdminSellerResponse> getSellersByStatus(VerificationStatus status, int page, int size);
 
     /**
      * Approves a pending seller application.

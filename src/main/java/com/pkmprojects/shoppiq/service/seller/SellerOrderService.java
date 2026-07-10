@@ -1,10 +1,9 @@
 package com.pkmprojects.shoppiq.service.seller;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
-
-import java.util.List;
 
 /**
  * Business contract for seller order management.
@@ -28,12 +27,14 @@ import java.util.List;
 public interface SellerOrderService {
 
     /**
-     * Retrieves all orders containing the authenticated seller's products.
+     * Retrieves all orders containing the authenticated seller's products, paginated.
      *
      * @param user the authenticated user
-     * @return list of orders with seller's items
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated orders with seller's items
      */
-    List<SellerOrderResponse> getOrders(User user);
+    PageResponse<SellerOrderResponse> getOrders(User user, int page, int size);
 
     /**
      * Retrieves a specific order filtered to the seller's line items.

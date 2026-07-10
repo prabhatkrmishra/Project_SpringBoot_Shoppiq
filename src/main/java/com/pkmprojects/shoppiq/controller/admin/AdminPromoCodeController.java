@@ -1,16 +1,17 @@
 package com.pkmprojects.shoppiq.controller.admin;
 
+import com.pkmprojects.shoppiq.config.PaginationProperties;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeRequest;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeResponse;
 import com.pkmprojects.shoppiq.service.PromoCodeService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * REST controller for admin promo code management.
@@ -28,9 +29,11 @@ import java.util.List;
 public class AdminPromoCodeController {
 
     private final PromoCodeService promoCodeService;
+    private final PaginationProperties pagination;
 
-    public AdminPromoCodeController(PromoCodeService promoCodeService) {
+    public AdminPromoCodeController(PromoCodeService promoCodeService, PaginationProperties pagination) {
         this.promoCodeService = promoCodeService;
+        this.pagination = pagination;
     }
 
     /**
@@ -46,13 +49,16 @@ public class AdminPromoCodeController {
     }
 
     /**
-     * Returns all promo codes.
+     * Returns all promo codes, paginated.
      *
-     * @return 200 OK with list of promo codes
+     * @return 200 OK with page of promo codes
      */
     @GetMapping
-    public ResponseEntity<List<PromoCodeResponse>> findAll() {
-        return ResponseEntity.ok(promoCodeService.findAll());
+    public ResponseEntity<PageResponse<PromoCodeResponse>> findAll(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return ResponseEntity.ok(promoCodeService.findAll(page, size));
     }
 
     /**

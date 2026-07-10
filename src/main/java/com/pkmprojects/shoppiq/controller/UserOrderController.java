@@ -1,11 +1,14 @@
 package com.pkmprojects.shoppiq.controller;
 
+import com.pkmprojects.shoppiq.config.PaginationProperties;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.service.impl.CheckoutServiceImpl;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,8 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * REST controller exposing order-management endpoints for authenticated customers.
@@ -42,6 +43,7 @@ import java.util.List;
 public class UserOrderController {
 
     private final CheckoutServiceImpl checkoutService;
+    private final PaginationProperties pagination;
 
     // =========================================================
     // Checkout
@@ -74,10 +76,12 @@ public class UserOrderController {
      * @return 200 OK with list of order responses
      */
     @GetMapping("/get/all")
-    public ResponseEntity<List<OrderResponse>> getMyOrders(
-            @AuthenticationPrincipal User user) {
-
-        return ResponseEntity.ok(checkoutService.getMyOrders(user));
+    public ResponseEntity<PageResponse<OrderResponse>> getMyOrders(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return ResponseEntity.ok(checkoutService.getMyOrders(user, page, size));
     }
 
     /**

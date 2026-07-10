@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
 import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
 import com.pkmprojects.shoppiq.entity.User;
@@ -66,6 +67,16 @@ public interface ItemReviewService {
     List<ItemReviewResponse> getByUser(User user);
 
     /**
+     * Retrieves every review written by the given user, paginated.
+     *
+     * @param user reviewer
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated review list
+     */
+    PageResponse<ItemReviewResponse> getByUser(User user, int page, int size);
+
+    /**
      * Retrieves every review belonging to an item visible to the
      * given user. Returns APPROVED reviews plus the user's own
      * PENDING/REJECTED reviews.
@@ -75,6 +86,18 @@ public interface ItemReviewService {
      * @return ordered review list
      */
     List<ItemReviewResponse> getByItemForUser(Long itemId, User currentUser);
+
+    /**
+     * Retrieves every review belonging to an item visible to the
+     * given user, paginated.
+     *
+     * @param itemId item identifier
+     * @param currentUser current user (may be null for anonymous)
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated review list
+     */
+    PageResponse<ItemReviewResponse> getByItemForUser(Long itemId, User currentUser, int page, int size);
 
     /**
      * Updates an existing review.

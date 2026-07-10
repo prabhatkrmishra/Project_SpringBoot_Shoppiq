@@ -1,12 +1,13 @@
 package com.pkmprojects.shoppiq.controller;
 
+import com.pkmprojects.shoppiq.config.PaginationProperties;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.response.ItemResponse;
 import com.pkmprojects.shoppiq.service.ItemService;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * REST controller responsible for managing catalog items.
@@ -26,14 +27,19 @@ import java.util.List;
 public class ItemController {
 
     private final ItemService itemService;
+    private final PaginationProperties pagination;
 
-    public ItemController(ItemService itemService) {
+    public ItemController(ItemService itemService, PaginationProperties pagination) {
         this.itemService = itemService;
+        this.pagination = pagination;
     }
 
     @GetMapping("/all")
-    public List<ItemResponse> getAll() {
-        return itemService.getAll();
+    public PageResponse<ItemResponse> getAll(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "12") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return itemService.getAll(page, size);
     }
 
     @GetMapping("/{id}")
@@ -49,12 +55,18 @@ public class ItemController {
     }
 
     @GetMapping("/new-arrivals")
-    public List<ItemResponse> getNewArrivals() {
-        return itemService.getNewArrivals();
+    public PageResponse<ItemResponse> getNewArrivals(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "12") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return itemService.getNewArrivals(page, size);
     }
 
     @GetMapping("/sale")
-    public List<ItemResponse> getSaleItems() {
-        return itemService.getSaleItems();
+    public PageResponse<ItemResponse> getSaleItems(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "12") @Min(1) int size) {
+        size = Math.min(size, pagination.maxPageSize());
+        return itemService.getSaleItems(page, size);
     }
 }

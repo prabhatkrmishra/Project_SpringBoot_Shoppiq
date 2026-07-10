@@ -1,8 +1,7 @@
 package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.admin.response.AdminReviewResponse;
-
-import java.util.List;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 
 /**
  * Business contract for admin review moderation.
@@ -60,20 +59,4 @@ public interface AdminReviewService {
      * @return updated review response
      */
     AdminReviewResponse rejectReview(Long reviewId);
-
-    /**
-     * Page response wrapper.
-     *
-     * @param <T> content type
-     */
-    record PageResponse<T>(
-            List<T> content,
-            int page,
-            int size,
-            long totalElements,
-            int totalPages,
-            boolean first,
-            boolean last
-    ) {
-    }
 }

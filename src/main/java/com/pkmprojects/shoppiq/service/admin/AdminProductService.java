@@ -1,8 +1,7 @@
 package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.admin.response.AdminProductResponse;
-
-import java.util.List;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 
 /**
  * Business contract for admin product lifecycle management.
@@ -24,11 +23,13 @@ import java.util.List;
 public interface AdminProductService {
 
     /**
-     * Retrieves all products with DRAFT publishing status.
+     * Retrieves all products with DRAFT publishing status, paginated.
      *
-     * @return list of pending products
+     * @param page page number (0-based)
+     * @param size page size
+     * @return paginated pending products
      */
-    List<AdminProductResponse> getPendingProducts();
+    PageResponse<AdminProductResponse> getPendingProducts(int page, int size);
 
     /**
      * Publishes a product by setting its status to PUBLISHED.

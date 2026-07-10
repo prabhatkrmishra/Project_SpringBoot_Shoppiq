@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.service.impl;
 
 import com.pkmprojects.shoppiq.dto.admin.response.AdminSellerResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.Role;
 import com.pkmprojects.shoppiq.entity.Seller;
 import com.pkmprojects.shoppiq.entity.Store;
@@ -16,10 +17,11 @@ import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.service.RolesService;
 import com.pkmprojects.shoppiq.service.admin.AdminSellerService;
 import com.pkmprojects.shoppiq.util.SlugUtil;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Default implementation of {@link AdminSellerService}.
@@ -48,18 +50,18 @@ public class AdminSellerServiceImpl implements AdminSellerService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdminSellerResponse> getAllSellers() {
-        return sellerRepository.findAll().stream()
-                .map(AdminSellerResponse::fromEntity)
-                .toList();
+    public PageResponse<AdminSellerResponse> getAllSellers(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var sellerPage = sellerRepository.findAll(pageable);
+        return PageResponse.of(sellerPage, AdminSellerResponse::fromEntity);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdminSellerResponse> getSellersByStatus(VerificationStatus status) {
-        return sellerRepository.findByVerificationStatus(status).stream()
-                .map(AdminSellerResponse::fromEntity)
-                .toList();
+    public PageResponse<AdminSellerResponse> getSellersByStatus(VerificationStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var sellerPage = sellerRepository.findByVerificationStatus(status, pageable);
+        return PageResponse.of(sellerPage, AdminSellerResponse::fromEntity);
     }
 
     @Override
