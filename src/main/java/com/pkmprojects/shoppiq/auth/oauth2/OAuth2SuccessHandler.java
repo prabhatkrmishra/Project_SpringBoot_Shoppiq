@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -72,6 +73,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     @Value("${jwt.expiration}")
     private long expirationTime;
+
+    @Value("${app.security.secure-cookie:true}")
+    private boolean secureCookie;
 
     public OAuth2SuccessHandler(UserRepository userRepository,
                                 JwtAuthenticationUtils jwtAuthenticationUtils,
@@ -153,8 +157,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             String jwt = jwtAuthenticationUtils.generateToken(user, expirationTime);
             response.addCookie(jwtCookieFactory.buildJwtCookie(jwt, (int) (expirationTime / 1000)));
 
-            logger.info("Returning OAuth2 user '{}' redirected to /allitems", user.getUsername());
-            response.sendRedirect("/allitems");
+            String redirectUrl = extractOAuthReturnUrl(request, response);
+            logger.info("Returning OAuth2 user '{}' redirected to {}", user.getUsername(), redirectUrl);
+            response.sendRedirect(redirectUrl);
             return;
         }
 
@@ -162,7 +167,30 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         OAuthRegistrationSession registrationSession = new OAuthRegistrationSession(email, name, Instant.now());
         registrationCookieService.save(registrationSession, response);
 
-        logger.info("New OAuth2 user with email '{}' redirected to /complete-profile", email);
-        response.sendRedirect("/complete-profile");
+        String returnTo = extractOAuthReturnUrl(request, response);
+        logger.info("New OAuth2 user with email '{}' redirected to /complete-profile (returnTo={})", email, returnTo);
+        response.sendRedirect("/complete-profile?returnUrl=" + java.net.URLEncoder.encode(returnTo, java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    private String extractOAuthReturnUrl(HttpServletRequest request, HttpServletResponse response) {
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if (OAuthReturnUrlFilter.COOKIE_NAME.equals(cookie.getName())) {
+                    String value = cookie.getValue();
+                    cookie.setValue("");
+                    cookie.setPath("/");
+                    cookie.setHttpOnly(true);
+                    cookie.setSecure(secureCookie);
+                    cookie.setAttribute("SameSite", "Lax");
+                    cookie.setMaxAge(0);
+                    response.addCookie(cookie);
+                    if (value.startsWith("/") && !value.startsWith("//")) {
+                        return value;
+                    }
+                    return "/allitems";
+                }
+            }
+        }
+        return "/allitems";
     }
 }

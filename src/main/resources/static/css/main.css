@@ -1120,10 +1120,10 @@ small { font-size: 0.78rem; }
   100% { background-position: -200% 0; }
 }
 /* ── Icon Sizes ── */
-.icon { width: 20px; height: 20px; vertical-align: middle; flex-shrink: 0; }
-.icon-sm { width: 16px; height: 16px; }
-.icon-lg { width: 24px; height: 24px; }
-.icon-xl { width: 32px; height: 32px; }
+.icon    { width: 20px; height: 20px; vertical-align: middle; flex-shrink: 0; }
+.icon-sm { width: 16px; height: 16px; flex-shrink: 0; }
+.icon-lg { width: 24px; height: 24px; flex-shrink: 0; }
+.icon-xl { width: 32px; height: 32px; flex-shrink: 0; }
 
 /* ── Scroll Reveal ── */
 .reveal {

@@ -91,7 +91,7 @@
                 </form>
 
                 <div class="text-center mt-lg">
-                    <p class="text-sm">Already have an account? <a th:href="@{/login}" class="btn-link">Sign in</a></p>
+                    <p class="text-sm">Already have an account? <a id="loginLink" th:href="@{/login}" class="btn-link">Sign in</a></p>
                 </div>
             </div>
         </div>
@@ -196,7 +196,12 @@
                         : "Account created! Redirecting to login...";
                     showToast(msg, "success");
                     setTimeout(() => {
-                        window.location.href = "/login";
+                        var dest = "/login";
+                        var ru = new URLSearchParams(window.location.search).get("returnUrl");
+                        if (ru && ru.startsWith("/") && !ru.startsWith("//")) {
+                            dest += "?returnUrl=" + encodeURIComponent(ru);
+                        }
+                        window.location.href = dest;
                     }, 2000);
                 } else {
                     const data = await response.json().catch(() => ({}));
@@ -209,6 +214,16 @@
             }
         });
         /*]]>*/
+    </script>
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var returnUrl = params.get("returnUrl");
+            if (returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//")) {
+                var ll = document.getElementById("loginLink");
+                if (ll) ll.href = "/login?returnUrl=" + encodeURIComponent(returnUrl);
+            }
+        })();
     </script>
 </body>
 </html>

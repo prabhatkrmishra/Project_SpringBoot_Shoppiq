@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/user")
-@PreAuthorize("isAuthenticated()")
 public class UserController {
 
     private final UserService userService;
@@ -30,11 +29,13 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/profile")
     public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userService.getProfile(user));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateProfile(
             @AuthenticationPrincipal User user,
@@ -44,6 +45,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getProfile(user));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/password")
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal User user,

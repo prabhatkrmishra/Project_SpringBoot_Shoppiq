@@ -43,7 +43,7 @@
 
                 <div class="auth-divider"><span>or</span></div>
 
-                <button type="button" onclick="window.location.href='/oauth2/authorization/google'"
+                <button type="button" id="googleLoginBtn"
                         class="btn btn-google btn-block">
                     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -59,8 +59,8 @@
                 </button>
 
                 <div class="text-center mt-lg">
-                    <p class="text-sm">Don't have an account? <a th:href="@{/register}" class="btn-link">Create one</a></p>
-                    <p class="text-sm mt-sm">Want to sell on Shoppiq? <a th:href="@{/register(seller=true)}" class="btn-link">Register as a seller</a></p>
+                    <p class="text-sm">Don't have an account? <a id="registerLink" th:href="@{/register}" class="btn-link">Create one</a></p>
+                    <p class="text-sm mt-sm">Want to sell on Shoppiq? <a id="sellerRegisterLink" th:href="@{/register(seller=true)}" class="btn-link">Register as a seller</a></p>
                 </div>
             </div>
         </div>
@@ -75,6 +75,9 @@
             const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value;
             const rememberMe = document.getElementById("rememberMe").checked;
+            const params = new URLSearchParams(window.location.search);
+            const rawReturnUrl = params.get("returnUrl");
+            const returnUrl = rawReturnUrl && rawReturnUrl.startsWith("/") && !rawReturnUrl.startsWith("//") ? rawReturnUrl : null;
             if (!username || !password) {
                 showToast("Please fill in all fields", "error");
                 return;
@@ -93,13 +96,36 @@
                 }
                 showToast("Login successful", "success");
                 setTimeout(() => {
-                    window.location.href = "/allitems";
+                    window.location.href = returnUrl || "/allitems";
                 }, 800);
             } catch (err) {
                 showToast("Unable to connect to server", "error");
             }
         });
         /*]]>*/
+    </script>
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var returnUrl = params.get("returnUrl");
+            if (returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//")) {
+                var rl = document.getElementById("registerLink");
+                var srl = document.getElementById("sellerRegisterLink");
+                if (rl) rl.href = "/register?returnUrl=" + encodeURIComponent(returnUrl);
+                if (srl) srl.href = "/register?seller=true&returnUrl=" + encodeURIComponent(returnUrl);
+            }
+
+            var googleBtn = document.getElementById("googleLoginBtn");
+            if (googleBtn) {
+                googleBtn.addEventListener("click", function () {
+                    var url = "/oauth2/authorization/google";
+                    if (returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//")) {
+                        url += "?returnUrl=" + encodeURIComponent(returnUrl);
+                    }
+                    window.location.href = url;
+                });
+            }
+        })();
     </script>
 </body>
 </html>

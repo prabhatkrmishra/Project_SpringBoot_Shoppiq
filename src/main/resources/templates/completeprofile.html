@@ -84,7 +84,9 @@ document.getElementById("completeProfileForm").addEventListener("submit", async 
       return;
     }
     showToast("Registration completed successfully!", "success");
-    setTimeout(() => { window.location.href = "/allitems"; }, 800);
+    var ru = new URLSearchParams(window.location.search).get("returnUrl");
+    var dest = (ru && ru.startsWith("/") && !ru.startsWith("//")) ? ru : "/allitems";
+    setTimeout(() => { window.location.href = dest; }, 800);
   } catch (err) {
     showToast("Unable to connect to server", "error");
   }

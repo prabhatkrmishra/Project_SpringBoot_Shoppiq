@@ -5,6 +5,7 @@ import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.service.RolesService;
@@ -24,6 +25,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.HashSet;
@@ -189,6 +191,9 @@ public class SecurityConfig {
                                 "/forgot-password",
                                 "/reset-password",
                                 "/allitems",
+                                "/new-arrivals",
+                                "/sale",
+                                "/contact",
                                 "/categories",
                                 "/category/**",
                                 "/item/**",
@@ -251,6 +256,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/items/all").permitAll()
                         .requestMatchers(HttpMethod.GET, "/items/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/items/slug/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/items/*/create/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/items/*/reviews").hasAnyRole("CUSTOMER", "ADMIN")
@@ -310,6 +316,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(shoppiqAccessDeniedHandler)
                 )
 
+                .addFilterBefore(new OAuthReturnUrlFilter(), OAuth2AuthorizationRequestRedirectFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
 

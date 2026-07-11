@@ -370,7 +370,7 @@
               '</form>' +
               '</div>' :
               '<div class="item-detail-actions">' +
-              '<a href="/login" class="btn btn-primary btn-lg btn-block"><i data-lucide="log-in" class="icon-sm"></i> Sign in to Purchase</a>' +
+              '<a href="/login?returnUrl=' + encodeURIComponent(window.location.pathname) + '" class="btn btn-primary btn-lg btn-block"><i data-lucide="log-in" class="icon-sm"></i> Sign in to Purchase</a>' +
               '</div>') +
             '</div>' +
             '</div>';

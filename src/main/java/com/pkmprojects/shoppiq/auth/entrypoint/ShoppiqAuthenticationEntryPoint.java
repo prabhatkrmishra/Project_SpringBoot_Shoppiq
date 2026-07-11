@@ -57,7 +57,8 @@ public class ShoppiqAuthenticationEntryPoint implements AuthenticationEntryPoint
             throws IOException, ServletException {
 
         if (isBrowserRequest(request)) {
-            response.sendRedirect("/login?error");
+            String uri = request.getRequestURI();
+            response.sendRedirect("/login?returnUrl=" + java.net.URLEncoder.encode(uri, java.nio.charset.StandardCharsets.UTF_8));
         } else {
             ProblemDetail problemDetail =
                     ProblemDetailFactory.create(
