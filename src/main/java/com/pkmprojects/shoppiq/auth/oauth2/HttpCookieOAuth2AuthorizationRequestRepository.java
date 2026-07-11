@@ -1,5 +1,7 @@
 package com.pkmprojects.shoppiq.auth.oauth2;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,10 +11,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.util.SerializationUtils;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Cookie-based {@link AuthorizationRequestRepository} that stores the OAuth2
@@ -43,7 +54,7 @@ import java.util.Base64;
  *       ↓
  * Google redirects to /login/oauth2/code/google?code=…&state=…
  *       ↓
- * loadAuthorizationRequest() — read cookie → deserialize
+ * loadAuthorizationRequest() — read cookie → verify HMAC → deserialize
  *       ↓
  * removeAuthorizationRequest() — clear cookie (Max-Age=0)
  *       ↓
@@ -61,16 +72,8 @@ import java.util.Base64;
  *       {@code accounts.google.com}, which is a different site.</li>
  *   <li>Short {@code Max-Age} of 300 s — limits exposure if the user abandons
  *       the login flow mid-way.</li>
+ *   <li>HMAC-SHA256 signed payload — prevents tampering and RCE via Java deserialization gadget chains.</li>
  * </ul>
- *
- * <h4>Serialization note</h4>
- * <p>{@link OAuth2AuthorizationRequest} is not JSON-friendly out of the box
- * (it contains internal Spring Security types with no public Jackson mixins).
- * Java object serialization via {@link SerializationUtils} is used instead.
- * The raw bytes are Base64url-encoded so the result is safe as a cookie value.
- * In a production system requiring tamper-evidence, encrypt or HMAC-sign the
- * payload before encoding; for this application the HTTPS transport and
- * HttpOnly flag provide sufficient protection.</p>
  *
  * @see org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository
  * @see OAuth2SuccessHandler
@@ -83,7 +86,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             LoggerFactory.getLogger(HttpCookieOAuth2AuthorizationRequestRepository.class);
 
     /**
-     * Cookie name that holds the Base64url-serialized
+     * Cookie name that holds the Base64url-encoded, HMAC-signed JSON
      * {@link OAuth2AuthorizationRequest}.
      *
      * <p>Exposed as a constant so that integration tests or diagnostic
@@ -101,6 +104,11 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     private static final int COOKIE_MAX_AGE_SECONDS = 300;
 
     /**
+     * HMAC algorithm used for signing the cookie payload.
+     */
+    private static final String HMAC_ALGORITHM = "HmacSHA256";
+
+    /**
      * Controls the {@code Secure} cookie flag.
      *
      * <p>Set to {@code false} in development (HTTP) and {@code true} in
@@ -110,6 +118,21 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
      */
     @Value("${app.security.secure-cookie:true}")
     private boolean secureCookie;
+
+    /**
+     * HMAC signing key derived from the application's JWT secret.
+     * Injected via {@code jwt.secret} property.
+     */
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private byte[] hmacKey;
+
+    @jakarta.annotation.PostConstruct
+    private void init() {
+        this.hmacKey = jwtSecret.getBytes(StandardCharsets.UTF_8);
+    }
 
     /**
      * Loads the {@link OAuth2AuthorizationRequest} stored in the
@@ -123,10 +146,10 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
      *       for {@code state} parameter validation.</li>
      * </ol>
      *
-     * <p>If the cookie is absent, malformed, or cannot be deserialized,
-     * {@code null} is returned and Spring Security will reject the callback
-     * with an {@code OAuth2AuthenticationException} citing an invalid
-     * {@code state}.</p>
+     * <p>If the cookie is absent, malformed, HMAC verification fails, or
+     * deserialization fails, {@code null} is returned and Spring Security will
+     * reject the callback with an {@code OAuth2AuthenticationException} citing
+     * an invalid {@code state}.</p>
      *
      * @param request incoming HTTP request; must not be {@code null}
      * @return the deserialized {@link OAuth2AuthorizationRequest}, or
@@ -138,8 +161,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     }
 
     /**
-     * Serializes {@code authorizationRequest} into a Base64url-encoded cookie
-     * and writes it to the response.
+     * Serializes {@code authorizationRequest} into a Base64url-encoded,
+     * HMAC-signed JSON cookie and writes it to the response.
      *
      * <p>Spring Security calls this method immediately before redirecting the
      * browser to the Google authorization endpoint, so the pending request is
@@ -290,58 +313,146 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     }
 
     // -------------------------------------------------------------------------
-    // Serialization helpers
+    // Secure serialization helpers (JSON + HMAC)
     // -------------------------------------------------------------------------
 
     /**
-     * Serializes an {@link OAuth2AuthorizationRequest} to a Base64url-encoded
-     * string suitable for embedding in a cookie value.
+     * Serializes an {@link OAuth2AuthorizationRequest} to a Base64url-encoded,
+     * HMAC-signed JSON string suitable for embedding in a cookie value.
      *
-     * <p>Java object serialization is used rather than JSON because
-     * {@link OAuth2AuthorizationRequest} contains internal Spring Security
-     * types (e.g. {@code LinkedHashMap} subclasses) that have no public
-     * Jackson mixins and would require custom serializers to round-trip
-     * correctly. The serialized bytes are Base64url-encoded (no padding,
-     * URL-safe alphabet) so the result contains only characters permitted in
-     * a cookie value without quoting.</p>
+     * <p>Only the fields required to reconstruct the authorization request for
+     * the callback are stored. The payload is signed with HMAC-SHA256 using
+     * the application's JWT secret, providing integrity and authenticity.
+     * This replaces the previous Java serialization approach which was
+     * vulnerable to RCE via gadget chains.</p>
      *
      * @param request the {@link OAuth2AuthorizationRequest} to serialize;
      *                must not be {@code null}
-     * @return a non-null, non-empty Base64url-encoded string representing the
-     * serialized authorization request
+     * @return a non-null, non-empty Base64url-encoded string: {@code payload.signature}
      */
-    private static String serialize(OAuth2AuthorizationRequest request) {
-        return Base64.getUrlEncoder().encodeToString(SerializationUtils.serialize(request));
+    private String serialize(OAuth2AuthorizationRequest request) {
+        try {
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("authorizationRequestUri", request.getAuthorizationRequestUri());
+            payload.put("redirectUri", request.getRedirectUri());
+            payload.put("scopes", request.getScopes());
+            payload.put("state", request.getState());
+            payload.put("additionalParameters", request.getAdditionalParameters());
+            payload.put("attributes", request.getAttributes());
+            payload.put("clientId", request.getClientId());
+
+            String json = objectMapper.writeValueAsString(payload);
+            String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+            String signature = sign(encodedPayload);
+            return encodedPayload + "." + signature;
+        } catch (Exception e) {
+            logger.error("Failed to serialize OAuth2 authorization request", e);
+            throw new IllegalStateException("Cannot serialize authorization request", e);
+        }
     }
 
     /**
-     * Deserializes an {@link OAuth2AuthorizationRequest} from a Base64url-encoded
-     * cookie value produced by {@link #serialize(OAuth2AuthorizationRequest)}.
+     * Deserializes an {@link OAuth2AuthorizationRequest} from a Base64url-encoded,
+     * HMAC-signed cookie value produced by {@link #serialize(OAuth2AuthorizationRequest)}.
      *
      * <p>Returns {@code null} rather than throwing in all error cases:</p>
      * <ul>
      *   <li>{@code value} is {@code null} or blank — cookie was absent.</li>
-     *   <li>Base64 decoding fails — cookie was tampered with or truncated.</li>
-     *   <li>Deserialization fails — class version mismatch after a deployment,
-     *       or corrupted bytes.</li>
+     *   <li>Format is invalid (missing dot separator) — cookie was tampered with.</li>
+     *   <li>HMAC verification fails — cookie was tampered with or forged.</li>
+     *   <li>Base64 decoding fails — cookie was corrupted.</li>
+     *   <li>JSON parsing fails — cookie was corrupted or from an incompatible version.</li>
      * </ul>
      * <p>In all these cases Spring Security's callback processing will
      * ultimately produce an {@code OAuth2AuthenticationException} with an
      * invalid-state message, which is the correct behavior — the user must
      * restart the login flow.</p>
      *
-     * @param value Base64url-encoded cookie value, or {@code null}
+     * @param value Base64url-encoded cookie value with HMAC signature ({@code payload.signature}), or {@code null}
      * @return the deserialized {@link OAuth2AuthorizationRequest}, or
-     * {@code null} if {@code value} is absent or cannot be deserialized
+     * {@code null} if {@code value} is absent or cannot be verified/deserialized
      */
-    private static OAuth2AuthorizationRequest deserialize(String value) {
+    private OAuth2AuthorizationRequest deserialize(String value) {
         if (value == null || value.isBlank()) return null;
+
+        int dotIndex = value.lastIndexOf('.');
+        if (dotIndex <= 0 || dotIndex == value.length() - 1) {
+            logger.warn("Invalid OAuth2 authorization request cookie format");
+            return null;
+        }
+
+        String encodedPayload = value.substring(0, dotIndex);
+        String signature = value.substring(dotIndex + 1);
+
+        if (!verifySignature(encodedPayload, signature)) {
+            logger.warn("OAuth2 authorization request cookie HMAC verification failed");
+            return null;
+        }
+
         try {
-            byte[] bytes = Base64.getUrlDecoder().decode(value);
-            return (OAuth2AuthorizationRequest) SerializationUtils.deserialize(bytes);
+            byte[] jsonBytes = Base64.getUrlDecoder().decode(encodedPayload);
+            String json = new String(jsonBytes, StandardCharsets.UTF_8);
+
+            TypeReference<Map<String, Object>> typeRef = new TypeReference<>() {
+            };
+            Map<String, Object> payload = objectMapper.readValue(json, typeRef);
+
+            String authorizationRequestUri = (String) payload.get("authorizationRequestUri");
+            String redirectUri = (String) payload.get("redirectUri");
+            @SuppressWarnings("unchecked")
+            Set<String> scopes = ((java.util.List<String>) payload.get("scopes")).stream().collect(Collectors.toSet());
+            String state = (String) payload.get("state");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> additionalParameters = (Map<String, Object>) payload.get("additionalParameters");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = (Map<String, Object>) payload.get("attributes");
+            String clientId = (String) payload.get("clientId");
+
+            return OAuth2AuthorizationRequest.authorizationCode()
+                    .authorizationRequestUri(authorizationRequestUri)
+                    .redirectUri(redirectUri)
+                    .scopes(scopes)
+                    .state(state)
+                    .additionalParameters(additionalParameters)
+                    .attributes(attributes)
+                    .clientId(clientId)
+                    .build();
         } catch (Exception e) {
             logger.warn("Failed to deserialize OAuth2 authorization request cookie: {}", e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Computes HMAC-SHA256 signature for the given payload.
+     *
+     * @param payload Base64url-encoded JSON payload
+     * @return Base64url-encoded HMAC signature (no padding)
+     */
+    private String sign(String payload) {
+        try {
+            Mac mac = Mac.getInstance(HMAC_ALGORITHM);
+            mac.init(new SecretKeySpec(hmacKey, HMAC_ALGORITHM));
+            byte[] signature = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new IllegalStateException("HMAC initialization failed", e);
+        }
+    }
+
+    /**
+     * Verifies HMAC-SHA256 signature for the given payload.
+     *
+     * @param payload   Base64url-encoded JSON payload
+     * @param signature Base64url-encoded HMAC signature
+     * @return {@code true} if signature is valid
+     */
+    private boolean verifySignature(String payload, String signature) {
+        try {
+            String expected = sign(payload);
+            return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            return false;
         }
     }
 }
