@@ -6,6 +6,7 @@ import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.service.RolesService;
@@ -90,6 +91,7 @@ public class SecurityConfig {
     private final RolesService rolesService;
     private final ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint;
     private final ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler;
+    private final OAuthReturnUrlFilter oauthReturnUrlFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           OAuth2SuccessHandler oAuth2SuccessHandler,
@@ -97,7 +99,8 @@ public class SecurityConfig {
                           UserRepository userRepository,
                           RolesService rolesService,
                           ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint,
-                          ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler) {
+                          ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler,
+                          OAuthReturnUrlFilter oauthReturnUrlFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
         this.cookieAuthorizationRequestRepository = cookieAuthorizationRequestRepository;
@@ -105,6 +108,7 @@ public class SecurityConfig {
         this.rolesService = rolesService;
         this.shoppiqAuthenticationEntryPoint = shoppiqAuthenticationEntryPoint;
         this.shoppiqAccessDeniedHandler = shoppiqAccessDeniedHandler;
+        this.oauthReturnUrlFilter = oauthReturnUrlFilter;
     }
 
     /**
@@ -317,7 +321,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(shoppiqAccessDeniedHandler)
                 )
 
-                .addFilterBefore(new OAuthReturnUrlFilter(), OAuth2AuthorizationRequestRedirectFilter.class)
+                .addFilterBefore(oauthReturnUrlFilter, OAuth2AuthorizationRequestRedirectFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
 

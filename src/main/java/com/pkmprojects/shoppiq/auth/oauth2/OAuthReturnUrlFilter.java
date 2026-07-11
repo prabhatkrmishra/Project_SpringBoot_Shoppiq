@@ -6,6 +6,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -21,13 +22,17 @@ import java.io.IOException;
  * occurs. This guarantees the cookie is received by the browser regardless
  * of the OAuth2 redirect chain.</p>
  */
+@Component
 public class OAuthReturnUrlFilter extends OncePerRequestFilter {
 
     static final String COOKIE_NAME = "oauth_return_url";
     private static final int COOKIE_MAX_AGE = 300; // 5 minutes
 
-    @Value("${app.security.secure-cookie:true}")
-    private boolean secureCookie;
+    private final boolean secureCookie;
+
+    public OAuthReturnUrlFilter(@Value("${app.security.secure-cookie:true}") boolean secureCookie) {
+        this.secureCookie = secureCookie;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
