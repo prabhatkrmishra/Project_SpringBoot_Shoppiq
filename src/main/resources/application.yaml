@@ -29,8 +29,8 @@ spring:
     validate-on-migrate: true
   web:
     error:
-      include-message: always
-      include-binding-errors: always
+      include-message: always           # Production recommendation: never
+      include-binding-errors: always    # Production recommendation: never
       include-stacktrace: never
 jwt:
   secret: ${JWT_SECRET}
@@ -39,7 +39,7 @@ jwt:
 
 app:
   security:
-    secure-cookie: false
+    secure-cookie: false    # Production recommendation: true
   pagination:
     default-page-size: 20
     max-page-size: 100
@@ -57,7 +57,7 @@ app:
 #   OFF   - Disable all logging
 logging:
   level:
-    com.pkmprojects.shoppiq: TRACE
+    com.pkmprojects.shoppiq: TRACE    # Production recommendation: WARN or ERROR
 
 server:
   port: 8090
@@ -67,7 +67,7 @@ server:
 # ============================================================
 shoppiq:
   email:
-    provider: ${EMAIL_PROVIDER:console}
+    provider: ${EMAIL_PROVIDER:console}    # Production recommendation: smtp
     from: ${EMAIL_FROM:noreply@shoppiq.com}
     enabled: ${EMAIL_ENABLED:true}
     smtp:
@@ -83,17 +83,17 @@ shoppiq:
     gateways:
       razorpay:
         base-url: https://api.razorpay.com/v1
-        api-key: ${RAZORPAY_KEY_ID:rzp_test_dummy}
-        api-secret: ${RAZORPAY_KEY_SECRET:rzp_test_secret}
+        api-key: ${RAZORPAY_KEY_ID:rzp_test_dummy}           # Production recommendation: use live key
+        api-secret: ${RAZORPAY_KEY_SECRET:rzp_test_secret}   # Production recommendation: use live secret
         enabled: true
       stripe:
         base-url: https://api.stripe.com/v1
-        api-key: ${STRIPE_SECRET_KEY:sk_test_dummy}
+        api-key: ${STRIPE_SECRET_KEY:sk_test_dummy}           # Production recommendation: use live key
         enabled: true
       paypal:
-        base-url: https://api-m.sandbox.paypal.com
-        api-key: ${PAYPAL_CLIENT_ID:paypal_client_dummy}
-        api-secret: ${PAYPAL_CLIENT_SECRET:paypal_secret_dummy}
+        base-url: https://api-m.sandbox.paypal.com            # Production recommendation: https://api-m.paypal.com
+        api-key: ${PAYPAL_CLIENT_ID:paypal_client_dummy}      # Production recommendation: use live client ID
+        api-secret: ${PAYPAL_CLIENT_SECRET:paypal_secret_dummy}  # Production recommendation: use live secret
         enabled: true
       upi:
         base-url: ${UPI_BASE_URL:https://upi.psp.example/v1}
