@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -21,5 +22,10 @@ public record ResetPasswordRequest(
 
         @NotBlank(message = "New password is required.")
         @Size(min = 8, message = "Password must be at least 8 characters.")
+        @Pattern(
+                regexp = "^(?=.*\\p{Ll})(?=.*\\p{Lu})(?=.*\\p{N})(?=.*[@$!%*?&]).+$",
+                message = "Password must contain uppercase, lowercase, number, and special character"
+        )
         String newPassword
-) {}
+) {
+}

@@ -188,8 +188,12 @@
         confirmPassword: document.getElementById('confirmPassword').value
       };
 
-      if (!data.newPassword) return showError(newPassword, 'New password is required');
-      if (data.newPassword.length < 8) return showError(newPassword, 'Password must be at least 8 characters');
+      const reqs = validatePasswordRequirements(data.newPassword);
+      if (!reqs.length) return showError(newPassword, 'Password must be at least 8 characters');
+      if (!reqs.upper) return showError(newPassword, 'Password must contain an uppercase letter');
+      if (!reqs.lower) return showError(newPassword, 'Password must contain a lowercase letter');
+      if (!reqs.digit) return showError(newPassword, 'Password must contain a number');
+      if (!reqs.special) return showError(newPassword, 'Password must contain a special character (@$!%*?&)');
       if (data.newPassword !== data.confirmPassword) return showError(document.getElementById('confirmPassword'), 'Passwords do not match');
 
       try {
@@ -211,6 +215,7 @@
         strengthFill.className = 'strength-fill';
         if (strength.level) strengthFill.classList.add(strength.level);
         strengthText.textContent = strength.label;
+        updatePasswordRequirements(newPassword.value);
       });
     }
 
@@ -231,16 +236,60 @@
   function calculateStrength(password) {
     if (!password) return { level: '', label: 'Password strength' };
     let score = 0;
-    if (password.length >= 8) score += 25;
-    if (/[A-Z]/.test(password)) score += 25;
-    if (/[a-z]/.test(password)) score += 25;
-    if (/[0-9]/.test(password)) score += 12.5;
-    if (/[^A-Za-z0-9]/.test(password)) score += 12.5;
+    if (password.length >= 8) score += 20;
+    if (/[A-Z]/.test(password)) score += 20;
+    if (/[a-z]/.test(password)) score += 20;
+    if (/[0-9]/.test(password)) score += 20;
+    if (/[@$!%*?&]/.test(password)) score += 20;
 
-    if (score < 30) return { level: 'weak', label: 'Weak' };
+    if (score < 40) return { level: 'weak', label: 'Weak' };
     if (score < 60) return { level: 'fair', label: 'Fair' };
-    if (score < 85) return { level: 'good', label: 'Good' };
+    if (score < 80) return { level: 'good', label: 'Good' };
     return { level: 'strong', label: 'Strong' };
+  }
+
+  function validatePasswordRequirements(password) {
+    return {
+      length: password.length >= 8,
+      upper: /[A-Z]/.test(password),
+      lower: /[a-z]/.test(password),
+      digit: /[0-9]/.test(password),
+      special: /[@$!%*?&]/.test(password)
+    };
+  }
+
+  function updatePasswordRequirements(password) {
+    const reqs = validatePasswordRequirements(password);
+    const map = {
+      'req-length': reqs.length,
+      'req-upper': reqs.upper,
+      'req-lower': reqs.lower,
+      'req-digit': reqs.digit,
+      'req-special': reqs.special
+    };
+    Object.entries(map).forEach(([id, met]) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('met', met);
+    });
+  }
+
+  function validatePasswordRequirements(password) {
+    return {
+      length: password.length >= 8,
+      upper: /[A-Z]/.test(password),
+      lower: /[a-z]/.test(password),
+      digit: /[0-9]/.test(password),
+      special: /[@$!%*?&]/.test(password)
+    };
+  }
+
+  function updatePasswordRequirements(password) {
+    const reqs = validatePasswordRequirements(password);
+    document.getElementById("req-length")?.classList.toggle("met", reqs.length);
+    document.getElementById("req-upper")?.classList.toggle("met", reqs.upper);
+    document.getElementById("req-lower")?.classList.toggle("met", reqs.lower);
+    document.getElementById("req-digit")?.classList.toggle("met", reqs.digit);
+    document.getElementById("req-special")?.classList.toggle("met", reqs.special);
   }
 
   function showError(el, msg) {

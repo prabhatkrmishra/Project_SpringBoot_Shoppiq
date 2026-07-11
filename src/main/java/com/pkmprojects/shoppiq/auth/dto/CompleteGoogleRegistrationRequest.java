@@ -29,6 +29,10 @@ public record CompleteGoogleRegistrationRequest(
 
         @NotBlank(message = "Password is required")
         @Size(min = 8, message = "Password must be at least 8 characters")
+        @Pattern(
+                regexp = "^(?=.*\\p{Ll})(?=.*\\p{Lu})(?=.*\\p{N})(?=.*[@$!%*?&]).+$",
+                message = "Password must contain uppercase, lowercase, number, and special character"
+        )
         String password
 
 ) {

@@ -33,6 +33,19 @@
         <div class="form-group">
           <label for="password" class="form-label">Password</label>
           <input type="password" id="password" name="password" class="form-input" placeholder="Choose a password" required autocomplete="new-password" minlength="8">
+          <div class="form-error" id="password-error"></div>
+          <div class="password-requirements">
+              <span class="req" id="req-length"><i data-lucide="check" class="icon-xs"></i> At least 8 characters</span>
+              <span class="req" id="req-upper"><i data-lucide="check" class="icon-xs"></i> One uppercase letter</span>
+              <span class="req" id="req-lower"><i data-lucide="check" class="icon-xs"></i> One lowercase letter</span>
+              <span class="req" id="req-digit"><i data-lucide="check" class="icon-xs"></i> One number</span>
+              <span class="req" id="req-special"><i data-lucide="check" class="icon-xs"></i> One special char (@$!%*?&)</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword" class="form-label">Confirm Password</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Confirm password" required autocomplete="new-password">
+          <div class="form-error" id="confirmPassword-error"></div>
         </div>
         <button type="submit" class="btn btn-primary btn-block">Complete Registration</button>
       </form>
@@ -63,14 +76,78 @@ async function loadGoogleProfile() {
 
 loadGoogleProfile();
 
-document.getElementById("completeProfileForm").addEventListener("submit", async function (event) {
-  event.preventDefault();
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value;
-  if (!username || !password) {
-    showToast("Please fill in all fields", "error");
-    return;
-  }
+        const passwordInput = document.getElementById("password");
+        const confirmPasswordInput = document.getElementById("confirmPassword");
+
+        function validatePasswordRequirements(password) {
+            return {
+                length: password.length >= 8,
+                upper: /[A-Z]/.test(password),
+                lower: /[a-z]/.test(password),
+                digit: /[0-9]/.test(password),
+                special: /[@$!%*?&]/.test(password)
+            };
+        }
+
+        function updatePasswordRequirements(password) {
+            const reqs = validatePasswordRequirements(password);
+            document.getElementById("req-length").classList.toggle("met", reqs.length);
+            document.getElementById("req-upper").classList.toggle("met", reqs.upper);
+            document.getElementById("req-lower").classList.toggle("met", reqs.lower);
+            document.getElementById("req-digit").classList.toggle("met", reqs.digit);
+            document.getElementById("req-special").classList.toggle("met", reqs.special);
+        }
+
+        function showFieldError(fieldId, message) {
+            const errorEl = document.getElementById(fieldId + "-error");
+            const inputEl = document.getElementById(fieldId);
+            if (errorEl) errorEl.textContent = message;
+            if (inputEl) inputEl.classList.add("is-invalid");
+        }
+
+        function clearFieldError(fieldId) {
+            const errorEl = document.getElementById(fieldId + "-error");
+            const inputEl = document.getElementById(fieldId);
+            if (errorEl) errorEl.textContent = "";
+            if (inputEl) inputEl.classList.remove("is-invalid");
+        }
+
+        function clearAllErrors() {
+            ["password", "confirmPassword"].forEach(clearFieldError);
+        }
+
+        passwordInput.addEventListener("input", function () {
+            clearFieldError("password");
+            updatePasswordRequirements(this.value);
+        });
+
+        confirmPasswordInput.addEventListener("input", function () {
+            clearFieldError("confirmPassword");
+        });
+
+        document.getElementById("completeProfileForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+            clearAllErrors();
+
+            const username = document.getElementById("username").value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            const reqs = validatePasswordRequirements(password);
+
+            let hasError = false;
+            if (!username) {
+                showFieldError("username", "Username is required");
+                hasError = true;
+            }
+            if (!reqs.length || !reqs.upper || !reqs.lower || !reqs.digit || !reqs.special) {
+                showFieldError("password", "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)");
+                hasError = true;
+            }
+            if (password !== confirmPassword) {
+                showFieldError("confirmPassword", "Passwords do not match");
+                hasError = true;
+            }
+            if (hasError) return;
   try {
     const response = await fetch("/auth/google/complete-profile", {
       method: "POST",

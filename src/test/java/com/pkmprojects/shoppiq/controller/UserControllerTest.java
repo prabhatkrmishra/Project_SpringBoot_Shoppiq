@@ -197,7 +197,7 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 200 when password is changed")
         void changePassword_validRequest_returns200() throws Exception {
-            ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "NewPass123", "NewPass123");
+            ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "NewPass123!", "NewPass123!");
 
             doNothing().when(userService).changePassword(any(), any());
 
@@ -212,7 +212,7 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 200 when current password is null (OAuth account)")
         void changePassword_noCurrentPassword_returns200() throws Exception {
-            ChangePasswordRequest request = new ChangePasswordRequest(null, "NewPass123", "NewPass123");
+            ChangePasswordRequest request = new ChangePasswordRequest(null, "NewPass123!", "NewPass123!");
 
             doNothing().when(userService).changePassword(any(), any());
 
@@ -249,7 +249,7 @@ class UserControllerTest {
         void changePassword_unauthenticated_returns401() throws Exception {
             SecurityContextHolder.clearContext();
 
-            ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "NewPass123", "NewPass123");
+            ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "NewPass123!", "NewPass123!");
 
             mockMvc.perform(put("/user/password")
                             .contentType(MediaType.APPLICATION_JSON)

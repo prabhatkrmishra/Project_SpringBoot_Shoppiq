@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.dto.user;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import lombok.AllArgsConstructor;
@@ -35,6 +36,10 @@ public class ChangePasswordRequest {
 
     @NotBlank(message = "New password is required")
     @Size(min = 8, max = 100, message = "New password must be at least 8 characters")
+    @Pattern(
+            regexp = "^(?=.*\\p{Ll})(?=.*\\p{Lu})(?=.*\\p{N})(?=.*[@$!%*?&]).+$",
+            message = "Password must contain uppercase, lowercase, number, and special character"
+    )
     private String newPassword;
 
     @NotBlank(message = "Please re-type the new password")
