@@ -363,11 +363,11 @@
     {
       "userId": 38,
       "seller": {
-        "panNumber": "KLMNO1234P",
+        "panNumber": "MNOPQ0038R",
         "phone": "9876543246",
         "businessName": "UrbanEdge",
         "businessEmail": "care@urbanedge.com",
-        "gstNumber": "27ABCDE1234F7Z4"
+        "gstNumber": "27MNOPQ0038R1ZS"
       }
     },
     {
@@ -493,11 +493,11 @@
     {
       "userId": 51,
       "seller": {
-        "panNumber": "XYZAB1234C",
+        "panNumber": "YZABC0051D",
         "phone": "9876543259",
         "businessName": "SuperStore",
         "businessEmail": "orders@superstore.com",
-        "gstNumber": "27ABCDE1234F0Z8"
+        "gstNumber": "27YZABC0051D1ZE"
       }
     },
     {
@@ -518,6 +518,296 @@
         "businessName": "PrimeGoods",
         "businessEmail": "hello@primegoods.com",
         "gstNumber": "27ABCDE1234F2Z1"
+      }
+    },
+    {
+      "userId": 56,
+      "seller": {
+        "panNumber": "CDEFG0156H",
+        "businessEmail": "cloudnineretail56@example.com",
+        "phone": "9876543256",
+        "businessName": "CloudNine Retail",
+        "gstNumber": "27CDEFG0156H1ZH"
+      }
+    },
+    {
+      "userId": 57,
+      "seller": {
+        "panNumber": "DEFGH0157I",
+        "businessEmail": "dawnbreakstores57@example.com",
+        "phone": "9876543257",
+        "businessName": "DawnBreak Stores",
+        "gstNumber": "27DEFGH0157I1ZI"
+      }
+    },
+    {
+      "userId": 58,
+      "seller": {
+        "panNumber": "EFGHI0158J",
+        "businessEmail": "echotronics58@example.com",
+        "phone": "9876543258",
+        "businessName": "EchoTronics",
+        "gstNumber": "27EFGHI0158J1ZJ"
+      }
+    },
+    {
+      "userId": 59,
+      "seller": {
+        "panNumber": "FGHIJ0159K",
+        "businessEmail": "florabloomshop59@example.com",
+        "phone": "9876543259",
+        "businessName": "FloraBloom Shop",
+        "gstNumber": "27FGHIJ0159K1ZK"
+      }
+    },
+    {
+      "userId": 60,
+      "seller": {
+        "panNumber": "GHIJK0160L",
+        "businessEmail": "goldengategoods60@example.com",
+        "phone": "9876543260",
+        "businessName": "GoldenGate Goods",
+        "gstNumber": "27GHIJK0160L1ZL"
+      }
+    },
+    {
+      "userId": 61,
+      "seller": {
+        "panNumber": "HIJKL0161M",
+        "businessEmail": "horizonhub61@example.com",
+        "phone": "9876543261",
+        "businessName": "Horizon Hub",
+        "gstNumber": "27HIJKL0161M1ZM"
+      }
+    },
+    {
+      "userId": 62,
+      "seller": {
+        "panNumber": "IJKLM0162N",
+        "businessEmail": "ivygrovemarket62@example.com",
+        "phone": "9876543262",
+        "businessName": "IvyGrove Market",
+        "gstNumber": "27IJKLM0162N1ZN"
+      }
+    },
+    {
+      "userId": 63,
+      "seller": {
+        "panNumber": "JKLMN0163O",
+        "businessEmail": "jadestonesupply63@example.com",
+        "phone": "9876543263",
+        "businessName": "JadeStone Supply",
+        "gstNumber": "27JKLMN0163O1ZO"
+      }
+    },
+    {
+      "userId": 65,
+      "seller": {
+        "panNumber": "LMNOP0165Q",
+        "businessEmail": "keystonekollections65@example.com",
+        "phone": "9876543265",
+        "businessName": "Keystone Kollections",
+        "gstNumber": "27LMNOP0165Q1ZQ"
+      }
+    },
+    {
+      "userId": 67,
+      "seller": {
+        "panNumber": "NOPQR0167S",
+        "businessEmail": "lunarlightstore67@example.com",
+        "phone": "9876543267",
+        "businessName": "LunarLight Store",
+        "gstNumber": "27NOPQR0167S1ZS"
+      }
+    },
+    {
+      "userId": 68,
+      "seller": {
+        "panNumber": "OPQRS0168T",
+        "businessEmail": "mapleleafmerch68@example.com",
+        "phone": "9876543268",
+        "businessName": "MapleLeaf Merch",
+        "gstNumber": "27OPQRS0168T1ZT"
+      }
+    },
+    {
+      "userId": 70,
+      "seller": {
+        "panNumber": "QRSTU0170V",
+        "businessEmail": "nimbusnook70@example.com",
+        "phone": "9876543270",
+        "businessName": "Nimbus Nook",
+        "gstNumber": "27QRSTU0170V1ZV"
+      }
+    },
+    {
+      "userId": 71,
+      "seller": {
+        "panNumber": "RSTUV0171W",
+        "businessEmail": "oasisoutlet71@example.com",
+        "phone": "9876543271",
+        "businessName": "Oasis Outlet",
+        "gstNumber": "27RSTUV0171W1ZW"
+      }
+    },
+    {
+      "userId": 72,
+      "seller": {
+        "panNumber": "STUVW0172X",
+        "businessEmail": "peakpointproducts72@example.com",
+        "phone": "9876543272",
+        "businessName": "PeakPoint Products",
+        "gstNumber": "27STUVW0172X1ZX"
+      }
+    },
+    {
+      "userId": 73,
+      "seller": {
+        "panNumber": "TUVWX0173Y",
+        "businessEmail": "quartzquarry73@example.com",
+        "phone": "9876543273",
+        "businessName": "QuartzQuarry",
+        "gstNumber": "27TUVWX0173Y1ZY"
+      }
+    },
+    {
+      "userId": 74,
+      "seller": {
+        "panNumber": "UVWXY0174Z",
+        "businessEmail": "riverrockretail74@example.com",
+        "phone": "9876543274",
+        "businessName": "RiverRock Retail",
+        "gstNumber": "27UVWXY0174Z1ZZ"
+      }
+    },
+    {
+      "userId": 75,
+      "seller": {
+        "panNumber": "VWXYZ0175A",
+        "businessEmail": "summitsupply75@example.com",
+        "phone": "9876543275",
+        "businessName": "Summit Supply",
+        "gstNumber": "27VWXYZ0175A1ZA"
+      }
+    },
+    {
+      "userId": 76,
+      "seller": {
+        "panNumber": "WXYZA0176B",
+        "businessEmail": "timbertrailtrade76@example.com",
+        "phone": "9876543276",
+        "businessName": "TimberTrail Trade",
+        "gstNumber": "27WXYZA0176B1ZB"
+      }
+    },
+    {
+      "userId": 77,
+      "seller": {
+        "panNumber": "XYZAB0177C",
+        "businessEmail": "unityuniverse77@example.com",
+        "phone": "9876543277",
+        "businessName": "UnityUniverse",
+        "gstNumber": "27XYZAB0177C1ZC"
+      }
+    },
+    {
+      "userId": 78,
+      "seller": {
+        "panNumber": "YZABC0178D",
+        "businessEmail": "vividventures78@example.com",
+        "phone": "9876543278",
+        "businessName": "VividVentures",
+        "gstNumber": "27YZABC0178D1ZD"
+      }
+    },
+    {
+      "userId": 79,
+      "seller": {
+        "panNumber": "ZABCD0179E",
+        "businessEmail": "whisperwindwares79@example.com",
+        "phone": "9876543279",
+        "businessName": "WhisperWind Wares",
+        "gstNumber": "27ZABCD0179E1ZE"
+      }
+    },
+    {
+      "userId": 80,
+      "seller": {
+        "panNumber": "ABCDE0180F",
+        "businessEmail": "xenonxpress80@example.com",
+        "phone": "9876543280",
+        "businessName": "XenonXpress",
+        "gstNumber": "27ABCDE0180F1ZF"
+      }
+    },
+    {
+      "userId": 81,
+      "seller": {
+        "panNumber": "BCDEF0181G",
+        "businessEmail": "yellowyard81@example.com",
+        "phone": "9876543281",
+        "businessName": "YellowYard",
+        "gstNumber": "27BCDEF0181G1ZG"
+      }
+    },
+    {
+      "userId": 82,
+      "seller": {
+        "panNumber": "XYZAB0175C",
+        "gstNumber": "27XYZAB0175C1ZD",
+        "businessEmail": "zenithzone75@example.com",
+        "phone": "9876543275",
+        "businessName": "ZenithZone"
+      }
+    },
+    {
+      "userId": 83,
+      "seller": {
+        "panNumber": "ZABCD0177E",
+        "gstNumber": "27ZABCD0177E1ZF",
+        "businessEmail": "apexavenue77@example.com",
+        "phone": "9876543277",
+        "businessName": "Apex Avenue"
+      }
+    },
+    {
+      "userId": 84,
+      "seller": {
+        "panNumber": "BCDEF0179G",
+        "gstNumber": "27BCDEF0179G1ZH",
+        "businessEmail": "primeportal79@example.com",
+        "phone": "9876543279",
+        "businessName": "Prime Portal"
+      }
+    },
+    {
+      "userId": 85,
+      "seller": {
+        "panNumber": "DEFGH0181I",
+        "gstNumber": "27DEFGH0181I1ZJ",
+        "businessEmail": "eliteedge81@example.com",
+        "phone": "9876543281",
+        "businessName": "Elite Edge"
+      }
+    },
+    {
+      "userId": 86,
+      "seller": {
+        "panNumber": "FGHIJ0183K",
+        "gstNumber": "27FGHIJ0183K1ZL",
+        "businessEmail": "summitselect83@example.com",
+        "phone": "9876543283",
+        "businessName": "Summit Select"
+      }
+    },
+    {
+      "userId": 87,
+      "seller": {
+        "panNumber": "HIJKL0185M",
+        "gstNumber": "27HIJKL0185M1ZN",
+        "businessEmail": "atlasauthority85@example.com",
+        "phone": "9876543285",
+        "businessName": "Atlas Authority"
       }
     }
   ]
