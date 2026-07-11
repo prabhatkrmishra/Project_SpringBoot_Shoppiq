@@ -24,11 +24,12 @@
             <div id="reviewsSection" style="display:none;" class="mt-xl">
                 <div class="panel">
                     <div class="panel-title">Customer Reviews</div>
+                    <div id="review-summary-container"></div>
                     <div id="reviews-loading" class="flex-center" style="padding:1rem;">
                         <span class="spinner"></span>
                     </div>
                     <div id="reviews-list" style="display:none;"></div>
-                    <div id="reviews-empty" class="text-center text-muted text-sm" style="display:none;padding:1rem;">No reviews yet. Be the first to review this product!</div>
+                    <div id="reviews-empty" class="text-center text-muted text-sm" style="display:none;padding:1.5rem 1rem;">No reviews yet. Be the first to review this product!</div>
                 </div>
 
                 <div sec:authorize="isAuthenticated() and !hasRole('SELLER') and !hasRole('ADMIN')" class="panel mt-lg">
@@ -36,12 +37,12 @@
                     <form id="review-form">
                         <div class="form-group">
                             <label class="form-label">Rating</label>
-                            <div id="star-rating" class="star-rating" style="display:flex;gap:4px;cursor:pointer;">
-                                <span class="star-input-item" data-star="1" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="1" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
-                                <span class="star-input-item" data-star="2" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="2" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
-                                <span class="star-input-item" data-star="3" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="3" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
-                                <span class="star-input-item" data-star="4" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="4" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
-                                <span class="star-input-item" data-star="5" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="5" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                            <div id="star-rating" class="star-rating" style="display:flex;gap:6px;cursor:pointer;padding:4px 0;">
+                                <span class="star-input-item" data-star="1" style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="1" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="2" style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="2" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="3" style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="3" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="4" style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="4" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
+                                <span class="star-input-item" data-star="5" style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i data-lucide="star" class="icon star-icon"></i><i data-lucide="star" class="icon star-icon filled" data-star-fg="5" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                             </div>
                             <input type="hidden" id="review-rating" value="0">
                         </div>
@@ -105,22 +106,23 @@
 
       function starHtml(rating, interactive) {
         var html = '';
+        var size = interactive ? 28 : 18;
         for (var i = 1; i <= 5; i++) {
           if (interactive) {
-            html += '<span class="star-input-item" data-star="' + i + '" style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;">' +
-              '<i data-lucide="star" class="icon star-icon"></i>' +
-              '<i data-lucide="star" class="icon star-icon filled" data-star-fg="' + i + '" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i>' +
+            html += '<span class="star-input-item" data-star="' + i + '" style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;">' +
+              '<i data-lucide="star" class="icon star-icon" style="width:' + size + 'px;height:' + size + 'px;"></i>' +
+              '<i data-lucide="star" class="icon star-icon filled" data-star-fg="' + i + '" style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;width:' + size + 'px;height:' + size + 'px;"></i>' +
               '</span>';
           } else {
             if (i <= Math.floor(rating)) {
-              html += '<i data-lucide="star" class="icon star-icon filled"></i>';
+              html += '<i data-lucide="star" class="icon star-icon filled" style="width:' + size + 'px;height:' + size + 'px;"></i>';
             } else if ((i - 0.5) <= rating) {
-              html += '<span class="star-half-display" style="display:inline-flex;position:relative;width:24px;height:24px;">' +
-                '<i data-lucide="star" class="icon star-icon"></i>' +
-                '<i data-lucide="star" class="icon star-icon filled" style="position:absolute;top:0;left:0;clip-path:inset(0 50% 0 0);pointer-events:none;"></i>' +
+              html += '<span class="star-half-display" style="display:inline-flex;position:relative;width:' + size + 'px;height:' + size + 'px;">' +
+                '<i data-lucide="star" class="icon star-icon" style="width:' + size + 'px;height:' + size + 'px;"></i>' +
+                '<i data-lucide="star" class="icon star-icon filled" style="position:absolute;top:0;left:0;clip-path:inset(0 50% 0 0);pointer-events:none;width:' + size + 'px;height:' + size + 'px;"></i>' +
                 '</span>';
             } else {
-              html += '<i data-lucide="star" class="icon star-icon"></i>';
+              html += '<i data-lucide="star" class="icon star-icon" style="width:' + size + 'px;height:' + size + 'px;"></i>';
             }
           }
         }
@@ -131,32 +133,64 @@
         document.getElementById('reviews-loading').style.display = 'none';
         var list = document.getElementById('reviews-list');
         var empty = document.getElementById('reviews-empty');
+        var summaryContainer = document.getElementById('review-summary-container');
         if (!reviews || reviews.length === 0) {
           empty.style.display = '';
+          if (summaryContainer) summaryContainer.innerHTML = '';
           return;
         }
         list.style.display = '';
+
+        var total = reviews.length;
+        var sum = 0;
+        var dist = [0, 0, 0, 0, 0];
+        reviews.forEach(function (r) {
+          var rounded = Math.round(r.rating || 0);
+          if (rounded >= 1 && rounded <= 5) dist[rounded - 1]++;
+          sum += (r.rating || 0);
+        });
+        var avg = total > 0 ? (sum / total) : 0;
+        var avgDisplay = avg.toFixed(1);
+
+        if (summaryContainer) {
+          var maxCount = Math.max.apply(null, dist);
+          var summaryHtml = '<div class="review-summary">' +
+            '<div class="review-summary-score">' +
+              '<span class="score">' + escapeHtml(avgDisplay) + '</span>' +
+              '<div class="star-rating-display">' + starHtml(avg, false) + '</div>' +
+              '<span class="count">' + total + ' review' + (total !== 1 ? 's' : '') + '</span>' +
+            '</div>' +
+            '<div class="review-summary-bars">';
+          for (var s = 5; s >= 1; s--) {
+            var pct = maxCount > 0 ? (dist[s - 1] / maxCount * 100) : 0;
+            summaryHtml += '<div class="review-bar-row">' +
+              '<span class="bar-label">' + s + '</span>' +
+              '<div class="review-bar-track"><div class="review-bar-fill" style="width:' + pct + '%"></div></div>' +
+              '<span class="bar-count">' + dist[s - 1] + '</span>' +
+            '</div>';
+          }
+          summaryHtml += '</div></div>';
+          summaryContainer.innerHTML = summaryHtml;
+        }
+
         list.innerHTML = '';
         reviews.forEach(function (r) {
           var isOwner = currentUsername && r.reviewerUsername === currentUsername;
           var div = document.createElement('div');
           div.className = 'review-item';
-          div.style.cssText = 'border-bottom:1px solid var(--border);padding:1rem 0;';
           div.innerHTML =
             (isOwner && r.status !== 'PENDING' ? '<div class="review-actions">' +
               '<button class="review-action-btn edit-review-btn" data-review-id="' + r.id + '" data-rating="' + r.rating + '" data-review="' + escapeAttr(r.review || '') + '" title="Edit review"><i data-lucide="pencil" class="icon-sm"></i></button>' +
               '<button class="review-action-btn review-action-danger delete-review-btn" data-review-id="' + r.id + '" title="Delete review"><i data-lucide="trash-2" class="icon-sm"></i></button>' +
               '</div>' : '') +
-            '<div>' +
-              '<div class="flex items-center gap-sm">' +
-                '<strong>' + escapeHtml(r.reviewerName || r.reviewerUsername || 'Anonymous') + '</strong>' +
-                '<span class="text-sm text-muted">' + formatDate(r.createdAt) + '</span>' +
-                (r.status === 'PENDING' ? '<span class="badge badge-warning" style="font-size:0.65rem;">Pending Approval</span>' : '') +
-              '</div>' +
-              '<div class="star-rating-display" style="margin-top:8px;">' + starHtml(r.rating || 0, false) + '</div>' +
+            '<div class="flex items-center gap-sm" style="margin-bottom:8px;line-height:1;">' +
+              '<strong style="font-size:0.92rem;line-height:1;">' + escapeHtml(r.reviewerName || r.reviewerUsername || 'Anonymous') + '</strong>' +
+              '<span class="text-sm text-muted" style="line-height:1;">' + formatDate(r.createdAt) + '</span>' +
+              (r.status === 'PENDING' ? '<span class="badge badge-warning" style="font-size:0.6rem;">Pending Approval</span>' : '') +
             '</div>' +
-            (r.review ? '<p class="text-sm" style="margin:0.5rem 0 0;">' + escapeHtml(r.review) + '</p>' : '') +
-            (isOwner && r.status === 'PENDING' ? '<div class="mt-sm"><span class="text-sm text-muted">Your review is awaiting admin approval.</span></div>' : '');
+            '<div class="star-rating-display" style="margin-bottom:8px;">' + starHtml(r.rating || 0, false) + '</div>' +
+            (r.review ? '<p class="text-sm" style="margin:0;color:var(--color-text-secondary);line-height:1.65;">' + escapeHtml(r.review) + '</p>' : '') +
+            (isOwner && r.status === 'PENDING' ? '<div style="margin-top:10px;"><span class="text-sm text-muted">Your review is awaiting admin approval.</span></div>' : '');
           list.appendChild(div);
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -224,7 +258,10 @@
         if (!currentItemId) return;
         document.getElementById('reviewsSection').style.display = '';
         document.getElementById('reviews-loading').style.display = '';
-        API.get('/items/' + currentItemId + '/reviews').then(renderReviews).catch(function () {
+        API.get('/items/' + currentItemId + '/reviews').then(function (res) {
+          var reviews = Array.isArray(res) ? res : (res && res.content ? res.content : []);
+          renderReviews(reviews);
+        }).catch(function () {
           document.getElementById('reviews-loading').style.display = 'none';
           document.getElementById('reviews-empty').style.display = '';
         });
@@ -301,11 +338,20 @@
             (hasDiscount ? '<span class="card-badge badge badge-success"><i data-lucide="tag" class="icon-sm"></i> ' + escapeHtml(String(item.discountPercentage)) + '% Off</span>' : '') +
             '</div></div>' +
             '<div class="item-detail-info">' +
-            (item.category ? '<span class="badge badge-neutral">' + escapeHtml(item.category.name) + '</span>' : '') +
+            (item.category ? '<span class="badge badge-neutral item-detail-category">' + escapeHtml(item.category.name) + '</span>' : '') +
             '<h1 class="item-detail-title">' + escapeHtml(item.name) + '</h1>' +
-            '<div class="item-detail-price"><span class="price-current">$' + escapeHtml(String(item.price)) + '</span>' +
-            (hasDiscount ? ' <span class="badge badge-success">' + escapeHtml(String(item.discountPercentage)) + '% Off</span>' : '') +
-            '</div>' +
+            (function () {
+              var priceHtml = '<div class="item-detail-price">';
+              priceHtml += '<span class="price-current">$' + escapeHtml(String(item.price)) + '</span>';
+              if (hasDiscount) {
+                var origPrice = (parseFloat(item.price) / (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
+                var savings = (parseFloat(origPrice) - parseFloat(item.price)).toFixed(2);
+                priceHtml += '<span class="price-original">$' + escapeHtml(origPrice) + '</span>';
+                priceHtml += '<span class="price-savings">Save $' + escapeHtml(savings) + '</span>';
+              }
+              priceHtml += '</div>';
+              return priceHtml;
+            })() +
             '<div class="item-detail-meta">' +
             (item.brand ? '<div class="item-detail-meta-row"><i data-lucide="building-2" class="icon-sm text-muted"></i><span class="text-muted">Brand:</span><span>' + escapeHtml(item.brand) + '</span></div>' : '') +
             (item.sku ? '<div class="item-detail-meta-row"><i data-lucide="barcode" class="icon-sm text-muted"></i><span class="text-muted">SKU:</span><span>' + escapeHtml(item.sku) + '</span></div>' : '') +
@@ -317,7 +363,7 @@
               '<form class="item-detail-form" id="add-to-cart-form">' +
               '<div class="qty-controls">' +
               '<button type="button" class="qty-minus" aria-label="Decrease quantity"><i data-lucide="minus" class="icon-sm"></i></button>' +
-              '<input type="number" id="qtyInput" name="quantity" value="1" min="1" max="99" class="form-input qty-input" aria-label="Quantity">' +
+              '<input type="number" id="qtyInput" name="quantity" value="1" min="1" max="99" class="qty-input" aria-label="Quantity">' +
               '<button type="button" class="qty-plus" aria-label="Increase quantity"><i data-lucide="plus" class="icon-sm"></i></button>' +
               '</div>' +
               '<button type="submit" class="btn btn-primary btn-lg"' + (item.stockQuantity == null || item.stockQuantity == 0 ? ' disabled' : '') + '><i data-lucide="shopping-cart" class="icon-sm"></i> Add to Cart</button>' +
