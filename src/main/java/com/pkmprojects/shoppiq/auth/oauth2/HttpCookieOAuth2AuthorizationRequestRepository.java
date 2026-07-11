@@ -285,6 +285,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         cookie.setSecure(secureCookie);
         cookie.setPath("/");
         cookie.setMaxAge(0);
+        cookie.setAttribute("SameSite", "Lax");
         response.addCookie(cookie);
     }
 
