@@ -282,4 +282,30 @@ public class JwtAuthenticationUtils {
                 .orElse(null);
     }
 
+    /**
+     * Validates a token for refresh purposes.
+     * Allows expired tokens but verifies signature, token version, and account status.
+     *
+     * @param token compact JWT string extracted from the cookie
+     * @param user  the user loaded from the database by user ID
+     * @return {@code true} if the token is valid for refresh
+     */
+    public boolean validateTokenForRefresh(String token, User user) {
+        try {
+            String tokenUsername = getUsernameFromToken(token);
+            boolean usernameMatches = user.getUsername().equals(tokenUsername);
+
+            Integer tokenTokenVersion = getTokenVersionFromToken(token);
+            boolean tokenVersionMatches = tokenTokenVersion != null
+                    && tokenTokenVersion.equals(user.getTokenVersion());
+
+            boolean userEnabled = user.isEnabled();
+
+            return usernameMatches && tokenVersionMatches && userEnabled;
+        } catch (Exception e) {
+            logger.debug("Token refresh validation failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
 }

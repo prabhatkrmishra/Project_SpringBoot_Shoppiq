@@ -218,8 +218,49 @@ public class AuthController {
         response.addCookie(jwtCookieFactory.buildJwtCookie(token, (int) (expirationTime / 1000)));
 
         registrationCookieService.clear(response);
-
-        logger.info("Google OAuth2 registration completed for user: {}", newRequest.username());
+logger.info("Google OAuth2 registration completed for user: {}", newRequest.username());
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
+
+    /**
+     * Refreshes the access token by validating the existing JWT cookie
+     * (even if expired) against the user's current token version in the database.
+     * If valid, issues a new JWT cookie with updated expiration.
+     *
+     * <p>This endpoint enables silent token refresh for the frontend without
+     * requiring the user to re-enter credentials.</p>
+     *
+     * @param request  incoming HTTP request containing the JWT cookie
+     * @param response servlet response for setting the new JWT cookie
+     * @return 200 with success message, or 401 if refresh fails
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<String> refresh(HttpServletRequest request, HttpServletResponse response) {
+        String token = jwtAuthenticationUtils.extractJwtFromCookies(request);
+        if (token == null) {
+            logger.debug("Refresh failed: no JWT cookie present");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No token to refresh");
+        }
+
+        Long userId;
+        try {
+            userId = jwtAuthenticationUtils.getUserIdFromToken(token);
+        } catch (Exception e) {
+            logger.debug("Refresh failed: invalid token structure");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || !jwtAuthenticationUtils.validateTokenForRefresh(token, user)) {
+            logger.debug("Refresh failed: user not found or token validation failed for userId={}", userId);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token refresh failed");
+        }
+
+        String newToken = jwtAuthenticationUtils.generateToken(user, expirationTime);
+        response.addCookie(jwtCookieFactory.buildJwtCookie(newToken, (int) (expirationTime / 1000)));
+
+        logger.debug("Token refreshed successfully for user: {}", user.getUsername());
+        return ResponseEntity.ok("Token refreshed");
+    }
+
 }

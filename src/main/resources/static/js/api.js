@@ -2,9 +2,36 @@
  *  Centralised fetch wrapper for all frontend → backend
  *  communication. Uses cookies (credentials: "include")
  *  for JWT auth — no manual token handling required.
+ *  Auto-refreshes access token on 401 for mutating requests.
  * ──────────────────────────────────────────────────────── */
 
 window.API = (function () {
+
+  var isRefreshing = false;
+  var refreshPromise = null;
+
+  async function refreshAccessToken() {
+    if (refreshPromise) return refreshPromise;
+    isRefreshing = true;
+    refreshPromise = fetch("/auth/refresh", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Accept": "application/json" }
+    })
+      .then(function (response) {
+        if (!response.ok) throw new Error("Refresh failed");
+        return response.json().catch(function () { return null; });
+      })
+      .catch(function (err) {
+        window.location.href = "/login?expired=1";
+        throw err;
+      })
+      .finally(function () {
+        isRefreshing = false;
+        refreshPromise = null;
+      });
+    return refreshPromise;
+  }
 
   async function request(url, options) {
     var defaults = {
@@ -16,8 +43,14 @@ window.API = (function () {
       config.headers["Content-Type"] = "application/json";
       config.body = JSON.stringify(config.body);
     }
+    var isMutating = config.method && ["POST", "PUT", "PATCH", "DELETE"].includes(config.method.toUpperCase());
     try {
       var response = await fetch(url, config);
+      if (response.status === 401 && isMutating && !config._retry) {
+        await refreshAccessToken();
+        config._retry = true;
+        response = await fetch(url, config);
+      }
       if (response.status === 204) return null;
       var data = await response.json().catch(function () { return null; });
       if (!response.ok) {

@@ -243,6 +243,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth/google/get-profile").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/google/complete-profile").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/verify-email").permitAll()
