@@ -6,8 +6,8 @@ import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
-import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.filter.RateLimitFilter;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import com.pkmprojects.shoppiq.service.RolesService;
 import org.slf4j.Logger;
@@ -31,6 +31,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -92,6 +93,7 @@ public class SecurityConfig {
     private final ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint;
     private final ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler;
     private final OAuthReturnUrlFilter oauthReturnUrlFilter;
+    private final Optional<RateLimitFilter> rateLimitFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           OAuth2SuccessHandler oAuth2SuccessHandler,
@@ -100,7 +102,8 @@ public class SecurityConfig {
                           RolesService rolesService,
                           ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint,
                           ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler,
-                          OAuthReturnUrlFilter oauthReturnUrlFilter) {
+                          OAuthReturnUrlFilter oauthReturnUrlFilter,
+                          Optional<RateLimitFilter> rateLimitFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
         this.cookieAuthorizationRequestRepository = cookieAuthorizationRequestRepository;
@@ -109,6 +112,7 @@ public class SecurityConfig {
         this.shoppiqAuthenticationEntryPoint = shoppiqAuthenticationEntryPoint;
         this.shoppiqAccessDeniedHandler = shoppiqAccessDeniedHandler;
         this.oauthReturnUrlFilter = oauthReturnUrlFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     /**
@@ -324,6 +328,9 @@ public class SecurityConfig {
                 .addFilterBefore(oauthReturnUrlFilter, OAuth2AuthorizationRequestRedirectFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
+
+        rateLimitFilter.ifPresent(filter ->
+                http.addFilterBefore(filter, JwtAuthenticationFilter.class));
 
         return http.build();
     }

@@ -156,8 +156,8 @@ loadGoogleProfile();
       body: JSON.stringify({ username: username, password: password })
     });
     if (!response.ok) {
-      const errText = await response.text();
-      showToast(errText || "Registration failed. Please try again.", "error");
+      const data = await response.json().catch(() => ({}));
+      showToast(data.detail || "Registration failed. Please try again.", "error");
       return;
     }
     showToast("Registration completed successfully!", "success");

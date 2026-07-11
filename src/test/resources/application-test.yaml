@@ -27,6 +27,8 @@ jwt:
 app:
   security:
     secure-cookie: false
+  rate-limit:
+    enabled: false
 
 shoppiq:
   email:

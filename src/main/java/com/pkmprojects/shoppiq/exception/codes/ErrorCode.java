@@ -430,6 +430,15 @@ public enum ErrorCode {
     VERIFICATION_CODE_MAX_ATTEMPTS("VERIFY-429-001", "Maximum verification attempts exceeded."),
 
     // =========================================================
+    // Rate Limit Errors
+    // =========================================================
+
+    /**
+     * Rate limit exceeded.
+     */
+    RATE_LIMIT_EXCEEDED("AUTH-429-001", "Too many requests. Please try again later."),
+
+    // =========================================================
     // Contact Message Errors
     // =========================================================
 

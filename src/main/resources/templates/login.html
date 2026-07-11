@@ -91,7 +91,8 @@
                     body: JSON.stringify({username: username, password: password, rememberMe: rememberMe})
                 });
                 if (!response.ok) {
-                    showToast("Invalid username or password", "error");
+                    const data = await response.json().catch(() => ({}));
+                    showToast(data.detail || "Invalid username or password", "error");
                     return;
                 }
                 showToast("Login successful", "success");

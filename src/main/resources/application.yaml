@@ -46,6 +46,67 @@ app:
     admin-page-size: 20
     seller-page-size: 15
     catalog-page-size: 12
+  rate-limit:
+    enabled: true
+    rules:
+      # ── Unauthenticated (IP-based) ──
+      - path: /auth/login
+        limit: 10
+        duration: 900
+        key-type: IP
+      - path: /user/register
+        limit: 10
+        duration: 3600
+        key-type: IP
+      - path: /auth/forgot-password
+        limit: 10
+        duration: 3600
+        key-type: IP
+      - path: /auth/reset-password
+        limit: 10
+        duration: 3600
+        key-type: IP
+      - path: /auth/verify-email
+        limit: 10
+        duration: 3600
+        key-type: IP
+      - path: /auth/confirm-email
+        limit: 10
+        duration: 3600
+        key-type: IP
+      - path: /auth/refresh
+        limit: 10
+        duration: 900
+        key-type: IP
+      - path: /auth/google/complete-profile
+        limit: 10
+        duration: 3600
+        key-type: IP
+      - path: /contact
+        limit: 10
+        duration: 3600
+        key-type: IP
+      - path: /api/newsletter/subscribe
+        limit: 10
+        duration: 3600
+        key-type: IP
+      # ── Authenticated critical (userId:IP-based) ──
+      - path: /user/order/checkout
+        limit: 10
+        duration: 60
+        key-type: USER_IP
+      - path: /user/payment/pay/*
+        limit: 10
+        duration: 60
+        key-type: USER_IP
+      - path: /user/payment/verify
+        limit: 10
+        duration: 60
+        key-type: USER_IP
+      - path: /user/password
+        limit: 10
+        duration: 60
+        key-type: USER_IP
 
 # Logging configuration
 # Available levels (create most to least verbose):
