@@ -73,10 +73,11 @@
         '<td>' + (s.commissionRate ? s.commissionRate + '%' : 'N/A') + '</td>' +
         '<td class="text-sm">' + formatDate(s.joinedAt) + '</td>' +
         '<td class="flex gap-xs">' +
-          (s.verificationStatus !== 'APPROVED' ? '<button class="btn btn-sm btn-success seller-approve-btn" data-id="' + s.id + '">Approve</button>' : '') +
-          (s.verificationStatus !== 'REJECTED' ? '<button class="btn btn-sm btn-danger seller-reject-btn" data-id="' + s.id + '">Reject</button>' : '') +
-          (s.sellerStatus === 'ACTIVE' ? '<button class="btn btn-sm btn-warning seller-suspend-btn" data-id="' + s.id + '">Suspend</button>' : '') +
-          (s.sellerStatus === 'SUSPENDED' ? '<button class="btn btn-sm btn-success seller-unsuspend-btn" data-id="' + s.id + '">Unsuspend</button>' : '') +
+          (s.verificationStatus === 'PENDING' ? '<button class="btn btn-sm btn-success seller-approve-btn" data-id="' + s.id + '">Approve</button>' : '') +
+          (s.verificationStatus === 'PENDING' ? '<button class="btn btn-sm btn-secondary seller-reject-btn" data-id="' + s.id + '">Reject</button>' : '') +
+          (s.verificationStatus === 'APPROVED' && s.sellerStatus === 'ACTIVE' ? '<button class="btn btn-sm btn-danger seller-suspend-btn" data-id="' + s.id + '">Suspend</button>' : '') +
+          (s.verificationStatus === 'APPROVED' && s.sellerStatus === 'SUSPENDED' ? '<button class="btn btn-sm btn-success seller-unsuspend-btn" data-id="' + s.id + '">Unsuspend</button>' : '') +
+          (s.verificationStatus === 'REJECTED' ? '<button class="btn btn-sm btn-success seller-approve-btn" data-id="' + s.id + '">Re-approve</button>' : '') +
         '</td>';
       tbody.appendChild(tr);
     });
