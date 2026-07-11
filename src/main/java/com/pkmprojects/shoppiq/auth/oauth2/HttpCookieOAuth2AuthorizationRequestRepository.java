@@ -333,6 +333,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     private String serialize(OAuth2AuthorizationRequest request) {
         try {
             Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("authorizationUri", request.getAuthorizationUri());
             payload.put("authorizationRequestUri", request.getAuthorizationRequestUri());
             payload.put("redirectUri", request.getRedirectUri());
             payload.put("scopes", request.getScopes());
@@ -340,6 +341,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             payload.put("additionalParameters", request.getAdditionalParameters());
             payload.put("attributes", request.getAttributes());
             payload.put("clientId", request.getClientId());
+            payload.put("grantType", request.getGrantType() != null ? request.getGrantType().getValue() : null);
 
             String json = objectMapper.writeValueAsString(payload);
             String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(json.getBytes(StandardCharsets.UTF_8));
@@ -398,6 +400,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             Map<String, Object> payload = objectMapper.readValue(json, typeRef);
 
             String authorizationRequestUri = (String) payload.get("authorizationRequestUri");
+            String authorizationUri = (String) payload.get("authorizationUri");
             String redirectUri = (String) payload.get("redirectUri");
             @SuppressWarnings("unchecked")
             Set<String> scopes = ((java.util.List<String>) payload.get("scopes")).stream().collect(Collectors.toSet());
@@ -407,14 +410,35 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = (Map<String, Object>) payload.get("attributes");
             String clientId = (String) payload.get("clientId");
+            String grantType = (String) payload.get("grantType");
 
-            return OAuth2AuthorizationRequest.authorizationCode()
-                    .authorizationRequestUri(authorizationRequestUri)
+            OAuth2AuthorizationRequest.Builder builder =
+                    OAuth2AuthorizationRequest.authorizationCode();
+
+            String resolvedAuthorizationUri = authorizationUri;
+            if (resolvedAuthorizationUri == null && authorizationRequestUri != null) {
+                int q = authorizationRequestUri.indexOf('?');
+                resolvedAuthorizationUri = q > 0
+                        ? authorizationRequestUri.substring(0, q)
+                        : authorizationRequestUri;
+            }
+
+            if (resolvedAuthorizationUri == null) {
+                logger.warn("Cannot reconstruct OAuth2 authorization request: no authorization URI in cookie");
+                return null;
+            }
+
+            builder.authorizationUri(resolvedAuthorizationUri);
+            if (authorizationRequestUri != null) {
+                builder.authorizationRequestUri(authorizationRequestUri);
+            }
+
+            return builder
                     .redirectUri(redirectUri)
                     .scopes(scopes)
                     .state(state)
-                    .additionalParameters(additionalParameters)
-                    .attributes(attributes)
+                    .additionalParameters(additionalParameters != null ? additionalParameters : java.util.Map.of())
+                    .attributes(attributes != null ? attributes : java.util.Map.of())
                     .clientId(clientId)
                     .build();
         } catch (Exception e) {
