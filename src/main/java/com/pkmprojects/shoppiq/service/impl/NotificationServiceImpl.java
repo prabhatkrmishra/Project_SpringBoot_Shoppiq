@@ -23,7 +23,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationPreferenceRepository preferenceRepository;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public NotificationPreferenceResponse getPreferences(User user) {
         NotificationPreference preference = getOrCreate(user);
         return NotificationPreferenceResponse.from(preference);

@@ -56,28 +56,34 @@
         <h2>Sales &amp; Offers</h2>
         <p>Deals you don't want to miss</p>
       </div>
-      <div class="offers-grid">
-        <a th:href="@{/sale}" class="offer-banner offer-banner-primary">
+      <div class="offers-grid" th:if="${banners != null and !banners.isEmpty()}">
+        <th:block th:each="banner : ${banners}">
+          <a th:if="${banner.buttonLink != null}"
+             th:href="@{${banner.buttonLink}}"
+             th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}">
+            <div class="offer-content">
+              <span class="offer-tag" th:text="${banner.badgeText}"></span>
+              <h3 th:text="${banner.heading}" th:style="'color:' + ${banner.headingColor}"></h3>
+              <p th:if="${banner.bodyText != null}" th:text="${banner.bodyText}" th:style="'color:' + ${banner.bodyColor}"></p>
+              <span th:if="${banner.buttonText != null}" class="btn btn-sm btn-white" th:text="${banner.buttonText}"></span>
+            </div>
+          </a>
+          <div th:unless="${banner.buttonLink != null}"
+               th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}">
+            <div class="offer-content">
+              <span class="offer-tag" th:text="${banner.badgeText}"></span>
+              <h3 th:text="${banner.heading}" th:style="'color:' + ${banner.headingColor}"></h3>
+              <p th:if="${banner.bodyText != null}" th:text="${banner.bodyText}" th:style="'color:' + ${banner.bodyColor}"></p>
+            </div>
+          </div>
+        </th:block>
+      </div>
+      <div class="offers-grid" th:if="${banners == null or banners.isEmpty()}">
+        <div class="offer-banner offer-banner-primary">
           <div class="offer-content">
             <span class="offer-tag">Limited Time</span>
-            <h3>Up to 50% Off</h3>
-            <p>Grab today's hottest deals before they're gone.</p>
-            <span class="btn btn-sm btn-white">Shop Sale</span>
-          </div>
-        </a>
-        <a th:href="@{/new-arrivals}" class="offer-banner offer-banner-secondary">
-          <div class="offer-content">
-            <span class="offer-tag">Just In</span>
-            <h3>New Arrivals</h3>
-            <p>Fresh drops just landed. Stay ahead of the curve.</p>
-            <span class="btn btn-sm btn-white">Explore</span>
-          </div>
-        </a>
-        <div class="offer-banner offer-banner-accent">
-          <div class="offer-content">
-            <span class="offer-tag">Perks</span>
-            <h3>Free Shipping</h3>
-            <p>On all orders over $50. No codes needed.</p>
+            <h3>Deals Coming Soon</h3>
+            <p>Check back later for amazing offers.</p>
           </div>
         </div>
       </div>

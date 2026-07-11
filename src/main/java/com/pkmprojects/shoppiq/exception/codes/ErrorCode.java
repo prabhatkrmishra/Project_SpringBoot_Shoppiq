@@ -402,6 +402,15 @@ public enum ErrorCode {
     PROMO_CODE_MIN_ORDER_AMOUNT_NOT_MET("PROMO-400-006", "Order subtotal does not meet the promo code minimum."),
 
     // =========================================================
+    // Banner Errors
+    // =========================================================
+
+    /**
+     * Requested homepage banner could not be found.
+     */
+    BANNER_NOT_FOUND("BANNER-404-001", "Requested banner was not found."),
+
+    // =========================================================
     // Email Errors
     // =========================================================
 

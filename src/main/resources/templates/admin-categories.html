@@ -76,6 +76,7 @@
     document.getElementById('cat-name').value = cat ? (cat.name || '') : '';
     document.getElementById('cat-description').value = cat ? (cat.description || '') : '';
     document.getElementById('cat-save-btn').textContent = cat ? 'Update' : 'Save';
+    document.getElementById('cat-save-btn').disabled = false;
     document.getElementById('category-modal').classList.add('active');
   }
 

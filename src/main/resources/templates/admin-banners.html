@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Manage Homepage Banners')}"></head>
+<body>
+<th:block th:replace="~{fragments/admin-header :: admin-header('banners')}"></th:block>
+<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+<main class="admin-main">
+  <div class="page-header flex-between items-center">
+    <div>
+      <h1>Homepage Banners</h1>
+      <p>Manage the Sales &amp; Offers banners displayed on the homepage</p>
+    </div>
+    <div class="flex gap-sm">
+      <button id="add-banner-btn" class="btn btn-primary btn-sm">+ Add Banner</button>
+    </div>
+  </div>
+
+  <div class="admin-panel">
+    <div class="admin-panel-header">
+      <div class="admin-panel-title">All Banners</div>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Badge</th>
+            <th>Type</th>
+            <th>Heading</th>
+            <th>Body</th>
+            <th>Button</th>
+            <th>Order</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="banner-body">
+          <tr><td colspan="9" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="banner-pagination"></div>
+
+  <div id="banner-modal" class="modal-overlay">
+    <div class="modal" role="dialog" aria-labelledby="banner-modal-title" style="max-width:560px;">
+      <div class="modal-header">
+        <h2 id="banner-modal-title">Add Banner</h2>
+        <button class="modal-close" id="banner-modal-close">&times;</button>
+      </div>
+      <form id="banner-form" class="modal-body">
+        <input type="hidden" id="banner-id" value="">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="banner-badge-text" class="form-label">Badge Text *</label>
+            <input type="text" id="banner-badge-text" class="form-input" maxlength="50" required placeholder="e.g. Limited Time">
+          </div>
+          <div class="form-group">
+            <label for="banner-badge-type" class="form-label">Banner Type *</label>
+            <select id="banner-badge-type" class="form-input" required>
+              <option value="PRIMARY">Red</option>
+              <option value="SECONDARY">Purple</option>
+              <option value="ACCENT">Green</option>
+              <option value="HIGHLIGHT">Orange</option>
+              <option value="INFO">Blue</option>
+              <option value="PREMIUM">Gold</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="banner-heading" class="form-label">Heading *</label>
+          <input type="text" id="banner-heading" class="form-input" maxlength="100" required placeholder="e.g. Up to 50% Off">
+        </div>
+        <div class="form-group">
+          <label for="banner-body-text" class="form-label">Body Text</label>
+          <input type="text" id="banner-body-text" class="form-input" maxlength="255" placeholder="e.g. Grab today's hottest deals before they're gone.">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="banner-button-text" class="form-label">Button Text</label>
+            <input type="text" id="banner-button-text" class="form-input" maxlength="50" placeholder="e.g. Shop Sale">
+          </div>
+          <div class="form-group">
+            <label for="banner-button-link" class="form-label">Button Link</label>
+            <input type="text" id="banner-button-link" class="form-input" maxlength="500" placeholder="e.g. /sale">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="banner-heading-color" class="form-label">Heading Color</label>
+            <div class="flex items-center gap-sm">
+              <input type="color" id="banner-heading-color" value="#ffffff" style="width:40px;height:36px;padding:2px;cursor:pointer;">
+              <input type="text" id="banner-heading-color-text" class="form-input" value="#FFFFFF" maxlength="7" style="flex:1;">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="banner-body-color" class="form-label">Body Color</label>
+            <div class="flex items-center gap-sm">
+              <input type="color" id="banner-body-color" value="#ffffff" style="width:40px;height:36px;padding:2px;cursor:pointer;">
+              <input type="text" id="banner-body-color-text" class="form-input" value="rgba(255,255,255,0.85)" maxlength="30" style="flex:1;">
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="banner-display-order" class="form-label">Display Order</label>
+            <input type="number" id="banner-display-order" class="form-input" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label flex items-center gap-sm" style="margin-top:22px;">
+              <input type="checkbox" id="banner-active" checked> Active
+            </label>
+          </div>
+        </div>
+        <div class="flex gap-sm mt-md">
+          <button type="submit" id="banner-save-btn" class="btn btn-primary">Save</button>
+          <button type="button" id="banner-cancel-btn" class="btn btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script th:src="@{/js/pagination.js}"></script>
+<script>
+(function () {
+  'use strict';
+  var editingId = null;
+  var currentPage = 0;
+  var PAGE_SIZE = 20;
+
+  var TYPE_LABELS = { PRIMARY: 'Red', SECONDARY: 'Purple', ACCENT: 'Green', HIGHLIGHT: 'Orange', INFO: 'Blue', PREMIUM: 'Gold' };
+  var TYPE_COLORS = { PRIMARY: '#ff1744', SECONDARY: '#d500f9', ACCENT: '#00e676', HIGHLIGHT: '#ff9100', INFO: '#2979ff', PREMIUM: '#ffd600' };
+
+  function openModal(banner) {
+    editingId = banner ? banner.id : null;
+    document.getElementById('banner-modal-title').textContent = banner ? 'Edit Banner' : 'Add Banner';
+    document.getElementById('banner-id').value = banner ? banner.id : '';
+    document.getElementById('banner-badge-text').value = banner ? (banner.badgeText || '') : '';
+    document.getElementById('banner-badge-type').value = banner ? banner.badgeType : 'PRIMARY';
+    document.getElementById('banner-heading').value = banner ? (banner.heading || '') : '';
+    document.getElementById('banner-body-text').value = banner ? (banner.bodyText || '') : '';
+    document.getElementById('banner-button-text').value = banner ? (banner.buttonText || '') : '';
+    document.getElementById('banner-button-link').value = banner ? (banner.buttonLink || '') : '';
+    document.getElementById('banner-heading-color').value = banner ? (banner.headingColor || '#FFFFFF') : '#ffffff';
+    document.getElementById('banner-heading-color-text').value = banner ? (banner.headingColor || '#FFFFFF') : '#FFFFFF';
+    document.getElementById('banner-body-color').value = banner ? rgbToHex(banner.bodyColor || 'rgba(255,255,255,0.85)') : '#ffffff';
+    document.getElementById('banner-body-color-text').value = banner ? (banner.bodyColor || 'rgba(255,255,255,0.85)') : 'rgba(255,255,255,0.85)';
+    document.getElementById('banner-display-order').value = banner ? (banner.displayOrder || 0) : 0;
+    document.getElementById('banner-active').checked = banner ? banner.active : true;
+    document.getElementById('banner-save-btn').textContent = banner ? 'Update' : 'Save';
+    document.getElementById('banner-save-btn').disabled = false;
+    document.getElementById('banner-modal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('banner-modal').classList.remove('active');
+    editingId = null;
+  }
+
+  function rgbToHex(color) {
+    if (!color) return '#ffffff';
+    if (color.charAt(0) === '#') return color.length === 4
+      ? '#' + color[1]+color[1]+color[2]+color[2]+color[3]+color[3]
+      : color;
+    var m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (!m) return '#ffffff';
+    return '#' + [m[1],m[2],m[3]].map(function(x){var h=parseInt(x).toString(16);return h.length===1?'0'+h:h;}).join('');
+  }
+
+  function renderBanners(banners) {
+    var tbody = document.getElementById('banner-body');
+    if (!banners || banners.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No banners found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    banners.forEach(function (b) {
+      var tr = document.createElement('tr');
+      var statusBadge = b.active
+        ? '<span class="status-badge in-stock">Active</span>'
+        : '<span class="status-badge out-of-stock">Inactive</span>';
+      var typeDot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + TYPE_COLORS[b.badgeType] + ';margin-right:6px;vertical-align:middle;"></span>' + (TYPE_LABELS[b.badgeType] || escapeHtml(b.badgeType));
+      var bodyPreview = b.bodyText ? (b.bodyText.length > 40 ? b.bodyText.substring(0, 40) + '...' : b.bodyText) : '—';
+      var buttonText = b.buttonText ? b.buttonText + ' → ' + (b.buttonLink || '') : '—';
+      tr.innerHTML =
+        '<td>' + b.id + '</td>' +
+        '<td><span style="display:inline-block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;background:rgba(0,0,0,0.06);padding:4px 10px;border-radius:999px;">' + escapeHtml(b.badgeText) + '</span></td>' +
+        '<td class="text-sm">' + typeDot + '</td>' +
+        '<td><strong>' + escapeHtml(b.heading) + '</strong></td>' +
+        '<td class="text-sm">' + escapeHtml(bodyPreview) + '</td>' +
+        '<td class="text-sm">' + escapeHtml(buttonText) + '</td>' +
+        '<td class="text-sm">' + b.displayOrder + '</td>' +
+        '<td>' + statusBadge + '</td>' +
+        '<td class="admin-table-actions">' +
+          '<button class="btn btn-sm btn-secondary banner-edit-btn" data-id="' + b.id + '">Edit</button> ' +
+          '<button class="btn btn-sm btn-ghost banner-toggle-btn" data-id="' + b.id + '" title="Toggle Active">' +
+            (b.active ? '🟢' : '⚪') +
+          '</button> ' +
+          '<button class="btn btn-sm btn-danger banner-delete-btn" data-id="' + b.id + '">Delete</button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('.banner-edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.id;
+        var found = banners.find(function (b) { return b.id == id; });
+        if (found) openModal(found);
+      });
+    });
+
+    tbody.querySelectorAll('.banner-toggle-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.id;
+        API.patch('/api/admin/banners/' + id + '/toggle').then(function () {
+          showToast('Banner status toggled', 'success');
+          loadBanners();
+        }).catch(function (e) { showToast(e.message || 'Failed to toggle', 'error'); });
+      });
+    });
+
+    tbody.querySelectorAll('.banner-delete-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = this.dataset.id;
+        showConfirmModal({ title: 'Delete Banner', message: 'Are you sure you want to delete this banner?', confirmText: 'Delete', danger: true }).then(function (confirmed) {
+          if (!confirmed) return;
+          API.del('/api/admin/banners/' + id).then(function () {
+            showToast('Banner deleted', 'success');
+            loadBanners();
+          }).catch(function (e) { showToast(e.message || 'Failed to delete', 'error'); });
+        });
+      });
+    });
+  }
+
+  function loadBanners(page) {
+    if (page != null) currentPage = page;
+    API.get('/api/admin/banners?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+      var items = data && data.content ? data.content : [];
+      renderBanners(items);
+      Pagination.render('banner-pagination', data, loadBanners, {
+        onPageSizeChange: function (newSize) {
+          PAGE_SIZE = newSize;
+          loadBanners(0);
+        }
+      });
+    }).catch(function () {
+      document.getElementById('banner-body').innerHTML =
+        '<tr><td colspan="9" class="text-center text-muted">Failed to load banners</td></tr>';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadBanners();
+
+    document.getElementById('add-banner-btn').addEventListener('click', function () { openModal(null); });
+    document.getElementById('banner-modal-close').addEventListener('click', closeModal);
+    document.getElementById('banner-cancel-btn').addEventListener('click', closeModal);
+    document.getElementById('banner-modal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
+
+    document.getElementById('banner-heading-color').addEventListener('input', function () {
+      document.getElementById('banner-heading-color-text').value = this.value.toUpperCase();
+    });
+    document.getElementById('banner-heading-color-text').addEventListener('input', function () {
+      if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+        document.getElementById('banner-heading-color').value = this.value;
+      }
+    });
+    document.getElementById('banner-body-color').addEventListener('input', function () {
+      document.getElementById('banner-body-color-text').value = this.value.toUpperCase();
+    });
+    document.getElementById('banner-body-color-text').addEventListener('input', function () {
+      if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+        document.getElementById('banner-body-color').value = this.value;
+      }
+    });
+
+    document.getElementById('banner-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var data = {
+        badgeText: document.getElementById('banner-badge-text').value.trim(),
+        badgeType: document.getElementById('banner-badge-type').value,
+        heading: document.getElementById('banner-heading').value.trim(),
+        bodyText: document.getElementById('banner-body-text').value.trim() || null,
+        buttonText: document.getElementById('banner-button-text').value.trim() || null,
+        buttonLink: document.getElementById('banner-button-link').value.trim() || null,
+        headingColor: document.getElementById('banner-heading-color-text').value.trim() || '#FFFFFF',
+        bodyColor: document.getElementById('banner-body-color-text').value.trim() || 'rgba(255,255,255,0.85)',
+        displayOrder: parseInt(document.getElementById('banner-display-order').value) || 0,
+        active: document.getElementById('banner-active').checked
+      };
+      var btn = document.getElementById('banner-save-btn');
+      setButtonLoading(btn, true);
+
+      var isUpdate = !!editingId;
+      var request = editingId
+        ? API.put('/api/admin/banners/' + editingId, data)
+        : API.post('/api/admin/banners', data);
+
+      request.then(function () {
+        showToast(isUpdate ? 'Banner updated' : 'Banner created', 'success');
+        closeModal();
+        loadBanners();
+      }).catch(function (err) {
+        showToast(err.message || 'Failed to save', 'error');
+        setButtonLoading(btn, false);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

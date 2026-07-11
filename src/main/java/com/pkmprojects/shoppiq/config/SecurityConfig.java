@@ -240,7 +240,8 @@ public class SecurityConfig {
                                 "/admin/roles",
                                 "/admin/promo-codes",
                                 "/admin/mail",
-                                "/admin/messages"
+                                "/admin/messages",
+                                "/admin/banners"
                         ).hasRole("ADMIN")
 
                         // Admin API endpoints
@@ -262,6 +263,9 @@ public class SecurityConfig {
                         // Newsletter: public subscribe + unsubscribe
                         .requestMatchers(HttpMethod.POST, "/api/newsletter/subscribe").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/newsletter/unsubscribe").permitAll()
+
+                        // Banners: public read
+                        .requestMatchers(HttpMethod.GET, "/api/banners/active").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/items/all").permitAll()
                         .requestMatchers(HttpMethod.GET, "/items/*").permitAll()

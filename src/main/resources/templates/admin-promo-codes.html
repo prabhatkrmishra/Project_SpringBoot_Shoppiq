@@ -157,6 +157,7 @@
     document.getElementById('promo-valid-until').value = promo ? toLocalDateTime(promo.validUntil) : '';
     document.getElementById('promo-active').checked = promo ? promo.active : true;
     document.getElementById('promo-save-btn').textContent = promo ? 'Update' : 'Save';
+    document.getElementById('promo-save-btn').disabled = false;
     document.getElementById('promo-modal').classList.add('active');
   }
 

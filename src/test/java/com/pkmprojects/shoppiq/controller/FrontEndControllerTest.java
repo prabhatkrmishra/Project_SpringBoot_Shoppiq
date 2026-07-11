@@ -12,6 +12,7 @@ import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
 import com.pkmprojects.shoppiq.repository.UserRepository;
+import com.pkmprojects.shoppiq.service.BannerService;
 import com.pkmprojects.shoppiq.service.RolesService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import org.junit.jupiter.api.AfterEach;
@@ -55,6 +56,9 @@ class FrontEndControllerTest {
 
     @MockitoBean
     private RolesService rolesService;
+
+    @MockitoBean
+    private BannerService bannerService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;

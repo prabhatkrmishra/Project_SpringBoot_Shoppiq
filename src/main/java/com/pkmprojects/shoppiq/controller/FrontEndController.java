@@ -1,13 +1,22 @@
 package com.pkmprojects.shoppiq.controller;
 
+import com.pkmprojects.shoppiq.service.BannerService;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class FrontEndController {
 
+    private final BannerService bannerService;
+
+    public FrontEndController(BannerService bannerService) {
+        this.bannerService = bannerService;
+    }
+
     @GetMapping("/")
-    public String homePage() {
+    public String homePage(Model model) {
+        model.addAttribute("banners", bannerService.findAllActive());
         return "index";
     }
 
@@ -209,6 +218,11 @@ public class FrontEndController {
     @GetMapping("/admin/promo-codes")
     public String adminPromoCodesPage() {
         return "admin-promo-codes";
+    }
+
+    @GetMapping("/admin/banners")
+    public String adminBannersPage() {
+        return "admin-banners";
     }
 
     @GetMapping("/admin/mail")
