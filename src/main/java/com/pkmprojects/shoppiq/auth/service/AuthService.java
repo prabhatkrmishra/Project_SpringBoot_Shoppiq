@@ -8,11 +8,15 @@ import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.exception.auth.InvalidCredentialException;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 /**
  * Service handling authentication logic and JWT cookie creation.
@@ -59,6 +63,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+
     @Value("${jwt.expiration}")
     private long expirationTime;
 
@@ -88,11 +95,32 @@ public class AuthService {
      * @throws InvalidCredentialException if authentication fails
      */
     private void authenticate(String username, String password) {
+        User user = userRepository.findUserByUsername(username).orElse(null);
+
+        if (user != null && !user.isAccountNonLocked()) {
+            throw new InvalidCredentialException("Account is locked. Please try again later.");
+        }
+
         try {
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password));
         } catch (AuthenticationException ex) {
+            if (user != null) {
+                int attempts = user.getFailedLoginAttempts() + 1;
+                user.setFailedLoginAttempts(attempts);
+                if (attempts >= MAX_FAILED_ATTEMPTS) {
+                    user.setLockoutTime(LocalDateTime.now());
+                    logger.warn("Account locked for user '{}' after {} failed attempts", username, attempts);
+                }
+                userRepository.save(user);
+            }
             throw new InvalidCredentialException("Invalid username or password");
+        }
+
+        if (user != null && user.getFailedLoginAttempts() > 0) {
+            user.setFailedLoginAttempts(0);
+            user.setLockoutTime(null);
+            userRepository.save(user);
         }
     }
 

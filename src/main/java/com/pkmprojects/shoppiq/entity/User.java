@@ -150,6 +150,21 @@ public class User extends AuditableEntity
     private LocalDateTime emailVerifiedAt;
 
     /**
+     * Number of consecutive failed login attempts.
+     * Reset to 0 on successful login.
+     */
+    @Builder.Default
+    @Column(name = "failed_login_attempts", nullable = false)
+    private int failedLoginAttempts = 0;
+
+    /**
+     * Timestamp when the account was locked due to too many failed attempts.
+     * {@code null} means the account is not locked.
+     */
+    @Column(name = "lockout_time")
+    private LocalDateTime lockoutTime;
+
+    /**
      * Security roles assigned to this user.
      */
     @Builder.Default
@@ -250,14 +265,19 @@ public class User extends AuditableEntity
      * Indicates whether the user's account is locked.
      *
      * <p>
-     * Account locking is not currently implemented.
+     * An account is locked when {@link #lockoutTime} is set and fewer than
+     * 30 minutes have elapsed since the lockout. After 30 minutes the
+     * lockout expires automatically (soft lockout).
      * </p>
      *
-     * @return always {@code true}
+     * @return {@code true} if the account is not locked or the lockout has expired
      */
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        if (lockoutTime == null) {
+            return true;
+        }
+        return lockoutTime.plusMinutes(30).isBefore(LocalDateTime.now());
     }
 
     /**
