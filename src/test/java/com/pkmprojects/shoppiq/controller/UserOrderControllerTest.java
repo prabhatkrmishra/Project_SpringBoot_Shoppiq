@@ -350,4 +350,327 @@ class UserOrderControllerTest {
                     .andExpect(status().isBadRequest());
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PUT /user/order/return/{id}
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("PUT /user/order/return/{id}")
+    class RequestReturnTests {
+
+        @Test
+        @DisplayName("204 No Content — return requested successfully")
+        void requestReturn_success() throws Exception {
+            doNothing().when(checkoutService).requestReturn(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/return/10"))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("404 Not Found — order does not exist")
+        void requestReturn_notFound() throws Exception {
+            doThrow(new OrderNotFoundException("Order '99' not found."))
+                    .when(checkoutService).requestReturn(any(), eq(99L));
+
+            mockMvc.perform(put("/user/order/return/99"))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("403 Forbidden — order belongs to another user")
+        void requestReturn_wrongOwner() throws Exception {
+            doThrow(OrderAccessDeniedException.forOrder(10L))
+                    .when(checkoutService).requestReturn(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/return/10"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("400 Bad Request — order not in DELIVERED state")
+        void requestReturn_notDelivered() throws Exception {
+            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.SHIPPED, OrderStatus.RETURN_REQUEST))
+                    .when(checkoutService).requestReturn(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/return/10"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PUT /user/order/refund/{id}
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("PUT /user/order/refund/{id}")
+    class RequestRefundTests {
+
+        @Test
+        @DisplayName("204 No Content — refund requested successfully")
+        void requestRefund_success() throws Exception {
+            doNothing().when(checkoutService).requestRefund(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/refund/10"))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("404 Not Found — order does not exist")
+        void requestRefund_notFound() throws Exception {
+            doThrow(new OrderNotFoundException("Order '99' not found."))
+                    .when(checkoutService).requestRefund(any(), eq(99L));
+
+            mockMvc.perform(put("/user/order/refund/99"))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("403 Forbidden — order belongs to another user")
+        void requestRefund_wrongOwner() throws Exception {
+            doThrow(OrderAccessDeniedException.forOrder(10L))
+                    .when(checkoutService).requestRefund(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/refund/10"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("400 Bad Request — order not in DELIVERED state")
+        void requestRefund_notDelivered() throws Exception {
+            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.PLACED, OrderStatus.REFUND_REQUEST))
+                    .when(checkoutService).requestRefund(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/refund/10"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PUT /user/order/replace/{id}
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("PUT /user/order/replace/{id}")
+    class RequestReplacementTests {
+
+        @Test
+        @DisplayName("204 No Content — replacement requested successfully")
+        void requestReplacement_success() throws Exception {
+            doNothing().when(checkoutService).requestReplacement(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/replace/10"))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("404 Not Found — order does not exist")
+        void requestReplacement_notFound() throws Exception {
+            doThrow(new OrderNotFoundException("Order '99' not found."))
+                    .when(checkoutService).requestReplacement(any(), eq(99L));
+
+            mockMvc.perform(put("/user/order/replace/99"))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("403 Forbidden — order belongs to another user")
+        void requestReplacement_wrongOwner() throws Exception {
+            doThrow(OrderAccessDeniedException.forOrder(10L))
+                    .when(checkoutService).requestReplacement(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/replace/10"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("400 Bad Request — order not in DELIVERED state")
+        void requestReplacement_notDelivered() throws Exception {
+            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.CANCELLED, OrderStatus.REPLACE_REQUEST))
+                    .when(checkoutService).requestReplacement(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/replace/10"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Unauthenticated access to all endpoints
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("Unauthenticated access")
+    class UnauthenticatedTests {
+
+        @Test
+        @DisplayName("401 Unauthorized — GET /user/order/get/all")
+        void getMyOrders_unauthenticated() throws Exception {
+            SecurityContextHolder.clearContext();
+
+            mockMvc.perform(get("/user/order/get/all?page=0&size=20"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("401 Unauthorized — GET /user/order/get/{id}")
+        void getMyOrder_unauthenticated() throws Exception {
+            SecurityContextHolder.clearContext();
+
+            mockMvc.perform(get("/user/order/get/10"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("401 Unauthorized — PUT /user/order/cancel/{id}")
+        void cancelOrder_unauthenticated() throws Exception {
+            SecurityContextHolder.clearContext();
+
+            mockMvc.perform(put("/user/order/cancel/10"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("401 Unauthorized — PUT /user/order/return/{id}")
+        void requestReturn_unauthenticated() throws Exception {
+            SecurityContextHolder.clearContext();
+
+            mockMvc.perform(put("/user/order/return/10"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("401 Unauthorized — PUT /user/order/refund/{id}")
+        void requestRefund_unauthenticated() throws Exception {
+            SecurityContextHolder.clearContext();
+
+            mockMvc.perform(put("/user/order/refund/10"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("401 Unauthorized — PUT /user/order/replace/{id}")
+        void requestReplacement_unauthenticated() throws Exception {
+            SecurityContextHolder.clearContext();
+
+            mockMvc.perform(put("/user/order/replace/10"))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Cancel endpoint — additional error scenarios
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("PUT /user/order/cancel/{id} — additional scenarios")
+    class CancelOrderAdditionalTests {
+
+        @Test
+        @DisplayName("400 Bad Request — order already in CANCEL_REQUEST state")
+        void cancelOrder_alreadyCancelRequest() throws Exception {
+            doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.CANCEL_REQUEST))
+                    .when(checkoutService).cancelOrder(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/cancel/10"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("400 Bad Request — order in RETURN_REQUEST state")
+        void cancelOrder_returnRequest() throws Exception {
+            doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.RETURN_REQUEST))
+                    .when(checkoutService).cancelOrder(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/cancel/10"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Return endpoint — additional error scenarios
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("PUT /user/order/return/{id} — additional scenarios")
+    class RequestReturnAdditionalTests {
+
+        @Test
+        @DisplayName("400 Bad Request — order already in RETURN_REQUEST state")
+        void requestReturn_alreadyReturnRequest() throws Exception {
+            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.RETURN_REQUEST, OrderStatus.RETURN_REQUEST))
+                    .when(checkoutService).requestReturn(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/return/10"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("400 Bad Request — order already RETURNED")
+        void requestReturn_alreadyReturned() throws Exception {
+            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.RETURNED, OrderStatus.RETURN_REQUEST))
+                    .when(checkoutService).requestReturn(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/return/10"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Refund endpoint — additional error scenarios
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("PUT /user/order/refund/{id} — additional scenarios")
+    class RequestRefundAdditionalTests {
+
+        @Test
+        @DisplayName("400 Bad Request — order already in REFUND_REQUEST state")
+        void requestRefund_alreadyRefundRequest() throws Exception {
+            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REFUND_REQUEST, OrderStatus.REFUND_REQUEST))
+                    .when(checkoutService).requestRefund(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/refund/10"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("400 Bad Request — order already REFUNDED")
+        void requestRefund_alreadyRefunded() throws Exception {
+            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REFUNDED, OrderStatus.REFUND_REQUEST))
+                    .when(checkoutService).requestRefund(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/refund/10"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Replace endpoint — additional error scenarios
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("PUT /user/order/replace/{id} — additional scenarios")
+    class RequestReplacementAdditionalTests {
+
+        @Test
+        @DisplayName("400 Bad Request — order already in REPLACE_REQUEST state")
+        void requestReplacement_alreadyReplaceRequest() throws Exception {
+            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REPLACE_REQUEST, OrderStatus.REPLACE_REQUEST))
+                    .when(checkoutService).requestReplacement(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/replace/10"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("400 Bad Request — order already REPLACED")
+        void requestReplacement_alreadyReplaced() throws Exception {
+            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REPLACED, OrderStatus.REPLACE_REQUEST))
+                    .when(checkoutService).requestReplacement(any(), eq(10L));
+
+            mockMvc.perform(put("/user/order/replace/10"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
 }

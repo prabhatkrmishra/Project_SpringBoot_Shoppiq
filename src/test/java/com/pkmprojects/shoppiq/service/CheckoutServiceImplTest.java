@@ -405,7 +405,7 @@ class CheckoutServiceImplTest {
     class CancelOrderTests {
 
         @Test
-        @DisplayName("Success — PLACED order is set to CANCELLED")
+        @DisplayName("Success — PLACED order is set to CANCEL_REQUEST")
         void cancelOrder_success() throws Exception {
             User user = buildUser(1L);
             Address addr = buildAddress(1L, user);
@@ -415,7 +415,8 @@ class CheckoutServiceImplTest {
 
             checkoutService.cancelOrder(user, 10L);
 
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCEL_REQUEST);
+            verify(orderRepository).save(order);
         }
 
         @Test
@@ -479,6 +480,518 @@ class CheckoutServiceImplTest {
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
                     .isInstanceOf(OrderCannotBeCancelledException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — CONFIRMED order cannot be cancelled")
+        void cancelOrder_confirmed_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.CONFIRMED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
+                    .isInstanceOf(OrderCannotBeCancelledException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — OUT_FOR_DELIVERY order cannot be cancelled")
+        void cancelOrder_outForDelivery_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.OUT_FOR_DELIVERY);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
+                    .isInstanceOf(OrderCannotBeCancelledException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — RETURN_REQUEST order cannot be cancelled")
+        void cancelOrder_returnRequest_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.RETURN_REQUEST);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
+                    .isInstanceOf(OrderCannotBeCancelledException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — REFUND_REQUEST order cannot be cancelled")
+        void cancelOrder_refundRequest_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.REFUND_REQUEST);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
+                    .isInstanceOf(OrderCannotBeCancelledException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — CANCEL_REQUEST order cannot be cancelled again")
+        void cancelOrder_cancelRequest_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.CANCEL_REQUEST);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
+                    .isInstanceOf(OrderCannotBeCancelledException.class);
+        }
+
+        @Test
+        @DisplayName("save is called exactly once for successful cancel")
+        void cancelOrder_savesExactlyOnce() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            checkoutService.cancelOrder(user, 10L);
+
+            verify(orderRepository, times(1)).save(order);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // requestReturn()
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("requestReturn()")
+    class RequestReturnTests {
+
+        @Test
+        @DisplayName("Success — DELIVERED order is set to RETURN_REQUEST")
+        void requestReturn_success() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            checkoutService.requestReturn(user, 10L);
+
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.RETURN_REQUEST);
+            verify(orderRepository).save(order);
+        }
+
+        @Test
+        @DisplayName("Fails — PLACED order cannot request return")
+        void requestReturn_placed_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — order not found")
+        void requestReturn_notFound() throws Exception {
+            User user = buildUser(1L);
+            when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> checkoutService.requestReturn(user, 99L))
+                    .isInstanceOf(OrderNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — wrong owner")
+        void requestReturn_wrongOwner() throws Exception {
+            User alice = buildUser(1L);
+            User bob = buildUser(2L);
+            Address addr = buildAddress(1L, bob);
+            Order order = buildOrder(10L, bob, addr, OrderStatus.DELIVERED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReturn(alice, 10L))
+                    .isInstanceOf(OrderAccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — SHIPPED order cannot request return")
+        void requestReturn_shipped_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.SHIPPED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — CANCELLED order cannot request return")
+        void requestReturn_cancelled_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.CANCELLED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — CONFIRMED order cannot request return")
+        void requestReturn_confirmed_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.CONFIRMED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — RETURNED order cannot request return again")
+        void requestReturn_alreadyReturned_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.RETURNED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — RETURN_REQUEST order cannot request return again")
+        void requestReturn_alreadyReturnRequest_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.RETURN_REQUEST);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("save is called exactly once for successful return request")
+        void requestReturn_savesExactlyOnce() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            checkoutService.requestReturn(user, 10L);
+
+            verify(orderRepository, times(1)).save(order);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // requestRefund()
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("requestRefund()")
+    class RequestRefundTests {
+
+        @Test
+        @DisplayName("Success — DELIVERED order is set to REFUND_REQUEST")
+        void requestRefund_success() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            checkoutService.requestRefund(user, 10L);
+
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.REFUND_REQUEST);
+            verify(orderRepository).save(order);
+        }
+
+        @Test
+        @DisplayName("Fails — SHIPPED order cannot request refund")
+        void requestRefund_shipped_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.SHIPPED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — order not found")
+        void requestRefund_notFound() throws Exception {
+            User user = buildUser(1L);
+            when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> checkoutService.requestRefund(user, 99L))
+                    .isInstanceOf(OrderNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — wrong owner")
+        void requestRefund_wrongOwner() throws Exception {
+            User alice = buildUser(1L);
+            User bob = buildUser(2L);
+            Address addr = buildAddress(1L, bob);
+            Order order = buildOrder(10L, bob, addr, OrderStatus.DELIVERED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestRefund(alice, 10L))
+                    .isInstanceOf(OrderAccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — PLACED order cannot request refund")
+        void requestRefund_placed_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — CANCELLED order cannot request refund")
+        void requestRefund_cancelled_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.CANCELLED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — CONFIRMED order cannot request refund")
+        void requestRefund_confirmed_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.CONFIRMED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — REFUNDED order cannot request refund again")
+        void requestRefund_alreadyRefunded_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.REFUNDED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — REFUND_REQUEST order cannot request refund again")
+        void requestRefund_alreadyRefundRequest_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.REFUND_REQUEST);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("save is called exactly once for successful refund request")
+        void requestRefund_savesExactlyOnce() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            checkoutService.requestRefund(user, 10L);
+
+            verify(orderRepository, times(1)).save(order);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // requestReplacement()
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("requestReplacement()")
+    class RequestReplacementTests {
+
+        @Test
+        @DisplayName("Success — DELIVERED order is set to REPLACE_REQUEST")
+        void requestReplacement_success() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            checkoutService.requestReplacement(user, 10L);
+
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.REPLACE_REQUEST);
+            verify(orderRepository).save(order);
+        }
+
+        @Test
+        @DisplayName("Fails — CANCELLED order cannot request replacement")
+        void requestReplacement_cancelled_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.CANCELLED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — order not found")
+        void requestReplacement_notFound() throws Exception {
+            User user = buildUser(1L);
+            when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> checkoutService.requestReplacement(user, 99L))
+                    .isInstanceOf(OrderNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — wrong owner")
+        void requestReplacement_wrongOwner() throws Exception {
+            User alice = buildUser(1L);
+            User bob = buildUser(2L);
+            Address addr = buildAddress(1L, bob);
+            Order order = buildOrder(10L, bob, addr, OrderStatus.DELIVERED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReplacement(alice, 10L))
+                    .isInstanceOf(OrderAccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — PLACED order cannot request replacement")
+        void requestReplacement_placed_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — SHIPPED order cannot request replacement")
+        void requestReplacement_shipped_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.SHIPPED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — CONFIRMED order cannot request replacement")
+        void requestReplacement_confirmed_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.CONFIRMED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — REPLACED order cannot request replacement again")
+        void requestReplacement_alreadyReplaced_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.REPLACED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — REPLACE_REQUEST order cannot request replacement again")
+        void requestReplacement_alreadyReplaceRequest_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.REPLACE_REQUEST);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — RETURNED order cannot request replacement")
+        void requestReplacement_returned_throws() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.RETURNED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
+                    .isInstanceOf(OrderInvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("save is called exactly once for successful replacement request")
+        void requestReplacement_savesExactlyOnce() throws Exception {
+            User user = buildUser(1L);
+            Address addr = buildAddress(1L, user);
+            Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
+
+            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+            checkoutService.requestReplacement(user, 10L);
+
+            verify(orderRepository, times(1)).save(order);
         }
     }
 }
