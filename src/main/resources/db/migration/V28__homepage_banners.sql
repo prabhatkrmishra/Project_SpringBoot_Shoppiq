@@ -19,7 +19,7 @@ CREATE TABLE homepage_banners
     button_text   VARCHAR(50),
     button_link   VARCHAR(500),
     heading_color VARCHAR(7)   NOT NULL DEFAULT '#FFFFFF',
-    body_color      VARCHAR(30)   NOT NULL DEFAULT 'rgba(255,255,255,0.85)',
+    body_color    VARCHAR(30)  NOT NULL DEFAULT 'rgba(255,255,255,0.85)',
     display_order INT          NOT NULL DEFAULT 0,
     active        BOOLEAN      NOT NULL DEFAULT TRUE,
 

@@ -1,5 +1,10 @@
 -- ============================================================
--- V12: Add publishing status to items for seller product lifecycle
+-- Shoppiq
+-- V11__add_publishing_status_to_items.sql
+--
+-- Adds publishing_status column to items for seller product
+-- lifecycle management (DRAFT, PENDING, PUBLISHED).
+-- Existing admin-created items are backfilled as PUBLISHED.
 -- ============================================================
 
 ALTER TABLE items

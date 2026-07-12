@@ -2,10 +2,9 @@
 -- Shoppiq
 -- V2__seed_roles.sql
 --
--- Inserts application roles.
+-- Seeds the base application roles (ROLE_ADMIN, ROLE_CUSTOMER).
 -- ============================================================
 
 INSERT INTO roles (role_name)
-VALUES
-    ('ROLE_ADMIN'),
-    ('ROLE_CUSTOMER');
+VALUES ('ROLE_ADMIN'),
+       ('ROLE_CUSTOMER');

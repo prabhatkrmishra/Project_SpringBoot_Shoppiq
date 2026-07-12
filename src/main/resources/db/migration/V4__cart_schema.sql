@@ -2,7 +2,8 @@
 -- Shoppiq
 -- V4__cart_schema.sql
 --
--- Cart and CartItem tables.
+-- Creates the cart and cart_items tables for session-based
+-- and authenticated user shopping carts.
 -- ============================================================
 
 -- ============================================================
@@ -38,10 +39,10 @@ CREATE INDEX idx_cart_user
 
 CREATE TABLE cart_items
 (
-    id       BIGINT  NOT NULL AUTO_INCREMENT,
-    cart_id  BIGINT  NOT NULL,
+    id              BIGINT  NOT NULL AUTO_INCREMENT,
+    cart_id         BIGINT  NOT NULL,
     item_details_id BIGINT  NOT NULL,
-    quantity INTEGER NOT NULL,
+    quantity        INTEGER NOT NULL,
 
     PRIMARY KEY (id),
 

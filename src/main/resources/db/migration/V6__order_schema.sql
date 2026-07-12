@@ -2,8 +2,8 @@
 -- Shoppiq
 -- V6__order_schema.sql
 --
--- Redesigned orders table (snapshot model) and order_items table.
--- Drops the legacy orders / order_with_items tables if they exist.
+-- Creates the orders table (snapshot model) and order_items
+-- table. Drops legacy orders / order_with_items if they exist.
 -- ============================================================
 
 -- Drop legacy join table first (FK dependent)

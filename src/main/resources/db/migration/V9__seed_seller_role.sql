@@ -2,7 +2,7 @@
 -- Shoppiq
 -- V9__seed_seller_role.sql
 --
--- Inserts the SELLER role for marketplace sellers.
+-- Inserts the ROLE_SELLER role for marketplace sellers.
 -- ============================================================
 
 INSERT INTO roles (role_name)

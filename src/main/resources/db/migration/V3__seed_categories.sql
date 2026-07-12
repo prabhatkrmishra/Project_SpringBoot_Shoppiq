@@ -2,7 +2,7 @@
 -- Shoppiq
 -- V3__seed_categories.sql
 --
--- Inserts initial product categories.
+-- Seeds initial product categories (Electronics, Clothing, etc.).
 -- ============================================================
 
 INSERT INTO categories (version,

@@ -2,7 +2,7 @@
 -- Shoppiq
 -- V10__add_seller_id_to_items.sql
 --
--- Adds seller ownership to items.
+-- Adds seller_id FK to items for marketplace seller ownership.
 -- ============================================================
 
 ALTER TABLE items

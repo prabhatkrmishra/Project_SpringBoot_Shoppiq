@@ -1,8 +1,9 @@
 -- ============================================================
 -- Shoppiq
--- V1__initial_schema.sql
+-- V1__baseline.sql
 --
--- Initial database schema.
+-- Initial database schema: users, roles, categories, items,
+-- item_details, and the user-role join table.
 -- ============================================================
 
 -- ============================================================

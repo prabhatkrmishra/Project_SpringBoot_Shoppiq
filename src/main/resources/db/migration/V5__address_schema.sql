@@ -2,7 +2,8 @@
 -- Shoppiq
 -- V5__address_schema.sql
 --
--- Addresses table for user shipping address management.
+-- Creates the addresses table for user shipping address
+-- management (label, name, street, city, state, postal, phone).
 -- ============================================================
 
 CREATE TABLE addresses
