@@ -152,7 +152,7 @@
                         return;
                     }
                     searchResults.innerHTML = res.map(user => `
-                        <div class="search-result-item" data-user='${JSON.stringify(user)}' style="padding: var(--space-sm); border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: var(--space-xs); cursor: pointer;">
+                        <div class="search-result-item" data-user="${escapeAttr(JSON.stringify(user))}" style="padding: var(--space-sm); border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: var(--space-xs); cursor: pointer;">
                             <div class="text-sm"><strong>${escapeHtml(user.name)}</strong></div>
                             <div class="text-xs text-muted">${escapeHtml(user.email)}</div>
                         </div>
@@ -218,7 +218,8 @@
                     return;
                 }
                 if (!body) {
-                    showError(document.getElementById('mailBody-error'), 'Body is required');
+                    showError(document.getElementById('editor-container'), 'Body is required');
+                    document.getElementById('mailBody-error').textContent = 'Body is required';
                     return;
                 }
 
@@ -267,6 +268,11 @@
                 const div = document.createElement('div');
                 div.textContent = str;
                 return div.innerHTML;
+            }
+
+            function escapeAttr(str) {
+                if (!str) return '';
+                return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;');
             }
         })();
         /*]]>*/

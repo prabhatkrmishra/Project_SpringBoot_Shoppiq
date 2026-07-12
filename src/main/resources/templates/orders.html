@@ -28,6 +28,7 @@
     </main>
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
     <script th:src="@{/js/pagination.js}"></script>
     <script>
     (function () {
@@ -64,7 +65,7 @@
                   '<strong>Order #' + order.id + '</strong>' +
                   '<span class="text-muted text-sm ml-sm">' + formatDate(order.placedAt) + '</span>' +
                 '</div>' +
-                '<span class="badge ' + badgeClass(order.status) + '">' + order.status + '</span>' +
+                '<span class="badge ' + badgeClass(order.status) + '">' + escapeHtml(order.status) + '</span>' +
               '</div>' +
               '<p class="text-sm" style="margin:0;">' +
                 itemCount + ' item(s)' +

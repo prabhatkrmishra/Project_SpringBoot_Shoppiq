@@ -51,6 +51,7 @@
     </main>
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
     <script>
     (function () {
       'use strict';
@@ -99,9 +100,9 @@
           var div = document.createElement('div');
           div.className = 'order-review-item';
           div.innerHTML =
-            '<img class="item-thumb" src="' + imgUrl + '" alt="" loading="lazy" width="48" height="48">' +
+            '<img class="item-thumb" src="' + escapeAttr(imgUrl) + '" alt="" loading="lazy" width="48" height="48">' +
             '<div class="item-info">' +
-              '<div class="item-name">' + (item.itemNameSnapshot || 'Product') + '</div>' +
+              '<div class="item-name">' + escapeHtml(item.itemNameSnapshot || 'Product') + '</div>' +
               '<div class="item-qty">Qty: ' + item.quantity + '</div>' +
             '</div>' +
             '<div class="item-price">' + formatCurrency(item.subtotal) + '</div>';

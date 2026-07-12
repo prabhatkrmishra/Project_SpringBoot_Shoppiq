@@ -75,7 +75,7 @@
           '<td>' + itemCount + '</td>' +
           '<td>' + formatCurrency(o.grandTotal) + '</td>' +
           '<td class="text-sm text-muted">' + formatDate(o.placedAt) + '</td>' +
-          '<td><span class="status-badge ' + statusClass(o.status) + '">' + o.status + '</span></td>' +
+          '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
           '<td class="admin-table-actions"><a href="/seller-panel/orders?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a></td>';
         tbody.appendChild(tr);
       });

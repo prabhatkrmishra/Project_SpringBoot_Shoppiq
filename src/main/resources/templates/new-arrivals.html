@@ -31,6 +31,7 @@
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
 
+<script src="/js/sanitize.js"></script>
 <script th:src="@{/js/pagination.js}"></script>
 <script>
 var currentPage = 0;
@@ -70,12 +71,12 @@ function loadNewArrivals(page) {
         return '<a href="/item/' + item.slug + '" class="card-link">' +
           '<article class="card product-card">' +
             '<div class="card-image-wrapper">' +
-              '<img class="card-image" src="' + imgUrl + '" alt="' + item.name + '" loading="lazy" width="300" height="300">' +
+              '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
               (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
             '</div>' +
             '<div class="card-body">' +
-              '<h3 class="card-title">' + item.name + '</h3>' +
-              '<p class="card-text">' + truncateWords(item.description || '', 12) + '</p>' +
+              '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
+              '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
               '<div class="card-price">' + priceHtml + '</div>' +
               '<div class="card-meta"><span class="badge ' + stockClass + '">' + stockText + '</span></div>' +
             '</div>' +

@@ -374,17 +374,18 @@ class RateLimitFilterTest {
             String key = buckets.keySet().iterator().next();
             Object currentEntry = buckets.get(key);
 
-            Method bucketMethod = currentEntry.getClass().getDeclaredMethod("bucket");
-            bucketMethod.setAccessible(true);
-            Bucket bucket = (Bucket) bucketMethod.invoke(currentEntry);
+            Field bucketField = currentEntry.getClass().getDeclaredField("bucket");
+            bucketField.setAccessible(true);
+            Bucket bucket = (Bucket) bucketField.get(currentEntry);
 
             long staleTimestamp = System.nanoTime() - (4000L * 1_000_000_000L);
+            long staleTimestampMillis = System.currentTimeMillis() - (4000L * 1000L);
 
             Class<?> entryClass = Class.forName(
                     "com.pkmprojects.shoppiq.filter.RateLimitFilter$BucketEntry");
-            Constructor<?> ctor = entryClass.getDeclaredConstructor(Bucket.class, long.class);
+            Constructor<?> ctor = entryClass.getDeclaredConstructor(Bucket.class, long.class, long.class);
             ctor.setAccessible(true);
-            Object staleEntry = ctor.newInstance(bucket, staleTimestamp);
+            Object staleEntry = ctor.newInstance(bucket, staleTimestamp, staleTimestampMillis);
             buckets.put(key, staleEntry);
 
             callEvictStaleBuckets();

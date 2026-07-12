@@ -96,7 +96,7 @@ public class JwtAuthenticationUtils {
     @PostConstruct
     public void init() {
         try {
-            this.key = Keys.hmacShaKeyFor(secret.getBytes());
+            this.key = Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize JWT signing key", e);
         }
@@ -284,35 +284,32 @@ public class JwtAuthenticationUtils {
 
     /**
      * Validates a token for refresh purposes.
-     * Allows expired tokens but verifies signature, token version, and account status.
+     * Verifies signature, token version, account status, and token age.
+     * Expired tokens are rejected by JJWT's parseSignedClaims before
+     * application-level checks run.
      *
-     * @param token compact JWT string extracted from the cookie
-     * @param user  the user loaded from the database by user ID
+     * @param token        compact JWT string extracted from the cookie
+     * @param user         the user loaded from the database by user ID
+     * @param maxAgeMillis maximum allowed token age (from issuance) in milliseconds
      * @return {@code true} if the token is valid for refresh
      */
-    public boolean validateTokenForRefresh(String token, User user) {
-        return validateTokenForRefresh(token, user, Long.MAX_VALUE);
-    }
-
     public boolean validateTokenForRefresh(String token, User user, long maxAgeMillis) {
         try {
-            String tokenUsername = getUsernameFromToken(token);
+            Claims claims = getClaimsFromToken(token);
+            String tokenUsername = claims.getSubject();
             boolean usernameMatches = user.getUsername().equals(tokenUsername);
 
-            Integer tokenTokenVersion = getTokenVersionFromToken(token);
+            Integer tokenTokenVersion = claims.get("tokenVersion", Integer.class);
             boolean tokenVersionMatches = tokenTokenVersion != null
                     && tokenTokenVersion.equals(user.getTokenVersion());
 
             boolean userEnabled = user.isEnabled();
 
-            boolean ageOk = true;
-            if (maxAgeMillis < Long.MAX_VALUE) {
-                Date issuedAt = getClaimsFromToken(token).getIssuedAt();
-                long ageMillis = System.currentTimeMillis() - issuedAt.getTime();
-                ageOk = ageMillis <= maxAgeMillis;
-                if (!ageOk) {
-                    logger.debug("Token age {}ms exceeds max allowed {}ms", ageMillis, maxAgeMillis);
-                }
+            Date issuedAt = claims.getIssuedAt();
+            long ageMillis = System.currentTimeMillis() - issuedAt.getTime();
+            boolean ageOk = ageMillis <= maxAgeMillis;
+            if (!ageOk) {
+                logger.debug("Token age {}ms exceeds max allowed {}ms", ageMillis, maxAgeMillis);
             }
 
             return usernameMatches && tokenVersionMatches && userEnabled && ageOk;

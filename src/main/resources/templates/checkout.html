@@ -123,14 +123,14 @@
       var div = document.createElement('label');
       div.className = 'payment-method' + (addr['default'] ? ' selected' : '');
       div.innerHTML =
-        '<input type="radio" name="addressId" value="' + addr.id + '"' + (addr['default'] ? ' checked' : '') + '>' +
+        '<input type="radio" name="addressId" value="' + escapeAttr(String(addr.id)) + '"' + (addr['default'] ? ' checked' : '') + '>' +
         '<div>' +
-          '<div class="method-label">' + (addr.fullName || '') + (addr.label ? ' (' + addr.label + ')' : '') + '</div>' +
+          '<div class="method-label">' + escapeHtml(addr.fullName || '') + (addr.label ? ' (' + escapeHtml(addr.label) + ')' : '') + '</div>' +
           '<div class="method-desc">' +
-            (addr.line1 || '') + (addr.line2 ? ', ' + addr.line2 : '') + '<br>' +
-            (addr.city || '') + ', ' + (addr.state || '') + ' ' + (addr.postalCode || '') + '<br>' +
-            (addr.country || '') +
-            (addr.phone ? ' · ' + addr.phone : '') +
+            escapeHtml(addr.line1 || '') + (addr.line2 ? ', ' + escapeHtml(addr.line2) : '') + '<br>' +
+            escapeHtml(addr.city || '') + ', ' + escapeHtml(addr.state || '') + ' ' + escapeHtml(addr.postalCode || '') + '<br>' +
+            escapeHtml(addr.country || '') +
+            (addr.phone ? ' · ' + escapeHtml(addr.phone) : '') +
           '</div>' +
         '</div>';
       div.querySelector('input').addEventListener('change', function () {
@@ -152,9 +152,9 @@
       var div = document.createElement('div');
       div.className = 'order-review-item';
       div.innerHTML =
-        '<img class="item-thumb" src="' + imgUrl + '" alt="" loading="lazy" width="48" height="48">' +
+        '<img class="item-thumb" src="' + escapeAttr(imgUrl) + '" alt="" loading="lazy" width="48" height="48">' +
         '<div class="item-info">' +
-          '<div class="item-name">' + (item.itemName || 'Product') + '</div>' +
+          '<div class="item-name">' + escapeHtml(item.itemName || 'Product') + '</div>' +
           '<div class="item-qty">Qty: ' + item.quantity + '</div>' +
         '</div>' +
         '<div class="item-price">' + formatCurrency(item.lineTotal) + '</div>';
@@ -221,7 +221,7 @@
       renderAddresses(addresses);
       init();
     }).catch(function (err) {
-      showToast(escapeHtml(err.message || 'Failed to load checkout data'), 'error');
+      showToast(err.message || 'Failed to load checkout data', 'error');
       init();
     });
 
@@ -260,7 +260,7 @@
       }).then(function (res) {
         window.location.href = '/order-detail?id=' + res.orderId;
       }).catch(function (err) {
-        showToast(escapeHtml(err.message || 'Failed to place order'), 'error');
+        showToast(err.message || 'Failed to place order', 'error');
         setButtonLoading(btn, false);
       });
     });

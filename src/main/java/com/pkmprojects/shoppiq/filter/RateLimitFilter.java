@@ -81,6 +81,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final long EVICT_AFTER_SECONDS = 3600;
     private static final long EVICT_INTERVAL_SECONDS = 300;
+    private static final int MAX_BUCKETS = 10_000;
 
     private final Map<String, Rule> ruleIndex = new ConcurrentHashMap<>();
     private final Map<String, BucketEntry> buckets = new ConcurrentHashMap<>();
@@ -109,16 +110,28 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 EVICT_INTERVAL_SECONDS, EVICT_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
-    private record BucketEntry(Bucket bucket, long createdAt) {}
+    private static final class BucketEntry {
+        final Bucket bucket;
+        final long createdAt;
+        volatile long lastAccessedAt;
+
+        BucketEntry(Bucket bucket, long createdAt, long lastAccessedAt) {
+            this.bucket = bucket;
+            this.createdAt = createdAt;
+            this.lastAccessedAt = lastAccessedAt;
+        }
+    }
 
     private void evictStaleBuckets() {
         long now = System.nanoTime();
+        long nowMillis = System.currentTimeMillis();
         Iterator<Map.Entry<String, BucketEntry>> it = buckets.entrySet().iterator();
         int removed = 0;
         while (it.hasNext()) {
             Map.Entry<String, BucketEntry> entry = it.next();
-            long ageSeconds = TimeUnit.NANOSECONDS.toSeconds(now - entry.getValue().createdAt());
-            if (ageSeconds > EVICT_AFTER_SECONDS) {
+            long ageSeconds = TimeUnit.NANOSECONDS.toSeconds(now - entry.getValue().createdAt);
+            long idleSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMillis - entry.getValue().lastAccessedAt);
+            if (ageSeconds > EVICT_AFTER_SECONDS || idleSeconds > EVICT_AFTER_SECONDS / 2) {
                 it.remove();
                 removed++;
             }
@@ -151,6 +164,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 if (bucketKey != null) {
                     Bucket bucket = resolveBucket(bucketKey, rule);
                     ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+                    touchBucket(bucketKey);
 
                     if (probe.isConsumed()) {
                         response.setHeader("X-Rate-Limit-Remaining",
@@ -217,14 +231,32 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * @return the bucket instance
      */
     private Bucket resolveBucket(String key, Rule rule) {
-        BucketEntry entry = buckets.computeIfAbsent(key, k -> {
-            Bandwidth bandwidth = Bandwidth.classic(
-                    rule.getLimit(),
-                    Refill.greedy(rule.getLimit(), Duration.ofSeconds(rule.getDuration()))
-            );
-            return new BucketEntry(Bucket.builder().addLimit(bandwidth).build(), System.nanoTime());
-        });
-        return entry.bucket();
+        BucketEntry existing = buckets.get(key);
+        if (existing != null) {
+            return existing.bucket;
+        }
+        if (buckets.size() >= MAX_BUCKETS) {
+            evictStaleBuckets();
+            if (buckets.size() >= MAX_BUCKETS) {
+                logger.warn("Rate-limit bucket map full ({} entries); rejecting request for key={}", buckets.size(), key);
+                return Bucket.builder()
+                        .addLimit(Bandwidth.classic(0, Refill.greedy(0, Duration.ofHours(1))))
+                        .build();
+            }
+        }
+        Bandwidth bandwidth = Bandwidth.classic(
+                rule.getLimit(),
+                Refill.greedy(rule.getLimit(), Duration.ofSeconds(rule.getDuration()))
+        );
+        return buckets.computeIfAbsent(key, k -> new BucketEntry(Bucket.builder().addLimit(bandwidth).build(), System.nanoTime(), System.currentTimeMillis()))
+                .bucket;
+    }
+
+    private void touchBucket(String key) {
+        BucketEntry entry = buckets.get(key);
+        if (entry != null) {
+            entry.lastAccessedAt = System.currentTimeMillis();
+        }
     }
 
     @Override

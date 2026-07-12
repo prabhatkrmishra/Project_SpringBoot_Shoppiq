@@ -91,7 +91,8 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script>
+<script src="/js/sanitize.js"></script>
+  <script>
 (function () {
   'use strict';
   var editingId = null;
@@ -138,21 +139,21 @@
       div.innerHTML =
         '<div class="card-body">' +
           '<div class="flex items-center justify-between mb-sm">' +
-            '<strong>' + (addr.fullName || '') + '</strong>' +
+            '<strong>' + escapeHtml(addr.fullName || '') + '</strong>' +
             (addr['default'] ? '<span class="badge badge-success">Default</span>' : '') +
           '</div>' +
           '<p class="text-sm" style="margin:0;">' +
-            '<strong>' + (addr.label || '') + '</strong><br>' +
-            (addr.line1 || '') +
-            (addr.line2 ? '<br>' + addr.line2 : '') + '<br>' +
-            (addr.city || '') + ', ' + (addr.state || '') + ' ' + (addr.postalCode || '') + '<br>' +
-            (addr.country || '') +
-            (addr.phone ? '<br>' + addr.phone : '') +
+            '<strong>' + escapeHtml(addr.label || '') + '</strong><br>' +
+            escapeHtml(addr.line1 || '') +
+            (addr.line2 ? '<br>' + escapeHtml(addr.line2) : '') + '<br>' +
+            escapeHtml(addr.city || '') + ', ' + escapeHtml(addr.state || '') + ' ' + escapeHtml(addr.postalCode || '') + '<br>' +
+            escapeHtml(addr.country || '') +
+            (addr.phone ? '<br>' + escapeHtml(addr.phone) : '') +
           '</p>' +
           '<div class="mt-md flex gap-sm">' +
-            '<button class="btn btn-sm btn-secondary address-edit-btn" data-addr-id="' + addr.id + '">Edit</button>' +
-            (addr['default'] ? '' : '<button class="btn btn-sm btn-ghost address-default-btn" data-address-id="' + addr.id + '">Set as Default</button>') +
-            '<button class="btn btn-sm btn-danger address-delete-btn" data-address-id="' + addr.id + '">Delete</button>' +
+            '<button class="btn btn-sm btn-secondary address-edit-btn" data-addr-id="' + escapeAttr(String(addr.id)) + '">Edit</button>' +
+            (addr['default'] ? '' : '<button class="btn btn-sm btn-ghost address-default-btn" data-address-id="' + escapeAttr(String(addr.id)) + '">Set as Default</button>') +
+            '<button class="btn btn-sm btn-danger address-delete-btn" data-address-id="' + escapeAttr(String(addr.id)) + '">Delete</button>' +
           '</div>' +
         '</div>';
       grid.appendChild(div);
