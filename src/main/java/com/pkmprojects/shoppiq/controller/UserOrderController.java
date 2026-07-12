@@ -25,7 +25,10 @@ import org.springframework.web.bind.annotation.*;
  *   <li>{@code POST /user/order/checkout}       — place an order</li>
  *   <li>{@code GET  /user/order/get/all}        — list all orders</li>
  *   <li>{@code GET  /user/order/get/{id}}       — get a single order</li>
- *   <li>{@code PUT  /user/order/cancel/{id}}    — cancel an order (PLACED only)</li>
+ *   <li>{@code PUT  /user/order/cancel/{id}}    — request cancellation (PLACED only)</li>
+ *   <li>{@code PUT  /user/order/return/{id}}    — request return (DELIVERED only)</li>
+ *   <li>{@code PUT  /user/order/refund/{id}}    — request refund (DELIVERED only)</li>
+ *   <li>{@code PUT  /user/order/replace/{id}}   — request replacement (DELIVERED only)</li>
  * </ul>
  *
  * <p>
@@ -104,7 +107,7 @@ public class UserOrderController {
     // =========================================================
 
     /**
-     * Cancels an order in {@code PLACED} status.
+     * Requests cancellation for an order in {@code PLACED} status.
      *
      * @param user    authenticated customer
      * @param orderId order id (must be positive)
@@ -136,6 +139,46 @@ public class UserOrderController {
             @PathVariable("id") @Positive(message = "Order id must be a positive number.") Long orderId) {
 
         checkoutService.requestReturn(user, orderId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // =========================================================
+    // Refund
+    // =========================================================
+
+    /**
+     * Requests a refund for an order in {@code DELIVERED} status.
+     *
+     * @param user    authenticated customer
+     * @param orderId order id (must be positive)
+     * @return 204 No Content
+     */
+    @PutMapping("/refund/{id}")
+    public ResponseEntity<Void> requestRefund(
+            @AuthenticationPrincipal User user,
+            @PathVariable("id") @Positive(message = "Order id must be a positive number.") Long orderId) {
+
+        checkoutService.requestRefund(user, orderId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // =========================================================
+    // Replacement
+    // =========================================================
+
+    /**
+     * Requests a replacement for an order in {@code DELIVERED} status.
+     *
+     * @param user    authenticated customer
+     * @param orderId order id (must be positive)
+     * @return 204 No Content
+     */
+    @PutMapping("/replace/{id}")
+    public ResponseEntity<Void> requestReplacement(
+            @AuthenticationPrincipal User user,
+            @PathVariable("id") @Positive(message = "Order id must be a positive number.") Long orderId) {
+
+        checkoutService.requestReplacement(user, orderId);
         return ResponseEntity.noContent().build();
     }
 }

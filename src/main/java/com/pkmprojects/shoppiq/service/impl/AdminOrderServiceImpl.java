@@ -86,8 +86,10 @@ public class AdminOrderServiceImpl implements AdminOrderService {
             throw new OrderInvalidStatusTransitionException(currentStatus, newStatus);
         }
 
-        // Special handling for cancellation
-        if (newStatus == OrderStatus.CANCELLED && currentStatus != OrderStatus.PLACED) {
+        // Special handling for cancellation — allow direct from PLACED or from CANCEL_REQUEST
+        if (newStatus == OrderStatus.CANCELLED
+                && currentStatus != OrderStatus.PLACED
+                && currentStatus != OrderStatus.CANCEL_REQUEST) {
             throw new OrderCannotBeCancelledException(orderId, currentStatus);
         }
 
@@ -106,22 +108,34 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     /**
      * Validates if a status transition is allowed.
      *
-     * <p>Valid flow: PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED
-     * CANCELLED can only be applied from PLACED status.</p>
+     * <p>Valid flows:</p>
+     * <pre>
+     * PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED
+     * PLACED → CANCEL_REQUEST → CANCELLED
+     * PLACED → CANCELLED (direct)
+     * DELIVERED → RETURN_REQUEST → RETURN_PICKUP → RETURNED
+     * DELIVERED → REFUND_REQUEST → RETURN_PICKUP → REFUNDED
+     * DELIVERED → REPLACE_REQUEST → REPLACE_PICKUP → REPLACED
+     * </pre>
      */
     private boolean isValidTransition(OrderStatus from, OrderStatus to) {
         if (from == to) {
-            return false; // No change
+            return false;
         }
 
-        if (to == OrderStatus.CANCELLED) {
-            return from == OrderStatus.PLACED;
-        }
-
-        // Forward flow
+        // PLACED can go to CONFIRMED, CANCEL_REQUEST, or CANCELLED
         if (from == OrderStatus.PLACED) {
-            return to == OrderStatus.CONFIRMED || to == OrderStatus.CANCELLED;
+            return to == OrderStatus.CONFIRMED
+                    || to == OrderStatus.CANCEL_REQUEST
+                    || to == OrderStatus.CANCELLED;
         }
+
+        // CANCEL_REQUEST can only go to CANCELLED
+        if (from == OrderStatus.CANCEL_REQUEST) {
+            return to == OrderStatus.CANCELLED;
+        }
+
+        // Normal forward flow
         if (from == OrderStatus.CONFIRMED) {
             return to == OrderStatus.SHIPPED;
         }
@@ -131,11 +145,40 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         if (from == OrderStatus.OUT_FOR_DELIVERY) {
             return to == OrderStatus.DELIVERED;
         }
+
+        // DELIVERED can go to RETURN_REQUEST, REFUND_REQUEST, or REPLACE_REQUEST
         if (from == OrderStatus.DELIVERED) {
-            return to == OrderStatus.RETURNED;
+            return to == OrderStatus.RETURN_REQUEST
+                    || to == OrderStatus.REFUND_REQUEST
+                    || to == OrderStatus.REPLACE_REQUEST;
         }
 
-        // RETURNED is terminal
+        // RETURN_REQUEST can go to RETURN_PICKUP
+        if (from == OrderStatus.RETURN_REQUEST) {
+            return to == OrderStatus.RETURN_PICKUP;
+        }
+
+        // REFUND_REQUEST can go to RETURN_PICKUP
+        if (from == OrderStatus.REFUND_REQUEST) {
+            return to == OrderStatus.RETURN_PICKUP;
+        }
+
+        // REPLACE_REQUEST can go to REPLACE_PICKUP
+        if (from == OrderStatus.REPLACE_REQUEST) {
+            return to == OrderStatus.REPLACE_PICKUP;
+        }
+
+        // RETURN_PICKUP can go to RETURNED or REFUNDED
+        if (from == OrderStatus.RETURN_PICKUP) {
+            return to == OrderStatus.RETURNED || to == OrderStatus.REFUNDED;
+        }
+
+        // REPLACE_PICKUP can go to REPLACED
+        if (from == OrderStatus.REPLACE_PICKUP) {
+            return to == OrderStatus.REPLACED;
+        }
+
+        // CANCELLED, RETURNED, REFUNDED, REPLACED are terminal
         return false;
     }
 }

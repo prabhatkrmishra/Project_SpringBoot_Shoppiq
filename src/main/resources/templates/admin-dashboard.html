@@ -58,7 +58,7 @@
   'use strict';
   function statusClass(s) {
     if (s === 'DELIVERED' || s === 'COMPLETED') return 'active';
-    if (s === 'CANCELLED') return 'inactive';
+    if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
     return 'pending';
   }
   function formatDateShort(iso) {

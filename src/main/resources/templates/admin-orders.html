@@ -17,9 +17,18 @@
       <option value="PLACED">Placed</option>
       <option value="CONFIRMED">Confirmed</option>
       <option value="SHIPPED">Shipped</option>
+      <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
       <option value="DELIVERED">Delivered</option>
-      <option value="RETURNED">Returned</option>
+      <option value="CANCEL_REQUEST">Cancel Requested</option>
       <option value="CANCELLED">Cancelled</option>
+      <option value="RETURN_REQUEST">Return Requested</option>
+      <option value="RETURN_PICKUP">Return Pickup</option>
+      <option value="RETURNED">Returned</option>
+      <option value="REFUND_REQUEST">Refund Requested</option>
+      <option value="REFUNDED">Refunded</option>
+      <option value="REPLACE_REQUEST">Replace Requested</option>
+      <option value="REPLACE_PICKUP">Replace Pickup</option>
+      <option value="REPLACED">Replaced</option>
     </select>
   </div>
 
@@ -69,9 +78,8 @@
 
   function statusClass(s) {
     if (s === 'DELIVERED' || s === 'COMPLETED') return 'active';
-    if (s === 'CANCELLED') return 'inactive';
-    if (s === 'PLACED') return 'pending';
-    return 'active';
+    if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
+    return 'pending';
   }
 
   function renderOrders(orders) {
@@ -85,7 +93,7 @@
     tbody.innerHTML = '';
     filtered.forEach(function (o) {
       var itemCount = o.items ? o.items.length : 0;
-      var statusOptions = ['PLACED','CONFIRMED','SHIPPED','OUT_FOR_DELIVERY','DELIVERED','RETURNED','CANCELLED'];
+      var statusOptions = ['PLACED','CONFIRMED','SHIPPED','OUT_FOR_DELIVERY','DELIVERED','CANCEL_REQUEST','CANCELLED','RETURN_REQUEST','RETURN_PICKUP','RETURNED','REFUND_REQUEST','REFUNDED','REPLACE_REQUEST','REPLACE_PICKUP','REPLACED'];
       var selectHtml = '<select class="form-select status-select" data-order-id="' + o.id + '" style="width:auto;display:inline-block;">';
       statusOptions.forEach(function (s) {
         selectHtml += '<option value="' + s + '"' + (s === o.status ? ' selected' : '') + '>' + s + '</option>';

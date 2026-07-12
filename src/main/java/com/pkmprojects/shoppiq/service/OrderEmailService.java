@@ -72,6 +72,14 @@ public class OrderEmailService {
             case DELIVERED -> "Order #%d Has Been Delivered".formatted(orderId);
             case CANCELLED -> "Order #%d Has Been Cancelled".formatted(orderId);
             case RETURNED -> "Order #%d Return Confirmed".formatted(orderId);
+            case CANCEL_REQUEST -> "Order #%d Cancellation Requested".formatted(orderId);
+            case RETURN_REQUEST -> "Order #%d Return Requested".formatted(orderId);
+            case REFUND_REQUEST -> "Order #%d Refund Requested".formatted(orderId);
+            case REFUNDED -> "Order #%d Refund Processed".formatted(orderId);
+            case RETURN_PICKUP -> "Order #%d Return Pickup Scheduled".formatted(orderId);
+            case REPLACE_PICKUP -> "Order #%d Replacement Pickup Scheduled".formatted(orderId);
+            case REPLACE_REQUEST -> "Order #%d Replacement Requested".formatted(orderId);
+            case REPLACED -> "Order #%d Replacement Completed".formatted(orderId);
         };
     }
 
@@ -84,6 +92,14 @@ public class OrderEmailService {
             case DELIVERED -> "Your order has been delivered. We hope you enjoy your purchase!";
             case CANCELLED -> "Your order has been cancelled. If you have any questions, please contact support.";
             case RETURNED -> "Your return has been confirmed. A refund will be processed shortly.";
+            case CANCEL_REQUEST -> "Your cancellation request has been received and is being reviewed.";
+            case RETURN_REQUEST -> "Your return request has been received and is being processed.";
+            case REFUND_REQUEST -> "Your refund request has been received and is being processed.";
+            case REFUNDED -> "Your refund has been processed. The amount will be credited to your account shortly.";
+            case RETURN_PICKUP -> "A pickup has been scheduled for your return item(s). Please have them ready.";
+            case REPLACE_PICKUP -> "A pickup has been scheduled for your replacement item(s). Please have them ready.";
+            case REPLACE_REQUEST -> "Your replacement request has been received and is being processed.";
+            case REPLACED -> "Your replacement has been completed. The new item(s) will be shipped shortly.";
         };
     }
 

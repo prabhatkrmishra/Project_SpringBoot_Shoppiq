@@ -19,9 +19,18 @@
       <option value="PLACED">Placed</option>
       <option value="CONFIRMED">Confirmed</option>
       <option value="SHIPPED">Shipped</option>
+      <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
       <option value="DELIVERED">Delivered</option>
-      <option value="RETURNED">Returned</option>
+      <option value="CANCEL_REQUEST">Cancel Requested</option>
       <option value="CANCELLED">Cancelled</option>
+      <option value="RETURN_REQUEST">Return Requested</option>
+      <option value="RETURN_PICKUP">Return Pickup</option>
+      <option value="RETURNED">Returned</option>
+      <option value="REFUND_REQUEST">Refund Requested</option>
+      <option value="REFUNDED">Refunded</option>
+      <option value="REPLACE_REQUEST">Replace Requested</option>
+      <option value="REPLACE_PICKUP">Replace Pickup</option>
+      <option value="REPLACED">Replaced</option>
     </select>
   </div>
 
@@ -60,7 +69,7 @@
 
   function statusClass(s) {
     if (s === 'DELIVERED' || s === 'COMPLETED') return 'active';
-    if (s === 'CANCELLED' || s === 'RETURNED') return 'inactive';
+    if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
     return 'pending';
   }
 
@@ -79,8 +88,26 @@
       var actions = '<a href="/seller-panel/orders?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a>';
       if (o.status === 'PLACED') {
         actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="CONFIRMED">Process</button>';
+        actions += ' <button class="btn btn-sm btn-danger status-btn" data-order-id="' + o.id + '" data-status="CANCELLED">Cancel</button>';
       } else if (o.status === 'CONFIRMED') {
         actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="SHIPPED">Ship</button>';
+      } else if (o.status === 'SHIPPED') {
+        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="OUT_FOR_DELIVERY">Out for Delivery</button>';
+      } else if (o.status === 'OUT_FOR_DELIVERY') {
+        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="DELIVERED">Deliver</button>';
+      } else if (o.status === 'CANCEL_REQUEST') {
+        actions += ' <button class="btn btn-sm btn-danger status-btn" data-order-id="' + o.id + '" data-status="CANCELLED">Approve Cancel</button>';
+      } else if (o.status === 'RETURN_REQUEST') {
+        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="RETURN_PICKUP">Schedule Pickup</button>';
+      } else if (o.status === 'REFUND_REQUEST') {
+        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="RETURN_PICKUP">Schedule Pickup</button>';
+      } else if (o.status === 'REPLACE_REQUEST') {
+        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="REPLACE_PICKUP">Schedule Pickup</button>';
+      } else if (o.status === 'RETURN_PICKUP') {
+        actions += ' <button class="btn btn-sm btn-success status-btn" data-order-id="' + o.id + '" data-status="RETURNED">Complete Return</button>';
+        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="REFUNDED">Process Refund</button>';
+      } else if (o.status === 'REPLACE_PICKUP') {
+        actions += ' <button class="btn btn-sm btn-success status-btn" data-order-id="' + o.id + '" data-status="REPLACED">Complete Replacement</button>';
       }
       var tr = document.createElement('tr');
       tr.innerHTML =

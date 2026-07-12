@@ -37,8 +37,9 @@
 
       function badgeClass(status) {
         if (status === 'DELIVERED' || status === 'COMPLETED') return 'badge-success';
-        if (status === 'CANCELLED') return 'badge-danger';
-        if (status === 'RETURNED') return 'badge-info';
+        if (status === 'CANCELLED' || status === 'RETURNED' || status === 'REFUNDED' || status === 'REPLACED') return 'badge-danger';
+        if (status === 'CANCEL_REQUEST' || status === 'RETURN_REQUEST' || status === 'REFUND_REQUEST' || status === 'REPLACE_REQUEST') return 'badge-info';
+        if (status === 'RETURN_PICKUP' || status === 'REPLACE_PICKUP') return 'badge-info';
         return 'badge-warning';
       }
 

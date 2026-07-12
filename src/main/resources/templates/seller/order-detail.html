@@ -35,12 +35,7 @@
 
       <div class="mt-lg flex gap-sm">
         <a href="/seller-panel/orders" class="btn btn-secondary">&larr; Back to Orders</a>
-        <select id="status-update" class="form-input" style="width:auto;display:none;">
-          <option value="CONFIRMED">Confirm</option>
-          <option value="SHIPPED">Ship</option>
-          <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
-          <option value="DELIVERED">Deliver</option>
-        </select>
+        <select id="status-update" class="form-input" style="width:auto;display:none;"></select>
         <button id="update-status-btn" class="btn btn-primary" style="display:none;">Update Status</button>
       </div>
     </div>
@@ -53,10 +48,24 @@
   'use strict';
   var currentOrder = null;
   function badgeClass(status) {
-    if (status === 'DELIVERED') return 'badge-success';
-    if (status === 'CANCELLED' || status === 'RETURNED') return 'badge-danger';
+    if (status === 'DELIVERED' || status === 'COMPLETED') return 'badge-success';
+    if (status === 'CANCELLED' || status === 'RETURNED' || status === 'REFUNDED' || status === 'REPLACED') return 'badge-danger';
+    if (status === 'CANCEL_REQUEST' || status === 'RETURN_REQUEST' || status === 'REFUND_REQUEST' || status === 'REPLACE_REQUEST') return 'badge-info';
+    if (status === 'RETURN_PICKUP' || status === 'REPLACE_PICKUP') return 'badge-info';
     return 'badge-warning';
   }
+  var nextStatusMap = {
+    'PLACED':        [{ value: 'CONFIRMED', label: 'Confirm' }, { value: 'CANCELLED', label: 'Cancel' }],
+    'CONFIRMED':     [{ value: 'SHIPPED', label: 'Ship' }],
+    'SHIPPED':       [{ value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' }],
+    'OUT_FOR_DELIVERY': [{ value: 'DELIVERED', label: 'Deliver' }],
+    'CANCEL_REQUEST': [{ value: 'CANCELLED', label: 'Approve Cancel' }],
+    'RETURN_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
+    'REFUND_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
+    'REPLACE_REQUEST': [{ value: 'REPLACE_PICKUP', label: 'Schedule Pickup' }],
+    'RETURN_PICKUP': [{ value: 'RETURNED', label: 'Complete Return' }, { value: 'REFUNDED', label: 'Process Refund' }],
+    'REPLACE_PICKUP': [{ value: 'REPLACED', label: 'Complete Replacement' }]
+  };
   function renderOrder(order) {
     currentOrder = order;
     document.getElementById('order-loading').style.display = 'none';
@@ -86,10 +95,21 @@
         '<div class="item-price">' + formatCurrency(item.subtotal) + '</div>';
       itemsContainer.appendChild(div);
     });
-    if (['PLACED','CONFIRMED','SHIPPED','OUT_FOR_DELIVERY'].indexOf(order.status) !== -1) {
-      var statusSelect = document.getElementById('status-update');
+    var statusSelect = document.getElementById('status-update');
+    var nextOptions = nextStatusMap[order.status] || [];
+    if (nextOptions.length > 0) {
+      statusSelect.innerHTML = '';
+      nextOptions.forEach(function (opt) {
+        var option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        statusSelect.appendChild(option);
+      });
       statusSelect.style.display = '';
       document.getElementById('update-status-btn').style.display = '';
+    } else {
+      statusSelect.style.display = 'none';
+      document.getElementById('update-status-btn').style.display = 'none';
     }
   }
   document.addEventListener('DOMContentLoaded', function () {

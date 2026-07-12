@@ -230,7 +230,9 @@ public class CheckoutServiceImpl {
     // =========================================================
 
     /**
-     * Cancels an order that must be in {@code PLACED} status.
+     * Requests cancellation for an order in {@code PLACED} status.
+     *
+     * <p>Sets the order status to {@code CANCEL_REQUEST} for admin/seller approval.</p>
      *
      * @param user    authenticated customer
      * @param orderId target order id
@@ -243,7 +245,8 @@ public class CheckoutServiceImpl {
             throw new OrderCannotBeCancelledException(orderId, order.getStatus());
         }
 
-        order.setStatus(OrderStatus.CANCELLED);
+        order.setStatus(OrderStatus.CANCEL_REQUEST);
+        orderRepository.save(order);
     }
 
     // =========================================================
@@ -253,7 +256,7 @@ public class CheckoutServiceImpl {
     /**
      * Requests a return for an order in {@code DELIVERED} status.
      *
-     * <p>Restores stock for each order item and sets the order status to {@code RETURNED}.</p>
+     * <p>Sets the order status to {@code RETURN_REQUEST} for admin/seller processing.</p>
      *
      * @param user    authenticated customer
      * @param orderId target order id
@@ -263,18 +266,59 @@ public class CheckoutServiceImpl {
         assertOwnership(user, order);
 
         if (order.getStatus() != OrderStatus.DELIVERED) {
-            throw new OrderCannotBeCancelledException(orderId, order.getStatus());
+            throw new OrderInvalidStatusTransitionException(order.getStatus(), OrderStatus.RETURN_REQUEST);
         }
 
-        for (OrderItem orderItem : order.getOrderItems()) {
-            if (orderItem.getItemDetails() != null) {
-                ItemDetails details = orderItem.getItemDetails();
-                details.setStockQuantity(details.getStockQuantity() + orderItem.getQuantity());
-                itemDetailsRepository.save(details);
-            }
+        order.setStatus(OrderStatus.RETURN_REQUEST);
+        orderRepository.save(order);
+    }
+
+    // =========================================================
+    // Refund
+    // =========================================================
+
+    /**
+     * Requests a refund for an order in {@code DELIVERED} status.
+     *
+     * <p>Sets the order status to {@code REFUND_REQUEST} for admin/seller processing.</p>
+     *
+     * @param user    authenticated customer
+     * @param orderId target order id
+     */
+    public void requestRefund(User user, Long orderId) {
+        Order order = findOrderOrThrow(orderId);
+        assertOwnership(user, order);
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new OrderInvalidStatusTransitionException(order.getStatus(), OrderStatus.REFUND_REQUEST);
         }
 
-        order.setStatus(OrderStatus.RETURNED);
+        order.setStatus(OrderStatus.REFUND_REQUEST);
+        orderRepository.save(order);
+    }
+
+    // =========================================================
+    // Replacement
+    // =========================================================
+
+    /**
+     * Requests a replacement for an order in {@code DELIVERED} status.
+     *
+     * <p>Sets the order status to {@code REPLACE_REQUEST} for admin/seller processing.</p>
+     *
+     * @param user    authenticated customer
+     * @param orderId target order id
+     */
+    public void requestReplacement(User user, Long orderId) {
+        Order order = findOrderOrThrow(orderId);
+        assertOwnership(user, order);
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new OrderInvalidStatusTransitionException(order.getStatus(), OrderStatus.REPLACE_REQUEST);
+        }
+
+        order.setStatus(OrderStatus.REPLACE_REQUEST);
+        orderRepository.save(order);
     }
 
     // =========================================================

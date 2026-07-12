@@ -54,8 +54,12 @@ public interface AdminOrderService {
      *
      * <p>Valid transitions:</p>
      * <pre>
-     * PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED → RETURNED
-     * PLACED → CANCELLED (at any point before DELIVERED)
+     * PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED
+     * PLACED → CANCEL_REQUEST → CANCELLED
+     * PLACED → CANCELLED (direct)
+     * DELIVERED → RETURN_REQUEST → RETURN_PICKUP → RETURNED
+     * DELIVERED → REFUND_REQUEST → RETURN_PICKUP → REFUNDED
+     * DELIVERED → REPLACE_REQUEST → REPLACE_PICKUP → REPLACED
      * </pre>
      *
      * @param orderId   order identifier

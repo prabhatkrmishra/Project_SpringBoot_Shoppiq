@@ -108,11 +108,28 @@ public class SellerOrderServiceImpl implements SellerOrderService {
 
     private boolean isValidTransition(OrderStatus from, OrderStatus to) {
         if (from == to) return false;
-        if (to == OrderStatus.CANCELLED) return from == OrderStatus.PLACED;
-        if (from == OrderStatus.PLACED) return to == OrderStatus.CONFIRMED || to == OrderStatus.CANCELLED;
+
+        if (from == OrderStatus.PLACED) {
+            return to == OrderStatus.CONFIRMED
+                    || to == OrderStatus.CANCEL_REQUEST
+                    || to == OrderStatus.CANCELLED;
+        }
+        if (from == OrderStatus.CANCEL_REQUEST) return to == OrderStatus.CANCELLED;
         if (from == OrderStatus.CONFIRMED) return to == OrderStatus.SHIPPED;
         if (from == OrderStatus.SHIPPED) return to == OrderStatus.OUT_FOR_DELIVERY;
         if (from == OrderStatus.OUT_FOR_DELIVERY) return to == OrderStatus.DELIVERED;
+        if (from == OrderStatus.DELIVERED) {
+            return to == OrderStatus.RETURN_REQUEST
+                    || to == OrderStatus.REFUND_REQUEST
+                    || to == OrderStatus.REPLACE_REQUEST;
+        }
+        if (from == OrderStatus.RETURN_REQUEST) return to == OrderStatus.RETURN_PICKUP;
+        if (from == OrderStatus.REFUND_REQUEST) return to == OrderStatus.RETURN_PICKUP;
+        if (from == OrderStatus.REPLACE_REQUEST) return to == OrderStatus.REPLACE_PICKUP;
+        if (from == OrderStatus.RETURN_PICKUP) {
+            return to == OrderStatus.RETURNED || to == OrderStatus.REFUNDED;
+        }
+        if (from == OrderStatus.REPLACE_PICKUP) return to == OrderStatus.REPLACED;
         return false;
     }
 

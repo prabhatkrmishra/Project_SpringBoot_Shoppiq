@@ -41,5 +41,45 @@ public enum OrderStatus {
     /**
      * Order has been returned.
      */
-    RETURNED
+    RETURNED,
+
+    /**
+     * Customer has requested cancellation.
+     */
+    CANCEL_REQUEST,
+
+    /**
+     * Customer has requested a return.
+     */
+    RETURN_REQUEST,
+
+    /**
+     * Customer has requested a refund.
+     */
+    REFUND_REQUEST,
+
+    /**
+     * Refund has been processed.
+     */
+    REFUNDED,
+
+    /**
+     * Item pickup scheduled for return or refund.
+     */
+    RETURN_PICKUP,
+
+    /**
+     * Item pickup scheduled for replacement.
+     */
+    REPLACE_PICKUP,
+
+    /**
+     * Customer has requested a replacement.
+     */
+    REPLACE_REQUEST,
+
+    /**
+     * Replacement has been completed.
+     */
+    REPLACED
 }

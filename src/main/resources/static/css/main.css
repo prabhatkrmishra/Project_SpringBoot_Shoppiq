@@ -401,6 +401,10 @@ small { font-size: 0.78rem; }
   background: var(--color-danger); color: #fff; border-color: var(--color-danger);
 }
 .btn-danger:hover { background: var(--color-danger-dark); border-color: var(--color-danger-dark); }
+.btn-warning {
+  background: var(--color-warning); color: #fff; border-color: var(--color-warning);
+}
+.btn-warning:hover { background: var(--color-warning-text); border-color: var(--color-warning-text); }
 .btn-success {
   background: var(--color-primary); color: #fff; border-color: var(--color-primary);
 }
