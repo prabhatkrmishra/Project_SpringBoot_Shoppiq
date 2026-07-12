@@ -60,6 +60,7 @@
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script th:src="@{/js/pagination.js}"></script>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -93,11 +94,11 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td><a href="/order-detail?id=' + o.id + '&admin=true" class="btn-link">#' + o.id + '</a></td>' +
-        '<td>' + (o.customerUsername || '') + '</td>' +
+        '<td>' + escapeHtml(o.customerUsername || '') + '</td>' +
         '<td class="text-sm">' + formatDate(o.placedAt) + '</td>' +
         '<td>' + itemCount + '</td>' +
         '<td>' + formatCurrency(o.grandTotal) + '</td>' +
-        '<td><span class="status-badge ' + statusClass(o.status) + '">' + o.status + '</span></td>' +
+        '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
         '<td class="admin-table-actions">' +
           '<button class="btn btn-sm btn-secondary view-order-btn" data-order-id="' + o.id + '">View</button> ' +
           selectHtml +
@@ -121,23 +122,23 @@
         document.getElementById('modal-order-body').innerHTML = '<span class="spinner"></span>';
         document.getElementById('orderModal').classList.add('active');
         API.get('/api/admin/orders/' + orderId).then(function (o) {
-          var html = '<div class="mb-md"><strong>Status:</strong> ' + o.status + '</div>';
-          html += '<div class="mb-md"><strong>Customer:</strong> ' + (o.customerUsername || '') + ' (' + (o.customerEmail || '') + ')</div>';
+          var html = '<div class="mb-md"><strong>Status:</strong> ' + escapeHtml(o.status) + '</div>';
+          html += '<div class="mb-md"><strong>Customer:</strong> ' + escapeHtml(o.customerUsername || '') + ' (' + escapeHtml(o.customerEmail || '') + ')</div>';
           html += '<div class="mb-md"><strong>Date:</strong> ' + formatDate(o.placedAt) + '</div>';
           html += '<div class="mb-md"><strong>Total:</strong> ' + formatCurrency(o.grandTotal) + '</div>';
           if (o.items && o.items.length > 0) {
             html += '<div class="mb-md"><strong>Items:</strong></div>';
             o.items.forEach(function (item) {
-              html += '<div class="text-sm" style="padding:4px 0;">' + (item.itemNameSnapshot || '') + ' x' + item.quantity + ' — ' + formatCurrency(item.subtotal) + '</div>';
+              html += '<div class="text-sm" style="padding:4px 0;">' + escapeHtml(item.itemNameSnapshot || '') + ' x' + item.quantity + ' — ' + formatCurrency(item.subtotal) + '</div>';
             });
           }
           if (o.address) {
             html += '<div class="mt-md"><strong>Address:</strong></div>';
-            html += '<div class="text-sm">' + (o.address.fullName || '') + '<br>' + (o.address.line1 || '') + '<br>' + (o.address.city || '') + ', ' + (o.address.state || '') + ' ' + (o.address.postalCode || '') + '</div>';
+            html += '<div class="text-sm">' + escapeHtml(o.address.fullName || '') + '<br>' + escapeHtml(o.address.line1 || '') + '<br>' + escapeHtml(o.address.city || '') + ', ' + escapeHtml(o.address.state || '') + ' ' + escapeHtml(o.address.postalCode || '') + '</div>';
           }
           document.getElementById('modal-order-body').innerHTML = html;
         }).catch(function (err) {
-          document.getElementById('modal-order-body').innerHTML = '<p class="text-danger">' + (err.message || 'Failed to load') + '</p>';
+          document.getElementById('modal-order-body').innerHTML = '<p class="text-danger">' + escapeHtml(err.message || 'Failed to load') + '</p>';
         });
       });
     });

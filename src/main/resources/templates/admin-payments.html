@@ -56,6 +56,7 @@
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script th:src="@{/js/pagination.js}"></script>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -100,13 +101,13 @@
         }
         var tr = document.createElement('tr');
         tr.innerHTML =
-          '<td class="text-sm">' + (p.transactionId || p.paymentReference || '') + '</td>' +
+          '<td class="text-sm">' + escapeHtml(p.transactionId || p.paymentReference || '') + '</td>' +
           '<td><a href="/order-detail?id=' + p.orderId + '" class="btn-link">#' + p.orderId + '</a></td>' +
-          '<td class="text-sm">' + (p.customerUsername || '') + '</td>' +
-          '<td class="text-sm">' + (p.paymentMethod || '') + '</td>' +
+          '<td class="text-sm">' + escapeHtml(p.customerUsername || '') + '</td>' +
+          '<td class="text-sm">' + escapeHtml(p.paymentMethod || '') + '</td>' +
           '<td>' + formatCurrency(p.amount) + '</td>' +
           '<td class="text-sm text-muted">' + formatDate(p.createdAt) + '</td>' +
-          '<td><span class="status-badge ' + statusClass(p.paymentStatus) + '">' + (p.paymentStatus || '') + '</span></td>' +
+          '<td><span class="status-badge ' + statusClass(p.paymentStatus) + '">' + escapeHtml(p.paymentStatus || '') + '</span></td>' +
           '<td class="admin-table-actions">' + actions + '</td>';
         tbody.appendChild(tr);
       });
@@ -118,19 +119,19 @@
           document.getElementById('paymentModal').classList.add('active');
           API.get('/api/admin/payments/' + paymentId).then(function (p) {
             var html = '<div class="mb-md"><strong>Payment ID:</strong> #' + p.id + '</div>';
-            html += '<div class="mb-md"><strong>Reference:</strong> ' + (p.paymentReference || '') + '</div>';
+            html += '<div class="mb-md"><strong>Reference:</strong> ' + escapeHtml(p.paymentReference || '') + '</div>';
             html += '<div class="mb-md"><strong>Order:</strong> <a href="/order-detail?id=' + p.orderId + '" class="btn-link">#' + p.orderId + '</a></div>';
-            html += '<div class="mb-md"><strong>Customer:</strong> ' + (p.customerUsername || '') + '</div>';
-            html += '<div class="mb-md"><strong>Method:</strong> ' + (p.paymentMethod || '') + '</div>';
-            html += '<div class="mb-md"><strong>Gateway:</strong> ' + (p.gateway || '') + '</div>';
+            html += '<div class="mb-md"><strong>Customer:</strong> ' + escapeHtml(p.customerUsername || '') + '</div>';
+            html += '<div class="mb-md"><strong>Method:</strong> ' + escapeHtml(p.paymentMethod || '') + '</div>';
+            html += '<div class="mb-md"><strong>Gateway:</strong> ' + escapeHtml(p.gateway || '') + '</div>';
             html += '<div class="mb-md"><strong>Amount:</strong> ' + formatCurrency(p.amount) + ' ' + (p.currency || '') + '</div>';
-            html += '<div class="mb-md"><strong>Transaction ID:</strong> ' + (p.transactionId || 'N/A') + '</div>';
-            html += '<div class="mb-md"><strong>Status:</strong> <span class="status-badge ' + statusClass(p.paymentStatus) + '">' + (p.paymentStatus || '') + '</span></div>';
+            html += '<div class="mb-md"><strong>Transaction ID:</strong> ' + escapeHtml(p.transactionId || 'N/A') + '</div>';
+            html += '<div class="mb-md"><strong>Status:</strong> <span class="status-badge ' + statusClass(p.paymentStatus) + '">' + escapeHtml(p.paymentStatus || '') + '</span></div>';
             html += '<div class="mb-md"><strong>Created:</strong> ' + formatDate(p.createdAt) + '</div>';
             if (p.paidAt) html += '<div class="mb-md"><strong>Paid At:</strong> ' + formatDate(p.paidAt) + '</div>';
             document.getElementById('modal-payment-body').innerHTML = html;
           }).catch(function (err) {
-            document.getElementById('modal-payment-body').innerHTML = '<p class="text-danger">' + (err.message || 'Failed to load') + '</p>';
+            document.getElementById('modal-payment-body').innerHTML = '<p class="text-danger">' + escapeHtml(err.message || 'Failed to load') + '</p>';
           });
         });
       });

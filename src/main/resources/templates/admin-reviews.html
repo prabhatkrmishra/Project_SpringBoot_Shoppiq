@@ -46,6 +46,7 @@
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script th:src="@{/js/pagination.js}"></script>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -81,10 +82,10 @@
       actions += '<button class="btn btn-sm btn-ghost delete-btn" data-review-id="' + r.id + '" aria-label="Delete"><i data-lucide="trash-2" class="icon-sm"></i></button>';
       var tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><a href="/item/' + (r.itemId || '') + '" class="btn-link">' + (r.itemName || '') + '</a></td>' +
-        '<td class="text-sm">' + (r.reviewerUsername || '') + '</td>' +
+        '<td><a href="/item/' + (r.itemId || '') + '" class="btn-link">' + escapeHtml(r.itemName || '') + '</a></td>' +
+        '<td class="text-sm">' + escapeHtml(r.reviewerUsername || '') + '</td>' +
         '<td><div class="star-display">' + Array(5).fill().map(function (_, i) { return i < r.rating ? '&#9733;' : '&#9734;'; }).join('') + '</div></td>' +
-        '<td class="text-sm">' + reviewText + '</td>' +
+        '<td class="text-sm">' + escapeHtml(reviewText) + '</td>' +
         '<td class="text-sm text-muted">' + formatDate(r.createdAt) + '</td>' +
         '<td><span class="status-badge ' + statusClass(r.status) + '">' + (r.status || 'PENDING') + '</span></td>' +
         '<td class="admin-table-actions">' + actions + '</td>';

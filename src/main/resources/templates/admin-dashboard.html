@@ -52,6 +52,7 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -119,9 +120,9 @@
           var tr = document.createElement('tr');
           tr.innerHTML =
             '<td><a href="/order-detail?id=' + o.orderId + '&admin=true" class="btn-link">#' + o.orderId + '</a></td>' +
-            '<td>' + (o.customerUsername || '') + '</td>' +
+            '<td>' + escapeHtml(o.customerUsername || '') + '</td>' +
             '<td class="text-sm">' + formatDateShort(o.placedAt) + '</td>' +
-            '<td><span class="status-badge ' + statusClass(o.status) + '">' + o.status + '</span></td>' +
+            '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
             '<td>' + formatCurrency(o.grandTotal) + '</td>';
           tbody.appendChild(tr);
         });
@@ -153,7 +154,7 @@
           div.className = 'activity-item';
           div.innerHTML =
             '<div class="activity-icon">' + a.icon + '</div>' +
-            '<div class="activity-text">' + a.text + '</div>' +
+            '<div class="activity-text">' + escapeHtml(a.text) + '</div>' +
             '<div class="activity-time">' + formatTime(a.time) + '</div>';
           actList.appendChild(div);
         });

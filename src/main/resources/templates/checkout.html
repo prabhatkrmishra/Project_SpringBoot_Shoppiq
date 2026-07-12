@@ -98,6 +98,7 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -197,7 +198,7 @@
       sessionStorage.removeItem('promoCode');
       discountAmount = 0;
       msgEl.style.display = 'block';
-      msgEl.innerHTML = '<span class="text-danger">' + (err.message || 'Invalid promo code') + '</span>';
+      msgEl.innerHTML = '<span class="text-danger">' + escapeHtml(err.message || 'Invalid promo code') + '</span>';
       document.getElementById('checkout-discount-row').style.display = 'none';
       document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal);
       setButtonLoading(btn, false);
@@ -220,7 +221,7 @@
       renderAddresses(addresses);
       init();
     }).catch(function (err) {
-      showToast(err.message || 'Failed to load checkout data', 'error');
+      showToast(escapeHtml(err.message || 'Failed to load checkout data'), 'error');
       init();
     });
 
@@ -259,7 +260,7 @@
       }).then(function (res) {
         window.location.href = '/order-detail?id=' + res.orderId;
       }).catch(function (err) {
-        showToast(err.message || 'Failed to place order', 'error');
+        showToast(escapeHtml(err.message || 'Failed to place order'), 'error');
         setButtonLoading(btn, false);
       });
     });

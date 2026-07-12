@@ -40,6 +40,7 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -52,7 +53,7 @@
     tbody.innerHTML = '';
     roles.forEach(function (r) {
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td>' + (r.id || '') + '</td><td><strong>' + (r.roleName || '') + '</strong></td>';
+      tr.innerHTML = '<td>' + (r.id || '') + '</td><td><strong>' + escapeHtml(r.roleName || '') + '</strong></td>';
       tbody.appendChild(tr);
     });
   }

@@ -49,6 +49,7 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script src="/js/sanitize.js"></script>
 <script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
@@ -87,7 +88,7 @@
         '<td>' + itemCount + '</td>' +
         '<td>' + formatCurrency(o.grandTotal) + '</td>' +
         '<td class="text-sm text-muted">' + formatDate(o.placedAt) + '</td>' +
-        '<td><span class="status-badge ' + statusClass(o.status) + '">' + o.status + '</span></td>' +
+        '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
         '<td class="admin-table-actions">' + actions + '</td>';
       tbody.appendChild(tr);
     });

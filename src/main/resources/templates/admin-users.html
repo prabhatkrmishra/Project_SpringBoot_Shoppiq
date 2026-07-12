@@ -55,6 +55,7 @@
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script th:src="@{/js/pagination.js}"></script>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -71,9 +72,9 @@
       var roles = Array.isArray(u.roles) ? u.roles.join(', ') : (u.roles || '');
       var tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><strong>' + (u.name || u.username || '') + '</strong></td>' +
-        '<td class="text-sm">' + (u.email || '') + '</td>' +
-        '<td><span class="badge badge-neutral">' + roles + '</span></td>' +
+        '<td><strong>' + escapeHtml(u.name || u.username || '') + '</strong></td>' +
+        '<td class="text-sm">' + escapeHtml(u.email || '') + '</td>' +
+        '<td><span class="badge badge-neutral">' + escapeHtml(roles) + '</span></td>' +
         '<td>' + (u.totalOrders || 0) + '</td>' +
         '<td class="text-sm text-muted">' + formatDate(u.createdAt) + '</td>' +
         '<td><span class="status-badge ' + (u.enabled ? 'active' : 'inactive') + '">' + (u.enabled ? 'Active' : 'Disabled') + '</span></td>' +
@@ -94,10 +95,10 @@
         modal.classList.add('active');
         API.get('/api/admin/users/' + userId).then(function (u) {
           var roles = Array.isArray(u.roles) ? u.roles.join(', ') : (u.roles || '');
-          var html = '<div class="mb-md"><strong>Name:</strong> ' + (u.name || '') + '</div>';
-          html += '<div class="mb-md"><strong>Username:</strong> ' + (u.username || '') + '</div>';
-          html += '<div class="mb-md"><strong>Email:</strong> ' + (u.email || '') + '</div>';
-          html += '<div class="mb-md"><strong>Roles:</strong> <span class="badge badge-neutral">' + roles + '</span></div>';
+          var html = '<div class="mb-md"><strong>Name:</strong> ' + escapeHtml(u.name || '') + '</div>';
+          html += '<div class="mb-md"><strong>Username:</strong> ' + escapeHtml(u.username || '') + '</div>';
+          html += '<div class="mb-md"><strong>Email:</strong> ' + escapeHtml(u.email || '') + '</div>';
+          html += '<div class="mb-md"><strong>Roles:</strong> <span class="badge badge-neutral">' + escapeHtml(roles) + '</span></div>';
           html += '<div class="mb-md"><strong>Status:</strong> <span class="status-badge ' + (u.enabled ? 'active' : 'inactive') + '">' + (u.enabled ? 'Active' : 'Disabled') + '</span></div>';
           html += '<div class="mb-md"><strong>Orders:</strong> ' + (u.totalOrders || 0) + '</div>';
           html += '<div class="mb-md"><strong>Total Spent:</strong> ' + formatCurrency(u.totalSpent || 0) + '</div>';
@@ -105,7 +106,7 @@
           if (u.updatedAt) html += '<div class="mb-md"><strong>Last Updated:</strong> ' + formatDate(u.updatedAt) + '</div>';
           document.getElementById('modal-user-body').innerHTML = html;
         }).catch(function (err) {
-          document.getElementById('modal-user-body').innerHTML = '<p class="text-danger">' + (err.message || 'Failed to load') + '</p>';
+          document.getElementById('modal-user-body').innerHTML = '<p class="text-danger">' + escapeHtml(err.message || 'Failed to load') + '</p>';
         });
       });
     });

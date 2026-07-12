@@ -30,6 +30,7 @@
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script th:src="@{/js/pagination.js}"></script>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -47,12 +48,12 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + p.itemId + '</td>' +
-        '<td><strong>' + (p.name || '') + '</strong><br><span class="text-sm text-muted">' + (p.description || '').substring(0, 60) + '</span></td>' +
-        '<td class="text-sm"><code>' + (p.sku || '') + '</code></td>' +
-        '<td>' + (p.brand || '') + '</td>' +
+        '<td><strong>' + escapeHtml(p.name || '') + '</strong><br><span class="text-sm text-muted">' + escapeHtml((p.description || '').substring(0, 60)) + '</span></td>' +
+        '<td class="text-sm"><code>' + escapeHtml(p.sku || '') + '</code></td>' +
+        '<td>' + escapeHtml(p.brand || '') + '</td>' +
         '<td>' + formatCurrency(p.price) + '</td>' +
         '<td>' + (p.stockQuantity != null ? p.stockQuantity : '') + '</td>' +
-        '<td class="text-sm">' + (p.categoryName || '') + '</td>' +
+        '<td class="text-sm">' + escapeHtml(p.categoryName || '') + '</td>' +
         '<td>' +
           '<button class="btn btn-sm btn-success publish-btn" data-id="' + p.itemId + '">Publish</button> ' +
           '<button class="btn btn-sm btn-danger reject-btn" data-id="' + p.itemId + '">Reject</button>' +

@@ -277,6 +277,7 @@
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="/js/sanitize.js"></script>
 <style>
 .tab-nav{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap;}
 .tab-btn{padding:8px 16px;border:none;background:var(--color-surface,#1a1a2e);color:var(--color-muted,#888);cursor:pointer;border-radius:6px;font-size:.85rem;transition:all .2s;display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;}
@@ -352,7 +353,7 @@
         ], { y: { position: 'left', title: { display: true, text: 'Revenue ($)' } }, y1: { position: 'right', title: { display: true, text: 'Orders' }, grid: { drawOnUrlArea: false } } });
       }
       tabular('sales-products-body', (s.topProducts || []).map(function (p) {
-        return '<tr><td><a href="/item/' + (p.itemId || '') + '" class="btn-link">' + (p.itemName || '') + '</a></td><td>' + (p.quantitySold || 0) + '</td><td>' + fmt(p.revenue) + '</td></tr>';
+        return '<tr><td><a href="/item/' + (p.itemId || '') + '" class="btn-link">' + escapeHtml(p.itemName || '') + '</a></td><td>' + (p.quantitySold || 0) + '</td><td>' + fmt(p.revenue) + '</td></tr>';
       }));
       if (callback) callback(true);
     }).catch(function () { if (callback) callback(false); });
@@ -395,10 +396,10 @@
       document.getElementById('prod-total').textContent = p.totalProductsSold || 0;
       document.getElementById('prod-revenue').textContent = fmt(p.totalProductRevenue);
       tabular('prod-body', (p.productPerformance || []).map(function (x) {
-        return '<tr><td><a href="/item/' + (x.itemId || '') + '" class="btn-link">' + (x.itemName || '') + '</a></td><td>' + (x.quantitySold || 0) + '</td><td>' + fmt(x.revenue) + '</td><td>' + fmt(x.averagePrice) + '</td><td>' + (x.currentStock || 0) + '</td></tr>';
+        return '<tr><td><a href="/item/' + (x.itemId || '') + '" class="btn-link">' + escapeHtml(x.itemName || '') + '</a></td><td>' + (x.quantitySold || 0) + '</td><td>' + fmt(x.revenue) + '</td><td>' + fmt(x.averagePrice) + '</td><td>' + (x.currentStock || 0) + '</td></tr>';
       }));
       tabular('cat-body', (p.categoryPerformance || []).map(function (c) {
-        return '<tr><td>' + (c.categoryName || '') + '</td><td>' + (c.quantitySold || 0) + '</td><td>' + fmt(c.revenue) + '</td><td>' + (c.uniqueProductsSold || 0) + '</td></tr>';
+        return '<tr><td>' + escapeHtml(c.categoryName || '') + '</td><td>' + (c.quantitySold || 0) + '</td><td>' + fmt(c.revenue) + '</td><td>' + (c.uniqueProductsSold || 0) + '</td></tr>';
       }));
       if (callback) callback(true);
     }).catch(function () { if (callback) callback(false); });
@@ -416,10 +417,10 @@
       document.getElementById('cust-returning').textContent = c.returningCustomers || 0;
       document.getElementById('cust-aov').textContent = fmt(c.averageOrderValue);
       tabular('cust-top-body', (c.topCustomers || []).map(function (x) {
-        return '<tr><td class="text-sm">' + (x.username || x.email || '') + '</td><td>' + (x.orderCount || 0) + '</td><td>' + fmt(x.totalSpent) + '</td><td class="text-sm text-muted">' + formatDate(x.firstOrderDate) + '</td><td class="text-sm text-muted">' + formatDate(x.lastOrderDate) + '</td></tr>';
+        return '<tr><td class="text-sm">' + escapeHtml(x.username || x.email || '') + '</td><td>' + (x.orderCount || 0) + '</td><td>' + fmt(x.totalSpent) + '</td><td class="text-sm text-muted">' + formatDate(x.firstOrderDate) + '</td><td class="text-sm text-muted">' + formatDate(x.lastOrderDate) + '</td></tr>';
       }));
       tabular('cust-segments-body', (c.customerSegments || []).map(function (s) {
-        return '<tr><td>' + (s.segment || '') + '</td><td>' + (s.count || 0) + '</td><td>' + fmt(s.revenue) + '</td></tr>';
+        return '<tr><td>' + escapeHtml(s.segment || '') + '</td><td>' + (s.count || 0) + '</td><td>' + fmt(s.revenue) + '</td></tr>';
       }));
       if (callback) callback(true);
     }).catch(function () { if (callback) callback(false); });
@@ -441,7 +442,7 @@
         return '<span class="status-badge out-of-stock">Out of Stock</span>';
       }
       tabular('inv-body', (r.productStatuses || []).map(function (p) {
-        return '<tr><td class="text-sm">' + (p.itemName || '') + '</td><td class="text-muted">' + (p.sku || '') + '</td><td>' + (p.category || '') + '</td><td>' + (p.stockQuantity || 0) + '</td><td>' + fmt(p.unitCost) + '</td><td>' + fmt(p.inventoryValue) + '</td><td>' + stockBadge(p.stockStatus) + '</td></tr>';
+        return '<tr><td class="text-sm">' + escapeHtml(p.itemName || '') + '</td><td class="text-muted">' + escapeHtml(p.sku || '') + '</td><td>' + escapeHtml(p.category || '') + '</td><td>' + (p.stockQuantity || 0) + '</td><td>' + fmt(p.unitCost) + '</td><td>' + fmt(p.inventoryValue) + '</td><td>' + stockBadge(p.stockStatus) + '</td></tr>';
       }));
       if (callback) callback(true);
     }).catch(function () { if (callback) callback(false); });
@@ -461,7 +462,7 @@
       document.getElementById('comm-revenue').textContent = fmt(totalRev);
       document.getElementById('comm-orders').textContent = totalOrd;
       tabular('comm-body', (list || []).map(function (x) {
-        return '<tr><td><strong>' + (x.businessName || '') + '</strong></td><td>' + (x.totalOrders || 0) + '</td><td>' + fmt(x.totalRevenue) + '</td><td>' + (x.commissionRate || 0) + '%</td><td>' + fmt(x.commissionEarned) + '</td></tr>';
+        return '<tr><td><strong>' + escapeHtml(x.businessName || '') + '</strong></td><td>' + (x.totalOrders || 0) + '</td><td>' + fmt(x.totalRevenue) + '</td><td>' + (x.commissionRate || 0) + '%</td><td>' + fmt(x.commissionEarned) + '</td></tr>';
       }));
       if (callback) callback(true);
     }).catch(function () { if (callback) callback(false); });

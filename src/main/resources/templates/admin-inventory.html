@@ -75,6 +75,7 @@
 .bulk-action-bar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 </style>
 <script th:src="@{/js/pagination.js}"></script>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -116,8 +117,8 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td><input type="checkbox" class="item-checkbox" data-item-id="' + item.itemId + '" aria-label="Select"></td>' +
-        '<td><a href="/item/' + item.itemId + '" class="btn-link">' + (item.itemName || '') + '</a></td>' +
-        '<td class="text-sm text-muted">' + (item.sku || '') + '</td>' +
+        '<td><a href="/item/' + item.itemId + '" class="btn-link">' + escapeHtml(item.itemName || '') + '</a></td>' +
+        '<td class="text-sm text-muted">' + escapeHtml(item.sku || '') + '</td>' +
         '<td>' + formatCurrency(item.effectivePrice || item.basePrice) + '</td>' +
         '<td>' +
           '<div class="inline-edit">' +

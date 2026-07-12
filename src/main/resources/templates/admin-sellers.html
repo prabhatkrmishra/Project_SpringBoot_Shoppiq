@@ -39,6 +39,7 @@
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script th:src="@{/js/pagination.js}"></script>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -65,9 +66,9 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + s.id + '</td>' +
-        '<td><strong>' + (s.businessName || '') + '</strong></td>' +
-        '<td>' + (s.userName || '') + '</td>' +
-        '<td class="text-sm">' + (s.userEmail || '') + '</td>' +
+        '<td><strong>' + escapeHtml(s.businessName || '') + '</strong></td>' +
+        '<td>' + escapeHtml(s.userName || '') + '</td>' +
+        '<td class="text-sm">' + escapeHtml(s.userEmail || '') + '</td>' +
         '<td><span class="badge ' + statusBadge(s.verificationStatus) + '">' + (s.verificationStatus || '') + '</span></td>' +
         '<td><span class="badge ' + sellerStatusBadge(s.sellerStatus) + '">' + (s.sellerStatus || '') + '</span></td>' +
         '<td>' + (s.commissionRate ? s.commissionRate + '%' : 'N/A') + '</td>' +

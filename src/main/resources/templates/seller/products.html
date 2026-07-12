@@ -91,6 +91,7 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script src="/js/sanitize.js"></script>
 <script th:src="@{/js/pagination.js}"></script>
 <script>
 (function () {
@@ -140,8 +141,8 @@
     products.forEach(function (p) {
       var tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><a href="/item/' + p.id + '" class="btn-link">' + (p.name || '') + '</a></td>' +
-        '<td class="text-sm">' + (p.category ? p.category.name : '') + '</td>' +
+        '<td><a href="/item/' + p.id + '" class="btn-link">' + escapeHtml(p.name || '') + '</a></td>' +
+        '<td class="text-sm">' + escapeHtml(p.category ? p.category.name : '') + '</td>' +
         '<td>' + formatCurrency(p.price) + '</td>' +
         '<td><span class="' + stockClass(p.stockQuantity) + '">' + p.stockQuantity + '</span></td>' +
         '<td><span class="status-badge ' + statusClass(p.publishingStatus === 'PUBLISHED') + '">' + (p.publishingStatus || 'DRAFT') + '</span></td>' +

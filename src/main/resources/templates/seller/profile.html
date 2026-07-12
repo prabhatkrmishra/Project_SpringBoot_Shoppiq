@@ -123,6 +123,7 @@
 </main>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -134,8 +135,8 @@
     document.getElementById('prof-panNumber').value = s.panNumber || '';
     var statusEl = document.getElementById('seller-status-info');
     statusEl.innerHTML =
-      '<p class="text-sm"><strong>Status:</strong> <span class="badge ' + (s.sellerStatus === 'ACTIVE' ? 'badge-success' : 'badge-warning') + '">' + (s.sellerStatus || '') + '</span></p>' +
-      '<p class="text-sm"><strong>Verification:</strong> <span class="badge ' + (s.verificationStatus === 'APPROVED' ? 'badge-success' : (s.verificationStatus === 'REJECTED' ? 'badge-danger' : 'badge-warning')) + '">' + (s.verificationStatus || '') + '</span></p>' +
+      '<p class="text-sm"><strong>Status:</strong> <span class="badge ' + (s.sellerStatus === 'ACTIVE' ? 'badge-success' : 'badge-warning') + '">' + escapeHtml(s.sellerStatus || '') + '</span></p>' +
+      '<p class="text-sm"><strong>Verification:</strong> <span class="badge ' + (s.verificationStatus === 'APPROVED' ? 'badge-success' : (s.verificationStatus === 'REJECTED' ? 'badge-danger' : 'badge-warning')) + '">' + escapeHtml(s.verificationStatus || '') + '</span></p>' +
       (s.commissionRate ? '<p class="text-sm"><strong>Commission:</strong> ' + s.commissionRate + '%</p>' : '') +
       (s.rating ? '<p class="text-sm"><strong>Rating:</strong> ' + s.rating.toFixed(1) + '/5</p>' : '') +
       (s.joinedAt ? '<p class="text-sm"><strong>Joined:</strong> ' + formatDate(s.joinedAt) + '</p>' : '');
@@ -149,7 +150,7 @@
       document.getElementById('pending-approval').style.display = '';
       var details = document.getElementById('pending-status-details');
       details.innerHTML =
-        '<p class="text-sm"><strong>Business:</strong> ' + (s.businessName || '') + '</p>' +
+        '<p class="text-sm"><strong>Business:</strong> ' + escapeHtml(s.businessName || '') + '</p>' +
         '<p class="text-sm"><strong>Submitted:</strong> ' + (s.joinedAt ? formatDate(s.joinedAt) : 'N/A') + '</p>';
       return;
     }
@@ -157,7 +158,7 @@
       document.getElementById('rejected-approval').style.display = '';
       var details = document.getElementById('rejected-status-details');
       details.innerHTML =
-        '<p class="text-sm"><strong>Business:</strong> ' + (s.businessName || '') + '</p>';
+        '<p class="text-sm"><strong>Business:</strong> ' + escapeHtml(s.businessName || '') + '</p>';
       return;
     }
     document.getElementById('seller-profile').style.display = '';

@@ -69,6 +69,7 @@
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script th:src="@{/js/pagination.js}"></script>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -135,8 +136,8 @@
       }
       tr.innerHTML =
         '<td><input type="checkbox" class="item-checkbox" data-item-id="' + item.itemId + '" aria-label="Select"></td>' +
-        '<td><a href="/item/' + item.slug + '" class="btn-link">' + (item.itemName || '') + '</a></td>' +
-        '<td class="text-sm text-muted">' + (item.sku || '') + '</td>' +
+        '<td><a href="/item/' + item.slug + '" class="btn-link">' + escapeHtml(item.itemName || '') + '</a></td>' +
+        '<td class="text-sm text-muted">' + escapeHtml(item.sku || '') + '</td>' +
         '<td>' + formatCurrency(item.basePrice) + '</td>' +
         '<td class="discount-cell" data-item-id="' + item.itemId + '" data-discount="' + (item.discountPercentage || 0) + '" style="cursor:pointer;" title="Click to edit">' +
           '<span class="discount-display">' + (item.discountPercentage > 0 ? item.discountPercentage + '%' : '0%') + '</span>' +
@@ -222,7 +223,7 @@
     overlay.innerHTML =
       '<div class="modal-content" style="background:#fff;border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.15);">' +
         '<h3 style="margin:0 0 4px;">Put on Sale</h3>' +
-        '<p class="text-muted text-sm" style="margin:0 0 16px;">' + name + ' — Base price: ' + formatCurrency(basePrice) + '</p>' +
+        '<p class="text-muted text-sm" style="margin:0 0 16px;">' + escapeHtml(name) + ' — Base price: ' + formatCurrency(basePrice) + '</p>' +
         '<label for="discountInput" class="form-label" style="font-weight:500;display:block;margin-bottom:4px;">Discount (%)</label>' +
         '<input type="number" id="discountInput" class="form-control" min="0" max="100" step="0.5" value="' + currentDiscount + '" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:8px;">' +
         '<p id="discountPreview" class="text-sm text-muted" style="margin:0 0 16px;"></p>' +

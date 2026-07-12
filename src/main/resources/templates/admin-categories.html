@@ -62,6 +62,7 @@
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 <script th:src="@{/js/pagination.js}"></script>
+<script src="/js/sanitize.js"></script>
 <script>
 (function () {
   'use strict';
@@ -96,9 +97,9 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + c.id + '</td>' +
-        '<td><strong>' + (c.name || '') + '</strong></td>' +
-        '<td class="text-sm">' + (c.description || '') + '</td>' +
-        '<td class="text-sm"><code>' + (c.slug || '') + '</code></td>' +
+        '<td><strong>' + escapeHtml(c.name || '') + '</strong></td>' +
+        '<td class="text-sm">' + escapeHtml(c.description || '') + '</td>' +
+        '<td class="text-sm"><code>' + escapeHtml(c.slug || '') + '</code></td>' +
         '<td>' +
           '<button class="btn btn-sm btn-secondary cat-edit-btn" data-id="' + c.id + '">Edit</button> ' +
           '<button class="btn btn-sm btn-danger cat-delete-btn" data-id="' + c.id + '">Delete</button>' +
