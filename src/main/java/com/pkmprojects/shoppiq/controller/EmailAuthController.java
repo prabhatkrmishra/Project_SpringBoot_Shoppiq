@@ -87,6 +87,7 @@ public class EmailAuthController {
         verificationCodeService.validateCode(user.getId(), request.code(), EmailType.PASSWORD_RESET);
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
 
         return ResponseEntity.ok(Map.of(
