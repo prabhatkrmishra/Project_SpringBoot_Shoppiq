@@ -113,6 +113,7 @@ public class User extends AuditableEntity
      * PasswordEncoder.
      * </p>
      */
+    @JsonIgnore
     @Column(length = 255)
     private String password;
 
