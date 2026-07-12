@@ -210,13 +210,34 @@
     });
 
     if (newPassword) {
+      var reqsEl = newPassword.closest('.form-group').querySelector('.password-requirements');
+      var confirmPw = document.getElementById('confirmPassword');
+      function toggleReqs() {
+        if (!reqsEl) return;
+        var pw = newPassword.value;
+        var cpw = confirmPw ? confirmPw.value : '';
+        if (pw && cpw && pw === cpw) {
+          reqsEl.classList.remove('visible');
+        } else if (pw) {
+          reqsEl.classList.add('visible');
+        } else {
+          reqsEl.classList.remove('visible');
+        }
+      }
+      newPassword.addEventListener('focus', () => {
+        if (newPassword.value) reqsEl.classList.add('visible');
+      });
       newPassword.addEventListener('input', () => {
         const strength = calculateStrength(newPassword.value);
         strengthFill.className = 'strength-fill';
         if (strength.level) strengthFill.classList.add(strength.level);
         strengthText.textContent = strength.label;
         updatePasswordRequirements(newPassword.value);
+        toggleReqs();
       });
+      if (confirmPw) {
+        confirmPw.addEventListener('input', toggleReqs);
+      }
     }
 
     checkHasPassword().then(hasPassword => {

@@ -7,6 +7,16 @@
 
     <main class="page">
         <div class="container container-narrow auth-card">
+            <div class="auth-brand">
+                <div class="auth-brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 01-8 0"/>
+                    </svg>
+                </div>
+            </div>
+
             <div class="page-header text-center">
                 <h1>Create Your Account</h1>
                 <p id="page-subtitle">Join Shoppiq and start shopping today</p>
@@ -18,17 +28,15 @@
 
             <div class="panel">
                 <form id="registerForm" novalidate>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="name" class="form-label">Full Name</label>
-                            <input type="text" id="name" name="name" class="form-input" placeholder="John Doe" required
-                                   autocomplete="name">
-                        </div>
-                        <div class="form-group">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com"
-                                   required autocomplete="email">
-                        </div>
+                    <div class="form-group">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" id="name" name="name" class="form-input" placeholder="John Doe" required
+                               autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com"
+                               required autocomplete="email">
                     </div>
                     <div class="form-group">
                         <label for="username" class="form-label">Username</label>
@@ -68,25 +76,21 @@
                         <div style="border-top:1px solid var(--color-border,#333);margin:4px 0 16px;padding-top:16px;">
                             <p class="text-sm fw-600 mb-md" style="color:var(--color-primary,#3b82f6);">Business Details</p>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="businessName" class="form-label">Business Name</label>
-                                <input type="text" id="businessName" name="businessName" class="form-input" placeholder="Acme Pvt Ltd">
-                            </div>
-                            <div class="form-group">
-                                <label for="businessEmail" class="form-label">Business Email</label>
-                                <input type="email" id="businessEmail" name="businessEmail" class="form-input" placeholder="business@example.com">
-                            </div>
+                        <div class="form-group">
+                            <label for="businessName" class="form-label">Business Name</label>
+                            <input type="text" id="businessName" name="businessName" class="form-input" placeholder="Acme Pvt Ltd">
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="phone" class="form-label">Phone</label>
-                                <input type="tel" id="phone" name="phone" class="form-input" placeholder="9876543210" maxlength="15">
-                            </div>
-                            <div class="form-group">
-                                <label for="panNumber" class="form-label">PAN Number</label>
-                                <input type="text" id="panNumber" name="panNumber" class="form-input" placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase;">
-                            </div>
+                        <div class="form-group">
+                            <label for="businessEmail" class="form-label">Business Email</label>
+                            <input type="email" id="businessEmail" name="businessEmail" class="form-input" placeholder="business@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" id="phone" name="phone" class="form-input" placeholder="9876543210" maxlength="15">
+                        </div>
+                        <div class="form-group">
+                            <label for="panNumber" class="form-label">PAN Number</label>
+                            <input type="text" id="panNumber" name="panNumber" class="form-input" placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase;">
                         </div>
                         <div class="form-group">
                             <label for="gstNumber" class="form-label">GST Number <span class="text-muted">(optional)</span></label>
@@ -200,10 +204,30 @@
         passwordInput.addEventListener("input", function () {
             clearFieldError("password");
             updatePasswordRequirements(this.value);
+            toggleReqs();
         });
 
+        var passwordReqs = passwordInput.closest('.form-group').querySelector('.password-requirements');
+        function toggleReqs() {
+            if (!passwordReqs) return;
+            var pw = passwordInput.value;
+            var cpw = confirmPasswordInput.value;
+            if (pw && cpw && pw === cpw) {
+                passwordReqs.classList.remove("visible");
+            } else if (pw) {
+                passwordReqs.classList.add("visible");
+            } else {
+                passwordReqs.classList.remove("visible");
+            }
+        }
+        if (passwordReqs) {
+            passwordInput.addEventListener("focus", function () {
+                if (this.value) passwordReqs.classList.add("visible");
+            });
+        }
         confirmPasswordInput.addEventListener("input", function () {
             clearFieldError("confirmPassword");
+            toggleReqs();
         });
 
         registerForm.addEventListener("submit", async function (event) {

@@ -181,10 +181,17 @@ function initScrollReveal() {
 
 // ─── Form Validation ──────────────────────────────────
 function initFormValidation() {
+    document.addEventListener('focus', function (e) {
+        var input = e.target;
+        if (!input.classList.contains('form-input') && !input.classList.contains('form-select')) return;
+        input.dataset.touched = 'true';
+    }, true);
+
     document.addEventListener('blur', function (e) {
         var input = e.target;
         if (!input.classList.contains('form-input') && !input.classList.contains('form-select')) return;
         if (!input.hasAttribute('required') && !input.hasAttribute('pattern') && input.type !== 'email') return;
+        if (!input.dataset.touched) return;
         validateField(input);
     }, true);
 

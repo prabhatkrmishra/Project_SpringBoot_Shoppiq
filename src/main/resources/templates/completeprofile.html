@@ -119,10 +119,30 @@ loadGoogleProfile();
         passwordInput.addEventListener("input", function () {
             clearFieldError("password");
             updatePasswordRequirements(this.value);
+            toggleReqs();
         });
 
+        var passwordReqs = passwordInput.closest('.form-group').querySelector('.password-requirements');
+        function toggleReqs() {
+            if (!passwordReqs) return;
+            var pw = passwordInput.value;
+            var cpw = confirmPasswordInput.value;
+            if (pw && cpw && pw === cpw) {
+                passwordReqs.classList.remove("visible");
+            } else if (pw) {
+                passwordReqs.classList.add("visible");
+            } else {
+                passwordReqs.classList.remove("visible");
+            }
+        }
+        if (passwordReqs) {
+            passwordInput.addEventListener("focus", function () {
+                if (this.value) passwordReqs.classList.add("visible");
+            });
+        }
         confirmPasswordInput.addEventListener("input", function () {
             clearFieldError("confirmPassword");
+            toggleReqs();
         });
 
         document.getElementById("completeProfileForm").addEventListener("submit", async function (event) {
