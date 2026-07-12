@@ -2,106 +2,111 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('New Arrivals')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="page">
-  <div class="container">
-    <div class="page-header">
-      <h1>New Arrivals</h1>
-      <p>Check out the latest products just added to our store</p>
-    </div>
+    <main class="page">
+        <div class="container">
+            <div class="page-header">
+                <h1>New Arrivals</h1>
+                <p>Check out the latest products just added to our store</p>
+            </div>
 
-    <div id="emptyState" class="cart-empty" style="display:none;">
-      <h2>No new arrivals yet</h2>
-      <p>Check back soon for the latest products.</p>
-      <a href="/allitems" class="btn btn-primary">Browse All Products</a>
-    </div>
+            <div id="emptyState" class="cart-empty" style="display:none;">
+                <h2>No new arrivals yet</h2>
+                <p>Check back soon for the latest products.</p>
+                <a href="/allitems" class="btn btn-primary">Browse All Products</a>
+            </div>
 
-    <div id="loadingState" class="text-center" style="padding:48px 0;">
-      <div class="spinner"></div>
-      <p class="text-muted mt-md">Loading new arrivals...</p>
-    </div>
+            <div id="loadingState" class="text-center" style="padding:48px 0;">
+                <div class="spinner"></div>
+                <p class="text-muted mt-md">Loading new arrivals...</p>
+            </div>
 
-    <div id="itemGrid" class="grid-4" style="display:none;"></div>
-    <div id="arrivals-pagination"></div>
-  </div>
-</main>
+            <div id="itemGrid" class="grid-4" style="display:none;"></div>
+            <div id="arrivals-pagination"></div>
+        </div>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
 
-<script src="/js/sanitize.js"></script>
-<script th:src="@{/js/pagination.js}"></script>
-<script>
-var currentPage = 0;
-var PAGE_SIZE = 12;
+    <script src="/js/sanitize.js"></script>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script>
+        var currentPage = 0;
+        var PAGE_SIZE = 12;
 
-document.addEventListener("DOMContentLoaded", function () {
-  loadNewArrivals(0);
-});
+        document.addEventListener("DOMContentLoaded", function () {
+            loadNewArrivals(0);
+        });
 
-function loadNewArrivals(page) {
-  if (page != null) currentPage = page;
-  var grid = document.getElementById("itemGrid");
-  var empty = document.getElementById("emptyState");
-  var loading = document.getElementById("loadingState");
-  loading.style.display = "";
-  grid.style.display = "none";
-  empty.style.display = "none";
+        function loadNewArrivals(page) {
+            if (page != null) currentPage = page;
+            var grid = document.getElementById("itemGrid");
+            var empty = document.getElementById("emptyState");
+            var loading = document.getElementById("loadingState");
+            loading.style.display = "";
+            grid.style.display = "none";
+            empty.style.display = "none";
 
-  API.get("/items/new-arrivals?page=" + currentPage + "&size=" + PAGE_SIZE).then(function (data) {
-    var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
-    if (items.length === 0) {
-      empty.style.display = "";
-      grid.style.display = "none";
-    } else {
-      grid.innerHTML = items.map(function (item) {
-        var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop";
-        var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
-        var priceHtml = '<span class="price-new">$' + item.price + '</span>';
-        if (hasDiscount) {
-          var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
-          priceHtml = '<span class="price-old">$' + item.price + '</span> ' +
-                      '<span class="price-new">$' + salePrice + '</span> ' +
-                      '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
+            API.get("/items/new-arrivals?page=" + currentPage + "&size=" + PAGE_SIZE).then(function (data) {
+                var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+                if (items.length === 0) {
+                    empty.style.display = "";
+                    grid.style.display = "none";
+                } else {
+                    grid.innerHTML = items.map(function (item) {
+                        var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop";
+                        var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
+                        var priceHtml = '<span class="price-new">$' + item.price + '</span>';
+                        if (hasDiscount) {
+                            var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
+                            priceHtml = '<span class="price-old">$' + item.price + '</span> ' +
+                                '<span class="price-new">$' + salePrice + '</span> ' +
+                                '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
+                        }
+                        var stockClass = item.stockQuantity > 10 ? "badge-success" : (item.stockQuantity > 0 ? "badge-warning" : "badge-danger");
+                        var stockText = item.stockQuantity > 0 ? "In Stock" : "Out of Stock";
+                        return '<a href="/item/' + item.slug + '" class="card-link">' +
+                            '<article class="card product-card">' +
+                            '<div class="card-image-wrapper">' +
+                            '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
+                            (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
+                            '</div>' +
+                            '<div class="card-body">' +
+                            '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
+                            '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
+                            '<div class="card-price">' + priceHtml + '</div>' +
+                            '<div class="card-meta"><span class="badge ' + stockClass + '">' + stockText + '</span></div>' +
+                            '</div>' +
+                            '</article>' +
+                            '</a>';
+                    }).join("");
+                    grid.style.display = "";
+                    empty.style.display = "none";
+                }
+                Pagination.render("arrivals-pagination", data, loadNewArrivals, {
+                    onPageSizeChange: function (newSize) {
+                        PAGE_SIZE = newSize;
+                        loadNewArrivals(0);
+                    }
+                });
+            }).catch(function (e) {
+                empty.style.display = "";
+                empty.querySelector("h2").textContent = "Could not load new arrivals";
+                empty.querySelector("p").textContent = e.message || "Please try again later.";
+            }).finally(function () {
+                loading.style.display = "none";
+                if (typeof lucide !== "undefined") lucide.createIcons();
+            });
         }
-        var stockClass = item.stockQuantity > 10 ? "badge-success" : (item.stockQuantity > 0 ? "badge-warning" : "badge-danger");
-        var stockText = item.stockQuantity > 0 ? "In Stock" : "Out of Stock";
-        return '<a href="/item/' + item.slug + '" class="card-link">' +
-          '<article class="card product-card">' +
-            '<div class="card-image-wrapper">' +
-              '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
-              (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
-            '</div>' +
-            '<div class="card-body">' +
-              '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
-              '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
-              '<div class="card-price">' + priceHtml + '</div>' +
-              '<div class="card-meta"><span class="badge ' + stockClass + '">' + stockText + '</span></div>' +
-            '</div>' +
-          '</article>' +
-        '</a>';
-      }).join("");
-      grid.style.display = "";
-      empty.style.display = "none";
-    }
-    Pagination.render("arrivals-pagination", data, loadNewArrivals, {
-      onPageSizeChange: function (newSize) {
-        PAGE_SIZE = newSize;
-        loadNewArrivals(0);
-      }
-    });
-  }).catch(function (e) {
-    empty.style.display = "";
-    empty.querySelector("h2").textContent = "Could not load new arrivals";
-    empty.querySelector("p").textContent = e.message || "Please try again later.";
-  }).finally(function () {
-    loading.style.display = "none";
-    if (typeof lucide !== "undefined") lucide.createIcons();
-  });
-}
-function truncateWords(str, max) { if (!str) return ''; var w = str.trim().split(/\s+/); return w.length <= max ? str : w.slice(0, max).join(' ') + '...'; }
-</script>
+
+        function truncateWords(str, max) {
+            if (!str) return '';
+            var w = str.trim().split(/\s+/);
+            return w.length <= max ? str : w.slice(0, max).join(' ') + '...';
+        }
+    </script>
 </body>
 </html>

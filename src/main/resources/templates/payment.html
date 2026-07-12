@@ -39,7 +39,8 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="expiry" class="form-label">Expiry Date</label>
-                                <input type="text" id="expiry" class="form-input" placeholder="MM/YY" autocomplete="cc-exp">
+                                <input type="text" id="expiry" class="form-input" placeholder="MM/YY"
+                                       autocomplete="cc-exp">
                             </div>
                             <div class="form-group">
                                 <label for="cvv" class="form-label">CVV</label>
@@ -59,15 +60,21 @@
                         <span id="payment-amount">$0.00</span>
                     </div>
 
-                    <button id="pay-now-btn" class="btn btn-primary btn-lg btn-block" data-payment-id="">Pay Now</button>
-                    <button id="cancel-payment-btn" class="btn btn-danger btn-lg btn-block mt-md" style="display:none;" data-payment-id="">Cancel Payment</button>
+                    <button id="pay-now-btn" class="btn btn-primary btn-lg btn-block" data-payment-id="">Pay Now
+                    </button>
+                    <button id="cancel-payment-btn" class="btn btn-danger btn-lg btn-block mt-md" style="display:none;"
+                            data-payment-id="">Cancel Payment
+                    </button>
 
-                    <div id="verify-section" style="display:none;" class="mt-lg" style="border-top:1px solid var(--color-border);padding-top:1rem;">
+                    <div id="verify-section" style="display:none;" class="mt-lg"
+                         style="border-top:1px solid var(--color-border);padding-top:1rem;">
                         <div class="panel-title">Verify Payment</div>
-                        <p class="text-sm text-muted mb-md">Enter the transaction ID from your payment gateway to verify.</p>
+                        <p class="text-sm text-muted mb-md">Enter the transaction ID from your payment gateway to
+                            verify.</p>
                         <div class="form-group">
                             <label for="transaction-id" class="form-label">Transaction ID</label>
-                            <input type="text" id="transaction-id" class="form-input" placeholder="Enter transaction ID">
+                            <input type="text" id="transaction-id" class="form-input"
+                                   placeholder="Enter transaction ID">
                         </div>
                         <button id="verify-btn" class="btn btn-primary">Verify Payment</button>
                     </div>
@@ -82,96 +89,107 @@
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
     <script>
-    (function () {
-      'use strict';
-      function showPaymentError(msg) {
-        document.getElementById('payment-loading').style.display = 'none';
-        document.getElementById('payment-error').style.display = '';
-        document.getElementById('payment-error-msg').textContent = msg || 'Unable to load payment details.';
-      }
-      function renderPayment(payment) {
-        document.getElementById('payment-loading').style.display = 'none';
-        document.getElementById('payment-content').style.display = '';
-        document.getElementById('payment-amount').textContent = formatCurrency(payment.amount);
-        document.getElementById('pay-now-btn').dataset.paymentId = payment.id;
-        if (payment.status === 'PAID') {
-          document.getElementById('pay-now-btn').textContent = 'Paid';
-          document.getElementById('pay-now-btn').disabled = true;
-          document.getElementById('pay-now-btn').className = 'btn btn-success btn-lg btn-block';
-        } else if (payment.status !== 'PENDING' && payment.status !== 'FAILED') {
-          document.getElementById('pay-now-btn').textContent = payment.status;
-          document.getElementById('pay-now-btn').disabled = true;
-          document.getElementById('pay-now-btn').className = 'btn btn-secondary btn-lg btn-block';
-        }
-        if (payment.status === 'PENDING' || payment.status === 'FAILED') {
-          var cancelBtn = document.getElementById('cancel-payment-btn');
-          cancelBtn.style.display = '';
-          cancelBtn.dataset.paymentId = payment.id;
-        }
-        if (payment.status === 'PROCESSING') {
-          document.getElementById('verify-section').style.display = '';
-        }
-      }
-      document.addEventListener('DOMContentLoaded', function () {
-        var paymentId = new URLSearchParams(window.location.search).get('paymentId');
-        if (!paymentId) {
-          showPaymentError('No payment ID specified.');
-          return;
-        }
-        API.get('/user/payment/get/' + paymentId).then(renderPayment).catch(function (err) {
-          showPaymentError(err.message || 'Failed to load payment details.');
-        });
-        document.getElementById('pay-now-btn').addEventListener('click', function () {
-          var btn = this;
-          var id = btn.dataset.paymentId;
-          if (!id) return;
-          setButtonLoading(btn, true);
-          API.post('/user/payment/pay/' + id, {}).then(function () {
-            showToast('Payment successful!', 'success');
-            btn.textContent = 'Paid';
-            btn.disabled = true;
-            btn.className = 'btn btn-success btn-lg btn-block';
-            document.getElementById('cancel-payment-btn').style.display = 'none';
-          }).catch(function (err) {
-            showToast(err.message || 'Payment failed', 'error');
-            setButtonLoading(btn, false);
-          });
-        });
-        document.getElementById('cancel-payment-btn').addEventListener('click', function () {
-          var btn = this;
-          var id = btn.dataset.paymentId;
-          if (!id) return;
-          showConfirmModal({ title: 'Cancel Payment', message: 'Cancel this payment?', confirmText: 'Cancel Payment', danger: true }).then(function (confirmed) {
-            if (!confirmed) return;
-            setButtonLoading(btn, true);
-            API.put('/user/payment/cancel/' + id, {}).then(function () {
-              showToast('Payment cancelled', 'success');
-              window.location.href = '/orders';
-            }).catch(function (err) {
-              showToast(err.message || 'Failed to cancel', 'error');
-              setButtonLoading(btn, false);
+        (function () {
+            'use strict';
+
+            function showPaymentError(msg) {
+                document.getElementById('payment-loading').style.display = 'none';
+                document.getElementById('payment-error').style.display = '';
+                document.getElementById('payment-error-msg').textContent = msg || 'Unable to load payment details.';
+            }
+
+            function renderPayment(payment) {
+                document.getElementById('payment-loading').style.display = 'none';
+                document.getElementById('payment-content').style.display = '';
+                document.getElementById('payment-amount').textContent = formatCurrency(payment.amount);
+                document.getElementById('pay-now-btn').dataset.paymentId = payment.id;
+                if (payment.status === 'PAID') {
+                    document.getElementById('pay-now-btn').textContent = 'Paid';
+                    document.getElementById('pay-now-btn').disabled = true;
+                    document.getElementById('pay-now-btn').className = 'btn btn-success btn-lg btn-block';
+                } else if (payment.status !== 'PENDING' && payment.status !== 'FAILED') {
+                    document.getElementById('pay-now-btn').textContent = payment.status;
+                    document.getElementById('pay-now-btn').disabled = true;
+                    document.getElementById('pay-now-btn').className = 'btn btn-secondary btn-lg btn-block';
+                }
+                if (payment.status === 'PENDING' || payment.status === 'FAILED') {
+                    var cancelBtn = document.getElementById('cancel-payment-btn');
+                    cancelBtn.style.display = '';
+                    cancelBtn.dataset.paymentId = payment.id;
+                }
+                if (payment.status === 'PROCESSING') {
+                    document.getElementById('verify-section').style.display = '';
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var paymentId = new URLSearchParams(window.location.search).get('paymentId');
+                if (!paymentId) {
+                    showPaymentError('No payment ID specified.');
+                    return;
+                }
+                API.get('/user/payment/get/' + paymentId).then(renderPayment).catch(function (err) {
+                    showPaymentError(err.message || 'Failed to load payment details.');
+                });
+                document.getElementById('pay-now-btn').addEventListener('click', function () {
+                    var btn = this;
+                    var id = btn.dataset.paymentId;
+                    if (!id) return;
+                    setButtonLoading(btn, true);
+                    API.post('/user/payment/pay/' + id, {}).then(function () {
+                        showToast('Payment successful!', 'success');
+                        btn.textContent = 'Paid';
+                        btn.disabled = true;
+                        btn.className = 'btn btn-success btn-lg btn-block';
+                        document.getElementById('cancel-payment-btn').style.display = 'none';
+                    }).catch(function (err) {
+                        showToast(err.message || 'Payment failed', 'error');
+                        setButtonLoading(btn, false);
+                    });
+                });
+                document.getElementById('cancel-payment-btn').addEventListener('click', function () {
+                    var btn = this;
+                    var id = btn.dataset.paymentId;
+                    if (!id) return;
+                    showConfirmModal({
+                        title: 'Cancel Payment',
+                        message: 'Cancel this payment?',
+                        confirmText: 'Cancel Payment',
+                        danger: true
+                    }).then(function (confirmed) {
+                        if (!confirmed) return;
+                        setButtonLoading(btn, true);
+                        API.put('/user/payment/cancel/' + id, {}).then(function () {
+                            showToast('Payment cancelled', 'success');
+                            window.location.href = '/orders';
+                        }).catch(function (err) {
+                            showToast(err.message || 'Failed to cancel', 'error');
+                            setButtonLoading(btn, false);
+                        });
+                    });
+                });
+                document.getElementById('verify-btn').addEventListener('click', function () {
+                    var btn = this;
+                    var txId = document.getElementById('transaction-id').value.trim();
+                    if (!txId) {
+                        showToast('Enter transaction ID', 'error');
+                        return;
+                    }
+                    setButtonLoading(btn, true);
+                    API.post('/user/payment/verify', {transactionId: txId}).then(function () {
+                        showToast('Payment verified!', 'success');
+                        document.getElementById('verify-section').style.display = 'none';
+                        document.getElementById('pay-now-btn').textContent = 'Paid';
+                        document.getElementById('pay-now-btn').disabled = true;
+                        document.getElementById('pay-now-btn').className = 'btn btn-success btn-lg btn-block';
+                        document.getElementById('cancel-payment-btn').style.display = 'none';
+                    }).catch(function (err) {
+                        showToast(err.message || 'Verification failed', 'error');
+                        setButtonLoading(btn, false);
+                    });
+                });
             });
-          });
-        });
-        document.getElementById('verify-btn').addEventListener('click', function () {
-          var btn = this;
-          var txId = document.getElementById('transaction-id').value.trim();
-          if (!txId) { showToast('Enter transaction ID', 'error'); return; }
-          setButtonLoading(btn, true);
-          API.post('/user/payment/verify', { transactionId: txId }).then(function () {
-            showToast('Payment verified!', 'success');
-            document.getElementById('verify-section').style.display = 'none';
-            document.getElementById('pay-now-btn').textContent = 'Paid';
-            document.getElementById('pay-now-btn').disabled = true;
-            document.getElementById('pay-now-btn').className = 'btn btn-success btn-lg btn-block';
-            document.getElementById('cancel-payment-btn').style.display = 'none';
-          }).catch(function (err) {
-            showToast(err.message || 'Verification failed', 'error');
-            setButtonLoading(btn, false);
-          });
-        });
-      });
-    })();
+        })();
     </script>
 </body>
 </html>

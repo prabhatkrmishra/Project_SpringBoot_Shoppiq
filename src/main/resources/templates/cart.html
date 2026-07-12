@@ -2,189 +2,201 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Cart')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="page">
-  <div class="container">
-    <div class="page-header">
-      <h1>Shopping Cart</h1>
-      <p id="cart-count-text"></p>
+    <main class="page">
+        <div class="container">
+            <div class="page-header">
+                <h1>Shopping Cart</h1>
+                <p id="cart-count-text"></p>
+            </div>
+
+            <div id="cart-empty" class="cart-empty" style="display:none;">
+                <h2>Your cart is empty</h2>
+                <p>Looks like you haven't added anything yet.</p>
+                <a href="/allitems" class="btn btn-primary">Start Shopping</a>
+            </div>
+
+            <div id="cart-content" class="cart-page" style="display:none;">
+                <div class="cart-items" id="cart-items"></div>
+
+                <aside class="cart-summary" aria-label="Order summary">
+                    <div class="cart-summary-title">Order Summary</div>
+                    <div class="cart-summary-row">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal">$0.00</span>
+                    </div>
+                    <div class="cart-summary-row">
+                        <span>Shipping</span>
+                        <span id="cart-shipping">Calculated at checkout</span>
+                    </div>
+                    <div class="cart-summary-row total">
+                        <span>Total</span>
+                        <span id="cart-total">$0.00</span>
+                    </div>
+                    <div class="cart-promo">
+                        <input type="text" id="cart-promo-input" class="form-input" placeholder="Promo code"
+                               aria-label="Promo code">
+                        <button type="button" id="cart-promo-apply" class="btn btn-sm btn-secondary">Apply</button>
+                    </div>
+                    <div id="cart-promo-msg" style="display:none;" class="text-sm mt-sm"></div>
+                    <div class="cart-actions">
+                        <a href="/checkout" class="btn btn-primary btn-lg">Proceed to Checkout</a>
+                        <a href="/allitems" class="btn btn-secondary">Continue Shopping</a>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <div id="cart-mobile-cta" class="cart-mobile-cta" style="display:none;">
+        <div class="cart-total-mobile">Total: <strong id="cart-total-mobile">$0.00</strong></div>
+        <a href="/checkout" class="btn btn-primary">Checkout</a>
     </div>
 
-    <div id="cart-empty" class="cart-empty" style="display:none;">
-      <h2>Your cart is empty</h2>
-      <p>Looks like you haven't added anything yet.</p>
-      <a href="/allitems" class="btn btn-primary">Start Shopping</a>
-    </div>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var cartData = null;
+            var appliedPromoCode = null;
 
-    <div id="cart-content" class="cart-page" style="display:none;">
-      <div class="cart-items" id="cart-items"></div>
+            function renderCart(cart) {
+                cartData = cart;
+                var items = cart.items || [];
+                if (items.length === 0) {
+                    document.getElementById('cart-empty').style.display = '';
+                    document.getElementById('cart-content').style.display = 'none';
+                    document.getElementById('cart-mobile-cta').style.display = 'none';
+                    document.getElementById('cart-count-text').textContent = '';
+                    return;
+                }
+                document.getElementById('cart-empty').style.display = 'none';
+                document.getElementById('cart-content').style.display = '';
+                document.getElementById('cart-mobile-cta').style.display = '';
+                document.getElementById('cart-count-text').textContent = items.length + ' item(s) in your cart';
 
-      <aside class="cart-summary" aria-label="Order summary">
-        <div class="cart-summary-title">Order Summary</div>
-        <div class="cart-summary-row">
-          <span>Subtotal</span>
-          <span id="cart-subtotal">$0.00</span>
-        </div>
-        <div class="cart-summary-row">
-          <span>Shipping</span>
-          <span id="cart-shipping">Calculated at checkout</span>
-        </div>
-        <div class="cart-summary-row total">
-          <span>Total</span>
-          <span id="cart-total">$0.00</span>
-        </div>
-        <div class="cart-promo">
-          <input type="text" id="cart-promo-input" class="form-input" placeholder="Promo code" aria-label="Promo code">
-          <button type="button" id="cart-promo-apply" class="btn btn-sm btn-secondary">Apply</button>
-        </div>
-        <div id="cart-promo-msg" style="display:none;" class="text-sm mt-sm"></div>
-        <div class="cart-actions">
-          <a href="/checkout" class="btn btn-primary btn-lg">Proceed to Checkout</a>
-          <a href="/allitems" class="btn btn-secondary">Continue Shopping</a>
-        </div>
-      </aside>
-    </div>
-  </div>
-</main>
+                var container = document.getElementById('cart-items');
+                container.innerHTML = '';
+                items.forEach(function (item) {
+                    var imgUrl = item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=100&fit=crop';
+                    var div = document.createElement('div');
+                    div.className = 'cart-item';
+                    div.dataset.cartItemId = item.cartItemId;
+                    div.innerHTML =
+                        '<img class="cart-item-image" src="' + escapeAttr(imgUrl) + '" alt="" loading="lazy" width="100" height="100">' +
+                        '<div class="cart-item-details">' +
+                        '<div class="cart-item-name"><a href="/item/' + escapeAttr(item.itemSlug) + '">' + escapeHtml(item.itemName || 'Product') + '</a></div>' +
+                        '<div class="cart-item-price">' + formatCurrency(item.unitPrice) + '</div>' +
+                        '<div class="cart-item-actions">' +
+                        '<div class="quantity-control">' +
+                        '<button class="qty-minus" data-cart-item-id="' + item.cartItemId + '" data-qty="' + item.quantity + '" aria-label="Decrease quantity">&minus;</button>' +
+                        '<input type="number" value="' + item.quantity + '" min="1" max="99" aria-label="Quantity" readonly>' +
+                        '<button class="qty-plus" data-cart-item-id="' + item.cartItemId + '" data-qty="' + item.quantity + '" aria-label="Increase quantity">+</button>' +
+                        '</div>' +
+                        '<button class="cart-item-remove" data-cart-item-id="' + item.cartItemId + '" aria-label="Remove item">Remove</button>' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="cart-item-subtotal">' + formatCurrency(item.lineTotal) + '</div>';
+                    container.appendChild(div);
+                });
 
-<div id="cart-mobile-cta" class="cart-mobile-cta" style="display:none;">
-  <div class="cart-total-mobile">Total: <strong id="cart-total-mobile">$0.00</strong></div>
-  <a href="/checkout" class="btn btn-primary">Checkout</a>
-</div>
+                document.getElementById('cart-subtotal').textContent = formatCurrency(cart.subtotal);
+                document.getElementById('cart-total').textContent = formatCurrency(cart.subtotal);
+                document.getElementById('cart-total-mobile').textContent = formatCurrency(cart.subtotal);
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script src="/js/sanitize.js"></script>
-<script>
-(function () {
-  'use strict';
-  var cartData = null;
-  var appliedPromoCode = null;
+                bindEvents();
+            }
 
-  function renderCart(cart) {
-    cartData = cart;
-    var items = cart.items || [];
-    if (items.length === 0) {
-      document.getElementById('cart-empty').style.display = '';
-      document.getElementById('cart-content').style.display = 'none';
-      document.getElementById('cart-mobile-cta').style.display = 'none';
-      document.getElementById('cart-count-text').textContent = '';
-      return;
-    }
-    document.getElementById('cart-empty').style.display = 'none';
-    document.getElementById('cart-content').style.display = '';
-    document.getElementById('cart-mobile-cta').style.display = '';
-    document.getElementById('cart-count-text').textContent = items.length + ' item(s) in your cart';
+            function bindEvents() {
+                document.querySelectorAll('.qty-minus').forEach(function (btn) {
+                    btn.onclick = function () {
+                        var id = parseInt(this.dataset.cartItemId);
+                        var qty = parseInt(this.dataset.qty) - 1;
+                        if (qty < 1) return;
+                        API.put('/user/cart/update/' + id, {quantity: qty}).then(loadCart).catch(function (e) {
+                            showToast(e.message, 'error');
+                        });
+                    };
+                });
+                document.querySelectorAll('.qty-plus').forEach(function (btn) {
+                    btn.onclick = function () {
+                        var id = parseInt(this.dataset.cartItemId);
+                        var qty = parseInt(this.dataset.qty) + 1;
+                        if (qty > 99) return;
+                        API.put('/user/cart/update/' + id, {quantity: qty}).then(loadCart).catch(function (e) {
+                            showToast(e.message, 'error');
+                        });
+                    };
+                });
+                document.querySelectorAll('.cart-item-remove').forEach(function (btn) {
+                    btn.onclick = function () {
+                        var id = parseInt(this.dataset.cartItemId);
+                        showConfirmModal({
+                            title: 'Remove Item',
+                            message: 'Remove this item?',
+                            confirmText: 'Remove',
+                            danger: true
+                        }).then(function (confirmed) {
+                            if (!confirmed) return;
+                            API.del('/user/cart/delete/' + id).then(loadCart).catch(function (e) {
+                                showToast(e.message, 'error');
+                            });
+                        });
+                    };
+                });
+            }
 
-    var container = document.getElementById('cart-items');
-    container.innerHTML = '';
-    items.forEach(function (item) {
-      var imgUrl = item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=100&fit=crop';
-      var div = document.createElement('div');
-      div.className = 'cart-item';
-      div.dataset.cartItemId = item.cartItemId;
-      div.innerHTML =
-        '<img class="cart-item-image" src="' + escapeAttr(imgUrl) + '" alt="" loading="lazy" width="100" height="100">' +
-        '<div class="cart-item-details">' +
-          '<div class="cart-item-name"><a href="/item/' + escapeAttr(item.itemSlug) + '">' + escapeHtml(item.itemName || 'Product') + '</a></div>' +
-          '<div class="cart-item-price">' + formatCurrency(item.unitPrice) + '</div>' +
-          '<div class="cart-item-actions">' +
-            '<div class="quantity-control">' +
-              '<button class="qty-minus" data-cart-item-id="' + item.cartItemId + '" data-qty="' + item.quantity + '" aria-label="Decrease quantity">&minus;</button>' +
-              '<input type="number" value="' + item.quantity + '" min="1" max="99" aria-label="Quantity" readonly>' +
-              '<button class="qty-plus" data-cart-item-id="' + item.cartItemId + '" data-qty="' + item.quantity + '" aria-label="Increase quantity">+</button>' +
-            '</div>' +
-            '<button class="cart-item-remove" data-cart-item-id="' + item.cartItemId + '" aria-label="Remove item">Remove</button>' +
-          '</div>' +
-        '</div>' +
-        '<div class="cart-item-subtotal">' + formatCurrency(item.lineTotal) + '</div>';
-      container.appendChild(div);
-    });
+            function loadCart() {
+                API.get('/user/cart/get').then(renderCart).catch(function () {
+                    document.getElementById('cart-empty').style.display = '';
+                    document.getElementById('cart-content').style.display = 'none';
+                });
+            }
 
-    document.getElementById('cart-subtotal').textContent = formatCurrency(cart.subtotal);
-    document.getElementById('cart-total').textContent = formatCurrency(cart.subtotal);
-    document.getElementById('cart-total-mobile').textContent = formatCurrency(cart.subtotal);
+            function applyPromoCode() {
+                var input = document.getElementById('cart-promo-input');
+                var msgEl = document.getElementById('cart-promo-msg');
+                var code = input.value.trim();
+                if (!code) {
+                    msgEl.style.display = 'block';
+                    msgEl.innerHTML = '<span class="text-danger">Please enter a promo code</span>';
+                    return;
+                }
+                var btn = document.getElementById('cart-promo-apply');
+                setButtonLoading(btn, true);
+                API.post('/api/promo-codes/validate', {code: code, subtotal: cartData.subtotal}).then(function (res) {
+                    appliedPromoCode = code;
+                    sessionStorage.setItem('promoCode', code);
+                    msgEl.style.display = 'block';
+                    msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(res.discount) + '</span>';
+                    if (cartData) {
+                        document.getElementById('cart-subtotal').textContent = formatCurrency(cartData.subtotal - res.discount);
+                        document.getElementById('cart-total').textContent = formatCurrency(cartData.subtotal - res.discount);
+                    }
+                    setButtonLoading(btn, false);
+                    btn.textContent = 'Applied';
+                    btn.disabled = true;
+                }).catch(function (err) {
+                    appliedPromoCode = null;
+                    sessionStorage.removeItem('promoCode');
+                    msgEl.style.display = 'block';
+                    msgEl.innerHTML = '<span class="text-danger">' + escapeHtml(err.message || 'Invalid promo code') + '</span>';
+                    setButtonLoading(btn, false);
+                });
+            }
 
-    bindEvents();
-  }
-
-  function bindEvents() {
-    document.querySelectorAll('.qty-minus').forEach(function (btn) {
-      btn.onclick = function () {
-        var id = parseInt(this.dataset.cartItemId);
-        var qty = parseInt(this.dataset.qty) - 1;
-        if (qty < 1) return;
-        API.put('/user/cart/update/' + id, { quantity: qty }).then(loadCart).catch(function (e) { showToast(e.message, 'error'); });
-      };
-    });
-    document.querySelectorAll('.qty-plus').forEach(function (btn) {
-      btn.onclick = function () {
-        var id = parseInt(this.dataset.cartItemId);
-        var qty = parseInt(this.dataset.qty) + 1;
-        if (qty > 99) return;
-        API.put('/user/cart/update/' + id, { quantity: qty }).then(loadCart).catch(function (e) { showToast(e.message, 'error'); });
-      };
-    });
-    document.querySelectorAll('.cart-item-remove').forEach(function (btn) {
-      btn.onclick = function () {
-        var id = parseInt(this.dataset.cartItemId);
-        showConfirmModal({ title: 'Remove Item', message: 'Remove this item?', confirmText: 'Remove', danger: true }).then(function (confirmed) {
-          if (!confirmed) return;
-          API.del('/user/cart/delete/' + id).then(loadCart).catch(function (e) { showToast(e.message, 'error'); });
-        });
-      };
-    });
-  }
-
-  function loadCart() {
-    API.get('/user/cart/get').then(renderCart).catch(function () {
-      document.getElementById('cart-empty').style.display = '';
-      document.getElementById('cart-content').style.display = 'none';
-    });
-  }
-
-  function applyPromoCode() {
-    var input = document.getElementById('cart-promo-input');
-    var msgEl = document.getElementById('cart-promo-msg');
-    var code = input.value.trim();
-    if (!code) {
-      msgEl.style.display = 'block';
-      msgEl.innerHTML = '<span class="text-danger">Please enter a promo code</span>';
-      return;
-    }
-    var btn = document.getElementById('cart-promo-apply');
-    setButtonLoading(btn, true);
-    API.post('/api/promo-codes/validate', { code: code, subtotal: cartData.subtotal }).then(function (res) {
-      appliedPromoCode = code;
-      sessionStorage.setItem('promoCode', code);
-      msgEl.style.display = 'block';
-      msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(res.discount) + '</span>';
-      if (cartData) {
-        document.getElementById('cart-subtotal').textContent = formatCurrency(cartData.subtotal - res.discount);
-        document.getElementById('cart-total').textContent = formatCurrency(cartData.subtotal - res.discount);
-      }
-      setButtonLoading(btn, false);
-      btn.textContent = 'Applied';
-      btn.disabled = true;
-    }).catch(function (err) {
-      appliedPromoCode = null;
-      sessionStorage.removeItem('promoCode');
-      msgEl.style.display = 'block';
-      msgEl.innerHTML = '<span class="text-danger">' + escapeHtml(err.message || 'Invalid promo code') + '</span>';
-      setButtonLoading(btn, false);
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    loadCart();
-    var savedPromo = sessionStorage.getItem('promoCode');
-    if (savedPromo) {
-      document.getElementById('cart-promo-input').value = savedPromo;
-    }
-    document.getElementById('cart-promo-apply').addEventListener('click', applyPromoCode);
-  });
-})();
-</script>
+            document.addEventListener('DOMContentLoaded', function () {
+                loadCart();
+                var savedPromo = sessionStorage.getItem('promoCode');
+                if (savedPromo) {
+                    document.getElementById('cart-promo-input').value = savedPromo;
+                }
+                document.getElementById('cart-promo-apply').addEventListener('click', applyPromoCode);
+            });
+        })();
+    </script>
 </body>
 </html>

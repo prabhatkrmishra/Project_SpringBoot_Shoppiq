@@ -59,126 +59,137 @@
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
     <script th:src="@{/js/pagination.js}"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var loading = document.getElementById('reviews-loading');
-        var empty = document.getElementById('reviews-empty');
-        var list = document.getElementById('reviews-list');
-        var currentPage = 0;
-        var PAGE_SIZE = 20;
+        document.addEventListener('DOMContentLoaded', function () {
+            var loading = document.getElementById('reviews-loading');
+            var empty = document.getElementById('reviews-empty');
+            var list = document.getElementById('reviews-list');
+            var currentPage = 0;
+            var PAGE_SIZE = 20;
 
-        function renderReviews(reviews) {
-            if (!reviews || reviews.length === 0) {
-                loading.style.display = 'none';
-                empty.style.display = '';
-                list.style.display = 'none';
-                return;
-            }
-            loading.style.display = 'none';
-            list.style.display = '';
-            var html = '';
-            reviews.forEach(function (r) {
-                var stars = '';
-                for (var i = 1; i <= 5; i++) {
-                    var filled = i <= r.rating ? ' filled' : '';
-                    stars += '<span class="star-icon' + filled + '">' + (i <= r.rating ? '&#9733;' : '&#9734;') + '</span>';
+            function renderReviews(reviews) {
+                if (!reviews || reviews.length === 0) {
+                    loading.style.display = 'none';
+                    empty.style.display = '';
+                    list.style.display = 'none';
+                    return;
                 }
-                html += '<div class="card mb-md">' +
-                    '<div class="card-body">' +
-                    '<div class="flex-between mb-sm">' +
-                    '<div><a href="/item/' + r.itemId + '" class="btn-link fw-600">' + window.escapeHtml(r.itemName) + '</a></div>' +
-                    '<div class="text-muted text-sm">' + window.formatDateTime(r.createdAt) + '</div>' +
-                    '</div>' +
-                    '<div class="mb-sm" id="stars-' + r.id + '">' + stars + '</div>' +
-                    '<p class="text-sm" id="review-text-' + r.id + '">' + window.escapeHtml(r.review || '') + '</p>' +
-                    '<div class="mt-sm">' +
-                    '<button class="btn btn-sm btn-secondary edit-review-btn" data-review-id="' + r.id + '">Edit</button> ' +
-                    '<button class="btn btn-sm btn-danger delete-review-btn" data-review-id="' + r.id + '">Delete</button>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>';
-            });
-            list.innerHTML = html;
-            window.initIcons();
-
-            list.querySelectorAll('.edit-review-btn').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var reviewId = this.dataset.reviewId;
-                    openEditModal(reviewId);
+                loading.style.display = 'none';
+                list.style.display = '';
+                var html = '';
+                reviews.forEach(function (r) {
+                    var stars = '';
+                    for (var i = 1; i <= 5; i++) {
+                        var filled = i <= r.rating ? ' filled' : '';
+                        stars += '<span class="star-icon' + filled + '">' + (i <= r.rating ? '&#9733;' : '&#9734;') + '</span>';
+                    }
+                    html += '<div class="card mb-md">' +
+                        '<div class="card-body">' +
+                        '<div class="flex-between mb-sm">' +
+                        '<div><a href="/item/' + r.itemId + '" class="btn-link fw-600">' + window.escapeHtml(r.itemName) + '</a></div>' +
+                        '<div class="text-muted text-sm">' + window.formatDateTime(r.createdAt) + '</div>' +
+                        '</div>' +
+                        '<div class="mb-sm" id="stars-' + r.id + '">' + stars + '</div>' +
+                        '<p class="text-sm" id="review-text-' + r.id + '">' + window.escapeHtml(r.review || '') + '</p>' +
+                        '<div class="mt-sm">' +
+                        '<button class="btn btn-sm btn-secondary edit-review-btn" data-review-id="' + r.id + '">Edit</button> ' +
+                        '<button class="btn btn-sm btn-danger delete-review-btn" data-review-id="' + r.id + '">Delete</button>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
                 });
-            });
+                list.innerHTML = html;
+                window.initIcons();
 
-            list.querySelectorAll('.delete-review-btn').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var reviewId = this.dataset.reviewId;
-                    showConfirmModal({ title: 'Delete Review', message: 'Are you sure you want to delete this review?', confirmText: 'Delete', danger: true }).then(function (confirmed) {
-                        if (!confirmed) return;
-                        API.del('/reviews/' + reviewId + '/delete').then(function () {
-                            showToast('Review deleted', 'success');
-                            loadReviews(currentPage);
-                        }).catch(function (e) { showToast(e.message || 'Failed to delete', 'error'); });
+                list.querySelectorAll('.edit-review-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var reviewId = this.dataset.reviewId;
+                        openEditModal(reviewId);
                     });
                 });
-            });
-        }
 
-        function openEditModal(reviewId) {
-            API.get('/reviews/' + reviewId).then(function (r) {
-                document.getElementById('edit-review-id').value = r.id;
-                document.getElementById('edit-review-rating').value = r.rating;
-                document.getElementById('edit-review-text').value = r.review || '';
-                document.getElementById('edit-review-modal').classList.add('active');
-            }).catch(function (e) { showToast(e.message || 'Failed to load review', 'error'); });
-        }
-
-        function closeModal() {
-            document.getElementById('edit-review-modal').classList.remove('active');
-        }
-
-        function loadReviews(page) {
-            if (page != null) currentPage = page;
-            loading.style.display = '';
-            empty.style.display = 'none';
-            list.style.display = 'none';
-            API.get('/user/reviews?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
-                var reviews = data && data.content ? data.content : (Array.isArray(data) ? data : []);
-                renderReviews(reviews);
-                Pagination.render('reviews-pagination', data, loadReviews, {
-                    onPageSizeChange: function (newSize) {
-                        PAGE_SIZE = newSize;
-                        loadReviews(0);
-                    }
+                list.querySelectorAll('.delete-review-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var reviewId = this.dataset.reviewId;
+                        showConfirmModal({
+                            title: 'Delete Review',
+                            message: 'Are you sure you want to delete this review?',
+                            confirmText: 'Delete',
+                            danger: true
+                        }).then(function (confirmed) {
+                            if (!confirmed) return;
+                            API.del('/reviews/' + reviewId + '/delete').then(function () {
+                                showToast('Review deleted', 'success');
+                                loadReviews(currentPage);
+                            }).catch(function (e) {
+                                showToast(e.message || 'Failed to delete', 'error');
+                            });
+                        });
+                    });
                 });
-            }).catch(function () {
-                loading.style.display = 'none';
-                empty.style.display = '';
+            }
+
+            function openEditModal(reviewId) {
+                API.get('/reviews/' + reviewId).then(function (r) {
+                    document.getElementById('edit-review-id').value = r.id;
+                    document.getElementById('edit-review-rating').value = r.rating;
+                    document.getElementById('edit-review-text').value = r.review || '';
+                    document.getElementById('edit-review-modal').classList.add('active');
+                }).catch(function (e) {
+                    showToast(e.message || 'Failed to load review', 'error');
+                });
+            }
+
+            function closeModal() {
+                document.getElementById('edit-review-modal').classList.remove('active');
+            }
+
+            function loadReviews(page) {
+                if (page != null) currentPage = page;
+                loading.style.display = '';
+                empty.style.display = 'none';
+                list.style.display = 'none';
+                API.get('/user/reviews?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+                    var reviews = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+                    renderReviews(reviews);
+                    Pagination.render('reviews-pagination', data, loadReviews, {
+                        onPageSizeChange: function (newSize) {
+                            PAGE_SIZE = newSize;
+                            loadReviews(0);
+                        }
+                    });
+                }).catch(function () {
+                    loading.style.display = 'none';
+                    empty.style.display = '';
+                });
+            }
+
+            loadReviews(0);
+
+            document.getElementById('edit-review-close').addEventListener('click', closeModal);
+            document.getElementById('edit-review-cancel').addEventListener('click', closeModal);
+            document.getElementById('edit-review-modal').addEventListener('click', function (e) {
+                if (e.target === this) closeModal();
             });
-        }
 
-        loadReviews(0);
-
-        document.getElementById('edit-review-close').addEventListener('click', closeModal);
-        document.getElementById('edit-review-cancel').addEventListener('click', closeModal);
-        document.getElementById('edit-review-modal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
-
-        document.getElementById('edit-review-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            var reviewId = document.getElementById('edit-review-id').value;
-            var btn = document.getElementById('edit-review-save');
-            setButtonLoading(btn, true);
-            API.put('/reviews/' + reviewId + '/update', {
-                rating: parseInt(document.getElementById('edit-review-rating').value),
-                review: document.getElementById('edit-review-text').value.trim()
-            }).then(function () {
-                showToast('Review updated', 'success');
-                closeModal();
-                setButtonLoading(btn, false);
-                loadReviews(currentPage);
-            }).catch(function (err) {
-                showToast(err.message || 'Failed to update', 'error');
-                setButtonLoading(btn, false);
+            document.getElementById('edit-review-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                var reviewId = document.getElementById('edit-review-id').value;
+                var btn = document.getElementById('edit-review-save');
+                setButtonLoading(btn, true);
+                API.put('/reviews/' + reviewId + '/update', {
+                    rating: parseInt(document.getElementById('edit-review-rating').value),
+                    review: document.getElementById('edit-review-text').value.trim()
+                }).then(function () {
+                    showToast('Review updated', 'success');
+                    closeModal();
+                    setButtonLoading(btn, false);
+                    loadReviews(currentPage);
+                }).catch(function (err) {
+                    showToast(err.message || 'Failed to update', 'error');
+                    setButtonLoading(btn, false);
+                });
             });
         });
-    });
     </script>
 </body>
 </html>

@@ -2,83 +2,92 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Manage Roles')}"></head>
 <body>
-<th:block th:replace="~{fragments/admin-header :: admin-header('roles')}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/admin-header :: admin-header('roles')}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="admin-main">
-  <div class="page-header">
-    <h1>Roles</h1>
-    <p>Manage system roles</p>
-  </div>
+    <main class="admin-main">
+        <div class="page-header">
+            <h1>Roles</h1>
+            <p>Manage system roles</p>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-header">
-      <div class="admin-panel-title">All Roles</div>
-    </div>
-    <div class="table-responsive">
-      <table class="admin-table">
-        <thead>
-          <tr><th>ID</th><th>Role Name</th></tr>
-        </thead>
-        <tbody id="roles-body">
-          <tr><td colspan="2" class="text-center text-muted">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <div class="admin-panel-title">All Roles</div>
+            </div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Role Name</th>
+                        </tr>
+                    </thead>
+                    <tbody id="roles-body">
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-  <div class="admin-panel mt-lg">
-   <div class="admin-panel-title">Create Role</div>
-     <form id="role-form" class="flex-between items-center gap-md" style="max-width:100%;">
-       <div class="form-group" style="flex:1;">
-         <label for="role-name" class="form-label">Role Name</label>
-         <input type="text" id="role-name" class="form-input" placeholder="ROLE_NAME" pattern="^[A-Z][A-Z0-9_]*$" minlength="2" maxlength="50" required>
-       </div>
-       <button type="submit" class="btn btn-primary btn-sm">Create</button>
-     </form>
-  </div>
-</main>
+        <div class="admin-panel mt-lg">
+            <div class="admin-panel-title">Create Role</div>
+            <form id="role-form" class="flex-between items-center gap-md" style="max-width:100%;">
+                <div class="form-group" style="flex:1;">
+                    <label for="role-name" class="form-label">Role Name</label>
+                    <input type="text" id="role-name" class="form-input" placeholder="ROLE_NAME"
+                           pattern="^[A-Z][A-Z0-9_]*$" minlength="2" maxlength="50" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Create</button>
+            </form>
+        </div>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script src="/js/sanitize.js"></script>
-<script>
-(function () {
-  'use strict';
-  function renderRoles(roles) {
-    var tbody = document.getElementById('roles-body');
-    if (!roles || roles.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No roles found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = '';
-    roles.forEach(function (r) {
-      var tr = document.createElement('tr');
-      tr.innerHTML = '<td>' + (r.id || '') + '</td><td><strong>' + escapeHtml(r.roleName || '') + '</strong></td>';
-      tbody.appendChild(tr);
-    });
-  }
-  function loadRoles() {
-    API.get('/roles/all').then(renderRoles).catch(function () {
-      document.getElementById('roles-body').innerHTML =
-        '<tr><td colspan="2" class="text-center text-muted">Failed to load</td></tr>';
-    });
-  }
-  document.addEventListener('DOMContentLoaded', function () {
-    loadRoles();
-    document.getElementById('role-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var name = document.getElementById('role-name').value.trim();
-      if (!name) return;
-      API.post('/roles/create/' + encodeURIComponent(name), {}).then(function () {
-        showToast('Role created', 'success');
-        document.getElementById('role-name').value = '';
-        loadRoles();
-      }).catch(function (err) {
-        showToast(err.message || 'Failed to create role', 'error');
-      });
-    });
-  });
-})();
-</script>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            function renderRoles(roles) {
+                var tbody = document.getElementById('roles-body');
+                if (!roles || roles.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No roles found</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                roles.forEach(function (r) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML = '<td>' + (r.id || '') + '</td><td><strong>' + escapeHtml(r.roleName || '') + '</strong></td>';
+                    tbody.appendChild(tr);
+                });
+            }
+
+            function loadRoles() {
+                API.get('/roles/all').then(renderRoles).catch(function () {
+                    document.getElementById('roles-body').innerHTML =
+                        '<tr><td colspan="2" class="text-center text-muted">Failed to load</td></tr>';
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                loadRoles();
+                document.getElementById('role-form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var name = document.getElementById('role-name').value.trim();
+                    if (!name) return;
+                    API.post('/roles/create/' + encodeURIComponent(name), {}).then(function () {
+                        showToast('Role created', 'success');
+                        document.getElementById('role-name').value = '';
+                        loadRoles();
+                    }).catch(function (err) {
+                        showToast(err.message || 'Failed to create role', 'error');
+                    });
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

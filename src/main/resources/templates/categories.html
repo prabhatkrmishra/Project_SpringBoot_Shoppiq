@@ -2,123 +2,143 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Categories')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="page">
-  <div class="container">
-    <div class="page-header">
-      <h1>Categories</h1>
-      <p id="categoryCount"></p>
-    </div>
+    <main class="page">
+        <div class="container">
+            <div class="page-header">
+                <h1>Categories</h1>
+                <p id="categoryCount"></p>
+            </div>
 
-    <div class="flex flex-col gap-md" style="margin-bottom:24px;">
-      <form class="form-inline" id="searchForm" onsubmit="return false;">
-        <div class="form-group" style="flex:2;">
-          <label for="search" class="sr-only">Search categories</label>
-          <input type="search" id="search" class="form-input" placeholder="Search categories..." autocomplete="off">
+            <div class="flex flex-col gap-md" style="margin-bottom:24px;">
+                <form class="form-inline" id="searchForm" onsubmit="return false;">
+                    <div class="form-group" style="flex:2;">
+                        <label for="search" class="sr-only">Search categories</label>
+                        <input type="search" id="search" class="form-input" placeholder="Search categories..."
+                               autocomplete="off">
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="loadCategories(0)">Search</button>
+                </form>
+            </div>
+
+            <div id="loadingState" class="text-center" style="padding:48px 0;">
+                <div class="spinner"></div>
+                <p class="text-muted mt-md">Loading categories...</p>
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display:none;">
+                <div class="empty-state-icon"><i data-lucide="layout-grid" class="icon-xl"></i></div>
+                <h2>No Categories Found</h2>
+                <p>There are no product categories available yet.</p>
+                <a th:href="@{/allitems}" class="btn btn-primary">Browse All Products</a>
+            </div>
+
+            <div id="noResults" class="empty-state" style="display:none;">
+                <div class="empty-state-icon"><i data-lucide="search-x" class="icon-xl"></i></div>
+                <h2>No Matching Categories</h2>
+                <p>Try adjusting your search term.</p>
+                <button class="btn btn-primary" onclick="clearSearch()">Clear Search</button>
+            </div>
+
+            <div id="categoryGrid" class="grid-3" style="display:none;"></div>
+            <div id="categories-pagination"></div>
         </div>
-        <button type="button" class="btn btn-primary" onclick="loadCategories(0)">Search</button>
-      </form>
-    </div>
+    </main>
 
-    <div id="loadingState" class="text-center" style="padding:48px 0;">
-      <div class="spinner"></div>
-      <p class="text-muted mt-md">Loading categories...</p>
-    </div>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
 
-    <div id="emptyState" class="empty-state" style="display:none;">
-      <div class="empty-state-icon"><i data-lucide="layout-grid" class="icon-xl"></i></div>
-      <h2>No Categories Found</h2>
-      <p>There are no product categories available yet.</p>
-      <a th:href="@{/allitems}" class="btn btn-primary">Browse All Products</a>
-    </div>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script>
+        var currentPage = 0;
+        var PAGE_SIZE = 20;
 
-    <div id="noResults" class="empty-state" style="display:none;">
-      <div class="empty-state-icon"><i data-lucide="search-x" class="icon-xl"></i></div>
-      <h2>No Matching Categories</h2>
-      <p>Try adjusting your search term.</p>
-      <button class="btn btn-primary" onclick="clearSearch()">Clear Search</button>
-    </div>
+        document.addEventListener("DOMContentLoaded", function () {
+            loadCategories(0);
+            document.getElementById("search").addEventListener("keyup", debounce(function () {
+                loadCategories(0);
+            }, 300));
+        });
 
-    <div id="categoryGrid" class="grid-3" style="display:none;"></div>
-    <div id="categories-pagination"></div>
-  </div>
-</main>
+        function loadCategories(page) {
+            if (page != null) currentPage = page;
+            var grid = document.getElementById("categoryGrid");
+            var empty = document.getElementById("emptyState");
+            var noResults = document.getElementById("noResults");
+            var loading = document.getElementById("loadingState");
+            var countEl = document.getElementById("categoryCount");
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
+            loading.style.display = "";
+            grid.style.display = "none";
+            empty.style.display = "none";
+            noResults.style.display = "none";
 
-<script th:src="@{/js/pagination.js}"></script>
-<script>
-var currentPage = 0;
-var PAGE_SIZE = 20;
+            var search = document.getElementById("search").value.trim();
+            var url = "/categories/all/paged?page=" + currentPage + "&size=" + PAGE_SIZE;
+            if (search) url += "&search=" + encodeURIComponent(search);
 
-document.addEventListener("DOMContentLoaded", function () {
-  loadCategories(0);
-  document.getElementById("search").addEventListener("keyup", debounce(function () { loadCategories(0); }, 300));
-});
+            API.get(url).then(function (data) {
+                var cats = data.content || [];
 
-function loadCategories(page) {
-  if (page != null) currentPage = page;
-  var grid = document.getElementById("categoryGrid");
-  var empty = document.getElementById("emptyState");
-  var noResults = document.getElementById("noResults");
-  var loading = document.getElementById("loadingState");
-  var countEl = document.getElementById("categoryCount");
+                countEl.textContent = (data.totalElements || 0) + " categories available";
 
-  loading.style.display = "";
-  grid.style.display = "none";
-  empty.style.display = "none";
-  noResults.style.display = "none";
+                if (cats.length === 0 && currentPage === 0 && !search) {
+                    empty.style.display = "";
+                } else if (cats.length === 0) {
+                    noResults.style.display = "";
+                } else {
+                    grid.innerHTML = cats.map(function (cat) {
+                        return '<a href="/category/' + escapeAttr(cat.slug) + '" class="card-link"><article class="card"><div class="card-body">' +
+                            '<h3>' + escapeHtml(cat.name) + '</h3>' +
+                            '<p class="card-text text-muted">' + (cat.description ? escapeHtml(cat.description) : '<i data-lucide="arrow-right" class="icon-sm"></i> Browse products') + '</p>' +
+                            '</div></article></a>';
+                    }).join("");
+                    grid.style.display = "";
+                }
 
-  var search = document.getElementById("search").value.trim();
-  var url = "/categories/all/paged?page=" + currentPage + "&size=" + PAGE_SIZE;
-  if (search) url += "&search=" + encodeURIComponent(search);
+                Pagination.render("categories-pagination", data, loadCategories, {
+                    onPageSizeChange: function (newSize) {
+                        PAGE_SIZE = newSize;
+                        loadCategories(0);
+                    }
+                });
+            }).catch(function () {
+                empty.style.display = "";
+                empty.querySelector("h2").textContent = "Could not load categories";
+                empty.querySelector("p").textContent = "Please try again later.";
+            }).finally(function () {
+                loading.style.display = "none";
+            });
+            if (typeof lucide !== "undefined") lucide.createIcons();
+        }
 
-  API.get(url).then(function (data) {
-    var cats = data.content || [];
+        function clearSearch() {
+            document.getElementById("search").value = "";
+            loadCategories(0);
+        }
 
-    countEl.textContent = (data.totalElements || 0) + " categories available";
+        function escapeHtml(str) {
+            var d = document.createElement("div");
+            d.appendChild(document.createTextNode(str || ""));
+            return d.innerHTML;
+        }
 
-    if (cats.length === 0 && currentPage === 0 && !search) {
-      empty.style.display = "";
-    } else if (cats.length === 0) {
-      noResults.style.display = "";
-    } else {
-      grid.innerHTML = cats.map(function (cat) {
-        return '<a href="/category/' + escapeAttr(cat.slug) + '" class="card-link"><article class="card"><div class="card-body">' +
-          '<h3>' + escapeHtml(cat.name) + '</h3>' +
-          '<p class="card-text text-muted">' + (cat.description ? escapeHtml(cat.description) : '<i data-lucide="arrow-right" class="icon-sm"></i> Browse products') + '</p>' +
-        '</div></article></a>';
-      }).join("");
-      grid.style.display = "";
-    }
+        function escapeAttr(str) {
+            return (str || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
 
-    Pagination.render("categories-pagination", data, loadCategories, {
-      onPageSizeChange: function (newSize) {
-        PAGE_SIZE = newSize;
-        loadCategories(0);
-      }
-    });
-  }).catch(function () {
-    empty.style.display = "";
-    empty.querySelector("h2").textContent = "Could not load categories";
-    empty.querySelector("p").textContent = "Please try again later.";
-  }).finally(function () {
-    loading.style.display = "none";
-  });
-  if (typeof lucide !== "undefined") lucide.createIcons();
-}
-
-function clearSearch() {
-  document.getElementById("search").value = "";
-  loadCategories(0);
-}
-
-function escapeHtml(str) { var d = document.createElement("div"); d.appendChild(document.createTextNode(str || "")); return d.innerHTML; }
-function escapeAttr(str) { return (str || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function debounce(fn, ms) { var t; return function () { var ctx = this, args = arguments; clearTimeout(t); t = setTimeout(function () { fn.apply(ctx, args); }, ms); }; }
-</script>
+        function debounce(fn, ms) {
+            var t;
+            return function () {
+                var ctx = this, args = arguments;
+                clearTimeout(t);
+                t = setTimeout(function () {
+                    fn.apply(ctx, args);
+                }, ms);
+            };
+        }
+    </script>
 </body>
 </html>

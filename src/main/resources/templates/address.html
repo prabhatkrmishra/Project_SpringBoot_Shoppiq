@@ -2,254 +2,281 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Addresses')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="page">
-  <div class="container container-narrow">
-    <div class="page-header">
-      <h1>Your Addresses</h1>
-      <p>Manage your shipping addresses</p>
-    </div>
+    <main class="page">
+        <div class="container container-narrow">
+            <div class="page-header">
+                <h1>Your Addresses</h1>
+                <p>Manage your shipping addresses</p>
+            </div>
 
-    <div id="address-loading" class="flex-center" style="padding:3rem;">
-      <span class="spinner"></span>
-    </div>
+            <div id="address-loading" class="flex-center" style="padding:3rem;">
+                <span class="spinner"></span>
+            </div>
 
-    <div id="address-empty" class="cart-empty" style="display:none;">
-      <h2>No addresses yet</h2>
-      <p>Add an address to start shopping</p>
-    </div>
+            <div id="address-empty" class="cart-empty" style="display:none;">
+                <h2>No addresses yet</h2>
+                <p>Add an address to start shopping</p>
+            </div>
 
-    <div id="address-grid" class="grid-2" style="display:none;"></div>
+            <div id="address-grid" class="grid-2" style="display:none;"></div>
 
-    <div class="mt-lg">
-      <button id="add-address-btn" class="btn btn-primary">+ Add New Address</button>
-    </div>
-  </div>
-
-  <div id="address-modal" class="modal-overlay">
-    <div class="modal" role="dialog" aria-labelledby="modal-title">
-      <div class="modal-header">
-        <h2 id="modal-title">Add Address</h2>
-        <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
-      </div>
-      <form id="address-form" class="modal-body">
-        <input type="hidden" id="addr-id" value="">
-        <div class="form-group">
-          <label for="addr-label" class="form-label">Label</label>
-          <input type="text" id="addr-label" class="form-input" placeholder="e.g. Home, Office" maxlength="30" required>
+            <div class="mt-lg">
+                <button id="add-address-btn" class="btn btn-primary">+ Add New Address</button>
+            </div>
         </div>
-        <div class="form-group">
-          <label for="addr-fullName" class="form-label">Full Name</label>
-          <input type="text" id="addr-fullName" class="form-input" placeholder="John Doe" maxlength="100" required>
-        </div>
-        <div class="form-group">
-          <label for="addr-phone" class="form-label">Phone</label>
-          <input type="text" id="addr-phone" class="form-input" placeholder="+1234567890" pattern="[+]?[0-9]{7,15}" required>
-        </div>
-        <div class="form-group">
-          <label for="addr-line1" class="form-label">Address Line 1</label>
-          <input type="text" id="addr-line1" class="form-input" placeholder="123 Main St" maxlength="255" required>
-        </div>
-        <div class="form-group">
-          <label for="addr-line2" class="form-label">Address Line 2 <span class="text-muted">(optional)</span></label>
-          <input type="text" id="addr-line2" class="form-input" placeholder="Apt, Suite, etc." maxlength="255">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="addr-city" class="form-label">City</label>
-            <input type="text" id="addr-city" class="form-input" placeholder="New York" maxlength="100" required>
-          </div>
-          <div class="form-group">
-            <label for="addr-state" class="form-label">State</label>
-            <input type="text" id="addr-state" class="form-input" placeholder="NY" maxlength="100" required>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="addr-postalCode" class="form-label">Postal Code</label>
-            <input type="text" id="addr-postalCode" class="form-input" placeholder="10001" maxlength="10" required>
-          </div>
-          <div class="form-group">
-            <label for="addr-country" class="form-label">Country</label>
-            <input type="text" id="addr-country" class="form-input" placeholder="US" maxlength="100" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-            <input type="checkbox" id="addr-default"> Set as default address
-          </label>
-        </div>
-        <div class="flex gap-sm mt-md">
-          <button type="submit" id="addr-save-btn" class="btn btn-primary">Save Address</button>
-          <button type="button" id="addr-cancel-btn" class="btn btn-secondary">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script src="/js/sanitize.js"></script>
-  <script>
-(function () {
-  'use strict';
-  var editingId = null;
+        <div id="address-modal" class="modal-overlay">
+            <div class="modal" role="dialog" aria-labelledby="modal-title">
+                <div class="modal-header">
+                    <h2 id="modal-title">Add Address</h2>
+                    <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+                </div>
+                <form id="address-form" class="modal-body">
+                    <input type="hidden" id="addr-id" value="">
+                    <div class="form-group">
+                        <label for="addr-label" class="form-label">Label</label>
+                        <input type="text" id="addr-label" class="form-input" placeholder="e.g. Home, Office"
+                               maxlength="30" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addr-fullName" class="form-label">Full Name</label>
+                        <input type="text" id="addr-fullName" class="form-input" placeholder="John Doe" maxlength="100"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addr-phone" class="form-label">Phone</label>
+                        <input type="text" id="addr-phone" class="form-input" placeholder="+1234567890"
+                               pattern="[+]?[0-9]{7,15}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addr-line1" class="form-label">Address Line 1</label>
+                        <input type="text" id="addr-line1" class="form-input" placeholder="123 Main St" maxlength="255"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addr-line2" class="form-label">Address Line 2 <span
+                                class="text-muted">(optional)</span></label>
+                        <input type="text" id="addr-line2" class="form-input" placeholder="Apt, Suite, etc."
+                               maxlength="255">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addr-city" class="form-label">City</label>
+                            <input type="text" id="addr-city" class="form-input" placeholder="New York" maxlength="100"
+                                   required>
+                        </div>
+                        <div class="form-group">
+                            <label for="addr-state" class="form-label">State</label>
+                            <input type="text" id="addr-state" class="form-input" placeholder="NY" maxlength="100"
+                                   required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addr-postalCode" class="form-label">Postal Code</label>
+                            <input type="text" id="addr-postalCode" class="form-input" placeholder="10001"
+                                   maxlength="10" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="addr-country" class="form-label">Country</label>
+                            <input type="text" id="addr-country" class="form-input" placeholder="US" maxlength="100"
+                                   required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="addr-default"> Set as default address
+                        </label>
+                    </div>
+                    <div class="flex gap-sm mt-md">
+                        <button type="submit" id="addr-save-btn" class="btn btn-primary">Save Address</button>
+                        <button type="button" id="addr-cancel-btn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
 
-  function fillForm(addr) {
-    editingId = addr ? addr.id : null;
-    document.getElementById('modal-title').textContent = addr ? 'Edit Address' : 'Add Address';
-    document.getElementById('addr-id').value = addr ? addr.id : '';
-    document.getElementById('addr-label').value = addr ? (addr.label || '') : '';
-    document.getElementById('addr-fullName').value = addr ? (addr.fullName || '') : '';
-    document.getElementById('addr-phone').value = addr ? (addr.phone || '') : '';
-    document.getElementById('addr-line1').value = addr ? (addr.line1 || '') : '';
-    document.getElementById('addr-line2').value = addr ? (addr.line2 || '') : '';
-    document.getElementById('addr-city').value = addr ? (addr.city || '') : '';
-    document.getElementById('addr-state').value = addr ? (addr.state || '') : '';
-    document.getElementById('addr-postalCode').value = addr ? (addr.postalCode || '') : '';
-    document.getElementById('addr-country').value = addr ? (addr.country || '') : '';
-    document.getElementById('addr-default').checked = addr ? !!addr['default'] : false;
-    document.getElementById('addr-save-btn').textContent = addr ? 'Update' : 'Save Address';
-  }
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var editingId = null;
 
-  function openModal(addr) {
-    fillForm(addr || null);
-    document.getElementById('address-modal').classList.add('active');
-  }
+            function fillForm(addr) {
+                editingId = addr ? addr.id : null;
+                document.getElementById('modal-title').textContent = addr ? 'Edit Address' : 'Add Address';
+                document.getElementById('addr-id').value = addr ? addr.id : '';
+                document.getElementById('addr-label').value = addr ? (addr.label || '') : '';
+                document.getElementById('addr-fullName').value = addr ? (addr.fullName || '') : '';
+                document.getElementById('addr-phone').value = addr ? (addr.phone || '') : '';
+                document.getElementById('addr-line1').value = addr ? (addr.line1 || '') : '';
+                document.getElementById('addr-line2').value = addr ? (addr.line2 || '') : '';
+                document.getElementById('addr-city').value = addr ? (addr.city || '') : '';
+                document.getElementById('addr-state').value = addr ? (addr.state || '') : '';
+                document.getElementById('addr-postalCode').value = addr ? (addr.postalCode || '') : '';
+                document.getElementById('addr-country').value = addr ? (addr.country || '') : '';
+                document.getElementById('addr-default').checked = addr ? !!addr['default'] : false;
+                document.getElementById('addr-save-btn').textContent = addr ? 'Update' : 'Save Address';
+            }
 
-  function closeModal() {
-    document.getElementById('address-modal').classList.remove('active');
-    editingId = null;
-  }
+            function openModal(addr) {
+                fillForm(addr || null);
+                document.getElementById('address-modal').classList.add('active');
+            }
 
-  function renderAddresses(addresses) {
-    document.getElementById('address-loading').style.display = 'none';
-    if (!addresses || addresses.length === 0) {
-      document.getElementById('address-empty').style.display = '';
-      return;
-    }
-    var grid = document.getElementById('address-grid');
-    grid.style.display = '';
-    grid.innerHTML = '';
-    addresses.forEach(function (addr) {
-      var div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML =
-        '<div class="card-body">' +
-          '<div class="flex items-center justify-between mb-sm">' +
-            '<strong>' + escapeHtml(addr.fullName || '') + '</strong>' +
-            (addr['default'] ? '<span class="badge badge-success">Default</span>' : '') +
-          '</div>' +
-          '<p class="text-sm" style="margin:0;">' +
-            '<strong>' + escapeHtml(addr.label || '') + '</strong><br>' +
-            escapeHtml(addr.line1 || '') +
-            (addr.line2 ? '<br>' + escapeHtml(addr.line2) : '') + '<br>' +
-            escapeHtml(addr.city || '') + ', ' + escapeHtml(addr.state || '') + ' ' + escapeHtml(addr.postalCode || '') + '<br>' +
-            escapeHtml(addr.country || '') +
-            (addr.phone ? '<br>' + escapeHtml(addr.phone) : '') +
-          '</p>' +
-          '<div class="mt-md flex gap-sm">' +
-            '<button class="btn btn-sm btn-secondary address-edit-btn" data-addr-id="' + escapeAttr(String(addr.id)) + '">Edit</button>' +
-            (addr['default'] ? '' : '<button class="btn btn-sm btn-ghost address-default-btn" data-address-id="' + escapeAttr(String(addr.id)) + '">Set as Default</button>') +
-            '<button class="btn btn-sm btn-danger address-delete-btn" data-address-id="' + escapeAttr(String(addr.id)) + '">Delete</button>' +
-          '</div>' +
-        '</div>';
-      grid.appendChild(div);
-    });
-    grid.querySelectorAll('.address-edit-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.addrId;
-        var found = addresses.find(function (a) { return a.id == id; });
-        if (found) openModal(found);
-      });
-    });
-    grid.querySelectorAll('.address-default-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.addressId;
-        showConfirmModal({ title: 'Set as Default', message: 'Make this your default shipping address?', confirmText: 'Set Default' }).then(function (confirmed) {
-          if (!confirmed) return;
-          API.put('/user/address/default/' + id).then(function () {
-            showToast('Default address updated', 'success');
-            loadAddresses();
-          }).catch(function (e) { showToast(e.message, 'error'); });
-        });
-      });
-    });
-    grid.querySelectorAll('.address-delete-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.addressId;
-        showConfirmModal({ title: 'Delete Address', message: 'Delete this address?', confirmText: 'Delete', danger: true }).then(function (confirmed) {
-          if (!confirmed) return;
-          API.del('/user/address/delete/' + id).then(function () {
-            showToast('Address deleted', 'success');
-            loadAddresses();
-          }).catch(function (e) { showToast(e.message, 'error'); });
-        });
-      });
-    });
-  }
+            function closeModal() {
+                document.getElementById('address-modal').classList.remove('active');
+                editingId = null;
+            }
 
-  function loadAddresses() {
-    document.getElementById('address-loading').style.display = '';
-    document.getElementById('address-empty').style.display = 'none';
-    document.getElementById('address-grid').style.display = 'none';
-    API.get('/user/address/get/all').then(renderAddresses).catch(function () {
-      document.getElementById('address-loading').style.display = 'none';
-      document.getElementById('address-empty').style.display = '';
-    });
-  }
+            function renderAddresses(addresses) {
+                document.getElementById('address-loading').style.display = 'none';
+                if (!addresses || addresses.length === 0) {
+                    document.getElementById('address-empty').style.display = '';
+                    return;
+                }
+                var grid = document.getElementById('address-grid');
+                grid.style.display = '';
+                grid.innerHTML = '';
+                addresses.forEach(function (addr) {
+                    var div = document.createElement('div');
+                    div.className = 'card';
+                    div.innerHTML =
+                        '<div class="card-body">' +
+                        '<div class="flex items-center justify-between mb-sm">' +
+                        '<strong>' + escapeHtml(addr.fullName || '') + '</strong>' +
+                        (addr['default'] ? '<span class="badge badge-success">Default</span>' : '') +
+                        '</div>' +
+                        '<p class="text-sm" style="margin:0;">' +
+                        '<strong>' + escapeHtml(addr.label || '') + '</strong><br>' +
+                        escapeHtml(addr.line1 || '') +
+                        (addr.line2 ? '<br>' + escapeHtml(addr.line2) : '') + '<br>' +
+                        escapeHtml(addr.city || '') + ', ' + escapeHtml(addr.state || '') + ' ' + escapeHtml(addr.postalCode || '') + '<br>' +
+                        escapeHtml(addr.country || '') +
+                        (addr.phone ? '<br>' + escapeHtml(addr.phone) : '') +
+                        '</p>' +
+                        '<div class="mt-md flex gap-sm">' +
+                        '<button class="btn btn-sm btn-secondary address-edit-btn" data-addr-id="' + escapeAttr(String(addr.id)) + '">Edit</button>' +
+                        (addr['default'] ? '' : '<button class="btn btn-sm btn-ghost address-default-btn" data-address-id="' + escapeAttr(String(addr.id)) + '">Set as Default</button>') +
+                        '<button class="btn btn-sm btn-danger address-delete-btn" data-address-id="' + escapeAttr(String(addr.id)) + '">Delete</button>' +
+                        '</div>' +
+                        '</div>';
+                    grid.appendChild(div);
+                });
+                grid.querySelectorAll('.address-edit-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.addrId;
+                        var found = addresses.find(function (a) {
+                            return a.id == id;
+                        });
+                        if (found) openModal(found);
+                    });
+                });
+                grid.querySelectorAll('.address-default-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.addressId;
+                        showConfirmModal({
+                            title: 'Set as Default',
+                            message: 'Make this your default shipping address?',
+                            confirmText: 'Set Default'
+                        }).then(function (confirmed) {
+                            if (!confirmed) return;
+                            API.put('/user/address/default/' + id).then(function () {
+                                showToast('Default address updated', 'success');
+                                loadAddresses();
+                            }).catch(function (e) {
+                                showToast(e.message, 'error');
+                            });
+                        });
+                    });
+                });
+                grid.querySelectorAll('.address-delete-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.addressId;
+                        showConfirmModal({
+                            title: 'Delete Address',
+                            message: 'Delete this address?',
+                            confirmText: 'Delete',
+                            danger: true
+                        }).then(function (confirmed) {
+                            if (!confirmed) return;
+                            API.del('/user/address/delete/' + id).then(function () {
+                                showToast('Address deleted', 'success');
+                                loadAddresses();
+                            }).catch(function (e) {
+                                showToast(e.message, 'error');
+                            });
+                        });
+                    });
+                });
+            }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    var editMatch = window.location.pathname.match(/\/address\/edit\/(\d+)/);
-    if (editMatch) {
-      var addrId = editMatch[1];
-      API.get('/user/address/get/' + addrId).then(function (addr) {
-        openModal(addr);
-      }).catch(function () {
-        openModal(null);
-      });
-    } else if (window.location.pathname.indexOf('/address/add') !== -1) {
-      openModal(null);
-    }
-    loadAddresses();
-    document.getElementById('add-address-btn').addEventListener('click', function () { openModal(null); });
-    document.getElementById('modal-close-btn').addEventListener('click', closeModal);
-    document.getElementById('addr-cancel-btn').addEventListener('click', closeModal);
-    document.getElementById('address-modal').addEventListener('click', function (e) {
-      if (e.target === this) closeModal();
-    });
-    document.getElementById('address-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var data = {
-        label: document.getElementById('addr-label').value.trim(),
-        fullName: document.getElementById('addr-fullName').value.trim(),
-        phone: document.getElementById('addr-phone').value.trim(),
-        line1: document.getElementById('addr-line1').value.trim(),
-        line2: document.getElementById('addr-line2').value.trim(),
-        city: document.getElementById('addr-city').value.trim(),
-        state: document.getElementById('addr-state').value.trim(),
-        postalCode: document.getElementById('addr-postalCode').value.trim(),
-        country: document.getElementById('addr-country').value.trim(),
-        default: document.getElementById('addr-default').checked
-      };
-      var btn = document.getElementById('addr-save-btn');
-      setButtonLoading(btn, true);
-      var promise = editingId
-        ? API.put('/user/address/update/' + editingId, data)
-        : API.post('/user/address/create', data);
-      promise.then(function () {
-        showToast(editingId ? 'Address updated' : 'Address created', 'success');
-        closeModal();
-        loadAddresses();
-      }).catch(function (err) {
-        showToast(err.message || 'Failed to save address', 'error');
-        setButtonLoading(btn, false);
-      });
-    });
-  });
-})();
-</script>
+            function loadAddresses() {
+                document.getElementById('address-loading').style.display = '';
+                document.getElementById('address-empty').style.display = 'none';
+                document.getElementById('address-grid').style.display = 'none';
+                API.get('/user/address/get/all').then(renderAddresses).catch(function () {
+                    document.getElementById('address-loading').style.display = 'none';
+                    document.getElementById('address-empty').style.display = '';
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var editMatch = window.location.pathname.match(/\/address\/edit\/(\d+)/);
+                if (editMatch) {
+                    var addrId = editMatch[1];
+                    API.get('/user/address/get/' + addrId).then(function (addr) {
+                        openModal(addr);
+                    }).catch(function () {
+                        openModal(null);
+                    });
+                } else if (window.location.pathname.indexOf('/address/add') !== -1) {
+                    openModal(null);
+                }
+                loadAddresses();
+                document.getElementById('add-address-btn').addEventListener('click', function () {
+                    openModal(null);
+                });
+                document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+                document.getElementById('addr-cancel-btn').addEventListener('click', closeModal);
+                document.getElementById('address-modal').addEventListener('click', function (e) {
+                    if (e.target === this) closeModal();
+                });
+                document.getElementById('address-form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var data = {
+                        label: document.getElementById('addr-label').value.trim(),
+                        fullName: document.getElementById('addr-fullName').value.trim(),
+                        phone: document.getElementById('addr-phone').value.trim(),
+                        line1: document.getElementById('addr-line1').value.trim(),
+                        line2: document.getElementById('addr-line2').value.trim(),
+                        city: document.getElementById('addr-city').value.trim(),
+                        state: document.getElementById('addr-state').value.trim(),
+                        postalCode: document.getElementById('addr-postalCode').value.trim(),
+                        country: document.getElementById('addr-country').value.trim(),
+                        default: document.getElementById('addr-default').checked
+                    };
+                    var btn = document.getElementById('addr-save-btn');
+                    setButtonLoading(btn, true);
+                    var promise = editingId
+                        ? API.put('/user/address/update/' + editingId, data)
+                        : API.post('/user/address/create', data);
+                    promise.then(function () {
+                        showToast(editingId ? 'Address updated' : 'Address created', 'success');
+                        closeModal();
+                        loadAddresses();
+                    }).catch(function (err) {
+                        showToast(err.message || 'Failed to save address', 'error');
+                        setButtonLoading(btn, false);
+                    });
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

@@ -16,7 +16,9 @@
                 <!-- Profile Header with Avatar -->
                 <header class="profile-header-card">
                     <div class="profile-header-inner">
-                        <div class="profile-avatar-large" th:text="${#strings.substring(#authentication.principal.name, 0, 2).toUpperCase()}">US</div>
+                        <div class="profile-avatar-large"
+                             th:text="${#strings.substring(#authentication.principal.name, 0, 2).toUpperCase()}">US
+                        </div>
                         <div class="profile-header-info">
                             <h2 th:text="${#authentication.principal.name}">User Name</h2>
                             <p class="profile-meta">
@@ -28,10 +30,20 @@
 
                 <!-- Tabs -->
                 <div class="tabs" role="tablist">
-                    <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-profile" data-tab="profile"><i data-lucide="user" class="icon-sm"></i> Profile</button>
-                    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-security" data-tab="security"><i data-lucide="shield" class="icon-sm"></i> Security</button>
-                    <button sec:authorize="!hasRole('ADMIN') and !hasRole('SELLER')" class="tab" role="tab" aria-selected="false" aria-controls="tab-notifications" data-tab="notifications"><i data-lucide="bell" class="icon-sm"></i> Notifications</button>
-                    <button sec:authorize="!hasRole('ADMIN')" class="tab" role="tab" aria-selected="false" aria-controls="tab-addresses" data-tab="addresses"><i data-lucide="map-pin" class="icon-sm"></i> Addresses</button>
+                    <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-profile"
+                            data-tab="profile"><i data-lucide="user" class="icon-sm"></i> Profile
+                    </button>
+                    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-security"
+                            data-tab="security"><i data-lucide="shield" class="icon-sm"></i> Security
+                    </button>
+                    <button sec:authorize="!hasRole('ADMIN') and !hasRole('SELLER')" class="tab" role="tab"
+                            aria-selected="false" aria-controls="tab-notifications" data-tab="notifications"><i
+                            data-lucide="bell" class="icon-sm"></i> Notifications
+                    </button>
+                    <button sec:authorize="!hasRole('ADMIN')" class="tab" role="tab" aria-selected="false"
+                            aria-controls="tab-addresses" data-tab="addresses"><i data-lucide="map-pin"
+                                                                                  class="icon-sm"></i> Addresses
+                    </button>
                 </div>
 
                 <!-- Profile Tab -->
@@ -44,11 +56,13 @@
                         <div class="profile-details">
                             <div class="profile-detail-row">
                                 <span class="profile-detail-label">Name</span>
-                                <span class="profile-detail-value" id="display-name" sec:authentication="principal.name">User Name</span>
+                                <span class="profile-detail-value" id="display-name"
+                                      sec:authentication="principal.name">User Name</span>
                             </div>
                             <div class="profile-detail-row">
                                 <span class="profile-detail-label">Email</span>
-                                <span class="profile-detail-value" id="display-email" th:text="${#authentication.principal.email}">-</span>
+                                <span class="profile-detail-value" id="display-email"
+                                      th:text="${#authentication.principal.email}">-</span>
                             </div>
                             <div class="profile-detail-row">
                                 <span class="profile-detail-label">Username</span>
@@ -56,7 +70,8 @@
                             </div>
                             <div class="profile-detail-row">
                                 <span class="profile-detail-label">Member Since</span>
-                                <span class="profile-detail-value" th:text="${#temporals.format(#authentication.principal.createdAt, 'MMMM yyyy')}">January 2024</span>
+                                <span class="profile-detail-value"
+                                      th:text="${#temporals.format(#authentication.principal.createdAt, 'MMMM yyyy')}">January 2024</span>
                             </div>
                         </div>
                     </div>
@@ -72,12 +87,12 @@
                         <div class="modal-body">
                             <div class="form-group">
                                 <label for="modal-name" class="form-label">Name</label>
-                                <input type="text" id="modal-name" class="form-input" required maxlength="100" />
+                                <input type="text" id="modal-name" class="form-input" required maxlength="100"/>
                                 <div class="form-error" id="modal-name-error"></div>
                             </div>
                             <div class="form-group">
                                 <label for="modal-email" class="form-label">Email</label>
-                                <input type="email" id="modal-email" class="form-input" readonly />
+                                <input type="email" id="modal-email" class="form-input" readonly/>
                                 <div class="form-hint">Email cannot be changed</div>
                             </div>
                         </div>
@@ -100,7 +115,8 @@
                             <div class="form-group">
                                 <label for="verifyCode" class="form-label">Verification Code</label>
                                 <input type="text" id="verifyCode" class="form-input text-center"
-                                       placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+                                       placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric"
+                                       pattern="[0-9]*">
                                 <div class="form-error" id="verifyCode-error"></div>
                             </div>
                         </div>
@@ -118,22 +134,27 @@
                         <p class="text-sm text-muted mb-lg">Verify your email address to secure your account.</p>
                         <div class="flex items-center gap-sm" id="email-verification-status">
                             <span class="status-badge" id="verification-badge">Loading...</span>
-                            <button type="button" class="btn btn-sm btn-primary hidden" id="verify-email-btn">Verify Email</button>
+                            <button type="button" class="btn btn-sm btn-primary hidden" id="verify-email-btn">Verify
+                                Email
+                            </button>
                         </div>
                     </div>
 
                     <div class="panel mt-lg">
                         <div class="panel-title">Change Password</div>
-                        <p class="text-sm text-muted mb-lg">Your password must be at least 8 characters with uppercase, lowercase, number, and special character.</p>
+                        <p class="text-sm text-muted mb-lg">Your password must be at least 8 characters with uppercase,
+                            lowercase, number, and special character.</p>
                         <form id="password-form" novalidate>
                             <div class="form-group" id="current-password-group">
                                 <label for="currentPassword" class="form-label">Current Password</label>
-                                <input type="password" id="currentPassword" name="currentPassword" class="form-input" autocomplete="current-password" />
+                                <input type="password" id="currentPassword" name="currentPassword" class="form-input"
+                                       autocomplete="current-password"/>
                                 <div class="form-error" id="currentPassword-error"></div>
                             </div>
                             <div class="form-group">
                                 <label for="newPassword" class="form-label">New Password</label>
-                                <input type="password" id="newPassword" name="newPassword" class="form-input" required minlength="8" autocomplete="new-password" />
+                                <input type="password" id="newPassword" name="newPassword" class="form-input" required
+                                       minlength="8" autocomplete="new-password"/>
                                 <div class="form-error" id="newPassword-error"></div>
                                 <div class="password-requirements" id="password-requirements">
                                     <span class="req" id="req-length"><i data-lucide="check" class="icon-xs"></i> At least 8 characters</span>
@@ -151,7 +172,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="confirmPassword" class="form-label">Confirm New Password</label>
-                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" required autocomplete="new-password" />
+                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                                       required autocomplete="new-password"/>
                                 <div class="form-error" id="confirmPassword-error"></div>
                             </div>
                             <div class="btn-row">
@@ -162,15 +184,19 @@
                 </div>
 
                 <!-- Notifications Tab -->
-                <div sec:authorize="!hasRole('ADMIN') and !hasRole('SELLER')" class="tab-content" id="tab-notifications" role="tabpanel">
+                <div sec:authorize="!hasRole('ADMIN') and !hasRole('SELLER')" class="tab-content" id="tab-notifications"
+                     role="tabpanel">
                     <div class="panel">
                         <div class="panel-title">Notification Preferences</div>
-                        <p class="text-sm text-muted mb-lg">Choose which notifications you'd like to receive via email.</p>
+                        <p class="text-sm text-muted mb-lg">Choose which notifications you'd like to receive via
+                            email.</p>
                         <div class="toggle-group">
                             <div class="toggle-row">
                                 <div>
                                     <div class="toggle-label">Order Updates</div>
-                                    <div class="toggle-desc">Order confirmations, shipping updates, and delivery notifications</div>
+                                    <div class="toggle-desc">Order confirmations, shipping updates, and delivery
+                                        notifications
+                                    </div>
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox" name="orderUpdates">
@@ -200,7 +226,8 @@
                             <div class="toggle-row">
                                 <div>
                                     <div class="toggle-label">Reviews & Engagement</div>
-                                    <div class="toggle-desc">Review requests, community updates, and engagement emails</div>
+                                    <div class="toggle-desc">Review requests, community updates, and engagement emails
+                                    </div>
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox" name="reviews">
@@ -226,7 +253,8 @@
                             <button id="save-address-btn" class="btn btn-primary btn-sm">Save</button>
                         </div>
                         <div class="address-manage-link mt-md">
-                            <a th:href="@{/address}" class="btn-link"><i data-lucide="external-link" class="icon-sm"></i> Manage all addresses</a>
+                            <a th:href="@{/address}" class="btn-link"><i data-lucide="external-link"
+                                                                         class="icon-sm"></i> Manage all addresses</a>
                         </div>
                     </div>
                 </div>
@@ -234,7 +262,8 @@
 
             <div sec:authorize="!isAuthenticated()">
                 <div class="panel">
-                    <p class="text-center">Please <a th:href="@{/login}" class="btn-link">sign in</a> to view your profile.</p>
+                    <p class="text-center">Please <a th:href="@{/login}" class="btn-link">sign in</a> to view your
+                        profile.</p>
                 </div>
             </div>
 

@@ -9,7 +9,8 @@
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+                <table width="600" cellpadding="0" cellspacing="0"
+                       style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
                     <!-- Header -->
                     <tr>
                         <td style="background-color: #dc2626; padding: 30px; text-align: center;">
@@ -20,7 +21,8 @@
                     <!-- Content -->
                     <tr>
                         <td style="padding: 40px 30px;">
-                            <h2 style="color: #1e293b; margin: 0 0 20px 0;" th:text="${alertTitle} ?: 'Security Alert'">Security Alert</h2>
+                            <h2 style="color: #1e293b; margin: 0 0 20px 0;" th:text="${alertTitle} ?: 'Security Alert'">
+                                Security Alert</h2>
 
                             <p style="color: #475569; line-height: 1.6; margin: 0 0 20px 0;">
                                 Hello <strong th:text="${userName}">User</strong>,
@@ -31,14 +33,17 @@
                             </p>
 
                             <!-- Alert Details -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <table width="100%" cellpadding="0" cellspacing="0"
+                                   style="margin: 20px 0; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                                 <tr>
                                     <td style="padding: 20px;">
                                         <p style="color: #64748b; font-size: 14px; margin: 0 0 10px 0;">
-                                            <strong>Event:</strong> <span th:text="${alertType} ?: 'Unknown'">Unknown</span>
+                                            <strong>Event:</strong> <span
+                                                th:text="${alertType} ?: 'Unknown'">Unknown</span>
                                         </p>
                                         <p style="color: #64748b; font-size: 14px; margin: 0 0 10px 0;">
-                                            <strong>Time:</strong> <span th:text="${alertTime} ?: 'Unknown'">Unknown</span>
+                                            <strong>Time:</strong> <span
+                                                th:text="${alertTime} ?: 'Unknown'">Unknown</span>
                                         </p>
                                         <p style="color: #64748b; font-size: 14px; margin: 0;">
                                             <strong>IP Address:</strong> <span th:text="${ipAddress} ?: 'Unknown'">Unknown</span>
@@ -48,11 +53,13 @@
                             </table>
 
                             <!-- Security Recommendation -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0 0 0; background-color: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
+                            <table width="100%" cellpadding="0" cellspacing="0"
+                                   style="margin: 30px 0 0 0; background-color: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
                                 <tr>
                                     <td style="padding: 15px;">
                                         <p style="color: #991b1b; font-size: 14px; margin: 0;">
-                                            <strong>Important:</strong> If this wasn't you, please change your password immediately and contact support.
+                                            <strong>Important:</strong> If this wasn't you, please change your password
+                                            immediately and contact support.
                                         </p>
                                     </td>
                                 </tr>

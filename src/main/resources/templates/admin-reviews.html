@@ -2,152 +2,169 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Review Management')}"></head>
 <body>
-<th:block th:replace="~{fragments/admin-header :: admin-header('reviews')}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/admin-header :: admin-header('reviews')}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="admin-main">
-  <div class="page-header">
-    <h1>Review Management</h1>
-    <p>Moderate customer reviews and ratings</p>
-  </div>
+    <main class="admin-main">
+        <div class="page-header">
+            <h1>Review Management</h1>
+            <p>Moderate customer reviews and ratings</p>
+        </div>
 
-  <div class="admin-filters">
-    <select id="statusFilter">
-      <option value="">All Status</option>
-      <option value="PENDING">Pending</option>
-      <option value="APPROVED">Approved</option>
-      <option value="REJECTED">Rejected</option>
-    </select>
-  </div>
+        <div class="admin-filters">
+            <select id="statusFilter">
+                <option value="">All Status</option>
+                <option value="PENDING">Pending</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+            </select>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-title">Product Reviews</div>
-    <div class="table-responsive">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Customer</th>
-            <th>Rating</th>
-            <th>Review</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="reviews-body">
-          <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  <div id="reviews-pagination"></div>
-</main>
+        <div class="admin-panel">
+            <div class="admin-panel-title">Product Reviews</div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Customer</th>
+                            <th>Rating</th>
+                            <th>Review</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviews-body">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="reviews-pagination"></div>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script th:src="@{/js/pagination.js}"></script>
-<script src="/js/sanitize.js"></script>
-<script>
-(function () {
-  'use strict';
-  var currentPage = 0;
-  var PAGE_SIZE = 20;
-  var allReviews = [];
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var currentPage = 0;
+            var PAGE_SIZE = 20;
+            var allReviews = [];
 
-  function statusClass(s) {
-    if (s === 'APPROVED') return 'active';
-    if (s === 'REJECTED') return 'inactive';
-    return 'pending';
-  }
+            function statusClass(s) {
+                if (s === 'APPROVED') return 'active';
+                if (s === 'REJECTED') return 'inactive';
+                return 'pending';
+            }
 
-  function renderReviews(reviews) {
-    allReviews = reviews || [];
-    var filter = document.getElementById('statusFilter').value;
-    var filtered = filter ? allReviews.filter(function (r) { return r.status === filter; }) : allReviews;
-    var tbody = document.getElementById('reviews-body');
-    if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No reviews found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = '';
-    filtered.forEach(function (r) {
-      var reviewText = r.review || '';
-      if (reviewText.length > 60) reviewText = reviewText.substring(0, 60) + '...';
-      var isPending = r.status === 'PENDING';
-      var actions = '';
-      if (isPending) {
-        actions += '<button class="btn btn-sm btn-primary approve-btn" data-review-id="' + r.id + '">Approve</button> ';
-        actions += '<button class="btn btn-sm btn-danger reject-btn" data-review-id="' + r.id + '">Reject</button> ';
-      }
-      actions += '<button class="btn btn-sm btn-ghost delete-btn" data-review-id="' + r.id + '" aria-label="Delete"><i data-lucide="trash-2" class="icon-sm"></i></button>';
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td><a href="/item/' + (r.itemId || '') + '" class="btn-link">' + escapeHtml(r.itemName || '') + '</a></td>' +
-        '<td class="text-sm">' + escapeHtml(r.reviewerUsername || '') + '</td>' +
-        '<td><div class="star-display">' + Array(5).fill().map(function (_, i) { return i < r.rating ? '&#9733;' : '&#9734;'; }).join('') + '</div></td>' +
-        '<td class="text-sm">' + escapeHtml(reviewText) + '</td>' +
-        '<td class="text-sm text-muted">' + formatDate(r.createdAt) + '</td>' +
-        '<td><span class="status-badge ' + statusClass(r.status) + '">' + (r.status || 'PENDING') + '</span></td>' +
-        '<td class="admin-table-actions">' + actions + '</td>';
-      tbody.appendChild(tr);
-    });
-    initIcons();
-    tbody.querySelectorAll('.approve-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.reviewId;
-        API.put('/api/admin/reviews/' + id + '/approve').then(function () {
-          showToast('Review approved', 'success');
-          loadReviews();
-        }).catch(function (e) { showToast(e.message, 'error'); });
-      });
-    });
-    tbody.querySelectorAll('.reject-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.reviewId;
-        API.put('/api/admin/reviews/' + id + '/reject').then(function () {
-          showToast('Review rejected', 'success');
-          loadReviews();
-        }).catch(function (e) { showToast(e.message, 'error'); });
-      });
-    });
-    tbody.querySelectorAll('.delete-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.reviewId;
-        showConfirmModal({ title: 'Delete Review', message: 'Delete this review?', confirmText: 'Delete', danger: true }).then(function (confirmed) {
-          if (!confirmed) return;
-          API.del('/api/admin/reviews/' + id).then(function () {
-            showToast('Review deleted', 'success');
-            loadReviews();
-          }).catch(function (e) { showToast(e.message, 'error'); });
-        });
-      });
-    });
-  }
+            function renderReviews(reviews) {
+                allReviews = reviews || [];
+                var filter = document.getElementById('statusFilter').value;
+                var filtered = filter ? allReviews.filter(function (r) {
+                    return r.status === filter;
+                }) : allReviews;
+                var tbody = document.getElementById('reviews-body');
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No reviews found</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                filtered.forEach(function (r) {
+                    var reviewText = r.review || '';
+                    if (reviewText.length > 60) reviewText = reviewText.substring(0, 60) + '...';
+                    var isPending = r.status === 'PENDING';
+                    var actions = '';
+                    if (isPending) {
+                        actions += '<button class="btn btn-sm btn-primary approve-btn" data-review-id="' + r.id + '">Approve</button> ';
+                        actions += '<button class="btn btn-sm btn-danger reject-btn" data-review-id="' + r.id + '">Reject</button> ';
+                    }
+                    actions += '<button class="btn btn-sm btn-ghost delete-btn" data-review-id="' + r.id + '" aria-label="Delete"><i data-lucide="trash-2" class="icon-sm"></i></button>';
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td><a href="/item/' + (r.itemId || '') + '" class="btn-link">' + escapeHtml(r.itemName || '') + '</a></td>' +
+                        '<td class="text-sm">' + escapeHtml(r.reviewerUsername || '') + '</td>' +
+                        '<td><div class="star-display">' + Array(5).fill().map(function (_, i) {
+                            return i < r.rating ? '&#9733;' : '&#9734;';
+                        }).join('') + '</div></td>' +
+                        '<td class="text-sm">' + escapeHtml(reviewText) + '</td>' +
+                        '<td class="text-sm text-muted">' + formatDate(r.createdAt) + '</td>' +
+                        '<td><span class="status-badge ' + statusClass(r.status) + '">' + (r.status || 'PENDING') + '</span></td>' +
+                        '<td class="admin-table-actions">' + actions + '</td>';
+                    tbody.appendChild(tr);
+                });
+                initIcons();
+                tbody.querySelectorAll('.approve-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.reviewId;
+                        API.put('/api/admin/reviews/' + id + '/approve').then(function () {
+                            showToast('Review approved', 'success');
+                            loadReviews();
+                        }).catch(function (e) {
+                            showToast(e.message, 'error');
+                        });
+                    });
+                });
+                tbody.querySelectorAll('.reject-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.reviewId;
+                        API.put('/api/admin/reviews/' + id + '/reject').then(function () {
+                            showToast('Review rejected', 'success');
+                            loadReviews();
+                        }).catch(function (e) {
+                            showToast(e.message, 'error');
+                        });
+                    });
+                });
+                tbody.querySelectorAll('.delete-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.reviewId;
+                        showConfirmModal({
+                            title: 'Delete Review',
+                            message: 'Delete this review?',
+                            confirmText: 'Delete',
+                            danger: true
+                        }).then(function (confirmed) {
+                            if (!confirmed) return;
+                            API.del('/api/admin/reviews/' + id).then(function () {
+                                showToast('Review deleted', 'success');
+                                loadReviews();
+                            }).catch(function (e) {
+                                showToast(e.message, 'error');
+                            });
+                        });
+                    });
+                });
+            }
 
-  function loadReviews(page) {
-    if (page != null) currentPage = page;
-    API.get('/api/admin/reviews?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
-      var reviews = data && data.content ? data.content : (Array.isArray(data) ? data : []);
-      renderReviews(reviews);
-      Pagination.render('reviews-pagination', data, loadReviews, {
-        onPageSizeChange: function (newSize) {
-          PAGE_SIZE = newSize;
-          loadReviews(0);
-        }
-      });
-    }).catch(function () {
-      document.getElementById('reviews-body').innerHTML =
-        '<tr><td colspan="7" class="text-center text-muted">Failed to load reviews</td></tr>';
-    });
-  }
+            function loadReviews(page) {
+                if (page != null) currentPage = page;
+                API.get('/api/admin/reviews?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+                    var reviews = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+                    renderReviews(reviews);
+                    Pagination.render('reviews-pagination', data, loadReviews, {
+                        onPageSizeChange: function (newSize) {
+                            PAGE_SIZE = newSize;
+                            loadReviews(0);
+                        }
+                    });
+                }).catch(function () {
+                    document.getElementById('reviews-body').innerHTML =
+                        '<tr><td colspan="7" class="text-center text-muted">Failed to load reviews</td></tr>';
+                });
+            }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    loadReviews();
-    document.getElementById('statusFilter').addEventListener('change', function () {
-      loadReviews(0);
-    });
-  });
-})();
-</script>
+            document.addEventListener('DOMContentLoaded', function () {
+                loadReviews();
+                document.getElementById('statusFilter').addEventListener('change', function () {
+                    loadReviews(0);
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

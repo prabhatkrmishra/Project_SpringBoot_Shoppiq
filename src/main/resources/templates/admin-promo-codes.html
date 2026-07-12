@@ -2,291 +2,315 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Manage Promo Codes')}"></head>
 <body>
-<th:block th:replace="~{fragments/admin-header :: admin-header('promo-codes')}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/admin-header :: admin-header('promo-codes')}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="admin-main">
-  <div class="page-header flex-between items-center">
-    <div>
-      <h1>Promo Codes</h1>
-      <p>Manage promotional discount codes</p>
-    </div>
-    <div class="flex gap-sm">
-      <button id="add-promo-btn" class="btn btn-primary btn-sm">+ Add Promo Code</button>
-    </div>
-  </div>
-
-  <div class="admin-panel">
-    <div class="admin-panel-header">
-      <div class="admin-panel-title">All Promo Codes</div>
-    </div>
-    <div class="table-responsive">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Code</th>
-            <th>Type</th>
-            <th>Value</th>
-            <th>Min Order</th>
-            <th>Max Discount</th>
-            <th>Usage</th>
-            <th>Valid From</th>
-            <th>Valid Until</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="promo-body">
-          <tr><td colspan="11" class="text-center text-muted">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div id="promo-pagination"></div>
-
-  <div id="promo-modal" class="modal-overlay">
-    <div class="modal" role="dialog" aria-labelledby="promo-modal-title" style="max-width:560px;">
-      <div class="modal-header">
-        <h2 id="promo-modal-title">Add Promo Code</h2>
-        <button class="modal-close" id="promo-modal-close">&times;</button>
-      </div>
-      <form id="promo-form" class="modal-body">
-        <input type="hidden" id="promo-id" value="">
-        <div class="form-group">
-          <label for="promo-code" class="form-label">Code *</label>
-          <input type="text" id="promo-code" class="form-input" maxlength="50" required placeholder="e.g. SAVE20">
+    <main class="admin-main">
+        <div class="page-header flex-between items-center">
+            <div>
+                <h1>Promo Codes</h1>
+                <p>Manage promotional discount codes</p>
+            </div>
+            <div class="flex gap-sm">
+                <button id="add-promo-btn" class="btn btn-primary btn-sm">+ Add Promo Code</button>
+            </div>
         </div>
-        <div class="form-group">
-          <label for="promo-description" class="form-label">Description</label>
-          <input type="text" id="promo-description" class="form-input" maxlength="255" placeholder="Optional description">
+
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <div class="admin-panel-title">All Promo Codes</div>
+            </div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Code</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Min Order</th>
+                            <th>Max Discount</th>
+                            <th>Usage</th>
+                            <th>Valid From</th>
+                            <th>Valid Until</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="promo-body">
+                        <tr>
+                            <td colspan="11" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="promo-discount-type" class="form-label">Discount Type *</label>
-            <select id="promo-discount-type" class="form-input" required>
-              <option value="PERCENTAGE">Percentage (%)</option>
-              <option value="FIXED_AMOUNT">Fixed Amount ($)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="promo-discount-value" class="form-label">Discount Value *</label>
-            <input type="number" id="promo-discount-value" class="form-input" min="0.01" step="0.01" required placeholder="e.g. 20">
-          </div>
+
+        <div id="promo-pagination"></div>
+
+        <div id="promo-modal" class="modal-overlay">
+            <div class="modal" role="dialog" aria-labelledby="promo-modal-title" style="max-width:560px;">
+                <div class="modal-header">
+                    <h2 id="promo-modal-title">Add Promo Code</h2>
+                    <button class="modal-close" id="promo-modal-close">&times;</button>
+                </div>
+                <form id="promo-form" class="modal-body">
+                    <input type="hidden" id="promo-id" value="">
+                    <div class="form-group">
+                        <label for="promo-code" class="form-label">Code *</label>
+                        <input type="text" id="promo-code" class="form-input" maxlength="50" required
+                               placeholder="e.g. SAVE20">
+                    </div>
+                    <div class="form-group">
+                        <label for="promo-description" class="form-label">Description</label>
+                        <input type="text" id="promo-description" class="form-input" maxlength="255"
+                               placeholder="Optional description">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promo-discount-type" class="form-label">Discount Type *</label>
+                            <select id="promo-discount-type" class="form-input" required>
+                                <option value="PERCENTAGE">Percentage (%)</option>
+                                <option value="FIXED_AMOUNT">Fixed Amount ($)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="promo-discount-value" class="form-label">Discount Value *</label>
+                            <input type="number" id="promo-discount-value" class="form-input" min="0.01" step="0.01"
+                                   required placeholder="e.g. 20">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promo-min-order" class="form-label">Min Order Amount</label>
+                            <input type="number" id="promo-min-order" class="form-input" min="0" step="0.01"
+                                   placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="promo-max-discount" class="form-label">Max Discount Amount</label>
+                            <input type="number" id="promo-max-discount" class="form-input" min="0" step="0.01"
+                                   placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promo-usage-limit" class="form-label">Usage Limit</label>
+                            <input type="number" id="promo-usage-limit" class="form-input" min="0"
+                                   placeholder="Unlimited">
+                        </div>
+                        <div class="form-group">
+                            <label for="promo-user-limit" class="form-label">Per-User Limit</label>
+                            <input type="number" id="promo-user-limit" class="form-input" min="0"
+                                   placeholder="Unlimited">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promo-valid-from" class="form-label">Valid From *</label>
+                            <input type="datetime-local" id="promo-valid-from" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="promo-valid-until" class="form-label">Valid Until *</label>
+                            <input type="datetime-local" id="promo-valid-until" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label flex items-center gap-sm">
+                            <input type="checkbox" id="promo-active" checked> Active
+                        </label>
+                    </div>
+                    <div class="flex gap-sm mt-md">
+                        <button type="submit" id="promo-save-btn" class="btn btn-primary">Save</button>
+                        <button type="button" id="promo-cancel-btn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="promo-min-order" class="form-label">Min Order Amount</label>
-            <input type="number" id="promo-min-order" class="form-input" min="0" step="0.01" placeholder="0.00">
-          </div>
-          <div class="form-group">
-            <label for="promo-max-discount" class="form-label">Max Discount Amount</label>
-            <input type="number" id="promo-max-discount" class="form-input" min="0" step="0.01" placeholder="0.00">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="promo-usage-limit" class="form-label">Usage Limit</label>
-            <input type="number" id="promo-usage-limit" class="form-input" min="0" placeholder="Unlimited">
-          </div>
-          <div class="form-group">
-            <label for="promo-user-limit" class="form-label">Per-User Limit</label>
-            <input type="number" id="promo-user-limit" class="form-input" min="0" placeholder="Unlimited">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="promo-valid-from" class="form-label">Valid From *</label>
-            <input type="datetime-local" id="promo-valid-from" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label for="promo-valid-until" class="form-label">Valid Until *</label>
-            <input type="datetime-local" id="promo-valid-until" class="form-input" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label flex items-center gap-sm">
-            <input type="checkbox" id="promo-active" checked> Active
-          </label>
-        </div>
-        <div class="flex gap-sm mt-md">
-          <button type="submit" id="promo-save-btn" class="btn btn-primary">Save</button>
-          <button type="button" id="promo-cancel-btn" class="btn btn-secondary">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</main>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script th:src="@{/js/pagination.js}"></script>
-<script>
-(function () {
-  'use strict';
-  var editingId = null;
-  var currentPage = 0;
-  var PAGE_SIZE = 20;
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script>
+        (function () {
+            'use strict';
+            var editingId = null;
+            var currentPage = 0;
+            var PAGE_SIZE = 20;
 
-  function toLocalDateTime(iso) {
-    if (!iso) return '';
-    var d = new Date(iso);
-    var off = d.getTimezoneOffset();
-    var local = new Date(d.getTime() - off * 60000);
-    return local.toISOString().slice(0, 16);
-  }
+            function toLocalDateTime(iso) {
+                if (!iso) return '';
+                var d = new Date(iso);
+                var off = d.getTimezoneOffset();
+                var local = new Date(d.getTime() - off * 60000);
+                return local.toISOString().slice(0, 16);
+            }
 
-  function toISOString(localVal) {
-    if (!localVal) return null;
-    return new Date(localVal).toISOString();
-  }
+            function toISOString(localVal) {
+                if (!localVal) return null;
+                return new Date(localVal).toISOString();
+            }
 
-  function openModal(promo) {
-    editingId = promo ? promo.id : null;
-    document.getElementById('promo-modal-title').textContent = promo ? 'Edit Promo Code' : 'Add Promo Code';
-    document.getElementById('promo-id').value = promo ? promo.id : '';
-    document.getElementById('promo-code').value = promo ? (promo.code || '') : '';
-    document.getElementById('promo-description').value = promo ? (promo.description || '') : '';
-    document.getElementById('promo-discount-type').value = promo ? promo.discountType : 'PERCENTAGE';
-    document.getElementById('promo-discount-value').value = promo ? promo.discountValue : '';
-    document.getElementById('promo-min-order').value = promo ? (promo.minOrderAmount || '') : '';
-    document.getElementById('promo-max-discount').value = promo ? (promo.maxDiscountAmount || '') : '';
-    document.getElementById('promo-usage-limit').value = promo ? (promo.usageLimit || '') : '';
-    document.getElementById('promo-user-limit').value = promo ? (promo.userUsageLimit || '') : '';
-    document.getElementById('promo-valid-from').value = promo ? toLocalDateTime(promo.validFrom) : '';
-    document.getElementById('promo-valid-until').value = promo ? toLocalDateTime(promo.validUntil) : '';
-    document.getElementById('promo-active').checked = promo ? promo.active : true;
-    document.getElementById('promo-save-btn').textContent = promo ? 'Update' : 'Save';
-    document.getElementById('promo-save-btn').disabled = false;
-    document.getElementById('promo-modal').classList.add('active');
-  }
+            function openModal(promo) {
+                editingId = promo ? promo.id : null;
+                document.getElementById('promo-modal-title').textContent = promo ? 'Edit Promo Code' : 'Add Promo Code';
+                document.getElementById('promo-id').value = promo ? promo.id : '';
+                document.getElementById('promo-code').value = promo ? (promo.code || '') : '';
+                document.getElementById('promo-description').value = promo ? (promo.description || '') : '';
+                document.getElementById('promo-discount-type').value = promo ? promo.discountType : 'PERCENTAGE';
+                document.getElementById('promo-discount-value').value = promo ? promo.discountValue : '';
+                document.getElementById('promo-min-order').value = promo ? (promo.minOrderAmount || '') : '';
+                document.getElementById('promo-max-discount').value = promo ? (promo.maxDiscountAmount || '') : '';
+                document.getElementById('promo-usage-limit').value = promo ? (promo.usageLimit || '') : '';
+                document.getElementById('promo-user-limit').value = promo ? (promo.userUsageLimit || '') : '';
+                document.getElementById('promo-valid-from').value = promo ? toLocalDateTime(promo.validFrom) : '';
+                document.getElementById('promo-valid-until').value = promo ? toLocalDateTime(promo.validUntil) : '';
+                document.getElementById('promo-active').checked = promo ? promo.active : true;
+                document.getElementById('promo-save-btn').textContent = promo ? 'Update' : 'Save';
+                document.getElementById('promo-save-btn').disabled = false;
+                document.getElementById('promo-modal').classList.add('active');
+            }
 
-  function closeModal() {
-    document.getElementById('promo-modal').classList.remove('active');
-    editingId = null;
-  }
+            function closeModal() {
+                document.getElementById('promo-modal').classList.remove('active');
+                editingId = null;
+            }
 
-  function renderPromoCodes(promos) {
-    var tbody = document.getElementById('promo-body');
-    if (!promos || promos.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted">No promo codes found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = '';
-    promos.forEach(function (p) {
-      var tr = document.createElement('tr');
-      var statusBadge = p.active
-        ? '<span class="status-badge in-stock">Active</span>'
-        : '<span class="status-badge out-of-stock">Inactive</span>';
-      var typeLabel = p.discountType === 'PERCENTAGE' ? '%' : '$';
-      var usageText = p.usageLimit ? p.usedCount + ' / ' + p.usageLimit : p.usedCount + ' / ∞';
-      var userLimitText = p.userUsageLimit || '∞';
-      tr.innerHTML =
-        '<td>' + p.id + '</td>' +
-        '<td><strong><code>' + escapeHtml(p.code) + '</code></strong></td>' +
-        '<td class="text-sm">' + p.discountType + '</td>' +
-        '<td class="text-sm">' + typeLabel + ' ' + p.discountValue + '</td>' +
-        '<td class="text-sm">' + (p.minOrderAmount ? '$' + p.minOrderAmount : '—') + '</td>' +
-        '<td class="text-sm">' + (p.maxDiscountAmount ? '$' + p.maxDiscountAmount : '—') + '</td>' +
-        '<td class="text-sm">' + usageText + '</td>' +
-        '<td class="text-sm">' + formatDateTime(p.validFrom) + '</td>' +
-        '<td class="text-sm">' + formatDateTime(p.validUntil) + '</td>' +
-        '<td>' + statusBadge + '</td>' +
-        '<td class="admin-table-actions">' +
-          '<button class="btn btn-sm btn-secondary promo-edit-btn" data-id="' + p.id + '">Edit</button> ' +
-          '<button class="btn btn-sm btn-ghost promo-toggle-btn" data-id="' + p.id + '" title="Toggle Active">' +
-            (p.active ? '🟢' : '⚪') +
-          '</button> ' +
-          '<button class="btn btn-sm btn-danger promo-delete-btn" data-id="' + p.id + '">Delete</button>' +
-        '</td>';
-      tbody.appendChild(tr);
-    });
+            function renderPromoCodes(promos) {
+                var tbody = document.getElementById('promo-body');
+                if (!promos || promos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted">No promo codes found</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                promos.forEach(function (p) {
+                    var tr = document.createElement('tr');
+                    var statusBadge = p.active
+                        ? '<span class="status-badge in-stock">Active</span>'
+                        : '<span class="status-badge out-of-stock">Inactive</span>';
+                    var typeLabel = p.discountType === 'PERCENTAGE' ? '%' : '$';
+                    var usageText = p.usageLimit ? p.usedCount + ' / ' + p.usageLimit : p.usedCount + ' / ∞';
+                    var userLimitText = p.userUsageLimit || '∞';
+                    tr.innerHTML =
+                        '<td>' + p.id + '</td>' +
+                        '<td><strong><code>' + escapeHtml(p.code) + '</code></strong></td>' +
+                        '<td class="text-sm">' + p.discountType + '</td>' +
+                        '<td class="text-sm">' + typeLabel + ' ' + p.discountValue + '</td>' +
+                        '<td class="text-sm">' + (p.minOrderAmount ? '$' + p.minOrderAmount : '—') + '</td>' +
+                        '<td class="text-sm">' + (p.maxDiscountAmount ? '$' + p.maxDiscountAmount : '—') + '</td>' +
+                        '<td class="text-sm">' + usageText + '</td>' +
+                        '<td class="text-sm">' + formatDateTime(p.validFrom) + '</td>' +
+                        '<td class="text-sm">' + formatDateTime(p.validUntil) + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td class="admin-table-actions">' +
+                        '<button class="btn btn-sm btn-secondary promo-edit-btn" data-id="' + p.id + '">Edit</button> ' +
+                        '<button class="btn btn-sm btn-ghost promo-toggle-btn" data-id="' + p.id + '" title="Toggle Active">' +
+                        (p.active ? '🟢' : '⚪') +
+                        '</button> ' +
+                        '<button class="btn btn-sm btn-danger promo-delete-btn" data-id="' + p.id + '">Delete</button>' +
+                        '</td>';
+                    tbody.appendChild(tr);
+                });
 
-    tbody.querySelectorAll('.promo-edit-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.id;
-        var found = promos.find(function (p) { return p.id == id; });
-        if (found) openModal(found);
-      });
-    });
+                tbody.querySelectorAll('.promo-edit-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.id;
+                        var found = promos.find(function (p) {
+                            return p.id == id;
+                        });
+                        if (found) openModal(found);
+                    });
+                });
 
-    tbody.querySelectorAll('.promo-toggle-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.id;
-        API.patch('/api/admin/promo-codes/' + id + '/toggle').then(function () {
-          showToast('Promo code status toggled', 'success');
-          loadPromoCodes();
-        }).catch(function (e) { showToast(e.message || 'Failed to toggle', 'error'); });
-      });
-    });
+                tbody.querySelectorAll('.promo-toggle-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.id;
+                        API.patch('/api/admin/promo-codes/' + id + '/toggle').then(function () {
+                            showToast('Promo code status toggled', 'success');
+                            loadPromoCodes();
+                        }).catch(function (e) {
+                            showToast(e.message || 'Failed to toggle', 'error');
+                        });
+                    });
+                });
 
-    tbody.querySelectorAll('.promo-delete-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.id;
-        showConfirmModal({ title: 'Delete Promo Code', message: 'Are you sure you want to delete this promo code?', confirmText: 'Delete', danger: true }).then(function (confirmed) {
-          if (!confirmed) return;
-          API.del('/api/admin/promo-codes/' + id).then(function () {
-            showToast('Promo code deleted', 'success');
-            loadPromoCodes();
-          }).catch(function (e) { showToast(e.message || 'Failed to delete', 'error'); });
-        });
-      });
-    });
-  }
+                tbody.querySelectorAll('.promo-delete-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.id;
+                        showConfirmModal({
+                            title: 'Delete Promo Code',
+                            message: 'Are you sure you want to delete this promo code?',
+                            confirmText: 'Delete',
+                            danger: true
+                        }).then(function (confirmed) {
+                            if (!confirmed) return;
+                            API.del('/api/admin/promo-codes/' + id).then(function () {
+                                showToast('Promo code deleted', 'success');
+                                loadPromoCodes();
+                            }).catch(function (e) {
+                                showToast(e.message || 'Failed to delete', 'error');
+                            });
+                        });
+                    });
+                });
+            }
 
-  function loadPromoCodes(page) {
-    if (page != null) currentPage = page;
-    API.get('/api/admin/promo-codes?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
-      var items = data && data.content ? data.content : [];
-      renderPromoCodes(items);
-      Pagination.render('promo-pagination', data, loadPromoCodes, {
-        onPageSizeChange: function (newSize) {
-          PAGE_SIZE = newSize;
-          loadPromoCodes(0);
-        }
-      });
-    }).catch(function () {
-      document.getElementById('promo-body').innerHTML =
-        '<tr><td colspan="11" class="text-center text-muted">Failed to load promo codes</td></tr>';
-    });
-  }
+            function loadPromoCodes(page) {
+                if (page != null) currentPage = page;
+                API.get('/api/admin/promo-codes?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+                    var items = data && data.content ? data.content : [];
+                    renderPromoCodes(items);
+                    Pagination.render('promo-pagination', data, loadPromoCodes, {
+                        onPageSizeChange: function (newSize) {
+                            PAGE_SIZE = newSize;
+                            loadPromoCodes(0);
+                        }
+                    });
+                }).catch(function () {
+                    document.getElementById('promo-body').innerHTML =
+                        '<tr><td colspan="11" class="text-center text-muted">Failed to load promo codes</td></tr>';
+                });
+            }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    loadPromoCodes();
+            document.addEventListener('DOMContentLoaded', function () {
+                loadPromoCodes();
 
-    document.getElementById('add-promo-btn').addEventListener('click', function () { openModal(null); });
-    document.getElementById('promo-modal-close').addEventListener('click', closeModal);
-    document.getElementById('promo-cancel-btn').addEventListener('click', closeModal);
-    document.getElementById('promo-modal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
+                document.getElementById('add-promo-btn').addEventListener('click', function () {
+                    openModal(null);
+                });
+                document.getElementById('promo-modal-close').addEventListener('click', closeModal);
+                document.getElementById('promo-cancel-btn').addEventListener('click', closeModal);
+                document.getElementById('promo-modal').addEventListener('click', function (e) {
+                    if (e.target === this) closeModal();
+                });
 
-    document.getElementById('promo-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var data = {
-        code: document.getElementById('promo-code').value.trim(),
-        description: document.getElementById('promo-description').value.trim() || null,
-        discountType: document.getElementById('promo-discount-type').value,
-        discountValue: parseFloat(document.getElementById('promo-discount-value').value),
-        minOrderAmount: parseFloat(document.getElementById('promo-min-order').value) || null,
-        maxDiscountAmount: parseFloat(document.getElementById('promo-max-discount').value) || null,
-        usageLimit: parseInt(document.getElementById('promo-usage-limit').value) || null,
-        userUsageLimit: parseInt(document.getElementById('promo-user-limit').value) || null,
-        validFrom: toISOString(document.getElementById('promo-valid-from').value),
-        validUntil: toISOString(document.getElementById('promo-valid-until').value),
-        active: document.getElementById('promo-active').checked
-      };
-      var btn = document.getElementById('promo-save-btn');
-      setButtonLoading(btn, true);
-      API.post('/api/admin/promo-codes', data).then(function () {
-        showToast(editingId ? 'Promo code updated' : 'Promo code created', 'success');
-        closeModal();
-        loadPromoCodes();
-      }).catch(function (err) {
-        showToast(err.message || 'Failed to save', 'error');
-        setButtonLoading(btn, false);
-      });
-    });
-  });
-})();
-</script>
+                document.getElementById('promo-form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var data = {
+                        code: document.getElementById('promo-code').value.trim(),
+                        description: document.getElementById('promo-description').value.trim() || null,
+                        discountType: document.getElementById('promo-discount-type').value,
+                        discountValue: parseFloat(document.getElementById('promo-discount-value').value),
+                        minOrderAmount: parseFloat(document.getElementById('promo-min-order').value) || null,
+                        maxDiscountAmount: parseFloat(document.getElementById('promo-max-discount').value) || null,
+                        usageLimit: parseInt(document.getElementById('promo-usage-limit').value) || null,
+                        userUsageLimit: parseInt(document.getElementById('promo-user-limit').value) || null,
+                        validFrom: toISOString(document.getElementById('promo-valid-from').value),
+                        validUntil: toISOString(document.getElementById('promo-valid-until').value),
+                        active: document.getElementById('promo-active').checked
+                    };
+                    var btn = document.getElementById('promo-save-btn');
+                    setButtonLoading(btn, true);
+                    API.post('/api/admin/promo-codes', data).then(function () {
+                        showToast(editingId ? 'Promo code updated' : 'Promo code created', 'success');
+                        closeModal();
+                        loadPromoCodes();
+                    }).catch(function (err) {
+                        showToast(err.message || 'Failed to save', 'error');
+                        setButtonLoading(btn, false);
+                    });
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

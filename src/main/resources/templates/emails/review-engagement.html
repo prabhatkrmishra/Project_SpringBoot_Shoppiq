@@ -9,11 +9,13 @@
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+                <table width="600" cellpadding="0" cellspacing="0"
+                       style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
                     <!-- Header -->
                     <tr>
                         <td style="background-color: #4f46e5; padding: 30px; text-align: center;">
-                            <h1 style="color: #ffffff; margin: 0; font-size: 24px;" th:text="${title}">We'd Love Your Feedback</h1>
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px;" th:text="${title}">We'd Love Your
+                                Feedback</h1>
                         </td>
                     </tr>
 
@@ -31,10 +33,13 @@
                             </div>
 
                             <!-- CTA Button -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;" th:if="${ctaText}">
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;"
+                                   th:if="${ctaText}">
                                 <tr>
                                     <td align="center">
-                                        <a th:href="${ctaUrl}" style="background-color: #4f46e5; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;" th:text="${ctaText}">Leave a Review</a>
+                                        <a th:href="${ctaUrl}"
+                                           style="background-color: #4f46e5; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;"
+                                           th:text="${ctaText}">Leave a Review</a>
                                     </td>
                                 </tr>
                             </table>

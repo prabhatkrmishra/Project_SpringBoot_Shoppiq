@@ -2,79 +2,85 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Complete Profile')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="page">
-  <div class="container container-narrow auth-card">
-    <div class="page-header text-center">
-      <h1>Complete Your Profile</h1>
-      <p class="text-muted">Google account verified. Choose a username and password to finish registration.</p>
-    </div>
+    <main class="page">
+        <div class="container container-narrow auth-card">
+            <div class="page-header text-center">
+                <h1>Complete Your Profile</h1>
+                <p class="text-muted">Google account verified. Choose a username and password to finish
+                    registration.</p>
+            </div>
 
-    <div th:if="${param.error}" class="guest-banner" role="alert">
-      <p th:text="${param.error}">Error</p>
-    </div>
+            <div th:if="${param.error}" class="guest-banner" role="alert">
+                <p th:text="${param.error}">Error</p>
+            </div>
 
-    <div class="panel">
-      <form id="completeProfileForm" novalidate>
-        <div class="form-group">
-          <label for="name" class="form-label">Full Name</label>
-          <input type="text" id="name" class="form-input auth-readonly" readonly aria-readonly="true">
+            <div class="panel">
+                <form id="completeProfileForm" novalidate>
+                    <div class="form-group">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" id="name" class="form-input auth-readonly" readonly aria-readonly="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" id="email" class="form-input auth-readonly" readonly aria-readonly="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" name="username" class="form-input"
+                               placeholder="Choose a username" required autocomplete="username"
+                               pattern="^[a-zA-Z0-9_]+$" minlength="3" maxlength="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-input"
+                               placeholder="Choose a password" required autocomplete="new-password" minlength="8">
+                        <div class="form-error" id="password-error"></div>
+                        <div class="password-requirements">
+                            <span class="req" id="req-length"><i data-lucide="check" class="icon-xs"></i> At least 8 characters</span>
+                            <span class="req" id="req-upper"><i data-lucide="check" class="icon-xs"></i> One uppercase letter</span>
+                            <span class="req" id="req-lower"><i data-lucide="check" class="icon-xs"></i> One lowercase letter</span>
+                            <span class="req" id="req-digit"><i data-lucide="check"
+                                                                class="icon-xs"></i> One number</span>
+                            <span class="req" id="req-special"><i data-lucide="check" class="icon-xs"></i> One special char (@$!%*?&)</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                               placeholder="Confirm password" required autocomplete="new-password">
+                        <div class="form-error" id="confirmPassword-error"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Complete Registration</button>
+                </form>
+            </div>
         </div>
-        <div class="form-group">
-          <label for="email" class="form-label">Email Address</label>
-          <input type="email" id="email" class="form-input auth-readonly" readonly aria-readonly="true">
-        </div>
-        <div class="form-group">
-          <label for="username" class="form-label">Username</label>
-          <input type="text" id="username" name="username" class="form-input" placeholder="Choose a username" required autocomplete="username" pattern="^[a-zA-Z0-9_]+$" minlength="3" maxlength="30">
-        </div>
-        <div class="form-group">
-          <label for="password" class="form-label">Password</label>
-          <input type="password" id="password" name="password" class="form-input" placeholder="Choose a password" required autocomplete="new-password" minlength="8">
-          <div class="form-error" id="password-error"></div>
-          <div class="password-requirements">
-              <span class="req" id="req-length"><i data-lucide="check" class="icon-xs"></i> At least 8 characters</span>
-              <span class="req" id="req-upper"><i data-lucide="check" class="icon-xs"></i> One uppercase letter</span>
-              <span class="req" id="req-lower"><i data-lucide="check" class="icon-xs"></i> One lowercase letter</span>
-              <span class="req" id="req-digit"><i data-lucide="check" class="icon-xs"></i> One number</span>
-              <span class="req" id="req-special"><i data-lucide="check" class="icon-xs"></i> One special char (@$!%*?&)</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="confirmPassword" class="form-label">Confirm Password</label>
-          <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Confirm password" required autocomplete="new-password">
-          <div class="form-error" id="confirmPassword-error"></div>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Complete Registration</button>
-      </form>
-    </div>
-  </div>
-</main>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
-<script th:inline="javascript">
-/*<![CDATA[*/
-async function loadGoogleProfile() {
-  try {
-    const response = await fetch("/auth/google/get-profile", {
-      credentials: "include"
-    });
-    if (!response.ok) {
-      throw new Error("Unable to load profile");
-    }
-    const profile = await response.json();
-    document.getElementById("name").value = profile.name || "";
-    document.getElementById("email").value = profile.email || "";
-  } catch (err) {
-    console.error(err);
-    showToast("Unable to load Google profile information. Please sign in with Google again.", "error");
-  }
-}
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        async function loadGoogleProfile() {
+            try {
+                const response = await fetch("/auth/google/get-profile", {
+                    credentials: "include"
+                });
+                if (!response.ok) {
+                    throw new Error("Unable to load profile");
+                }
+                const profile = await response.json();
+                document.getElementById("name").value = profile.name || "";
+                document.getElementById("email").value = profile.email || "";
+            } catch (err) {
+                console.error(err);
+                showToast("Unable to load Google profile information. Please sign in with Google again.", "error");
+            }
+        }
 
-loadGoogleProfile();
+        loadGoogleProfile();
 
         const passwordInput = document.getElementById("password");
         const confirmPasswordInput = document.getElementById("confirmPassword");
@@ -123,6 +129,7 @@ loadGoogleProfile();
         });
 
         var passwordReqs = passwordInput.closest('.form-group').querySelector('.password-requirements');
+
         function toggleReqs() {
             if (!passwordReqs) return;
             var pw = passwordInput.value;
@@ -135,6 +142,7 @@ loadGoogleProfile();
                 passwordReqs.classList.remove("visible");
             }
         }
+
         if (passwordReqs) {
             passwordInput.addEventListener("focus", function () {
                 if (this.value) passwordReqs.classList.add("visible");
@@ -168,27 +176,29 @@ loadGoogleProfile();
                 hasError = true;
             }
             if (hasError) return;
-  try {
-    const response = await fetch("/auth/google/complete-profile", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: username, password: password })
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      showToast(data.detail || "Registration failed. Please try again.", "error");
-      return;
-    }
-    showToast("Registration completed successfully!", "success");
-    var ru = new URLSearchParams(window.location.search).get("returnUrl");
-    var dest = (ru && ru.startsWith("/") && !ru.startsWith("//")) ? ru : "/allitems";
-    setTimeout(() => { window.location.href = dest; }, 800);
-  } catch (err) {
-    showToast("Unable to connect to server", "error");
-  }
-});
-/*]]>*/
-</script>
+            try {
+                const response = await fetch("/auth/google/complete-profile", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({username: username, password: password})
+                });
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    showToast(data.detail || "Registration failed. Please try again.", "error");
+                    return;
+                }
+                showToast("Registration completed successfully!", "success");
+                var ru = new URLSearchParams(window.location.search).get("returnUrl");
+                var dest = (ru && ru.startsWith("/") && !ru.startsWith("//")) ? ru : "/allitems";
+                setTimeout(() => {
+                    window.location.href = dest;
+                }, 800);
+            } catch (err) {
+                showToast("Unable to connect to server", "error");
+            }
+        });
+        /*]]>*/
+    </script>
 </body>
 </html>

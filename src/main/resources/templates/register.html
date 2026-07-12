@@ -9,7 +9,8 @@
         <div class="container container-narrow auth-card">
             <div class="auth-brand">
                 <div class="auth-brand-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
                         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
                         <line x1="3" y1="6" x2="21" y2="6"/>
                         <path d="M16 10a4 4 0 01-8 0"/>
@@ -53,7 +54,8 @@
                             <span class="req" id="req-length"><i data-lucide="check" class="icon-xs"></i> At least 8 characters</span>
                             <span class="req" id="req-upper"><i data-lucide="check" class="icon-xs"></i> One uppercase letter</span>
                             <span class="req" id="req-lower"><i data-lucide="check" class="icon-xs"></i> One lowercase letter</span>
-                            <span class="req" id="req-digit"><i data-lucide="check" class="icon-xs"></i> One number</span>
+                            <span class="req" id="req-digit"><i data-lucide="check"
+                                                                class="icon-xs"></i> One number</span>
                             <span class="req" id="req-special"><i data-lucide="check" class="icon-xs"></i> One special char (@$!%*?&)</span>
                         </div>
                     </div>
@@ -65,36 +67,47 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;">
-                            <input type="checkbox" id="sellerToggle" style="width:18px;height:18px;accent-color:var(--color-primary);">
+                        <label class="form-checkbox"
+                               style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;">
+                            <input type="checkbox" id="sellerToggle"
+                                   style="width:18px;height:18px;accent-color:var(--color-primary);">
                             <span class="text-sm" style="font-weight:500;">I want to sell on Shoppiq</span>
                         </label>
-                        <p class="text-xs text-muted" style="margin-top:-8px;margin-bottom:12px;">Register as a seller to list and sell your products. Your account will be reviewed by an admin before activation.</p>
+                        <p class="text-xs text-muted" style="margin-top:-8px;margin-bottom:12px;">Register as a seller
+                            to list and sell your products. Your account will be reviewed by an admin before
+                            activation.</p>
                     </div>
 
                     <div id="sellerFields" style="display:none;">
                         <div style="border-top:1px solid var(--color-border,#333);margin:4px 0 16px;padding-top:16px;">
-                            <p class="text-sm fw-600 mb-md" style="color:var(--color-primary,#3b82f6);">Business Details</p>
+                            <p class="text-sm fw-600 mb-md" style="color:var(--color-primary,#3b82f6);">Business
+                                Details</p>
                         </div>
                         <div class="form-group">
                             <label for="businessName" class="form-label">Business Name</label>
-                            <input type="text" id="businessName" name="businessName" class="form-input" placeholder="Acme Pvt Ltd">
+                            <input type="text" id="businessName" name="businessName" class="form-input"
+                                   placeholder="Acme Pvt Ltd">
                         </div>
                         <div class="form-group">
                             <label for="businessEmail" class="form-label">Business Email</label>
-                            <input type="email" id="businessEmail" name="businessEmail" class="form-input" placeholder="business@example.com">
+                            <input type="email" id="businessEmail" name="businessEmail" class="form-input"
+                                   placeholder="business@example.com">
                         </div>
                         <div class="form-group">
                             <label for="phone" class="form-label">Phone</label>
-                            <input type="tel" id="phone" name="phone" class="form-input" placeholder="9876543210" maxlength="15">
+                            <input type="tel" id="phone" name="phone" class="form-input" placeholder="9876543210"
+                                   maxlength="15">
                         </div>
                         <div class="form-group">
                             <label for="panNumber" class="form-label">PAN Number</label>
-                            <input type="text" id="panNumber" name="panNumber" class="form-input" placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase;">
+                            <input type="text" id="panNumber" name="panNumber" class="form-input"
+                                   placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase;">
                         </div>
                         <div class="form-group">
-                            <label for="gstNumber" class="form-label">GST Number <span class="text-muted">(optional)</span></label>
-                            <input type="text" id="gstNumber" name="gstNumber" class="form-input" placeholder="22AAAAA0000A1Z5" maxlength="20" style="text-transform:uppercase;">
+                            <label for="gstNumber" class="form-label">GST Number <span
+                                    class="text-muted">(optional)</span></label>
+                            <input type="text" id="gstNumber" name="gstNumber" class="form-input"
+                                   placeholder="22AAAAA0000A1Z5" maxlength="20" style="text-transform:uppercase;">
                         </div>
                     </div>
 
@@ -102,7 +115,8 @@
                 </form>
 
                 <div class="text-center mt-lg">
-                    <p class="text-sm">Already have an account? <a id="loginLink" th:href="@{/login}" class="btn-link">Sign in</a></p>
+                    <p class="text-sm">Already have an account? <a id="loginLink" th:href="@{/login}" class="btn-link">Sign
+                        in</a></p>
                 </div>
             </div>
         </div>
@@ -140,10 +154,10 @@
 
         function validateSellerFields() {
             var fields = [
-                { id: "businessName", label: "Business Name" },
-                { id: "businessEmail", label: "Business Email" },
-                { id: "phone", label: "Phone" },
-                { id: "panNumber", label: "PAN Number" }
+                {id: "businessName", label: "Business Name"},
+                {id: "businessEmail", label: "Business Email"},
+                {id: "phone", label: "Phone"},
+                {id: "panNumber", label: "PAN Number"}
             ];
             for (var i = 0; i < fields.length; i++) {
                 var val = document.getElementById(fields[i].id).value.trim();
@@ -208,6 +222,7 @@
         });
 
         var passwordReqs = passwordInput.closest('.form-group').querySelector('.password-requirements');
+
         function toggleReqs() {
             if (!passwordReqs) return;
             var pw = passwordInput.value;
@@ -220,6 +235,7 @@
                 passwordReqs.classList.remove("visible");
             }
         }
+
         if (passwordReqs) {
             passwordInput.addEventListener("focus", function () {
                 if (this.value) passwordReqs.classList.add("visible");

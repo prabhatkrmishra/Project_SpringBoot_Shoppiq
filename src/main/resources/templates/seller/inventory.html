@@ -2,175 +2,199 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Seller Inventory')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="seller-main">
-  <div class="seller-header">
-    <div>
-      <h1>Inventory</h1>
-      <p>Manage your product stock levels</p>
-    </div>
-    <a href="/seller-panel/products" class="btn btn-primary">+ Add Product</a>
-  </div>
+    <main class="seller-main">
+        <div class="seller-header">
+            <div>
+                <h1>Inventory</h1>
+                <p>Manage your product stock levels</p>
+            </div>
+            <a href="/seller-panel/products" class="btn btn-primary">+ Add Product</a>
+        </div>
 
-  <div class="seller-summary-grid">
-    <div class="summary-card"><div class="label">Total</div><div class="value" id="stat-total">0</div></div>
-    <div class="summary-card"><div class="label">In Stock</div><div class="value success" id="stat-in-stock">0</div></div>
-    <div class="summary-card"><div class="label">Low Stock</div><div class="value warning" id="stat-low-stock">0</div></div>
-    <div class="summary-card"><div class="label">Out of Stock</div><div class="value danger" id="stat-out-of-stock">0</div></div>
-  </div>
+        <div class="seller-summary-grid">
+            <div class="summary-card">
+                <div class="label">Total</div>
+                <div class="value" id="stat-total">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">In Stock</div>
+                <div class="value success" id="stat-in-stock">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Low Stock</div>
+                <div class="value warning" id="stat-low-stock">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Out of Stock</div>
+                <div class="value danger" id="stat-out-of-stock">0</div>
+            </div>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-header">
-      <div class="admin-panel-title">Your Products</div>
-      <div class="flex gap-sm">
-        <select id="stock-filter" class="form-input" style="width:auto;">
-          <option value="all">All Stock</option>
-          <option value="low">Low Stock</option>
-          <option value="out">Out of Stock</option>
-        </select>
-      </div>
-    </div>
-    <div class="table-responsive">
-      <table class="seller-table">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="inventory-body">
-          <tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div id="inventory-pagination"></div>
-  </div>
-</main>
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <div class="admin-panel-title">Your Products</div>
+                <div class="flex gap-sm">
+                    <select id="stock-filter" class="form-input" style="width:auto;">
+                        <option value="all">All Stock</option>
+                        <option value="low">Low Stock</option>
+                        <option value="out">Out of Stock</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="seller-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-body">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="inventory-pagination"></div>
+        </div>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script src="/js/sanitize.js"></script>
-<script th:src="@{/js/pagination.js}"></script>
-<script>
-(function () {
-  'use strict';
-  var allItems = [];
-  var currentPage = 0;
-  var PAGE_SIZE = 15;
-  var currentFilter = 'all';
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script>
+        (function () {
+            'use strict';
+            var allItems = [];
+            var currentPage = 0;
+            var PAGE_SIZE = 15;
+            var currentFilter = 'all';
 
-  function stockBadge(status) {
-    if (status === 'IN_STOCK') return '<span class="status-badge in-stock">In Stock</span>';
-    if (status === 'LOW_STOCK') return '<span class="status-badge low-stock">Low Stock</span>';
-    return '<span class="status-badge out-of-stock">Out of Stock</span>';
-  }
+            function stockBadge(status) {
+                if (status === 'IN_STOCK') return '<span class="status-badge in-stock">In Stock</span>';
+                if (status === 'LOW_STOCK') return '<span class="status-badge low-stock">Low Stock</span>';
+                return '<span class="status-badge out-of-stock">Out of Stock</span>';
+            }
 
-  function renderRows(items) {
-    var tbody = document.getElementById('inventory-body');
-    if (!items || items.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No products found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = '';
-    items.forEach(function (item) {
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td><a href="/item/' + item.itemId + '" class="btn-link">' + escapeHtml(item.itemName || '') + '</a></td>' +
-        '<td>' + formatCurrency(item.basePrice) + '</td>' +
-        '<td>' +
-          '<div class="inline-edit">' +
-            '<input type="number" class="stock-input" value="' + item.stockQuantity + '" min="0" data-item-id="' + item.itemId + '">' +
-            '<button class="stock-adjust-btn btn btn-sm btn-primary" data-item-id="' + item.itemId + '">Save</button>' +
-          '</div>' +
-        '</td>' +
-        '<td>' + stockBadge(item.stockStatus) + '</td>' +
-        '<td class="admin-table-actions">' +
-          '<a href="/item/' + item.itemId + '" class="btn btn-sm btn-secondary">Edit</a>' +
-        '</td>';
-      tbody.appendChild(tr);
-    });
-    tbody.querySelectorAll('.stock-adjust-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var itemId = this.dataset.itemId;
-        var input = tbody.querySelector('.stock-input[data-item-id="' + itemId + '"]');
-        var newQty = parseInt(input.value) || 0;
-        API.put('/seller/inventory/' + itemId + '/adjust?quantity=' + newQty + '&reason=Stock adjustment').then(function () {
-          showToast('Stock updated', 'success');
-          loadInventory();
-        }).catch(function (e) { showToast(e.message, 'error'); });
-      });
-    });
-  }
+            function renderRows(items) {
+                var tbody = document.getElementById('inventory-body');
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No products found</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                items.forEach(function (item) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td><a href="/item/' + item.itemId + '" class="btn-link">' + escapeHtml(item.itemName || '') + '</a></td>' +
+                        '<td>' + formatCurrency(item.basePrice) + '</td>' +
+                        '<td>' +
+                        '<div class="inline-edit">' +
+                        '<input type="number" class="stock-input" value="' + item.stockQuantity + '" min="0" data-item-id="' + item.itemId + '">' +
+                        '<button class="stock-adjust-btn btn btn-sm btn-primary" data-item-id="' + item.itemId + '">Save</button>' +
+                        '</div>' +
+                        '</td>' +
+                        '<td>' + stockBadge(item.stockStatus) + '</td>' +
+                        '<td class="admin-table-actions">' +
+                        '<a href="/item/' + item.itemId + '" class="btn btn-sm btn-secondary">Edit</a>' +
+                        '</td>';
+                    tbody.appendChild(tr);
+                });
+                tbody.querySelectorAll('.stock-adjust-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var itemId = this.dataset.itemId;
+                        var input = tbody.querySelector('.stock-input[data-item-id="' + itemId + '"]');
+                        var newQty = parseInt(input.value) || 0;
+                        API.put('/seller/inventory/' + itemId + '/adjust?quantity=' + newQty + '&reason=Stock adjustment').then(function () {
+                            showToast('Stock updated', 'success');
+                            loadInventory();
+                        }).catch(function (e) {
+                            showToast(e.message, 'error');
+                        });
+                    });
+                });
+            }
 
-  function renderInventory(items) {
-    allItems = items || [];
-    var total = allItems.length;
-    var inStock = allItems.filter(function (i) { return i.stockStatus === 'IN_STOCK'; }).length;
-    var lowStock = allItems.filter(function (i) { return i.stockStatus === 'LOW_STOCK'; }).length;
-    var outOfStock = allItems.filter(function (i) { return i.stockStatus === 'OUT_OF_STOCK'; }).length;
-    document.getElementById('stat-total').textContent = total;
-    document.getElementById('stat-in-stock').textContent = inStock;
-    document.getElementById('stat-low-stock').textContent = lowStock;
-    document.getElementById('stat-out-of-stock').textContent = outOfStock;
-    renderRows(allItems);
-  }
+            function renderInventory(items) {
+                allItems = items || [];
+                var total = allItems.length;
+                var inStock = allItems.filter(function (i) {
+                    return i.stockStatus === 'IN_STOCK';
+                }).length;
+                var lowStock = allItems.filter(function (i) {
+                    return i.stockStatus === 'LOW_STOCK';
+                }).length;
+                var outOfStock = allItems.filter(function (i) {
+                    return i.stockStatus === 'OUT_OF_STOCK';
+                }).length;
+                document.getElementById('stat-total').textContent = total;
+                document.getElementById('stat-in-stock').textContent = inStock;
+                document.getElementById('stat-low-stock').textContent = lowStock;
+                document.getElementById('stat-out-of-stock').textContent = outOfStock;
+                renderRows(allItems);
+            }
 
-  function loadFiltered(filter, page) {
-    if (page != null) currentPage = page;
-    currentFilter = filter;
-    var url = '/seller/inventory';
-    if (filter === 'low') url = '/seller/inventory/low-stock';
-    else if (filter === 'out') url = '/seller/inventory/out-of-stock';
-    url += '?page=' + currentPage + '&size=' + PAGE_SIZE;
-    API.get(url).then(function (data) {
-      var items = data && data.content ? data.content : [];
-      renderRows(items);
-      Pagination.render('inventory-pagination', data, function (p) { loadFiltered(currentFilter, p); }, {
-        onPageSizeChange: function (newSize) {
-          PAGE_SIZE = newSize;
-          loadFiltered(currentFilter, 0);
-        }
-      });
-    }).catch(function () {
-      document.getElementById('inventory-body').innerHTML =
-        '<tr><td colspan="5" class="text-center text-muted">Failed to load inventory</td></tr>';
-    });
-  }
+            function loadFiltered(filter, page) {
+                if (page != null) currentPage = page;
+                currentFilter = filter;
+                var url = '/seller/inventory';
+                if (filter === 'low') url = '/seller/inventory/low-stock';
+                else if (filter === 'out') url = '/seller/inventory/out-of-stock';
+                url += '?page=' + currentPage + '&size=' + PAGE_SIZE;
+                API.get(url).then(function (data) {
+                    var items = data && data.content ? data.content : [];
+                    renderRows(items);
+                    Pagination.render('inventory-pagination', data, function (p) {
+                        loadFiltered(currentFilter, p);
+                    }, {
+                        onPageSizeChange: function (newSize) {
+                            PAGE_SIZE = newSize;
+                            loadFiltered(currentFilter, 0);
+                        }
+                    });
+                }).catch(function () {
+                    document.getElementById('inventory-body').innerHTML =
+                        '<tr><td colspan="5" class="text-center text-muted">Failed to load inventory</td></tr>';
+                });
+            }
 
-  function loadInventory(page) {
-    if (page != null) currentPage = page;
-    currentFilter = 'all';
-    API.get('/seller/inventory?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
-      var items = data && data.content ? data.content : [];
-      renderInventory(items);
-      Pagination.render('inventory-pagination', data, loadInventory, {
-        onPageSizeChange: function (newSize) {
-          PAGE_SIZE = newSize;
-          loadInventory(0);
-        }
-      });
-    }).catch(function () {
-      document.getElementById('inventory-body').innerHTML =
-        '<tr><td colspan="5" class="text-center text-muted">Failed to load inventory</td></tr>';
-    });
-  }
+            function loadInventory(page) {
+                if (page != null) currentPage = page;
+                currentFilter = 'all';
+                API.get('/seller/inventory?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+                    var items = data && data.content ? data.content : [];
+                    renderInventory(items);
+                    Pagination.render('inventory-pagination', data, loadInventory, {
+                        onPageSizeChange: function (newSize) {
+                            PAGE_SIZE = newSize;
+                            loadInventory(0);
+                        }
+                    });
+                }).catch(function () {
+                    document.getElementById('inventory-body').innerHTML =
+                        '<tr><td colspan="5" class="text-center text-muted">Failed to load inventory</td></tr>';
+                });
+            }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    loadInventory();
-    document.getElementById('stock-filter').addEventListener('change', function () {
-      currentPage = 0;
-      if (this.value === 'all') {
-        loadInventory(0);
-      } else {
-        loadFiltered(this.value, 0);
-      }
-    });
-  });
-})();
-</script>
+            document.addEventListener('DOMContentLoaded', function () {
+                loadInventory();
+                document.getElementById('stock-filter').addEventListener('change', function () {
+                    currentPage = 0;
+                    if (this.value === 'all') {
+                        loadInventory(0);
+                    } else {
+                        loadFiltered(this.value, 0);
+                    }
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

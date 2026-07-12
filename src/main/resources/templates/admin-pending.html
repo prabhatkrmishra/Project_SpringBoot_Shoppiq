@@ -2,104 +2,128 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Pending Products')}"></head>
 <body>
-<th:block th:replace="~{fragments/admin-header :: admin-header('pending')}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/admin-header :: admin-header('pending')}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="admin-main">
-  <div class="page-header">
-    <h1>Pending Products</h1>
-    <p>Review and approve new product listings</p>
-  </div>
+    <main class="admin-main">
+        <div class="page-header">
+            <h1>Pending Products</h1>
+            <p>Review and approve new product listings</p>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-title">Awaiting Approval</div>
-    <div class="table-responsive">
-      <table class="admin-table">
-        <thead>
-          <tr><th>ID</th><th>Product</th><th>SKU</th><th>Brand</th><th>Price</th><th>Stock</th><th>Category</th><th>Actions</th></tr>
-        </thead>
-        <tbody id="pending-body">
-          <tr><td colspan="8" class="text-center text-muted">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+        <div class="admin-panel">
+            <div class="admin-panel-title">Awaiting Approval</div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product</th>
+                            <th>SKU</th>
+                            <th>Brand</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pending-body">
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-  <div id="pending-pagination"></div>
-</main>
+        <div id="pending-pagination"></div>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script th:src="@{/js/pagination.js}"></script>
-<script src="/js/sanitize.js"></script>
-<script>
-(function () {
-  'use strict';
-  var currentPage = 0;
-  var PAGE_SIZE = 20;
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var currentPage = 0;
+            var PAGE_SIZE = 20;
 
-  function renderProducts(products) {
-    var tbody = document.getElementById('pending-body');
-    if (!products || products.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No pending products</td></tr>';
-      return;
-    }
-    tbody.innerHTML = '';
-    products.forEach(function (p) {
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>' + p.itemId + '</td>' +
-        '<td><strong>' + escapeHtml(p.name || '') + '</strong><br><span class="text-sm text-muted">' + escapeHtml((p.description || '').substring(0, 60)) + '</span></td>' +
-        '<td class="text-sm"><code>' + escapeHtml(p.sku || '') + '</code></td>' +
-        '<td>' + escapeHtml(p.brand || '') + '</td>' +
-        '<td>' + formatCurrency(p.price) + '</td>' +
-        '<td>' + (p.stockQuantity != null ? p.stockQuantity : '') + '</td>' +
-        '<td class="text-sm">' + escapeHtml(p.categoryName || '') + '</td>' +
-        '<td>' +
-          '<button class="btn btn-sm btn-success publish-btn" data-id="' + p.itemId + '">Publish</button> ' +
-          '<button class="btn btn-sm btn-danger reject-btn" data-id="' + p.itemId + '">Reject</button>' +
-        '</td>';
-      tbody.appendChild(tr);
-    });
-    tbody.querySelectorAll('.publish-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.id;
-        API.put('/api/admin/products/' + id + '/publish', {}).then(function () {
-          showToast('Product published', 'success');
-          loadProducts();
-        }).catch(function (e) { showToast(e.message, 'error'); });
-      });
-    });
-    tbody.querySelectorAll('.reject-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = this.dataset.id;
-        showConfirmModal({ title: 'Reject Product', message: 'Reject this product?', confirmText: 'Reject', danger: true }).then(function (confirmed) {
-          if (!confirmed) return;
-          API.put('/api/admin/products/' + id + '/reject', {}).then(function () {
-            showToast('Product rejected', 'success');
-            loadProducts();
-          }).catch(function (e) { showToast(e.message, 'error'); });
-        });
-      });
-    });
-  }
-  function loadProducts(page) {
-    if (page != null) currentPage = page;
-    API.get('/api/admin/products/pending?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
-      var items = data && data.content ? data.content : [];
-      renderProducts(items);
-      Pagination.render('pending-pagination', data, loadProducts, {
-        onPageSizeChange: function (newSize) {
-          PAGE_SIZE = newSize;
-          loadProducts(0);
-        }
-      });
-    }).catch(function () {
-      document.getElementById('pending-body').innerHTML =
-        '<tr><td colspan="8" class="text-center text-muted">Failed to load</td></tr>';
-    });
-  }
-  document.addEventListener('DOMContentLoaded', function () { loadProducts(); });
-})();
-</script>
+            function renderProducts(products) {
+                var tbody = document.getElementById('pending-body');
+                if (!products || products.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No pending products</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                products.forEach(function (p) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + p.itemId + '</td>' +
+                        '<td><strong>' + escapeHtml(p.name || '') + '</strong><br><span class="text-sm text-muted">' + escapeHtml((p.description || '').substring(0, 60)) + '</span></td>' +
+                        '<td class="text-sm"><code>' + escapeHtml(p.sku || '') + '</code></td>' +
+                        '<td>' + escapeHtml(p.brand || '') + '</td>' +
+                        '<td>' + formatCurrency(p.price) + '</td>' +
+                        '<td>' + (p.stockQuantity != null ? p.stockQuantity : '') + '</td>' +
+                        '<td class="text-sm">' + escapeHtml(p.categoryName || '') + '</td>' +
+                        '<td>' +
+                        '<button class="btn btn-sm btn-success publish-btn" data-id="' + p.itemId + '">Publish</button> ' +
+                        '<button class="btn btn-sm btn-danger reject-btn" data-id="' + p.itemId + '">Reject</button>' +
+                        '</td>';
+                    tbody.appendChild(tr);
+                });
+                tbody.querySelectorAll('.publish-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.id;
+                        API.put('/api/admin/products/' + id + '/publish', {}).then(function () {
+                            showToast('Product published', 'success');
+                            loadProducts();
+                        }).catch(function (e) {
+                            showToast(e.message, 'error');
+                        });
+                    });
+                });
+                tbody.querySelectorAll('.reject-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = this.dataset.id;
+                        showConfirmModal({
+                            title: 'Reject Product',
+                            message: 'Reject this product?',
+                            confirmText: 'Reject',
+                            danger: true
+                        }).then(function (confirmed) {
+                            if (!confirmed) return;
+                            API.put('/api/admin/products/' + id + '/reject', {}).then(function () {
+                                showToast('Product rejected', 'success');
+                                loadProducts();
+                            }).catch(function (e) {
+                                showToast(e.message, 'error');
+                            });
+                        });
+                    });
+                });
+            }
+
+            function loadProducts(page) {
+                if (page != null) currentPage = page;
+                API.get('/api/admin/products/pending?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+                    var items = data && data.content ? data.content : [];
+                    renderProducts(items);
+                    Pagination.render('pending-pagination', data, loadProducts, {
+                        onPageSizeChange: function (newSize) {
+                            PAGE_SIZE = newSize;
+                            loadProducts(0);
+                        }
+                    });
+                }).catch(function () {
+                    document.getElementById('pending-body').innerHTML =
+                        '<tr><td colspan="8" class="text-center text-muted">Failed to load</td></tr>';
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                loadProducts();
+            });
+        })();
+    </script>
 </body>
 </html>

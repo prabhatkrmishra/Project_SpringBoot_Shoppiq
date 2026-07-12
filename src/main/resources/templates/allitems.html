@@ -2,166 +2,196 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Shop')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="page">
-  <div class="container">
-    <div class="page-header">
-      <h1>All Products</h1>
-      <p id="itemCount"></p>
-    </div>
+    <main class="page">
+        <div class="container">
+            <div class="page-header">
+                <h1>All Products</h1>
+                <p id="itemCount"></p>
+            </div>
 
-    <div class="flex flex-col gap-md" style="margin-bottom:24px;">
-      <form class="form-inline" id="filterForm" onsubmit="return false;">
-        <div class="form-group" style="flex:2;">
-          <label for="search" class="sr-only">Search products</label>
-          <input type="search" id="search" class="form-input" placeholder="Search products..." autocomplete="off">
+            <div class="flex flex-col gap-md" style="margin-bottom:24px;">
+                <form class="form-inline" id="filterForm" onsubmit="return false;">
+                    <div class="form-group" style="flex:2;">
+                        <label for="search" class="sr-only">Search products</label>
+                        <input type="search" id="search" class="form-input" placeholder="Search products..."
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="categoryFilter" class="sr-only">Category</label>
+                        <select id="categoryFilter" class="form-select">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="loadItems(0)">Search</button>
+                </form>
+            </div>
+
+            <div id="emptyState" class="cart-empty" style="display:none;">
+                <h2>No products found</h2>
+                <p>Try adjusting your search or filter criteria.</p>
+                <button class="btn btn-primary" onclick="resetFilters()">Clear Filters</button>
+            </div>
+
+            <div id="loadingState" class="text-center" style="padding:48px 0;">
+                <div class="spinner"></div>
+                <p class="text-muted mt-md">Loading products...</p>
+            </div>
+
+            <div id="itemGrid" class="grid-4" style="display:none;"></div>
+            <div id="items-pagination"></div>
         </div>
-        <div class="form-group">
-          <label for="categoryFilter" class="sr-only">Category</label>
-          <select id="categoryFilter" class="form-select">
-            <option value="">All Categories</option>
-          </select>
-        </div>
-        <button type="button" class="btn btn-primary" onclick="loadItems(0)">Search</button>
-      </form>
-    </div>
+    </main>
 
-    <div id="emptyState" class="cart-empty" style="display:none;">
-      <h2>No products found</h2>
-      <p>Try adjusting your search or filter criteria.</p>
-      <button class="btn btn-primary" onclick="resetFilters()">Clear Filters</button>
-    </div>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
 
-    <div id="loadingState" class="text-center" style="padding:48px 0;">
-      <div class="spinner"></div>
-      <p class="text-muted mt-md">Loading products...</p>
-    </div>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var currentPage = 0;
+        var PAGE_SIZE = 12;
 
-    <div id="itemGrid" class="grid-4" style="display:none;"></div>
-    <div id="items-pagination"></div>
-  </div>
-</main>
+        document.addEventListener("DOMContentLoaded", function () {
+            loadCategories();
+            loadItems(0);
+            document.getElementById("search").addEventListener("keyup", debounce(function () {
+                loadItems(0);
+            }, 300));
+            document.getElementById("categoryFilter").addEventListener("change", function () {
+                loadItems(0);
+            });
+        });
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
+        async function loadCategories() {
+            try {
+                var cats = await API.get("/categories/all");
+                var sel = document.getElementById("categoryFilter");
+                cats.forEach(function (c) {
+                    var opt = document.createElement("option");
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { /* silent */
+            }
+        }
 
-<script th:src="@{/js/pagination.js}"></script>
-<script th:inline="javascript">
-/*<![CDATA[*/
-var currentPage = 0;
-var PAGE_SIZE = 12;
+        async function loadItems(page) {
+            if (page != null) currentPage = page;
+            var grid = document.getElementById("itemGrid");
+            var empty = document.getElementById("emptyState");
+            var loading = document.getElementById("loadingState");
+            loading.style.display = "";
+            grid.style.display = "none";
+            empty.style.display = "none";
 
-document.addEventListener("DOMContentLoaded", function () {
-  loadCategories();
-  loadItems(0);
-  document.getElementById("search").addEventListener("keyup", debounce(function () { loadItems(0); }, 300));
-  document.getElementById("categoryFilter").addEventListener("change", function () { loadItems(0); });
-});
+            try {
+                var search = document.getElementById("search").value.toLowerCase();
+                var catId = document.getElementById("categoryFilter").value;
 
-async function loadCategories() {
-  try {
-    var cats = await API.get("/categories/all");
-    var sel = document.getElementById("categoryFilter");
-    cats.forEach(function (c) {
-      var opt = document.createElement("option");
-      opt.value = c.id;
-      opt.textContent = c.name;
-      sel.appendChild(opt);
-    });
-  } catch (e) { /* silent */ }
-}
+                var url = "/items/all?page=" + currentPage + "&size=" + PAGE_SIZE;
+                var data = await API.get(url);
+                var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
 
-async function loadItems(page) {
-  if (page != null) currentPage = page;
-  var grid = document.getElementById("itemGrid");
-  var empty = document.getElementById("emptyState");
-  var loading = document.getElementById("loadingState");
-  loading.style.display = "";
-  grid.style.display = "none";
-  empty.style.display = "none";
+                var filtered = items.filter(function (item) {
+                    var matchSearch = !search || item.name.toLowerCase().indexOf(search) !== -1 ||
+                        (item.description && item.description.toLowerCase().indexOf(search) !== -1);
+                    var matchCat = !catId || (item.category && String(item.category.id) === catId);
+                    return matchSearch && matchCat;
+                });
 
-  try {
-    var search = document.getElementById("search").value.toLowerCase();
-    var catId = document.getElementById("categoryFilter").value;
+                document.getElementById("itemCount").textContent = (data.totalElements || filtered.length) + " products available";
 
-    var url = "/items/all?page=" + currentPage + "&size=" + PAGE_SIZE;
-    var data = await API.get(url);
-    var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+                if (filtered.length === 0) {
+                    empty.style.display = "";
+                    grid.style.display = "none";
+                } else {
+                    grid.innerHTML = filtered.map(renderItemCard).join("");
+                    grid.style.display = "";
+                    empty.style.display = "none";
+                }
 
-    var filtered = items.filter(function (item) {
-      var matchSearch = !search || item.name.toLowerCase().indexOf(search) !== -1 || (item.description && item.description.toLowerCase().indexOf(search) !== -1);
-      var matchCat = !catId || (item.category && String(item.category.id) === catId);
-      return matchSearch && matchCat;
-    });
+                Pagination.render("items-pagination", data, loadItems, {
+                    onPageSizeChange: function (newSize) {
+                        PAGE_SIZE = newSize;
+                        loadItems(0);
+                    }
+                });
+            } catch (e) {
+                empty.style.display = "";
+                empty.querySelector("h2").textContent = "Could not load products";
+                empty.querySelector("p").textContent = e.message || "Please try again later.";
+            } finally {
+                loading.style.display = "none";
+            }
+            if (typeof lucide !== "undefined") lucide.createIcons();
+        }
 
-    document.getElementById("itemCount").textContent = (data.totalElements || filtered.length) + " products available";
+        function renderItemCard(item) {
+            var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=687&fit=crop";
+            var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
+            var priceHtml = '<span class="price-new">$' + escapeHtml(String(item.price)) + '</span>';
+            if (hasDiscount) {
+                var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
+                priceHtml = '<span class="price-old">$' + escapeHtml(String(item.price)) + '</span> ' +
+                    '<span class="price-new">$' + salePrice + '</span> ' +
+                    '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
+            }
+            var stockClass = item.stockQuantity > 10 ? "badge-success" : (item.stockQuantity > 0 ? "badge-warning" : "badge-danger");
+            var stockText = item.stockQuantity > 0 ? "In Stock" : "Out of Stock";
+            return '<a href="/item/' + item.slug + '" class="card-link">' +
+                '<article class="card product-card">' +
+                '<div class="card-image-wrapper">' +
+                '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
+                (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
+                '</div>' +
+                '<div class="card-body">' +
+                '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
+                '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
+                '<div class="card-price">' + priceHtml + '</div>' +
+                '<div class="card-meta"><span class="badge ' + stockClass + '">' + stockText + '</span></div>' +
+                '</div>' +
+                '</article>' +
+                '</a>';
+        }
 
-    if (filtered.length === 0) {
-      empty.style.display = "";
-      grid.style.display = "none";
-    } else {
-      grid.innerHTML = filtered.map(renderItemCard).join("");
-      grid.style.display = "";
-      empty.style.display = "none";
-    }
+        function resetFilters() {
+            document.getElementById("search").value = "";
+            document.getElementById("categoryFilter").value = "";
+            loadItems(0);
+        }
 
-    Pagination.render("items-pagination", data, loadItems, {
-      onPageSizeChange: function (newSize) {
-        PAGE_SIZE = newSize;
-        loadItems(0);
-      }
-    });
-  } catch (e) {
-    empty.style.display = "";
-    empty.querySelector("h2").textContent = "Could not load products";
-    empty.querySelector("p").textContent = e.message || "Please try again later.";
-  } finally {
-    loading.style.display = "none";
-  }
-  if (typeof lucide !== "undefined") lucide.createIcons();
-}
+        function escapeHtml(str) {
+            var d = document.createElement("div");
+            d.appendChild(document.createTextNode(str));
+            return d.innerHTML;
+        }
 
-function renderItemCard(item) {
-  var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=687&fit=crop";
-  var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
-  var priceHtml = '<span class="price-new">$' + escapeHtml(String(item.price)) + '</span>';
-  if (hasDiscount) {
-    var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
-    priceHtml = '<span class="price-old">$' + escapeHtml(String(item.price)) + '</span> ' +
-                '<span class="price-new">$' + salePrice + '</span> ' +
-                '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
-  }
-  var stockClass = item.stockQuantity > 10 ? "badge-success" : (item.stockQuantity > 0 ? "badge-warning" : "badge-danger");
-  var stockText = item.stockQuantity > 0 ? "In Stock" : "Out of Stock";
-  return '<a href="/item/' + item.slug + '" class="card-link">' +
-    '<article class="card product-card">' +
-      '<div class="card-image-wrapper">' +
-        '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
-        (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
-      '</div>' +
-      '<div class="card-body">' +
-        '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
-        '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
-        '<div class="card-price">' + priceHtml + '</div>' +
-        '<div class="card-meta"><span class="badge ' + stockClass + '">' + stockText + '</span></div>' +
-      '</div>' +
-    '</article>' +
-  '</a>';
-}
+        function escapeAttr(str) {
+            return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
 
-function resetFilters() {
-  document.getElementById("search").value = "";
-  document.getElementById("categoryFilter").value = "";
-  loadItems(0);
-}
+        function truncateWords(str, max) {
+            if (!str) return '';
+            var w = str.trim().split(/\s+/);
+            return w.length <= max ? str : w.slice(0, max).join(' ') + '...';
+        }
 
-function escapeHtml(str) { var d = document.createElement("div"); d.appendChild(document.createTextNode(str)); return d.innerHTML; }
-function escapeAttr(str) { return str.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function truncateWords(str, max) { if (!str) return ''; var w = str.trim().split(/\s+/); return w.length <= max ? str : w.slice(0, max).join(' ') + '...'; }
-function debounce(fn, ms) { var t; return function () { var ctx = this, args = arguments; clearTimeout(t); t = setTimeout(function () { fn.apply(ctx, args); }, ms); }; }
-/*]]>*/
-</script>
+        function debounce(fn, ms) {
+            var t;
+            return function () {
+                var ctx = this, args = arguments;
+                clearTimeout(t);
+                t = setTimeout(function () {
+                    fn.apply(ctx, args);
+                }, ms);
+            };
+        }
+
+        /*]]>*/
+    </script>
 </body>
 </html>

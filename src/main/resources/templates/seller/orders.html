@@ -2,170 +2,176 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Seller Orders')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="seller-main">
-  <div class="seller-header">
-    <div>
-      <h1>Orders</h1>
-      <p>View and manage incoming orders</p>
-    </div>
-  </div>
+    <main class="seller-main">
+        <div class="seller-header">
+            <div>
+                <h1>Orders</h1>
+                <p>View and manage incoming orders</p>
+            </div>
+        </div>
 
-  <div class="admin-filters">
-    <select id="statusFilter">
-      <option value="">All Orders</option>
-      <option value="PLACED">Placed</option>
-      <option value="CONFIRMED">Confirmed</option>
-      <option value="SHIPPED">Shipped</option>
-      <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
-      <option value="DELIVERED">Delivered</option>
-      <option value="CANCEL_REQUEST">Cancel Requested</option>
-      <option value="CANCELLED">Cancelled</option>
-      <option value="RETURN_REQUEST">Return Requested</option>
-      <option value="RETURN_PICKUP">Return Pickup</option>
-      <option value="PICKUP_ARRIVED">Pickup Arrived</option>
-      <option value="RETURNED">Returned</option>
-      <option value="REFUND_REQUEST">Refund Requested</option>
-      <option value="REFUNDED">Refunded</option>
-      <option value="REPLACE_REQUEST">Replace Requested</option>
-      <option value="REPLACE_PICKUP">Replace Pickup</option>
-      <option value="ISSUE_REPLACE">Issue Replace</option>
-      <option value="REPLACE_DELIVERED">Replace Delivered</option>
-      <option value="REPLACED">Replaced</option>
-    </select>
-  </div>
+        <div class="admin-filters">
+            <select id="statusFilter">
+                <option value="">All Orders</option>
+                <option value="PLACED">Placed</option>
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="SHIPPED">Shipped</option>
+                <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCEL_REQUEST">Cancel Requested</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="RETURN_REQUEST">Return Requested</option>
+                <option value="RETURN_PICKUP">Return Pickup</option>
+                <option value="PICKUP_ARRIVED">Pickup Arrived</option>
+                <option value="RETURNED">Returned</option>
+                <option value="REFUND_REQUEST">Refund Requested</option>
+                <option value="REFUNDED">Refunded</option>
+                <option value="REPLACE_REQUEST">Replace Requested</option>
+                <option value="REPLACE_PICKUP">Replace Pickup</option>
+                <option value="ISSUE_REPLACE">Issue Replace</option>
+                <option value="REPLACE_DELIVERED">Replace Delivered</option>
+                <option value="REPLACED">Replaced</option>
+            </select>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-title">Order List</div>
-    <div class="table-responsive">
-      <table class="seller-table">
-        <thead>
-          <tr>
-            <th>Order #</th>
-            <th>Items</th>
-            <th>Total</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="orders-body">
-          <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div id="orders-pagination"></div>
-  </div>
-</main>
+        <div class="admin-panel">
+            <div class="admin-panel-title">Order List</div>
+            <div class="table-responsive">
+                <table class="seller-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-body">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="orders-pagination"></div>
+        </div>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script src="/js/sanitize.js"></script>
-<script th:src="@{/js/pagination.js}"></script>
-<script>
-(function () {
-  'use strict';
-  var allOrders = [];
-  var currentPage = 0;
-  var PAGE_SIZE = 15;
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script>
+        (function () {
+            'use strict';
+            var allOrders = [];
+            var currentPage = 0;
+            var PAGE_SIZE = 15;
 
-  function statusClass(s) {
-    if (s === 'DELIVERED' || s === 'COMPLETED' || s === 'REPLACE_DELIVERED') return 'active';
-    if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
-    return 'pending';
-  }
+            function statusClass(s) {
+                if (s === 'DELIVERED' || s === 'COMPLETED' || s === 'REPLACE_DELIVERED') return 'active';
+                if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
+                return 'pending';
+            }
 
-  function renderOrders(orders) {
-    allOrders = orders || [];
-    var filter = document.getElementById('statusFilter').value;
-    var filtered = filter ? allOrders.filter(function (o) { return o.status === filter; }) : allOrders;
-    var tbody = document.getElementById('orders-body');
-    if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No orders found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = '';
-    filtered.forEach(function (o) {
-      var itemCount = o.items ? o.items.length : 0;
-      var actions = '<a href="/seller-panel/orders?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a>';
-      if (o.status === 'PLACED') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="CONFIRMED">Process</button>';
-        actions += ' <button class="btn btn-sm btn-danger status-btn" data-order-id="' + o.id + '" data-status="CANCELLED">Cancel</button>';
-      } else if (o.status === 'CONFIRMED') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="SHIPPED">Ship</button>';
-      } else if (o.status === 'SHIPPED') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="OUT_FOR_DELIVERY">Out for Delivery</button>';
-      } else if (o.status === 'OUT_FOR_DELIVERY') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="DELIVERED">Deliver</button>';
-      } else if (o.status === 'CANCEL_REQUEST') {
-        actions += ' <button class="btn btn-sm btn-danger status-btn" data-order-id="' + o.id + '" data-status="CANCELLED">Approve Cancel</button>';
-      } else if (o.status === 'RETURN_REQUEST') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="RETURN_PICKUP">Schedule Pickup</button>';
-      } else if (o.status === 'REFUND_REQUEST') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="RETURN_PICKUP">Schedule Pickup</button>';
-      } else if (o.status === 'REPLACE_REQUEST') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="REPLACE_PICKUP">Schedule Pickup</button>';
-      } else if (o.status === 'RETURN_PICKUP') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="PICKUP_ARRIVED">Pickup Arrived</button>';
-      } else if (o.status === 'REPLACE_PICKUP') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="PICKUP_ARRIVED">Pickup Arrived</button>';
-      } else if (o.status === 'PICKUP_ARRIVED') {
-        actions += ' <button class="btn btn-sm btn-success status-btn" data-order-id="' + o.id + '" data-status="RETURNED">Complete Return</button>';
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="REFUNDED">Process Refund</button>';
-        actions += ' <button class="btn btn-sm btn-warning status-btn" data-order-id="' + o.id + '" data-status="ISSUE_REPLACE">Issue Replace</button>';
-      } else if (o.status === 'ISSUE_REPLACE') {
-        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="REPLACE_DELIVERED">Replace Delivered</button>';
-      } else if (o.status === 'REPLACE_DELIVERED') {
-        actions += ' <button class="btn btn-sm btn-success status-btn" data-order-id="' + o.id + '" data-status="REPLACED">Complete Replacement</button>';
-      }
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td><a href="/seller-panel/orders?id=' + o.id + '" class="btn-link">#' + o.id + '</a></td>' +
-        '<td>' + itemCount + '</td>' +
-        '<td>' + formatCurrency(o.grandTotal) + '</td>' +
-        '<td class="text-sm text-muted">' + formatDate(o.placedAt) + '</td>' +
-        '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
-        '<td class="admin-table-actions">' + actions + '</td>';
-      tbody.appendChild(tr);
-    });
-    tbody.querySelectorAll('.status-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var orderId = this.dataset.orderId;
-        var newStatus = this.dataset.status;
-        API.put('/seller/orders/' + orderId + '/status?status=' + newStatus).then(function () {
-          showToast('Order status updated', 'success');
-          loadOrders();
-        }).catch(function (e) { showToast(e.message, 'error'); });
-      });
-    });
-  }
+            function renderOrders(orders) {
+                allOrders = orders || [];
+                var filter = document.getElementById('statusFilter').value;
+                var filtered = filter ? allOrders.filter(function (o) {
+                    return o.status === filter;
+                }) : allOrders;
+                var tbody = document.getElementById('orders-body');
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No orders found</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                filtered.forEach(function (o) {
+                    var itemCount = o.items ? o.items.length : 0;
+                    var actions = '<a href="/seller-panel/orders?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a>';
+                    if (o.status === 'PLACED') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="CONFIRMED">Process</button>';
+                        actions += ' <button class="btn btn-sm btn-danger status-btn" data-order-id="' + o.id + '" data-status="CANCELLED">Cancel</button>';
+                    } else if (o.status === 'CONFIRMED') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="SHIPPED">Ship</button>';
+                    } else if (o.status === 'SHIPPED') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="OUT_FOR_DELIVERY">Out for Delivery</button>';
+                    } else if (o.status === 'OUT_FOR_DELIVERY') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="DELIVERED">Deliver</button>';
+                    } else if (o.status === 'CANCEL_REQUEST') {
+                        actions += ' <button class="btn btn-sm btn-danger status-btn" data-order-id="' + o.id + '" data-status="CANCELLED">Approve Cancel</button>';
+                    } else if (o.status === 'RETURN_REQUEST') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="RETURN_PICKUP">Schedule Pickup</button>';
+                    } else if (o.status === 'REFUND_REQUEST') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="RETURN_PICKUP">Schedule Pickup</button>';
+                    } else if (o.status === 'REPLACE_REQUEST') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="REPLACE_PICKUP">Schedule Pickup</button>';
+                    } else if (o.status === 'RETURN_PICKUP') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="PICKUP_ARRIVED">Pickup Arrived</button>';
+                    } else if (o.status === 'REPLACE_PICKUP') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="PICKUP_ARRIVED">Pickup Arrived</button>';
+                    } else if (o.status === 'PICKUP_ARRIVED') {
+                        actions += ' <button class="btn btn-sm btn-success status-btn" data-order-id="' + o.id + '" data-status="RETURNED">Complete Return</button>';
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="REFUNDED">Process Refund</button>';
+                        actions += ' <button class="btn btn-sm btn-warning status-btn" data-order-id="' + o.id + '" data-status="ISSUE_REPLACE">Issue Replace</button>';
+                    } else if (o.status === 'ISSUE_REPLACE') {
+                        actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="REPLACE_DELIVERED">Replace Delivered</button>';
+                    } else if (o.status === 'REPLACE_DELIVERED') {
+                        actions += ' <button class="btn btn-sm btn-success status-btn" data-order-id="' + o.id + '" data-status="REPLACED">Complete Replacement</button>';
+                    }
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td><a href="/seller-panel/orders?id=' + o.id + '" class="btn-link">#' + o.id + '</a></td>' +
+                        '<td>' + itemCount + '</td>' +
+                        '<td>' + formatCurrency(o.grandTotal) + '</td>' +
+                        '<td class="text-sm text-muted">' + formatDate(o.placedAt) + '</td>' +
+                        '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
+                        '<td class="admin-table-actions">' + actions + '</td>';
+                    tbody.appendChild(tr);
+                });
+                tbody.querySelectorAll('.status-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var orderId = this.dataset.orderId;
+                        var newStatus = this.dataset.status;
+                        API.put('/seller/orders/' + orderId + '/status?status=' + newStatus).then(function () {
+                            showToast('Order status updated', 'success');
+                            loadOrders();
+                        }).catch(function (e) {
+                            showToast(e.message, 'error');
+                        });
+                    });
+                });
+            }
 
-  function loadOrders(page) {
-    if (page != null) currentPage = page;
-    API.get('/seller/orders?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
-      allOrders = data && data.content ? data.content : [];
-      renderOrders(allOrders);
-      Pagination.render('orders-pagination', data, loadOrders, {
-        onPageSizeChange: function (newSize) {
-          PAGE_SIZE = newSize;
-          loadOrders(0);
-        }
-      });
-    }).catch(function () {
-      document.getElementById('orders-body').innerHTML =
-        '<tr><td colspan="6" class="text-center text-muted">Failed to load orders</td></tr>';
-    });
-  }
+            function loadOrders(page) {
+                if (page != null) currentPage = page;
+                API.get('/seller/orders?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+                    allOrders = data && data.content ? data.content : [];
+                    renderOrders(allOrders);
+                    Pagination.render('orders-pagination', data, loadOrders, {
+                        onPageSizeChange: function (newSize) {
+                            PAGE_SIZE = newSize;
+                            loadOrders(0);
+                        }
+                    });
+                }).catch(function () {
+                    document.getElementById('orders-body').innerHTML =
+                        '<tr><td colspan="6" class="text-center text-muted">Failed to load orders</td></tr>';
+                });
+            }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    loadOrders();
-    document.getElementById('statusFilter').addEventListener('change', function () {
-      currentPage = 0;
-      loadOrders(0);
-    });
-  });
-})();
-</script>
+            document.addEventListener('DOMContentLoaded', function () {
+                loadOrders();
+                document.getElementById('statusFilter').addEventListener('change', function () {
+                    currentPage = 0;
+                    loadOrders(0);
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

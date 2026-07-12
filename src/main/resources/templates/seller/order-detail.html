@@ -2,148 +2,159 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Order Detail')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="page">
-  <div class="container container-narrow">
-    <div id="order-loading" class="flex-center" style="padding:3rem;">
-      <span class="spinner"></span>
-    </div>
+    <main class="page">
+        <div class="container container-narrow">
+            <div id="order-loading" class="flex-center" style="padding:3rem;">
+                <span class="spinner"></span>
+            </div>
 
-    <div id="order-content" style="display:none;">
-      <div class="page-header">
-        <h1>Order #<span id="order-id"></span></h1>
-        <div class="flex items-center gap-sm">
-          <span class="badge" id="order-status"></span>
-          <span class="text-muted text-sm" id="order-date"></span>
+            <div id="order-content" style="display:none;">
+                <div class="page-header">
+                    <h1>Order #<span id="order-id"></span></h1>
+                    <div class="flex items-center gap-sm">
+                        <span class="badge" id="order-status"></span>
+                        <span class="text-muted text-sm" id="order-date"></span>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Order Items</div>
+                    <div id="order-items"></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Order Summary</div>
+                    <div class="cart-summary-row"><span>Subtotal</span><span id="order-subtotal">$0.00</span></div>
+                    <div class="cart-summary-row"><span>Shipping</span><span id="order-shipping">$0.00</span></div>
+                    <div class="cart-summary-row" id="order-discount-row" style="display:none;">
+                        <span>Discount</span><span class="discount" id="order-discount">-$0.00</span></div>
+                    <div class="cart-summary-row total"><span>Total</span><span id="order-total">$0.00</span></div>
+                </div>
+
+                <div class="mt-lg flex gap-sm">
+                    <a href="/seller-panel/orders" class="btn btn-secondary">&larr; Back to Orders</a>
+                    <select id="status-update" class="form-input" style="width:auto;display:none;"></select>
+                    <button id="update-status-btn" class="btn btn-primary" style="display:none;">Update Status</button>
+                </div>
+            </div>
         </div>
-      </div>
+    </main>
 
-      <div class="panel">
-        <div class="panel-title">Order Items</div>
-        <div id="order-items"></div>
-      </div>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var currentOrder = null;
 
-      <div class="panel">
-        <div class="panel-title">Order Summary</div>
-        <div class="cart-summary-row"><span>Subtotal</span><span id="order-subtotal">$0.00</span></div>
-        <div class="cart-summary-row"><span>Shipping</span><span id="order-shipping">$0.00</span></div>
-        <div class="cart-summary-row" id="order-discount-row" style="display:none;"><span>Discount</span><span class="discount" id="order-discount">-$0.00</span></div>
-        <div class="cart-summary-row total"><span>Total</span><span id="order-total">$0.00</span></div>
-      </div>
+            function badgeClass(status) {
+                if (status === 'DELIVERED' || status === 'COMPLETED' || status === 'REPLACE_DELIVERED') return 'badge-success';
+                if (status === 'CANCELLED' || status === 'RETURNED' || status === 'REFUNDED' || status === 'REPLACED') return 'badge-danger';
+                if (status === 'CANCEL_REQUEST' || status === 'RETURN_REQUEST' || status === 'REFUND_REQUEST' || status === 'REPLACE_REQUEST') return 'badge-info';
+                if (status === 'RETURN_PICKUP' || status === 'REPLACE_PICKUP' || status === 'PICKUP_ARRIVED' || status === 'ISSUE_REPLACE') return 'badge-info';
+                return 'badge-warning';
+            }
 
-      <div class="mt-lg flex gap-sm">
-        <a href="/seller-panel/orders" class="btn btn-secondary">&larr; Back to Orders</a>
-        <select id="status-update" class="form-input" style="width:auto;display:none;"></select>
-        <button id="update-status-btn" class="btn btn-primary" style="display:none;">Update Status</button>
-      </div>
-    </div>
-  </div>
-</main>
+            var nextStatusMap = {
+                'PLACED': [{value: 'CONFIRMED', label: 'Confirm'}, {value: 'CANCELLED', label: 'Cancel'}],
+                'CONFIRMED': [{value: 'SHIPPED', label: 'Ship'}],
+                'SHIPPED': [{value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery'}],
+                'OUT_FOR_DELIVERY': [{value: 'DELIVERED', label: 'Deliver'}],
+                'DELIVERED': [{value: 'RETURN_REQUEST', label: 'Return'}, {
+                    value: 'REFUND_REQUEST',
+                    label: 'Refund'
+                }, {value: 'REPLACE_REQUEST', label: 'Replace'}],
+                'CANCEL_REQUEST': [{value: 'CANCELLED', label: 'Approve Cancel'}],
+                'RETURN_REQUEST': [{value: 'RETURN_PICKUP', label: 'Schedule Pickup'}],
+                'REFUND_REQUEST': [{value: 'RETURN_PICKUP', label: 'Schedule Pickup'}],
+                'REPLACE_REQUEST': [{value: 'REPLACE_PICKUP', label: 'Schedule Pickup'}],
+                'RETURN_PICKUP': [{value: 'PICKUP_ARRIVED', label: 'Pickup Arrived'}],
+                'REPLACE_PICKUP': [{value: 'PICKUP_ARRIVED', label: 'Pickup Arrived'}],
+                'PICKUP_ARRIVED': [{value: 'RETURNED', label: 'Complete Return'}, {
+                    value: 'REFUNDED',
+                    label: 'Process Refund'
+                }, {value: 'ISSUE_REPLACE', label: 'Issue Replace'}],
+                'ISSUE_REPLACE': [{value: 'REPLACE_DELIVERED', label: 'Replace Delivered'}],
+                'REPLACE_DELIVERED': [{value: 'REPLACED', label: 'Complete Replacement'}]
+            };
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script src="/js/sanitize.js"></script>
-<script>
-(function () {
-  'use strict';
-  var currentOrder = null;
-  function badgeClass(status) {
-    if (status === 'DELIVERED' || status === 'COMPLETED' || status === 'REPLACE_DELIVERED') return 'badge-success';
-    if (status === 'CANCELLED' || status === 'RETURNED' || status === 'REFUNDED' || status === 'REPLACED') return 'badge-danger';
-    if (status === 'CANCEL_REQUEST' || status === 'RETURN_REQUEST' || status === 'REFUND_REQUEST' || status === 'REPLACE_REQUEST') return 'badge-info';
-    if (status === 'RETURN_PICKUP' || status === 'REPLACE_PICKUP' || status === 'PICKUP_ARRIVED' || status === 'ISSUE_REPLACE') return 'badge-info';
-    return 'badge-warning';
-  }
-  var nextStatusMap = {
-    'PLACED':        [{ value: 'CONFIRMED', label: 'Confirm' }, { value: 'CANCELLED', label: 'Cancel' }],
-    'CONFIRMED':     [{ value: 'SHIPPED', label: 'Ship' }],
-    'SHIPPED':       [{ value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' }],
-    'OUT_FOR_DELIVERY': [{ value: 'DELIVERED', label: 'Deliver' }],
-    'DELIVERED':     [{ value: 'RETURN_REQUEST', label: 'Return' }, { value: 'REFUND_REQUEST', label: 'Refund' }, { value: 'REPLACE_REQUEST', label: 'Replace' }],
-    'CANCEL_REQUEST': [{ value: 'CANCELLED', label: 'Approve Cancel' }],
-    'RETURN_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
-    'REFUND_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
-    'REPLACE_REQUEST': [{ value: 'REPLACE_PICKUP', label: 'Schedule Pickup' }],
-    'RETURN_PICKUP': [{ value: 'PICKUP_ARRIVED', label: 'Pickup Arrived' }],
-    'REPLACE_PICKUP': [{ value: 'PICKUP_ARRIVED', label: 'Pickup Arrived' }],
-    'PICKUP_ARRIVED': [{ value: 'RETURNED', label: 'Complete Return' }, { value: 'REFUNDED', label: 'Process Refund' }, { value: 'ISSUE_REPLACE', label: 'Issue Replace' }],
-    'ISSUE_REPLACE': [{ value: 'REPLACE_DELIVERED', label: 'Replace Delivered' }],
-    'REPLACE_DELIVERED': [{ value: 'REPLACED', label: 'Complete Replacement' }]
-  };
-  function renderOrder(order) {
-    currentOrder = order;
-    document.getElementById('order-loading').style.display = 'none';
-    document.getElementById('order-content').style.display = '';
-    document.getElementById('order-id').textContent = order.id;
-    var statusEl = document.getElementById('order-status');
-    statusEl.textContent = order.status;
-    statusEl.className = 'badge ' + badgeClass(order.status);
-    document.getElementById('order-date').textContent = formatDate(order.placedAt);
-    document.getElementById('order-subtotal').textContent = formatCurrency(order.subtotal);
-    document.getElementById('order-shipping').textContent = formatCurrency(order.shippingFee);
-    document.getElementById('order-total').textContent = formatCurrency(order.grandTotal);
-    if (order.discount && parseFloat(order.discount) > 0) {
-      document.getElementById('order-discount-row').style.display = '';
-      document.getElementById('order-discount').textContent = '-' + formatCurrency(order.discount);
-    }
-    var itemsContainer = document.getElementById('order-items');
-    itemsContainer.innerHTML = '';
-    (order.items || []).forEach(function (item) {
-      var div = document.createElement('div');
-      div.className = 'order-review-item';
-      div.innerHTML =
-        '<div class="item-info">' +
-          '<div class="item-name">' + escapeHtml(item.itemNameSnapshot || 'Product') + '</div>' +
-          '<div class="item-qty">Qty: ' + item.quantity + '</div>' +
-        '</div>' +
-        '<div class="item-price">' + formatCurrency(item.subtotal) + '</div>';
-      itemsContainer.appendChild(div);
-    });
-    var statusSelect = document.getElementById('status-update');
-    var nextOptions = nextStatusMap[order.status] || [];
-    if (nextOptions.length > 0) {
-      statusSelect.innerHTML = '';
-      nextOptions.forEach(function (opt) {
-        var option = document.createElement('option');
-        option.value = opt.value;
-        option.textContent = opt.label;
-        statusSelect.appendChild(option);
-      });
-      statusSelect.style.display = '';
-      document.getElementById('update-status-btn').style.display = '';
-    } else {
-      statusSelect.style.display = 'none';
-      document.getElementById('update-status-btn').style.display = 'none';
-    }
-  }
-  document.addEventListener('DOMContentLoaded', function () {
-    var id = new URLSearchParams(window.location.search).get('id');
-    if (!id) {
-      document.getElementById('order-loading').style.display = 'none';
-      showToast('No order ID specified', 'error');
-      return;
-    }
-    API.get('/seller/orders/' + id).then(renderOrder).catch(function (err) {
-      document.getElementById('order-loading').style.display = 'none';
-      showToast(err.message || 'Failed to load order', 'error');
-    });
-    document.getElementById('update-status-btn').addEventListener('click', function () {
-      var btn = this;
-      var newStatus = document.getElementById('status-update').value;
-      if (!newStatus || !currentOrder) return;
-      setButtonLoading(btn, true);
-      API.put('/seller/orders/' + currentOrder.id + '/status?status=' + newStatus).then(function () {
-        showToast('Status updated', 'success');
-        renderOrder(Object.assign(currentOrder, { status: newStatus }));
-        setButtonLoading(btn, false);
-      }).catch(function (err) {
-        showToast(err.message || 'Failed to update', 'error');
-        setButtonLoading(btn, false);
-      });
-    });
-  });
-})();
-</script>
+            function renderOrder(order) {
+                currentOrder = order;
+                document.getElementById('order-loading').style.display = 'none';
+                document.getElementById('order-content').style.display = '';
+                document.getElementById('order-id').textContent = order.id;
+                var statusEl = document.getElementById('order-status');
+                statusEl.textContent = order.status;
+                statusEl.className = 'badge ' + badgeClass(order.status);
+                document.getElementById('order-date').textContent = formatDate(order.placedAt);
+                document.getElementById('order-subtotal').textContent = formatCurrency(order.subtotal);
+                document.getElementById('order-shipping').textContent = formatCurrency(order.shippingFee);
+                document.getElementById('order-total').textContent = formatCurrency(order.grandTotal);
+                if (order.discount && parseFloat(order.discount) > 0) {
+                    document.getElementById('order-discount-row').style.display = '';
+                    document.getElementById('order-discount').textContent = '-' + formatCurrency(order.discount);
+                }
+                var itemsContainer = document.getElementById('order-items');
+                itemsContainer.innerHTML = '';
+                (order.items || []).forEach(function (item) {
+                    var div = document.createElement('div');
+                    div.className = 'order-review-item';
+                    div.innerHTML =
+                        '<div class="item-info">' +
+                        '<div class="item-name">' + escapeHtml(item.itemNameSnapshot || 'Product') + '</div>' +
+                        '<div class="item-qty">Qty: ' + item.quantity + '</div>' +
+                        '</div>' +
+                        '<div class="item-price">' + formatCurrency(item.subtotal) + '</div>';
+                    itemsContainer.appendChild(div);
+                });
+                var statusSelect = document.getElementById('status-update');
+                var nextOptions = nextStatusMap[order.status] || [];
+                if (nextOptions.length > 0) {
+                    statusSelect.innerHTML = '';
+                    nextOptions.forEach(function (opt) {
+                        var option = document.createElement('option');
+                        option.value = opt.value;
+                        option.textContent = opt.label;
+                        statusSelect.appendChild(option);
+                    });
+                    statusSelect.style.display = '';
+                    document.getElementById('update-status-btn').style.display = '';
+                } else {
+                    statusSelect.style.display = 'none';
+                    document.getElementById('update-status-btn').style.display = 'none';
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var id = new URLSearchParams(window.location.search).get('id');
+                if (!id) {
+                    document.getElementById('order-loading').style.display = 'none';
+                    showToast('No order ID specified', 'error');
+                    return;
+                }
+                API.get('/seller/orders/' + id).then(renderOrder).catch(function (err) {
+                    document.getElementById('order-loading').style.display = 'none';
+                    showToast(err.message || 'Failed to load order', 'error');
+                });
+                document.getElementById('update-status-btn').addEventListener('click', function () {
+                    var btn = this;
+                    var newStatus = document.getElementById('status-update').value;
+                    if (!newStatus || !currentOrder) return;
+                    setButtonLoading(btn, true);
+                    API.put('/seller/orders/' + currentOrder.id + '/status?status=' + newStatus).then(function () {
+                        showToast('Status updated', 'success');
+                        renderOrder(Object.assign(currentOrder, {status: newStatus}));
+                        setButtonLoading(btn, false);
+                    }).catch(function (err) {
+                        showToast(err.message || 'Failed to update', 'error');
+                        setButtonLoading(btn, false);
+                    });
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

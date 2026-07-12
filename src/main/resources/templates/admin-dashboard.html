@@ -2,169 +2,216 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Admin Dashboard')}"></head>
 <body>
-<th:block th:replace="~{fragments/admin-header :: admin-header('dashboard')}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/admin-header :: admin-header('dashboard')}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="admin-main">
-  <div class="page-header">
-    <h1>Dashboard</h1>
-    <p>Overview of your store performance</p>
-  </div>
+    <main class="admin-main">
+        <div class="page-header">
+            <h1>Dashboard</h1>
+            <p>Overview of your store performance</p>
+        </div>
 
-  <div class="admin-summary-grid">
-    <div class="summary-card"><div class="label">Today's Revenue</div><div class="value success" id="stat-revenue">$0</div></div>
-    <div class="summary-card"><div class="label">Total Revenue</div><div class="value success" id="stat-total-revenue">$0</div></div>
-    <div class="summary-card"><div class="label">Total Orders</div><div class="value" id="stat-orders">0</div></div>
-    <div class="summary-card"><div class="label">Total Products</div><div class="value" id="stat-products">0</div></div>
-    <div class="summary-card"><div class="label">Total Customers</div><div class="value" id="stat-customers">0</div></div>
-    <div class="summary-card"><div class="label">Pending Orders</div><div class="value warning" id="stat-pending">0</div></div>
-    <div class="summary-card"><div class="label">Out of Stock</div><div class="value danger" id="stat-oos">0</div></div>
-  </div>
+        <div class="admin-summary-grid">
+            <div class="summary-card">
+                <div class="label">Today's Revenue</div>
+                <div class="value success" id="stat-revenue">$0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Total Revenue</div>
+                <div class="value success" id="stat-total-revenue">$0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Total Orders</div>
+                <div class="value" id="stat-orders">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Total Products</div>
+                <div class="value" id="stat-products">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Total Customers</div>
+                <div class="value" id="stat-customers">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Pending Orders</div>
+                <div class="value warning" id="stat-pending">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Out of Stock</div>
+                <div class="value danger" id="stat-oos">0</div>
+            </div>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-title">Sales Analytics</div>
-    <div id="analytics-content"><p class="text-sm text-muted">Loading...</p></div>
-  </div>
+        <div class="admin-panel">
+            <div class="admin-panel-title">Sales Analytics</div>
+            <div id="analytics-content"><p class="text-sm text-muted">Loading...</p></div>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-title">Inventory Summary</div>
-    <div id="inventory-summary"><p class="text-sm text-muted">Loading...</p></div>
-  </div>
+        <div class="admin-panel">
+            <div class="admin-panel-title">Inventory Summary</div>
+            <div id="inventory-summary"><p class="text-sm text-muted">Loading...</p></div>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-title">Recent Orders</div>
-    <div class="table-responsive">
-      <table class="admin-table">
-        <thead>
-          <tr><th>Order</th><th>Customer</th><th>Date</th><th>Status</th><th>Total</th></tr>
-        </thead>
-        <tbody id="recent-orders-body">
-          <tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+        <div class="admin-panel">
+            <div class="admin-panel-title">Recent Orders</div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-orders-body">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-title">Recent Activity</div>
-    <div id="activity-list"><p class="text-sm text-muted">Loading...</p></div>
-  </div>
-</main>
+        <div class="admin-panel">
+            <div class="admin-panel-title">Recent Activity</div>
+            <div id="activity-list"><p class="text-sm text-muted">Loading...</p></div>
+        </div>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script src="/js/sanitize.js"></script>
-<script>
-(function () {
-  'use strict';
-  function statusClass(s) {
-    if (s === 'DELIVERED' || s === 'COMPLETED' || s === 'REPLACE_DELIVERED') return 'active';
-    if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
-    return 'pending';
-  }
-  function formatDateShort(iso) {
-    if (!iso) return '';
-    try { return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(iso)); } catch (e) { return ''; }
-  }
-  function formatTime(iso) {
-    if (!iso) return '';
-    try { return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(iso)); } catch (e) { return ''; }
-  }
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
 
-  document.addEventListener('DOMContentLoaded', function () {
-    API.get('/api/admin/dashboard/summary').then(function (d) {
-      document.getElementById('stat-revenue').textContent = formatCurrency(d.todaysRevenue);
-      document.getElementById('stat-total-revenue').textContent = formatCurrency(d.totalRevenue);
-      document.getElementById('stat-orders').textContent = d.totalOrders || 0;
-      document.getElementById('stat-products').textContent = d.totalProducts || 0;
-      document.getElementById('stat-customers').textContent = d.totalUsers || 0;
-      document.getElementById('stat-pending').textContent = d.pendingOrders || 0;
-      document.getElementById('stat-oos').textContent = d.outOfStockProducts || 0;
-    }).catch(function () {});
+            function statusClass(s) {
+                if (s === 'DELIVERED' || s === 'COMPLETED' || s === 'REPLACE_DELIVERED') return 'active';
+                if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
+                return 'pending';
+            }
 
-    API.get('/api/admin/dashboard/sales-analytics').then(function (d) {
-      var el = document.getElementById('analytics-content');
-      el.innerHTML =
-        '<div class="admin-summary-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">' +
-          '<div><span class="text-sm text-muted">Today Revenue</span><br><strong>' + formatCurrency(d.todayRevenue || 0) + '</strong></div>' +
-          '<div><span class="text-sm text-muted">Week Revenue</span><br><strong>' + formatCurrency(d.weekRevenue || 0) + '</strong></div>' +
-          '<div><span class="text-sm text-muted">Month Revenue</span><br><strong>' + formatCurrency(d.monthRevenue || 0) + '</strong></div>' +
-          '<div><span class="text-sm text-muted">Today Orders</span><br><strong>' + (d.todayOrders || 0) + '</strong></div>' +
-          '<div><span class="text-sm text-muted">Week Orders</span><br><strong>' + (d.weekOrders || 0) + '</strong></div>' +
-          '<div><span class="text-sm text-muted">Month Orders</span><br><strong>' + (d.monthOrders || 0) + '</strong></div>' +
-        '</div>';
-    }).catch(function () {
-      document.getElementById('analytics-content').innerHTML = '<p class="text-sm text-muted">No analytics data</p>';
-    });
+            function formatDateShort(iso) {
+                if (!iso) return '';
+                try {
+                    return new Intl.DateTimeFormat('en-US', {month: 'short', day: 'numeric'}).format(new Date(iso));
+                } catch (e) {
+                    return '';
+                }
+            }
 
-    API.get('/api/admin/inventory/summary').then(function (d) {
-      var el = document.getElementById('inventory-summary');
-      el.innerHTML =
-        '<div class="admin-summary-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">' +
-          '<div><span class="text-sm text-muted">Total Items</span><br><strong>' + (d.totalItems || 0) + '</strong></div>' +
-          '<div><span class="text-sm text-muted">In Stock</span><br><strong class="text-success">' + (d.inStockItems || 0) + '</strong></div>' +
-          '<div><span class="text-sm text-muted">Low Stock</span><br><strong class="text-warning">' + (d.lowStockItems || 0) + '</strong></div>' +
-          '<div><span class="text-sm text-muted">Out of Stock</span><br><strong class="text-danger">' + (d.outOfStockItems || 0) + '</strong></div>' +
-        '</div>';
-    }).catch(function () {
-      document.getElementById('inventory-summary').innerHTML = '<p class="text-sm text-muted">No inventory data</p>';
-    });
+            function formatTime(iso) {
+                if (!iso) return '';
+                try {
+                    return new Intl.DateTimeFormat('en-US', {hour: 'numeric', minute: '2-digit'}).format(new Date(iso));
+                } catch (e) {
+                    return '';
+                }
+            }
 
-    API.get('/api/admin/dashboard/recent-activity').then(function (data) {
-      var tbody = document.getElementById('recent-orders-body');
-      var recentOrders = data.recentOrders || [];
-      if (recentOrders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No orders yet</td></tr>';
-      } else {
-        tbody.innerHTML = '';
-        recentOrders.forEach(function (o) {
-          var tr = document.createElement('tr');
-          tr.innerHTML =
-            '<td><a href="/order-detail?id=' + o.orderId + '&admin=true" class="btn-link">#' + o.orderId + '</a></td>' +
-            '<td>' + escapeHtml(o.customerUsername || '') + '</td>' +
-            '<td class="text-sm">' + formatDateShort(o.placedAt) + '</td>' +
-            '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
-            '<td>' + formatCurrency(o.grandTotal) + '</td>';
-          tbody.appendChild(tr);
-        });
-      }
+            document.addEventListener('DOMContentLoaded', function () {
+                API.get('/api/admin/dashboard/summary').then(function (d) {
+                    document.getElementById('stat-revenue').textContent = formatCurrency(d.todaysRevenue);
+                    document.getElementById('stat-total-revenue').textContent = formatCurrency(d.totalRevenue);
+                    document.getElementById('stat-orders').textContent = d.totalOrders || 0;
+                    document.getElementById('stat-products').textContent = d.totalProducts || 0;
+                    document.getElementById('stat-customers').textContent = d.totalUsers || 0;
+                    document.getElementById('stat-pending').textContent = d.pendingOrders || 0;
+                    document.getElementById('stat-oos').textContent = d.outOfStockProducts || 0;
+                }).catch(function () {
+                });
 
-      var actList = document.getElementById('activity-list');
-      var activities = [];
-      (data.recentOrders || []).forEach(function (o) {
-        activities.push({ icon: 'O', text: 'Order #' + o.orderId + ' — ' + o.status, time: o.placedAt });
-      });
-      (data.recentPayments || []).forEach(function (p) {
-        activities.push({ icon: 'P', text: 'Payment ' + (p.paymentReference || '') + ' — ' + p.paymentStatus, time: p.createdAt });
-      });
-      (data.recentReviews || []).forEach(function (r) {
-        activities.push({ icon: 'R', text: r.itemName + ' — ' + r.rating + '★', time: r.createdAt });
-      });
-      (data.recentUsers || []).forEach(function (u) {
-        activities.push({ icon: 'U', text: u.username + ' registered', time: u.createdAt });
-      });
-      activities.sort(function (a, b) { return new Date(b.time) - new Date(a.time); });
-      activities = activities.slice(0, 10);
+                API.get('/api/admin/dashboard/sales-analytics').then(function (d) {
+                    var el = document.getElementById('analytics-content');
+                    el.innerHTML =
+                        '<div class="admin-summary-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">' +
+                        '<div><span class="text-sm text-muted">Today Revenue</span><br><strong>' + formatCurrency(d.todayRevenue || 0) + '</strong></div>' +
+                        '<div><span class="text-sm text-muted">Week Revenue</span><br><strong>' + formatCurrency(d.weekRevenue || 0) + '</strong></div>' +
+                        '<div><span class="text-sm text-muted">Month Revenue</span><br><strong>' + formatCurrency(d.monthRevenue || 0) + '</strong></div>' +
+                        '<div><span class="text-sm text-muted">Today Orders</span><br><strong>' + (d.todayOrders || 0) + '</strong></div>' +
+                        '<div><span class="text-sm text-muted">Week Orders</span><br><strong>' + (d.weekOrders || 0) + '</strong></div>' +
+                        '<div><span class="text-sm text-muted">Month Orders</span><br><strong>' + (d.monthOrders || 0) + '</strong></div>' +
+                        '</div>';
+                }).catch(function () {
+                    document.getElementById('analytics-content').innerHTML = '<p class="text-sm text-muted">No analytics data</p>';
+                });
 
-      if (activities.length === 0) {
-        actList.innerHTML = '<p class="text-sm text-muted">No recent activity</p>';
-      } else {
-        actList.innerHTML = '';
-        activities.forEach(function (a) {
-          var div = document.createElement('div');
-          div.className = 'activity-item';
-          div.innerHTML =
-            '<div class="activity-icon">' + a.icon + '</div>' +
-            '<div class="activity-text">' + escapeHtml(a.text) + '</div>' +
-            '<div class="activity-time">' + formatTime(a.time) + '</div>';
-          actList.appendChild(div);
-        });
-      }
-    }).catch(function () {
-      document.getElementById('recent-orders-body').innerHTML =
-        '<tr><td colspan="5" class="text-center text-muted">Failed to load</td></tr>';
-    });
-  });
-})();
-</script>
+                API.get('/api/admin/inventory/summary').then(function (d) {
+                    var el = document.getElementById('inventory-summary');
+                    el.innerHTML =
+                        '<div class="admin-summary-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">' +
+                        '<div><span class="text-sm text-muted">Total Items</span><br><strong>' + (d.totalItems || 0) + '</strong></div>' +
+                        '<div><span class="text-sm text-muted">In Stock</span><br><strong class="text-success">' + (d.inStockItems || 0) + '</strong></div>' +
+                        '<div><span class="text-sm text-muted">Low Stock</span><br><strong class="text-warning">' + (d.lowStockItems || 0) + '</strong></div>' +
+                        '<div><span class="text-sm text-muted">Out of Stock</span><br><strong class="text-danger">' + (d.outOfStockItems || 0) + '</strong></div>' +
+                        '</div>';
+                }).catch(function () {
+                    document.getElementById('inventory-summary').innerHTML = '<p class="text-sm text-muted">No inventory data</p>';
+                });
+
+                API.get('/api/admin/dashboard/recent-activity').then(function (data) {
+                    var tbody = document.getElementById('recent-orders-body');
+                    var recentOrders = data.recentOrders || [];
+                    if (recentOrders.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No orders yet</td></tr>';
+                    } else {
+                        tbody.innerHTML = '';
+                        recentOrders.forEach(function (o) {
+                            var tr = document.createElement('tr');
+                            tr.innerHTML =
+                                '<td><a href="/order-detail?id=' + o.orderId + '&admin=true" class="btn-link">#' + o.orderId + '</a></td>' +
+                                '<td>' + escapeHtml(o.customerUsername || '') + '</td>' +
+                                '<td class="text-sm">' + formatDateShort(o.placedAt) + '</td>' +
+                                '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
+                                '<td>' + formatCurrency(o.grandTotal) + '</td>';
+                            tbody.appendChild(tr);
+                        });
+                    }
+
+                    var actList = document.getElementById('activity-list');
+                    var activities = [];
+                    (data.recentOrders || []).forEach(function (o) {
+                        activities.push({icon: 'O', text: 'Order #' + o.orderId + ' — ' + o.status, time: o.placedAt});
+                    });
+                    (data.recentPayments || []).forEach(function (p) {
+                        activities.push({
+                            icon: 'P',
+                            text: 'Payment ' + (p.paymentReference || '') + ' — ' + p.paymentStatus,
+                            time: p.createdAt
+                        });
+                    });
+                    (data.recentReviews || []).forEach(function (r) {
+                        activities.push({icon: 'R', text: r.itemName + ' — ' + r.rating + '★', time: r.createdAt});
+                    });
+                    (data.recentUsers || []).forEach(function (u) {
+                        activities.push({icon: 'U', text: u.username + ' registered', time: u.createdAt});
+                    });
+                    activities.sort(function (a, b) {
+                        return new Date(b.time) - new Date(a.time);
+                    });
+                    activities = activities.slice(0, 10);
+
+                    if (activities.length === 0) {
+                        actList.innerHTML = '<p class="text-sm text-muted">No recent activity</p>';
+                    } else {
+                        actList.innerHTML = '';
+                        activities.forEach(function (a) {
+                            var div = document.createElement('div');
+                            div.className = 'activity-item';
+                            div.innerHTML =
+                                '<div class="activity-icon">' + a.icon + '</div>' +
+                                '<div class="activity-text">' + escapeHtml(a.text) + '</div>' +
+                                '<div class="activity-time">' + formatTime(a.time) + '</div>';
+                            actList.appendChild(div);
+                        });
+                    }
+                }).catch(function () {
+                    document.getElementById('recent-orders-body').innerHTML =
+                        '<tr><td colspan="5" class="text-center text-muted">Failed to load</td></tr>';
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

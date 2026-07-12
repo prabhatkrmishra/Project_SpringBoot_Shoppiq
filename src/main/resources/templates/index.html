@@ -2,254 +2,290 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Home')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main>
-  <section class="hero">
-    <div class="hero-inner">
-      <div class="hero-content">
-        <h1>Shop Smarter, Not Harder</h1>
-        <p>Discover quality products with transparent pricing, fast delivery, and a seamless shopping experience.</p>
-        <div class="btn-group">
-          <a th:href="@{/allitems}" class="btn btn-lg btn-primary">Start Shopping</a>
-          <a th:href="@{/categories}" class="btn btn-lg btn-secondary">Explore Categories</a>
-        </div>
-      </div>
-      <div class="hero-image">
-        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop" alt="Shopping experience" loading="eager" width="600" height="400">
-      </div>
-    </div>
-  </section>
-
-  <div class="home-section">
-    <div class="container">
-      <div class="page-header" id="topSellingHeader" style="display:none;">
-        <h2>Most Bought</h2>
-        <p>What everyone's been buying this month</p>
-      </div>
-      <div id="topSellingGrid" class="grid-4"></div>
-      <div id="topSellingEmpty" class="text-center mt-xl" style="display:none;">
-        <p class="text-muted">No sales data yet. Be the first to shop!</p>
-        <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse All Products</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="home-section">
-    <div class="container">
-      <div class="page-header" id="featuredHeader" style="display:none;">
-        <h2>Featured Products</h2>
-        <p>Handpicked deals just for you</p>
-      </div>
-      <div id="featuredGrid" class="grid-4"></div>
-      <div id="featuredEmpty" class="text-center mt-xl" style="display:none;">
-        <p class="text-muted">Featured products coming soon.</p>
-        <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse All Products</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="home-section">
-    <div class="container">
-      <div class="page-header">
-        <h2>Sales &amp; Offers</h2>
-        <p>Deals you don't want to miss</p>
-      </div>
-      <div class="offers-grid" th:if="${banners != null and !banners.isEmpty()}">
-        <th:block th:each="banner : ${banners}">
-          <a th:if="${banner.buttonLink != null}"
-             th:href="@{${banner.buttonLink}}"
-             th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}">
-            <div class="offer-content">
-              <span class="offer-tag" th:text="${banner.badgeText}"></span>
-              <h3 th:text="${banner.heading}" th:style="'color:' + ${banner.headingColor}"></h3>
-              <p th:if="${banner.bodyText != null}" th:text="${banner.bodyText}" th:style="'color:' + ${banner.bodyColor}"></p>
-              <span th:if="${banner.buttonText != null}" class="btn btn-sm btn-white" th:text="${banner.buttonText}"></span>
+    <main>
+        <section class="hero">
+            <div class="hero-inner">
+                <div class="hero-content">
+                    <h1>Shop Smarter, Not Harder</h1>
+                    <p>Discover quality products with transparent pricing, fast delivery, and a seamless shopping
+                        experience.</p>
+                    <div class="btn-group">
+                        <a th:href="@{/allitems}" class="btn btn-lg btn-primary">Start Shopping</a>
+                        <a th:href="@{/categories}" class="btn btn-lg btn-secondary">Explore Categories</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop"
+                         alt="Shopping experience" loading="eager" width="600" height="400">
+                </div>
             </div>
-          </a>
-          <div th:unless="${banner.buttonLink != null}"
-               th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}">
-            <div class="offer-content">
-              <span class="offer-tag" th:text="${banner.badgeText}"></span>
-              <h3 th:text="${banner.heading}" th:style="'color:' + ${banner.headingColor}"></h3>
-              <p th:if="${banner.bodyText != null}" th:text="${banner.bodyText}" th:style="'color:' + ${banner.bodyColor}"></p>
+        </section>
+
+        <div class="home-section">
+            <div class="container">
+                <div class="page-header" id="topSellingHeader" style="display:none;">
+                    <h2>Most Bought</h2>
+                    <p>What everyone's been buying this month</p>
+                </div>
+                <div id="topSellingGrid" class="grid-4"></div>
+                <div id="topSellingEmpty" class="text-center mt-xl" style="display:none;">
+                    <p class="text-muted">No sales data yet. Be the first to shop!</p>
+                    <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse All Products</a>
+                </div>
             </div>
-          </div>
-        </th:block>
-      </div>
-      <div class="offers-grid" th:if="${banners == null or banners.isEmpty()}">
-        <div class="offer-banner offer-banner-primary">
-          <div class="offer-content">
-            <span class="offer-tag">Limited Time</span>
-            <h3>Deals Coming Soon</h3>
-            <p>Check back later for amazing offers.</p>
-          </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="home-section">
-    <div class="container">
-      <div class="page-header" id="catHeader" style="display:none;">
-        <h2>Most Bought Category</h2>
-        <p>Top categories our customers love</p>
-      </div>
-      <div id="categoryGrid" class="categories-grid"></div>
-    </div>
-  </div>
-
-  <section class="features">
-    <div class="container">
-      <div class="features-grid">
-        <div class="feature-item">
-          <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <h3>Secure Checkout</h3>
-          <p>Your data is encrypted and protected</p>
+        <div class="home-section">
+            <div class="container">
+                <div class="page-header" id="featuredHeader" style="display:none;">
+                    <h2>Featured Products</h2>
+                    <p>Handpicked deals just for you</p>
+                </div>
+                <div id="featuredGrid" class="grid-4"></div>
+                <div id="featuredEmpty" class="text-center mt-xl" style="display:none;">
+                    <p class="text-muted">Featured products coming soon.</p>
+                    <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse All Products</a>
+                </div>
+            </div>
         </div>
-        <div class="feature-item">
-          <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-          <h3>Fast Delivery</h3>
-          <p>Free shipping on orders over $50</p>
+
+        <div class="home-section">
+            <div class="container">
+                <div class="page-header">
+                    <h2>Sales &amp; Offers</h2>
+                    <p>Deals you don't want to miss</p>
+                </div>
+                <div class="offers-grid" th:if="${banners != null and !banners.isEmpty()}">
+                    <th:block th:each="banner : ${banners}">
+                        <a th:if="${banner.buttonLink != null}"
+                           th:href="@{${banner.buttonLink}}"
+                           th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}">
+                            <div class="offer-content">
+                                <span class="offer-tag" th:text="${banner.badgeText}"></span>
+                                <h3 th:text="${banner.heading}" th:style="'color:' + ${banner.headingColor}"></h3>
+                                <p th:if="${banner.bodyText != null}" th:text="${banner.bodyText}"
+                                   th:style="'color:' + ${banner.bodyColor}"></p>
+                                <span th:if="${banner.buttonText != null}" class="btn btn-sm btn-white"
+                                      th:text="${banner.buttonText}"></span>
+                            </div>
+                        </a>
+                        <div th:unless="${banner.buttonLink != null}"
+                             th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}">
+                            <div class="offer-content">
+                                <span class="offer-tag" th:text="${banner.badgeText}"></span>
+                                <h3 th:text="${banner.heading}" th:style="'color:' + ${banner.headingColor}"></h3>
+                                <p th:if="${banner.bodyText != null}" th:text="${banner.bodyText}"
+                                   th:style="'color:' + ${banner.bodyColor}"></p>
+                            </div>
+                        </div>
+                    </th:block>
+                </div>
+                <div class="offers-grid" th:if="${banners == null or banners.isEmpty()}">
+                    <div class="offer-banner offer-banner-primary">
+                        <div class="offer-content">
+                            <span class="offer-tag">Limited Time</span>
+                            <h3>Deals Coming Soon</h3>
+                            <p>Check back later for amazing offers.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="feature-item">
-          <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><circle cx="12" cy="12" r="3"/></svg>
-          <h3>30-Day Returns</h3>
-          <p>Not satisfied? Return it for free</p>
+
+        <div class="home-section">
+            <div class="container">
+                <div class="page-header" id="catHeader" style="display:none;">
+                    <h2>Most Bought Category</h2>
+                    <p>Top categories our customers love</p>
+                </div>
+                <div id="categoryGrid" class="categories-grid"></div>
+            </div>
         </div>
-      </div>
-    </div>
-  </section>
 
-  <section class="newsletter">
-    <div class="newsletter-inner">
-      <h2>Stay in the Loop</h2>
-      <p>Get updates on new arrivals, exclusive deals, and more.</p>
-      <form class="newsletter-form" id="newsletterForm">
-        <label for="newsletter-email" class="sr-only">Email address</label>
-        <input type="email" id="newsletter-email" class="form-input" placeholder="your@email.com" required>
-        <button type="submit" class="btn btn-primary">Subscribe</button>
-      </form>
-      <div id="newsletter-success" class="newsletter-success" style="display:none;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M20 6L9 17l-5-5"/></svg>
-        <span>Subscribed!</span>
-      </div>
-    </div>
-  </section>
-</main>
+        <section class="features">
+            <div class="container">
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.5">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        <h3>Secure Checkout</h3>
+                        <p>Your data is encrypted and protected</p>
+                    </div>
+                    <div class="feature-item">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.5">
+                            <path d="M5 12h14"/>
+                            <path d="M12 5l7 7-7 7"/>
+                        </svg>
+                        <h3>Fast Delivery</h3>
+                        <p>Free shipping on orders over $50</p>
+                    </div>
+                    <div class="feature-item">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.5">
+                            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <h3>30-Day Returns</h3>
+                        <p>Not satisfied? Return it for free</p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
+        <section class="newsletter">
+            <div class="newsletter-inner">
+                <h2>Stay in the Loop</h2>
+                <p>Get updates on new arrivals, exclusive deals, and more.</p>
+                <form class="newsletter-form" id="newsletterForm">
+                    <label for="newsletter-email" class="sr-only">Email address</label>
+                    <input type="email" id="newsletter-email" class="form-input" placeholder="your@email.com" required>
+                    <button type="submit" class="btn btn-primary">Subscribe</button>
+                </form>
+                <div id="newsletter-success" class="newsletter-success" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                         stroke-linejoin="round" width="20" height="20">
+                        <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    <span>Subscribed!</span>
+                </div>
+            </div>
+        </section>
+    </main>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  loadTopSelling();
-  loadFeaturedProducts();
-  loadHomepageCategories();
-  initNewsletterForm();
-});
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-js}"></th:block>
 
-function initNewsletterForm() {
-  var form = document.getElementById("newsletterForm");
-  if (!form) return;
-  form.addEventListener("submit", async function (e) {
-    e.preventDefault();
-    var emailInput = document.getElementById("newsletter-email");
-    var btn = form.querySelector("button[type=submit]");
-    var email = emailInput.value.trim();
-    if (!email) return;
-    btn.disabled = true;
-    btn.textContent = "Subscribing...";
-    try {
-      await API.post("/api/newsletter/subscribe", { email: email });
-      form.style.display = "none";
-      document.getElementById("newsletter-success").style.display = "flex";
-    } catch (err) {
-      showAlertModal({ title: "Oops", message: err.message || "Something went wrong. Please try again.", type: "error" });
-      btn.disabled = false;
-      btn.textContent = "Subscribe";
-    }
-  });
-}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            loadTopSelling();
+            loadFeaturedProducts();
+            loadHomepageCategories();
+            initNewsletterForm();
+        });
 
-function renderProductCard(item) {
-  var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop";
-  var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
-  var priceHtml = '<span class="price-new">$' + escapeHtml(String(item.price)) + '</span>';
-  if (hasDiscount) {
-    var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
-    priceHtml = '<span class="price-old">$' + escapeHtml(String(item.price)) + '</span> ' +
-                '<span class="price-new">$' + salePrice + '</span> ' +
-                '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
-  }
-  return '<a href="/item/' + item.slug + '" class="card-link">' +
-    '<article class="card product-card">' +
-      '<div class="card-image-wrapper">' +
-        '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
-        (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
-      '</div>' +
-      '<div class="card-body">' +
-        '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
-        '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
-        '<div class="card-price">' + priceHtml + '</div>' +
-      '</div>' +
-    '</article>' +
-  '</a>';
-}
+        function initNewsletterForm() {
+            var form = document.getElementById("newsletterForm");
+            if (!form) return;
+            form.addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var emailInput = document.getElementById("newsletter-email");
+                var btn = form.querySelector("button[type=submit]");
+                var email = emailInput.value.trim();
+                if (!email) return;
+                btn.disabled = true;
+                btn.textContent = "Subscribing...";
+                try {
+                    await API.post("/api/newsletter/subscribe", {email: email});
+                    form.style.display = "none";
+                    document.getElementById("newsletter-success").style.display = "flex";
+                } catch (err) {
+                    showAlertModal({
+                        title: "Oops",
+                        message: err.message || "Something went wrong. Please try again.",
+                        type: "error"
+                    });
+                    btn.disabled = false;
+                    btn.textContent = "Subscribe";
+                }
+            });
+        }
 
-async function loadTopSelling() {
-  try {
-    var items = await API.get("/items/top-selling?size=8");
-    if (!items || items.length === 0) {
-      document.getElementById("topSellingEmpty").style.display = "";
-      return;
-    }
-    document.getElementById("topSellingHeader").style.display = "";
-    document.getElementById("topSellingGrid").innerHTML = items.map(renderProductCard).join("");
-  } catch (e) {
-    document.getElementById("topSellingEmpty").style.display = "";
-  }
-}
+        function renderProductCard(item) {
+            var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop";
+            var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
+            var priceHtml = '<span class="price-new">$' + escapeHtml(String(item.price)) + '</span>';
+            if (hasDiscount) {
+                var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
+                priceHtml = '<span class="price-old">$' + escapeHtml(String(item.price)) + '</span> ' +
+                    '<span class="price-new">$' + salePrice + '</span> ' +
+                    '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
+            }
+            return '<a href="/item/' + item.slug + '" class="card-link">' +
+                '<article class="card product-card">' +
+                '<div class="card-image-wrapper">' +
+                '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
+                (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
+                '</div>' +
+                '<div class="card-body">' +
+                '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
+                '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
+                '<div class="card-price">' + priceHtml + '</div>' +
+                '</div>' +
+                '</article>' +
+                '</a>';
+        }
 
-async function loadFeaturedProducts() {
-  try {
-    var data = await API.get("/items/all?page=0&size=20");
-    var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
-    var featured = items.filter(function (item) {
-      return item.discountPercentage && parseFloat(item.discountPercentage) > 0;
-    }).slice(0, 4);
-    if (featured.length === 0) {
-      featured = items.slice(0, 4);
-    }
-    if (featured.length === 0) {
-      document.getElementById("featuredEmpty").style.display = "";
-      return;
-    }
-    document.getElementById("featuredHeader").style.display = "";
-    document.getElementById("featuredGrid").innerHTML = featured.map(renderProductCard).join("");
-  } catch (e) {
-    document.getElementById("featuredEmpty").style.display = "";
-  }
-}
+        async function loadTopSelling() {
+            try {
+                var items = await API.get("/items/top-selling?size=8");
+                if (!items || items.length === 0) {
+                    document.getElementById("topSellingEmpty").style.display = "";
+                    return;
+                }
+                document.getElementById("topSellingHeader").style.display = "";
+                document.getElementById("topSellingGrid").innerHTML = items.map(renderProductCard).join("");
+            } catch (e) {
+                document.getElementById("topSellingEmpty").style.display = "";
+            }
+        }
 
-async function loadHomepageCategories() {
-  try {
-    var cats = await API.get("/categories/top-selling?size=8");
-    if (!cats || cats.length === 0) return;
-    document.getElementById("catHeader").style.display = "";
-    document.getElementById("categoryGrid").innerHTML = cats.map(function (cat) {
-      return '<a href="/category/' + escapeAttr(cat.slug) + '" class="category-card">' +
-        '<svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>' +
-        '<span class="category-name">' + escapeHtml(cat.name) + '</span>' +
-      '</a>';
-    }).join("");
-  } catch (e) { /* silent */ }
-}
+        async function loadFeaturedProducts() {
+            try {
+                var data = await API.get("/items/all?page=0&size=20");
+                var items = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+                var featured = items.filter(function (item) {
+                    return item.discountPercentage && parseFloat(item.discountPercentage) > 0;
+                }).slice(0, 4);
+                if (featured.length === 0) {
+                    featured = items.slice(0, 4);
+                }
+                if (featured.length === 0) {
+                    document.getElementById("featuredEmpty").style.display = "";
+                    return;
+                }
+                document.getElementById("featuredHeader").style.display = "";
+                document.getElementById("featuredGrid").innerHTML = featured.map(renderProductCard).join("");
+            } catch (e) {
+                document.getElementById("featuredEmpty").style.display = "";
+            }
+        }
 
-function escapeHtml(str) { var d = document.createElement("div"); d.appendChild(document.createTextNode(str || "")); return d.innerHTML; }
-function escapeAttr(str) { return (str || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function truncateWords(str, max) { if (!str) return ''; var w = str.trim().split(/\s+/); return w.length <= max ? str : w.slice(0, max).join(' ') + '...'; }
-</script>
+        async function loadHomepageCategories() {
+            try {
+                var cats = await API.get("/categories/top-selling?size=8");
+                if (!cats || cats.length === 0) return;
+                document.getElementById("catHeader").style.display = "";
+                document.getElementById("categoryGrid").innerHTML = cats.map(function (cat) {
+                    return '<a href="/category/' + escapeAttr(cat.slug) + '" class="category-card">' +
+                        '<svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>' +
+                        '<span class="category-name">' + escapeHtml(cat.name) + '</span>' +
+                        '</a>';
+                }).join("");
+            } catch (e) { /* silent */
+            }
+        }
+
+        function escapeHtml(str) {
+            var d = document.createElement("div");
+            d.appendChild(document.createTextNode(str || ""));
+            return d.innerHTML;
+        }
+
+        function escapeAttr(str) {
+            return (str || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function truncateWords(str, max) {
+            if (!str) return '';
+            var w = str.trim().split(/\s+/);
+            return w.length <= max ? str : w.slice(0, max).join(' ') + '...';
+        }
+    </script>
 </body>
 </html>

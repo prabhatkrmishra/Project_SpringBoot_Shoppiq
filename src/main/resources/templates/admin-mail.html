@@ -16,15 +16,18 @@
                         <div class="panel">
                             <div class="panel-title">Recipients</div>
                             <div class="form-group">
-                                <label class="form-label" style="display: flex; align-items: center; gap: var(--space-sm); cursor: pointer;">
+                                <label class="form-label"
+                                       style="display: flex; align-items: center; gap: var(--space-sm); cursor: pointer;">
                                     <input type="checkbox" id="sendToAll" class="form-checkbox">
                                     <span>Send to all users</span>
                                 </label>
                             </div>
                             <div id="userSearchSection">
                                 <div class="form-group">
-                                    <label for="searchInput" class="form-label">Search by ID, Name, Email, or Username</label>
-                                    <input type="text" id="searchInput" class="form-input" placeholder="Search users..." autocomplete="off">
+                                    <label for="searchInput" class="form-label">Search by ID, Name, Email, or
+                                        Username</label>
+                                    <input type="text" id="searchInput" class="form-input" placeholder="Search users..."
+                                           autocomplete="off">
                                 </div>
                                 <div id="searchResults" class="search-results"></div>
                             </div>
@@ -39,7 +42,9 @@
                         <!-- All Users Info -->
                         <div class="panel mt-lg" id="all-users-panel" style="display: none;">
                             <div class="panel-title">All Users</div>
-                            <p class="text-sm text-muted">This email will be sent to all registered users and newsletter subscribers. Users who have opted out of this notification type will not receive the email.</p>
+                            <p class="text-sm text-muted">This email will be sent to all registered users and newsletter
+                                subscribers. Users who have opted out of this notification type will not receive the
+                                email.</p>
                         </div>
                     </div>
 
@@ -55,16 +60,20 @@
                                         <option value="PROMOTION">Promotion/Offer</option>
                                         <option value="REVIEW_ENGAGEMENT">Review/Engagement</option>
                                     </select>
-                                    <div class="form-hint text-xs text-muted">"General Message" bypasses user notification preferences.</div>
+                                    <div class="form-hint text-xs text-muted">"General Message" bypasses user
+                                        notification preferences.
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="mailSubject" class="form-label">Subject</label>
-                                    <input type="text" id="mailSubject" class="form-input" placeholder="Email subject" required maxlength="255">
+                                    <input type="text" id="mailSubject" class="form-input" placeholder="Email subject"
+                                           required maxlength="255">
                                     <div class="form-error" id="mailSubject-error"></div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Body</label>
-                                    <div id="editor-container" style="height: 300px; border: 1px solid var(--color-border); border-radius: var(--radius-sm);"></div>
+                                    <div id="editor-container"
+                                         style="height: 300px; border: 1px solid var(--color-border); border-radius: var(--radius-sm);"></div>
                                     <div class="form-error" id="mailBody-error"></div>
                                 </div>
                                 <div class="btn-row">
@@ -87,7 +96,8 @@
                 <button type="button" class="modal-close" id="close-preview-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div id="preview-content" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-md); background: #fff;"></div>
+                <div id="preview-content"
+                     style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-md); background: #fff;"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-ghost" id="cancel-preview-modal">Close</button>
@@ -201,7 +211,9 @@
 
             document.getElementById('close-preview-modal')?.addEventListener('click', () => previewModal.classList.remove('active'));
             document.getElementById('cancel-preview-modal')?.addEventListener('click', () => previewModal.classList.remove('active'));
-            previewModal?.addEventListener('click', (e) => { if (e.target === previewModal) previewModal.classList.remove('active'); });
+            previewModal?.addEventListener('click', (e) => {
+                if (e.target === previewModal) previewModal.classList.remove('active');
+            });
 
             mailForm.addEventListener('submit', async (e) => {
                 e.preventDefault();

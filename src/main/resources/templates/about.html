@@ -2,42 +2,49 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('About Us')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="page">
-  <div class="container container-narrow">
-    <div class="page-header">
-      <h1>About Shoppiq</h1>
-      <p>Your modern shopping destination</p>
-    </div>
+    <main class="page">
+        <div class="container container-narrow">
+            <div class="page-header">
+                <h1>About Shoppiq</h1>
+                <p>Your modern shopping destination</p>
+            </div>
 
-    <div class="panel">
-      <div class="content-section">
-        <h2>Our Story</h2>
-        <p>Shoppiq was built with a simple mission: make online shopping transparent, secure, and enjoyable. We believe in honest pricing, fast delivery, and putting customers first.</p>
-      </div>
-      <div class="content-section">
-        <h2>Why Shop With Us?</h2>
-        <ul>
-          <li><strong>Transparent Pricing</strong> — No hidden fees, no surprises. What you see is what you pay.</li>
-          <li><strong>Quality Products</strong> — Every item is vetted for quality and authenticity.</li>
-          <li><strong>Fast Shipping</strong> — Free delivery on orders over $50, with tracking on every order.</li>
-          <li><strong>30-Day Returns</strong> — Not satisfied? Return it for a full refund, no questions asked.</li>
-        </ul>
-      </div>
-      <div class="content-section">
-        <h2>Contact Us</h2>
-        <p>Have a question or concern? We'd love to hear from you.</p>
-        <p class="text-sm m-0">
-          Email: <a href="mailto:support@shoppiq.com" class="btn-link">support@shoppiq.com</a><br>
-          Phone: <a href="tel:+18005551234" class="btn-link">1-800-555-1234</a>
-        </p>
-      </div>
-    </div>
-  </div>
-</main>
+            <div class="panel">
+                <div class="content-section">
+                    <h2>Our Story</h2>
+                    <p>Shoppiq was built with a simple mission: make online shopping transparent, secure, and enjoyable.
+                        We believe in honest pricing, fast delivery, and putting customers first.</p>
+                </div>
+                <div class="content-section">
+                    <h2>Why Shop With Us?</h2>
+                    <ul>
+                        <li><strong>Transparent Pricing</strong> — No hidden fees, no surprises. What you see is what
+                            you pay.
+                        </li>
+                        <li><strong>Quality Products</strong> — Every item is vetted for quality and authenticity.</li>
+                        <li><strong>Fast Shipping</strong> — Free delivery on orders over $50, with tracking on every
+                            order.
+                        </li>
+                        <li><strong>30-Day Returns</strong> — Not satisfied? Return it for a full refund, no questions
+                            asked.
+                        </li>
+                    </ul>
+                </div>
+                <div class="content-section">
+                    <h2>Contact Us</h2>
+                    <p>Have a question or concern? We'd love to hear from you.</p>
+                    <p class="text-sm m-0">
+                        Email: <a href="mailto:support@shoppiq.com" class="btn-link">support@shoppiq.com</a><br>
+                        Phone: <a href="tel:+18005551234" class="btn-link">1-800-555-1234</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 </body>
 </html>

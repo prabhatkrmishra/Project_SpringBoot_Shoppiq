@@ -2,270 +2,282 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/header :: head('Checkout')}"></head>
 <body>
-<th:block th:replace="~{fragments/header :: header}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="page">
-  <div class="container">
-    <div class="page-header">
-      <h1>Checkout</h1>
-    </div>
+    <main class="page">
+        <div class="container">
+            <div class="page-header">
+                <h1>Checkout</h1>
+            </div>
 
-    <div class="checkout-progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
-      <span class="step active"><span class="step-dot"></span> Cart</span>
-      <span class="step-line"></span>
-      <span class="step"><span class="step-dot"></span> Details</span>
-      <span class="step-line"></span>
-      <span class="step"><span class="step-dot"></span> Pay</span>
-    </div>
+            <div class="checkout-progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
+                <span class="step active"><span class="step-dot"></span> Cart</span>
+                <span class="step-line"></span>
+                <span class="step"><span class="step-dot"></span> Details</span>
+                <span class="step-line"></span>
+                <span class="step"><span class="step-dot"></span> Pay</span>
+            </div>
 
-    <div class="guest-banner" sec:authorize="!isAuthenticated()">
-      <p>Checking out as a guest. <a th:href="@{/login}" class="btn-link">Sign in</a> for faster checkout.</p>
-    </div>
+            <div class="guest-banner" sec:authorize="!isAuthenticated()">
+                <p>Checking out as a guest. <a th:href="@{/login}" class="btn-link">Sign in</a> for faster checkout.</p>
+            </div>
 
-    <div id="checkout-loading" class="flex-center" style="padding:3rem;">
-      <span class="spinner"></span>
-    </div>
+            <div id="checkout-loading" class="flex-center" style="padding:3rem;">
+                <span class="spinner"></span>
+            </div>
 
-    <form id="checkout-form" class="checkout-page" style="display:none;">
-      <div class="checkout-main">
-        <section class="checkout-section" aria-labelledby="shipping-heading">
-          <div class="checkout-section-header">
-            <h2 id="shipping-heading"><span class="checkout-step-number">1</span> Shipping Address</h2>
-          </div>
-          <div id="address-list"></div>
-          <div id="no-addresses" style="display:none;" class="text-muted text-sm mb-md">
-            No saved addresses. Please add one in your <a href="/address" class="btn-link">address book</a> first.
-          </div>
-        </section>
+            <form id="checkout-form" class="checkout-page" style="display:none;">
+                <div class="checkout-main">
+                    <section class="checkout-section" aria-labelledby="shipping-heading">
+                        <div class="checkout-section-header">
+                            <h2 id="shipping-heading"><span class="checkout-step-number">1</span> Shipping Address</h2>
+                        </div>
+                        <div id="address-list"></div>
+                        <div id="no-addresses" style="display:none;" class="text-muted text-sm mb-md">
+                            No saved addresses. Please add one in your <a href="/address" class="btn-link">address
+                            book</a> first.
+                        </div>
+                    </section>
 
-        <section class="checkout-section" aria-labelledby="payment-heading">
-          <div class="checkout-section-header">
-            <h2 id="payment-heading"><span class="checkout-step-number">2</span> Payment Method</h2>
-          </div>
-          <div class="payment-methods">
-            <label class="payment-method selected">
-              <input type="radio" name="paymentMethod" value="CREDIT_CARD" checked>
-              <div>
-                <div class="method-label">Credit Card</div>
-                <div class="method-desc">Visa, Mastercard, Amex</div>
-              </div>
-            </label>
-            <label class="payment-method">
-              <input type="radio" name="paymentMethod" value="PAYPAL">
-              <div>
-                <div class="method-label">PayPal</div>
-                <div class="method-desc">Pay with your PayPal account</div>
-              </div>
-            </label>
-            <label class="payment-method">
-              <input type="radio" name="paymentMethod" value="STRIPE">
-              <div>
-                <div class="method-label">Stripe</div>
-                <div class="method-desc">Secure card payments via Stripe</div>
-              </div>
-            </label>
-          </div>
-        </section>
+                    <section class="checkout-section" aria-labelledby="payment-heading">
+                        <div class="checkout-section-header">
+                            <h2 id="payment-heading"><span class="checkout-step-number">2</span> Payment Method</h2>
+                        </div>
+                        <div class="payment-methods">
+                            <label class="payment-method selected">
+                                <input type="radio" name="paymentMethod" value="CREDIT_CARD" checked>
+                                <div>
+                                    <div class="method-label">Credit Card</div>
+                                    <div class="method-desc">Visa, Mastercard, Amex</div>
+                                </div>
+                            </label>
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="PAYPAL">
+                                <div>
+                                    <div class="method-label">PayPal</div>
+                                    <div class="method-desc">Pay with your PayPal account</div>
+                                </div>
+                            </label>
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="STRIPE">
+                                <div>
+                                    <div class="method-label">Stripe</div>
+                                    <div class="method-desc">Secure card payments via Stripe</div>
+                                </div>
+                            </label>
+                        </div>
+                    </section>
 
-        <section class="checkout-section" aria-labelledby="review-heading">
-          <div class="checkout-section-header">
-            <h2 id="review-heading"><span class="checkout-step-number">3</span> Review Items</h2>
-          </div>
-          <div id="review-items"></div>
-        </section>
-      </div>
+                    <section class="checkout-section" aria-labelledby="review-heading">
+                        <div class="checkout-section-header">
+                            <h2 id="review-heading"><span class="checkout-step-number">3</span> Review Items</h2>
+                        </div>
+                        <div id="review-items"></div>
+                    </section>
+                </div>
 
-      <aside class="checkout-sidebar">
-        <div class="checkout-section">
-          <div class="cart-summary-title">Order Summary</div>
-          <div class="cart-summary-row"><span>Subtotal</span><span id="checkout-subtotal">$0.00</span></div>
-          <div id="checkout-discount-row" class="cart-summary-row" style="display:none;"><span>Discount</span><span id="checkout-discount" class="text-success">-$0.00</span></div>
-          <div class="cart-summary-row"><span>Shipping</span><span>Calculated at checkout</span></div>
-          <div class="cart-summary-row total"><span>Total</span><span id="checkout-total">$0.00</span></div>
-          <div class="cart-promo">
-            <input type="text" id="checkout-promo-input" class="form-input" placeholder="Promo code" aria-label="Promo code">
-            <button type="button" id="checkout-promo-apply" class="btn btn-sm btn-secondary">Apply</button>
-          </div>
-          <div id="checkout-promo-msg" style="display:none;" class="text-sm mt-sm"></div>
-          <div class="cart-actions">
-            <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg btn-block">Place Order</button>
-          </div>
+                <aside class="checkout-sidebar">
+                    <div class="checkout-section">
+                        <div class="cart-summary-title">Order Summary</div>
+                        <div class="cart-summary-row"><span>Subtotal</span><span id="checkout-subtotal">$0.00</span>
+                        </div>
+                        <div id="checkout-discount-row" class="cart-summary-row" style="display:none;">
+                            <span>Discount</span><span id="checkout-discount" class="text-success">-$0.00</span></div>
+                        <div class="cart-summary-row"><span>Shipping</span><span>Calculated at checkout</span></div>
+                        <div class="cart-summary-row total"><span>Total</span><span id="checkout-total">$0.00</span>
+                        </div>
+                        <div class="cart-promo">
+                            <input type="text" id="checkout-promo-input" class="form-input" placeholder="Promo code"
+                                   aria-label="Promo code">
+                            <button type="button" id="checkout-promo-apply" class="btn btn-sm btn-secondary">Apply
+                            </button>
+                        </div>
+                        <div id="checkout-promo-msg" style="display:none;" class="text-sm mt-sm"></div>
+                        <div class="cart-actions">
+                            <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg btn-block">Place
+                                Order
+                            </button>
+                        </div>
+                    </div>
+                </aside>
+            </form>
         </div>
-      </aside>
-    </form>
-  </div>
-</main>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script src="/js/sanitize.js"></script>
-<script>
-(function () {
-  'use strict';
-  var selectedAddressId = null;
-  var appliedPromoCode = null;
-  var cartSubtotal = 0;
-  var discountAmount = 0;
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var selectedAddressId = null;
+            var appliedPromoCode = null;
+            var cartSubtotal = 0;
+            var discountAmount = 0;
 
-  function renderAddresses(addresses) {
-    var list = document.getElementById('address-list');
-    var noMsg = document.getElementById('no-addresses');
-    if (!addresses || addresses.length === 0) {
-      list.style.display = 'none';
-      noMsg.style.display = '';
-      return;
-    }
-    noMsg.style.display = 'none';
-    list.style.display = '';
-    list.innerHTML = '<div class="address-radio-list"></div>';
-    var container = list.querySelector('.address-radio-list');
-    addresses.forEach(function (addr) {
-      var div = document.createElement('label');
-      div.className = 'payment-method' + (addr['default'] ? ' selected' : '');
-      div.innerHTML =
-        '<input type="radio" name="addressId" value="' + escapeAttr(String(addr.id)) + '"' + (addr['default'] ? ' checked' : '') + '>' +
-        '<div>' +
-          '<div class="method-label">' + escapeHtml(addr.fullName || '') + (addr.label ? ' (' + escapeHtml(addr.label) + ')' : '') + '</div>' +
-          '<div class="method-desc">' +
-            escapeHtml(addr.line1 || '') + (addr.line2 ? ', ' + escapeHtml(addr.line2) : '') + '<br>' +
-            escapeHtml(addr.city || '') + ', ' + escapeHtml(addr.state || '') + ' ' + escapeHtml(addr.postalCode || '') + '<br>' +
-            escapeHtml(addr.country || '') +
-            (addr.phone ? ' · ' + escapeHtml(addr.phone) : '') +
-          '</div>' +
-        '</div>';
-      div.querySelector('input').addEventListener('change', function () {
-        selectedAddressId = addr.id;
-        container.querySelectorAll('.payment-method').forEach(function (el) { el.classList.remove('selected'); });
-        div.classList.add('selected');
-      });
-      if (addr['default']) selectedAddressId = addr.id;
-      container.appendChild(div);
-    });
-    if (!selectedAddressId && addresses.length > 0) selectedAddressId = addresses[0].id;
-  }
+            function renderAddresses(addresses) {
+                var list = document.getElementById('address-list');
+                var noMsg = document.getElementById('no-addresses');
+                if (!addresses || addresses.length === 0) {
+                    list.style.display = 'none';
+                    noMsg.style.display = '';
+                    return;
+                }
+                noMsg.style.display = 'none';
+                list.style.display = '';
+                list.innerHTML = '<div class="address-radio-list"></div>';
+                var container = list.querySelector('.address-radio-list');
+                addresses.forEach(function (addr) {
+                    var div = document.createElement('label');
+                    div.className = 'payment-method' + (addr['default'] ? ' selected' : '');
+                    div.innerHTML =
+                        '<input type="radio" name="addressId" value="' + escapeAttr(String(addr.id)) + '"' + (addr['default'] ? ' checked' : '') + '>' +
+                        '<div>' +
+                        '<div class="method-label">' + escapeHtml(addr.fullName || '') + (addr.label ? ' (' + escapeHtml(addr.label) + ')' : '') + '</div>' +
+                        '<div class="method-desc">' +
+                        escapeHtml(addr.line1 || '') + (addr.line2 ? ', ' + escapeHtml(addr.line2) : '') + '<br>' +
+                        escapeHtml(addr.city || '') + ', ' + escapeHtml(addr.state || '') + ' ' + escapeHtml(addr.postalCode || '') + '<br>' +
+                        escapeHtml(addr.country || '') +
+                        (addr.phone ? ' · ' + escapeHtml(addr.phone) : '') +
+                        '</div>' +
+                        '</div>';
+                    div.querySelector('input').addEventListener('change', function () {
+                        selectedAddressId = addr.id;
+                        container.querySelectorAll('.payment-method').forEach(function (el) {
+                            el.classList.remove('selected');
+                        });
+                        div.classList.add('selected');
+                    });
+                    if (addr['default']) selectedAddressId = addr.id;
+                    container.appendChild(div);
+                });
+                if (!selectedAddressId && addresses.length > 0) selectedAddressId = addresses[0].id;
+            }
 
-  function renderReviewItems(cart) {
-    var container = document.getElementById('review-items');
-    container.innerHTML = '';
-    (cart.items || []).forEach(function (item) {
-      var imgUrl = item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=48&fit=crop';
-      var div = document.createElement('div');
-      div.className = 'order-review-item';
-      div.innerHTML =
-        '<img class="item-thumb" src="' + escapeAttr(imgUrl) + '" alt="" loading="lazy" width="48" height="48">' +
-        '<div class="item-info">' +
-          '<div class="item-name">' + escapeHtml(item.itemName || 'Product') + '</div>' +
-          '<div class="item-qty">Qty: ' + item.quantity + '</div>' +
-        '</div>' +
-        '<div class="item-price">' + formatCurrency(item.lineTotal) + '</div>';
-      container.appendChild(div);
-    });
-    document.getElementById('checkout-subtotal').textContent = formatCurrency(cart.subtotal);
-    document.getElementById('checkout-total').textContent = formatCurrency(cart.subtotal);
-    cartSubtotal = cart.subtotal;
-    var savedPromo = sessionStorage.getItem('promoCode');
-    if (savedPromo) {
-      document.getElementById('checkout-promo-input').value = savedPromo;
-      applyPromoCode();
-    }
-  }
+            function renderReviewItems(cart) {
+                var container = document.getElementById('review-items');
+                container.innerHTML = '';
+                (cart.items || []).forEach(function (item) {
+                    var imgUrl = item.imageUrl || 'https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=48&fit=crop';
+                    var div = document.createElement('div');
+                    div.className = 'order-review-item';
+                    div.innerHTML =
+                        '<img class="item-thumb" src="' + escapeAttr(imgUrl) + '" alt="" loading="lazy" width="48" height="48">' +
+                        '<div class="item-info">' +
+                        '<div class="item-name">' + escapeHtml(item.itemName || 'Product') + '</div>' +
+                        '<div class="item-qty">Qty: ' + item.quantity + '</div>' +
+                        '</div>' +
+                        '<div class="item-price">' + formatCurrency(item.lineTotal) + '</div>';
+                    container.appendChild(div);
+                });
+                document.getElementById('checkout-subtotal').textContent = formatCurrency(cart.subtotal);
+                document.getElementById('checkout-total').textContent = formatCurrency(cart.subtotal);
+                cartSubtotal = cart.subtotal;
+                var savedPromo = sessionStorage.getItem('promoCode');
+                if (savedPromo) {
+                    document.getElementById('checkout-promo-input').value = savedPromo;
+                    applyPromoCode();
+                }
+            }
 
-  function applyPromoCode() {
-    var input = document.getElementById('checkout-promo-input');
-    var msgEl = document.getElementById('checkout-promo-msg');
-    var code = input.value.trim();
-    if (!code) {
-      msgEl.style.display = 'block';
-      msgEl.innerHTML = '<span class="text-danger">Please enter a promo code</span>';
-      return;
-    }
-    var btn = document.getElementById('checkout-promo-apply');
-    setButtonLoading(btn, true);
-    API.post('/api/promo-codes/validate', { code: code, subtotal: cartSubtotal }).then(function (res) {
-      appliedPromoCode = code;
-      sessionStorage.setItem('promoCode', code);
-      discountAmount = parseFloat(res.discount);
-      msgEl.style.display = 'block';
-      msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(res.discount) + '</span>';
-      document.getElementById('checkout-discount-row').style.display = '';
-      document.getElementById('checkout-discount').textContent = '-' + formatCurrency(res.discount);
-      document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal - discountAmount);
-      setButtonLoading(btn, false);
-      btn.textContent = 'Applied';
-      btn.disabled = true;
-    }).catch(function (err) {
-      appliedPromoCode = null;
-      sessionStorage.removeItem('promoCode');
-      discountAmount = 0;
-      msgEl.style.display = 'block';
-      msgEl.innerHTML = '<span class="text-danger">' + escapeHtml(err.message || 'Invalid promo code') + '</span>';
-      document.getElementById('checkout-discount-row').style.display = 'none';
-      document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal);
-      setButtonLoading(btn, false);
-    });
-  }
+            function applyPromoCode() {
+                var input = document.getElementById('checkout-promo-input');
+                var msgEl = document.getElementById('checkout-promo-msg');
+                var code = input.value.trim();
+                if (!code) {
+                    msgEl.style.display = 'block';
+                    msgEl.innerHTML = '<span class="text-danger">Please enter a promo code</span>';
+                    return;
+                }
+                var btn = document.getElementById('checkout-promo-apply');
+                setButtonLoading(btn, true);
+                API.post('/api/promo-codes/validate', {code: code, subtotal: cartSubtotal}).then(function (res) {
+                    appliedPromoCode = code;
+                    sessionStorage.setItem('promoCode', code);
+                    discountAmount = parseFloat(res.discount);
+                    msgEl.style.display = 'block';
+                    msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(res.discount) + '</span>';
+                    document.getElementById('checkout-discount-row').style.display = '';
+                    document.getElementById('checkout-discount').textContent = '-' + formatCurrency(res.discount);
+                    document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal - discountAmount);
+                    setButtonLoading(btn, false);
+                    btn.textContent = 'Applied';
+                    btn.disabled = true;
+                }).catch(function (err) {
+                    appliedPromoCode = null;
+                    sessionStorage.removeItem('promoCode');
+                    discountAmount = 0;
+                    msgEl.style.display = 'block';
+                    msgEl.innerHTML = '<span class="text-danger">' + escapeHtml(err.message || 'Invalid promo code') + '</span>';
+                    document.getElementById('checkout-discount-row').style.display = 'none';
+                    document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal);
+                    setButtonLoading(btn, false);
+                });
+            }
 
-  function init() {
-    document.getElementById('checkout-loading').style.display = 'none';
-    document.getElementById('checkout-form').style.display = '';
-  }
+            function init() {
+                document.getElementById('checkout-loading').style.display = 'none';
+                document.getElementById('checkout-form').style.display = '';
+            }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    Promise.all([
-      API.get('/user/cart/get'),
-      API.get('/user/address/get/all')
-    ]).then(function (results) {
-      var cart = results[0];
-      var addresses = results[1];
-      renderReviewItems(cart);
-      renderAddresses(addresses);
-      init();
-    }).catch(function (err) {
-      showToast(err.message || 'Failed to load checkout data', 'error');
-      init();
-    });
+            document.addEventListener('DOMContentLoaded', function () {
+                Promise.all([
+                    API.get('/user/cart/get'),
+                    API.get('/user/address/get/all')
+                ]).then(function (results) {
+                    var cart = results[0];
+                    var addresses = results[1];
+                    renderReviewItems(cart);
+                    renderAddresses(addresses);
+                    init();
+                }).catch(function (err) {
+                    showToast(err.message || 'Failed to load checkout data', 'error');
+                    init();
+                });
 
-    document.getElementById('checkout-promo-apply').addEventListener('click', applyPromoCode);
+                document.getElementById('checkout-promo-apply').addEventListener('click', applyPromoCode);
 
-    document.getElementById('checkout-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (!selectedAddressId) {
-        showToast('Please select a shipping address', 'error');
-        return;
-      }
-      var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
-      if (!paymentMethod) {
-        showToast('Please select a payment method', 'error');
-        return;
-      }
-      var btn = document.getElementById('place-order-btn');
-      setButtonLoading(btn, true);
-      API.post('/user/order/checkout', {
-        addressId: selectedAddressId,
-        paymentMethod: paymentMethod.value,
-        promoCode: appliedPromoCode
-      }).then(function (res) {
-        showToast('Order placed successfully!', 'success');
-        sessionStorage.removeItem('promoCode');
-        if (paymentMethod.value !== 'COD' && res.paymentId) {
-          var simulatedTxn = 'TEST-' + res.paymentId + '-' + Date.now();
-          return API.post('/user/payment/verify', {
-            paymentId: res.paymentId,
-            transactionId: simulatedTxn
-          }).catch(function (e) {
-            console.warn('Payment verification skipped:', e.message);
-          }).then(function () { return res; });
-        }
-        return res;
-      }).then(function (res) {
-        window.location.href = '/order-detail?id=' + res.orderId;
-      }).catch(function (err) {
-        showToast(err.message || 'Failed to place order', 'error');
-        setButtonLoading(btn, false);
-      });
-    });
-  });
-})();
-</script>
+                document.getElementById('checkout-form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    if (!selectedAddressId) {
+                        showToast('Please select a shipping address', 'error');
+                        return;
+                    }
+                    var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+                    if (!paymentMethod) {
+                        showToast('Please select a payment method', 'error');
+                        return;
+                    }
+                    var btn = document.getElementById('place-order-btn');
+                    setButtonLoading(btn, true);
+                    API.post('/user/order/checkout', {
+                        addressId: selectedAddressId,
+                        paymentMethod: paymentMethod.value,
+                        promoCode: appliedPromoCode
+                    }).then(function (res) {
+                        showToast('Order placed successfully!', 'success');
+                        sessionStorage.removeItem('promoCode');
+                        if (paymentMethod.value !== 'COD' && res.paymentId) {
+                            var simulatedTxn = 'TEST-' + res.paymentId + '-' + Date.now();
+                            return API.post('/user/payment/verify', {
+                                paymentId: res.paymentId,
+                                transactionId: simulatedTxn
+                            }).catch(function (e) {
+                                console.warn('Payment verification skipped:', e.message);
+                            }).then(function () {
+                                return res;
+                            });
+                        }
+                        return res;
+                    }).then(function (res) {
+                        window.location.href = '/order-detail?id=' + res.orderId;
+                    }).catch(function (err) {
+                        showToast(err.message || 'Failed to place order', 'error');
+                        setButtonLoading(btn, false);
+                    });
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

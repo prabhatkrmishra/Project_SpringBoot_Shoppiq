@@ -2,213 +2,226 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Order Management')}"></head>
 <body>
-<th:block th:replace="~{fragments/admin-header :: admin-header('orders')}"></th:block>
-<th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+    <th:block th:replace="~{fragments/admin-header :: admin-header('orders')}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
-<main class="admin-main">
-  <div class="page-header">
-    <h1>Order Management</h1>
-    <p>View and manage all customer orders</p>
-  </div>
+    <main class="admin-main">
+        <div class="page-header">
+            <h1>Order Management</h1>
+            <p>View and manage all customer orders</p>
+        </div>
 
-  <div class="admin-filters">
-    <select id="statusFilter">
-      <option value="">All Status</option>
-      <option value="PLACED">Placed</option>
-      <option value="CONFIRMED">Confirmed</option>
-      <option value="SHIPPED">Shipped</option>
-      <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
-      <option value="DELIVERED">Delivered</option>
-      <option value="CANCEL_REQUEST">Cancel Requested</option>
-      <option value="CANCELLED">Cancelled</option>
-      <option value="RETURN_REQUEST">Return Requested</option>
-      <option value="RETURN_PICKUP">Return Pickup</option>
-      <option value="PICKUP_ARRIVED">Pickup Arrived</option>
-      <option value="RETURNED">Returned</option>
-      <option value="REFUND_REQUEST">Refund Requested</option>
-      <option value="REFUNDED">Refunded</option>
-      <option value="REPLACE_REQUEST">Replace Requested</option>
-      <option value="REPLACE_PICKUP">Replace Pickup</option>
-      <option value="ISSUE_REPLACE">Issue Replace</option>
-      <option value="REPLACE_DELIVERED">Replace Delivered</option>
-      <option value="REPLACED">Replaced</option>
-    </select>
-  </div>
+        <div class="admin-filters">
+            <select id="statusFilter">
+                <option value="">All Status</option>
+                <option value="PLACED">Placed</option>
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="SHIPPED">Shipped</option>
+                <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCEL_REQUEST">Cancel Requested</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="RETURN_REQUEST">Return Requested</option>
+                <option value="RETURN_PICKUP">Return Pickup</option>
+                <option value="PICKUP_ARRIVED">Pickup Arrived</option>
+                <option value="RETURNED">Returned</option>
+                <option value="REFUND_REQUEST">Refund Requested</option>
+                <option value="REFUNDED">Refunded</option>
+                <option value="REPLACE_REQUEST">Replace Requested</option>
+                <option value="REPLACE_PICKUP">Replace Pickup</option>
+                <option value="ISSUE_REPLACE">Issue Replace</option>
+                <option value="REPLACE_DELIVERED">Replace Delivered</option>
+                <option value="REPLACED">Replaced</option>
+            </select>
+        </div>
 
-  <div class="admin-panel">
-    <div class="admin-panel-title">All Orders</div>
-    <div class="table-responsive">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Order #</th>
-            <th>Customer</th>
-            <th>Date</th>
-            <th>Items</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="orders-body">
-          <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div id="orders-pagination"></div>
-  </div>
-  <div id="orderModal" class="modal-overlay">
-    <div class="modal" style="max-width:600px;width:90%;">
-      <div class="modal-header">
-        <h3>Order #<span id="modal-order-id"></span></h3>
-        <button class="modal-close" id="order-modal-close">&times;</button>
-      </div>
-      <div class="modal-body" id="modal-order-body">
-        <span class="spinner"></span>
-      </div>
-    </div>
-  </div>
-</main>
+        <div class="admin-panel">
+            <div class="admin-panel-title">All Orders</div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-body">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="orders-pagination"></div>
+        </div>
+        <div id="orderModal" class="modal-overlay">
+            <div class="modal" style="max-width:600px;width:90%;">
+                <div class="modal-header">
+                    <h3>Order #<span id="modal-order-id"></span></h3>
+                    <button class="modal-close" id="order-modal-close">&times;</button>
+                </div>
+                <div class="modal-body" id="modal-order-body">
+                    <span class="spinner"></span>
+                </div>
+            </div>
+        </div>
+    </main>
 
-<th:block th:replace="~{fragments/footer :: footer}"></th:block>
-<script th:src="@{/js/pagination.js}"></script>
-<script src="/js/sanitize.js"></script>
-<script>
-(function () {
-  'use strict';
-  var currentPage = 0;
-  var PAGE_SIZE = 20;
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var currentPage = 0;
+            var PAGE_SIZE = 20;
 
-  function statusClass(s) {
-    if (s === 'DELIVERED' || s === 'COMPLETED' || s === 'REPLACE_DELIVERED') return 'active';
-    if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
-    return 'pending';
-  }
+            function statusClass(s) {
+                if (s === 'DELIVERED' || s === 'COMPLETED' || s === 'REPLACE_DELIVERED') return 'active';
+                if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
+                return 'pending';
+            }
 
-  var nextStatusMap = {
-    'PLACED':        [{ value: 'CONFIRMED', label: 'Confirm' }, { value: 'CANCELLED', label: 'Cancel' }],
-    'CONFIRMED':     [{ value: 'SHIPPED', label: 'Ship' }],
-    'SHIPPED':       [{ value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' }],
-    'OUT_FOR_DELIVERY': [{ value: 'DELIVERED', label: 'Delivered' }],
-    'DELIVERED':     [{ value: 'RETURN_REQUEST', label: 'Return' }, { value: 'REFUND_REQUEST', label: 'Refund' }, { value: 'REPLACE_REQUEST', label: 'Replace' }],
-    'CANCEL_REQUEST': [{ value: 'CANCELLED', label: 'Approve Cancel' }],
-    'RETURN_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
-    'REFUND_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
-    'REPLACE_REQUEST': [{ value: 'REPLACE_PICKUP', label: 'Schedule Pickup' }],
-    'RETURN_PICKUP': [{ value: 'PICKUP_ARRIVED', label: 'Pickup Arrived' }],
-    'REPLACE_PICKUP': [{ value: 'PICKUP_ARRIVED', label: 'Pickup Arrived' }],
-    'PICKUP_ARRIVED': [{ value: 'RETURNED', label: 'Complete Return' }, { value: 'REFUNDED', label: 'Process Refund' }, { value: 'ISSUE_REPLACE', label: 'Issue Replace' }],
-    'ISSUE_REPLACE': [{ value: 'REPLACE_DELIVERED', label: 'Replace Delivered' }],
-    'REPLACE_DELIVERED': [{ value: 'REPLACED', label: 'Complete Replacement' }]
-  };
-  function renderOrders(orders) {
-    var filter = document.getElementById('statusFilter').value;
-    var filtered = filter ? orders.filter(function (o) { return o.status === filter; }) : orders;
-    var tbody = document.getElementById('orders-body');
-    if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No orders found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = '';
-    filtered.forEach(function (o) {
-      var itemCount = o.items ? o.items.length : 0;
-      var nextStatuses = nextStatusMap[o.status] || [];
-      var selectHtml = '';
-      if (nextStatuses.length > 0) {
-        selectHtml = '<select class="form-select status-select" data-order-id="' + o.id + '" style="width:170px;display:inline-block;margin-left:var(--space-xs);">';
-        selectHtml += '<option value="" disabled selected>Update Status</option>';
-        nextStatuses.forEach(function (s) {
-          selectHtml += '<option value="' + s.value + '">' + s.label + '</option>';
-        });
-        selectHtml += '</select>';
-      }
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td><a href="/order-detail?id=' + o.id + '&admin=true" class="btn-link">#' + o.id + '</a></td>' +
-        '<td>' + escapeHtml(o.customerUsername || '') + '</td>' +
-        '<td class="text-sm">' + formatDate(o.placedAt) + '</td>' +
-        '<td>' + itemCount + '</td>' +
-        '<td>' + formatCurrency(o.grandTotal) + '</td>' +
-        '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
-        '<td class="admin-table-actions">' +
-          '<button class="btn btn-sm btn-secondary view-order-btn" data-order-id="' + o.id + '" style="min-width:60px;">View</button>' +
-          selectHtml +
-        '</td>';
-      tbody.appendChild(tr);
-    });
-    tbody.querySelectorAll('.status-select').forEach(function (sel) {
-      sel.addEventListener('change', function () {
-        var orderId = this.dataset.orderId;
-        var newStatus = this.value;
-        if (!newStatus) return;
-        API.put('/api/admin/orders/' + orderId + '/status?status=' + newStatus).then(function () {
-          showToast('Order status updated', 'success');
-          loadOrders();
-        }).catch(function (e) { showToast(e.message, 'error'); });
-      });
-    });
-    tbody.querySelectorAll('.view-order-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var orderId = this.dataset.orderId;
-        document.getElementById('modal-order-id').textContent = orderId;
-        document.getElementById('modal-order-body').innerHTML = '<span class="spinner"></span>';
-        document.getElementById('orderModal').classList.add('active');
-        API.get('/api/admin/orders/' + orderId).then(function (o) {
-          var html = '<div class="mb-md"><strong>Status:</strong> ' + escapeHtml(o.status) + '</div>';
-          html += '<div class="mb-md"><strong>Customer:</strong> ' + escapeHtml(o.customerUsername || '') + ' (' + escapeHtml(o.customerEmail || '') + ')</div>';
-          html += '<div class="mb-md"><strong>Date:</strong> ' + formatDate(o.placedAt) + '</div>';
-          html += '<div class="mb-md"><strong>Total:</strong> ' + formatCurrency(o.grandTotal) + '</div>';
-          if (o.items && o.items.length > 0) {
-            html += '<div class="mb-md"><strong>Items:</strong></div>';
-            o.items.forEach(function (item) {
-              html += '<div class="text-sm" style="padding:4px 0;">' + escapeHtml(item.itemNameSnapshot || '') + ' x' + item.quantity + ' — ' + formatCurrency(item.subtotal) + '</div>';
+            var nextStatusMap = {
+                'PLACED': [{value: 'CONFIRMED', label: 'Confirm'}, {value: 'CANCELLED', label: 'Cancel'}],
+                'CONFIRMED': [{value: 'SHIPPED', label: 'Ship'}],
+                'SHIPPED': [{value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery'}],
+                'OUT_FOR_DELIVERY': [{value: 'DELIVERED', label: 'Delivered'}],
+                'DELIVERED': [{value: 'RETURN_REQUEST', label: 'Return'}, {
+                    value: 'REFUND_REQUEST',
+                    label: 'Refund'
+                }, {value: 'REPLACE_REQUEST', label: 'Replace'}],
+                'CANCEL_REQUEST': [{value: 'CANCELLED', label: 'Approve Cancel'}],
+                'RETURN_REQUEST': [{value: 'RETURN_PICKUP', label: 'Schedule Pickup'}],
+                'REFUND_REQUEST': [{value: 'RETURN_PICKUP', label: 'Schedule Pickup'}],
+                'REPLACE_REQUEST': [{value: 'REPLACE_PICKUP', label: 'Schedule Pickup'}],
+                'RETURN_PICKUP': [{value: 'PICKUP_ARRIVED', label: 'Pickup Arrived'}],
+                'REPLACE_PICKUP': [{value: 'PICKUP_ARRIVED', label: 'Pickup Arrived'}],
+                'PICKUP_ARRIVED': [{value: 'RETURNED', label: 'Complete Return'}, {
+                    value: 'REFUNDED',
+                    label: 'Process Refund'
+                }, {value: 'ISSUE_REPLACE', label: 'Issue Replace'}],
+                'ISSUE_REPLACE': [{value: 'REPLACE_DELIVERED', label: 'Replace Delivered'}],
+                'REPLACE_DELIVERED': [{value: 'REPLACED', label: 'Complete Replacement'}]
+            };
+
+            function renderOrders(orders) {
+                var filter = document.getElementById('statusFilter').value;
+                var filtered = filter ? orders.filter(function (o) {
+                    return o.status === filter;
+                }) : orders;
+                var tbody = document.getElementById('orders-body');
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No orders found</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                filtered.forEach(function (o) {
+                    var itemCount = o.items ? o.items.length : 0;
+                    var nextStatuses = nextStatusMap[o.status] || [];
+                    var selectHtml = '';
+                    if (nextStatuses.length > 0) {
+                        selectHtml = '<select class="form-select status-select" data-order-id="' + o.id + '" style="width:170px;display:inline-block;margin-left:var(--space-xs);">';
+                        selectHtml += '<option value="" disabled selected>Update Status</option>';
+                        nextStatuses.forEach(function (s) {
+                            selectHtml += '<option value="' + s.value + '">' + s.label + '</option>';
+                        });
+                        selectHtml += '</select>';
+                    }
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td><a href="/order-detail?id=' + o.id + '&admin=true" class="btn-link">#' + o.id + '</a></td>' +
+                        '<td>' + escapeHtml(o.customerUsername || '') + '</td>' +
+                        '<td class="text-sm">' + formatDate(o.placedAt) + '</td>' +
+                        '<td>' + itemCount + '</td>' +
+                        '<td>' + formatCurrency(o.grandTotal) + '</td>' +
+                        '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
+                        '<td class="admin-table-actions">' +
+                        '<button class="btn btn-sm btn-secondary view-order-btn" data-order-id="' + o.id + '" style="min-width:60px;">View</button>' +
+                        selectHtml +
+                        '</td>';
+                    tbody.appendChild(tr);
+                });
+                tbody.querySelectorAll('.status-select').forEach(function (sel) {
+                    sel.addEventListener('change', function () {
+                        var orderId = this.dataset.orderId;
+                        var newStatus = this.value;
+                        if (!newStatus) return;
+                        API.put('/api/admin/orders/' + orderId + '/status?status=' + newStatus).then(function () {
+                            showToast('Order status updated', 'success');
+                            loadOrders();
+                        }).catch(function (e) {
+                            showToast(e.message, 'error');
+                        });
+                    });
+                });
+                tbody.querySelectorAll('.view-order-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var orderId = this.dataset.orderId;
+                        document.getElementById('modal-order-id').textContent = orderId;
+                        document.getElementById('modal-order-body').innerHTML = '<span class="spinner"></span>';
+                        document.getElementById('orderModal').classList.add('active');
+                        API.get('/api/admin/orders/' + orderId).then(function (o) {
+                            var html = '<div class="mb-md"><strong>Status:</strong> ' + escapeHtml(o.status) + '</div>';
+                            html += '<div class="mb-md"><strong>Customer:</strong> ' + escapeHtml(o.customerUsername || '') + ' (' + escapeHtml(o.customerEmail || '') + ')</div>';
+                            html += '<div class="mb-md"><strong>Date:</strong> ' + formatDate(o.placedAt) + '</div>';
+                            html += '<div class="mb-md"><strong>Total:</strong> ' + formatCurrency(o.grandTotal) + '</div>';
+                            if (o.items && o.items.length > 0) {
+                                html += '<div class="mb-md"><strong>Items:</strong></div>';
+                                o.items.forEach(function (item) {
+                                    html += '<div class="text-sm" style="padding:4px 0;">' + escapeHtml(item.itemNameSnapshot || '') + ' x' + item.quantity + ' — ' + formatCurrency(item.subtotal) + '</div>';
+                                });
+                            }
+                            if (o.address) {
+                                html += '<div class="mt-md"><strong>Address:</strong></div>';
+                                html += '<div class="text-sm">' + escapeHtml(o.address.fullName || '') + '<br>' + escapeHtml(o.address.line1 || '') + '<br>' + escapeHtml(o.address.city || '') + ', ' + escapeHtml(o.address.state || '') + ' ' + escapeHtml(o.address.postalCode || '') + '</div>';
+                            }
+                            document.getElementById('modal-order-body').innerHTML = html;
+                        }).catch(function (err) {
+                            document.getElementById('modal-order-body').innerHTML = '<p class="text-danger">' + escapeHtml(err.message || 'Failed to load') + '</p>';
+                        });
+                    });
+                });
+            }
+
+            function loadOrders(page) {
+                if (page != null) currentPage = page;
+                var status = document.getElementById('statusFilter').value;
+                var url = '/api/admin/orders?page=' + currentPage + '&size=' + PAGE_SIZE;
+                if (status) url += '&status=' + status;
+                API.get(url).then(function (data) {
+                    var orders = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+                    renderOrders(orders);
+                    Pagination.render('orders-pagination', data, loadOrders, {
+                        onPageSizeChange: function (newSize) {
+                            PAGE_SIZE = newSize;
+                            loadOrders(0);
+                        }
+                    });
+                }).catch(function () {
+                    document.getElementById('orders-body').innerHTML =
+                        '<tr><td colspan="7" class="text-center text-muted">Failed to load orders</td></tr>';
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                loadOrders(0);
+                document.getElementById('statusFilter').addEventListener('change', function () {
+                    loadOrders(0);
+                });
+                document.getElementById('order-modal-close').addEventListener('click', function () {
+                    document.getElementById('orderModal').classList.remove('active');
+                });
+                document.getElementById('orderModal').addEventListener('click', function (e) {
+                    if (e.target === this) this.classList.remove('active');
+                });
             });
-          }
-          if (o.address) {
-            html += '<div class="mt-md"><strong>Address:</strong></div>';
-            html += '<div class="text-sm">' + escapeHtml(o.address.fullName || '') + '<br>' + escapeHtml(o.address.line1 || '') + '<br>' + escapeHtml(o.address.city || '') + ', ' + escapeHtml(o.address.state || '') + ' ' + escapeHtml(o.address.postalCode || '') + '</div>';
-          }
-          document.getElementById('modal-order-body').innerHTML = html;
-        }).catch(function (err) {
-          document.getElementById('modal-order-body').innerHTML = '<p class="text-danger">' + escapeHtml(err.message || 'Failed to load') + '</p>';
-        });
-      });
-    });
-  }
-
-  function loadOrders(page) {
-    if (page != null) currentPage = page;
-    var status = document.getElementById('statusFilter').value;
-    var url = '/api/admin/orders?page=' + currentPage + '&size=' + PAGE_SIZE;
-    if (status) url += '&status=' + status;
-    API.get(url).then(function (data) {
-      var orders = data && data.content ? data.content : (Array.isArray(data) ? data : []);
-      renderOrders(orders);
-      Pagination.render('orders-pagination', data, loadOrders, {
-        onPageSizeChange: function (newSize) {
-          PAGE_SIZE = newSize;
-          loadOrders(0);
-        }
-      });
-    }).catch(function () {
-      document.getElementById('orders-body').innerHTML =
-        '<tr><td colspan="7" class="text-center text-muted">Failed to load orders</td></tr>';
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    loadOrders(0);
-    document.getElementById('statusFilter').addEventListener('change', function () {
-      loadOrders(0);
-    });
-    document.getElementById('order-modal-close').addEventListener('click', function () {
-      document.getElementById('orderModal').classList.remove('active');
-    });
-    document.getElementById('orderModal').addEventListener('click', function (e) {
-      if (e.target === this) this.classList.remove('active');
-    });
-  });
-})();
-</script>
+        })();
+    </script>
 </body>
 </html>
