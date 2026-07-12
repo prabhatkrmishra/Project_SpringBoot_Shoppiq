@@ -29,9 +29,13 @@ import org.springframework.web.util.pattern.PathPatternParser;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Rate limiting filter that enforces per-path token-bucket quotas using
@@ -75,8 +79,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
     private final ProblemDetailResponseWriter responseWriter;
 
+    private static final long EVICT_AFTER_SECONDS = 3600;
+    private static final long EVICT_INTERVAL_SECONDS = 300;
+
     private final Map<String, Rule> ruleIndex = new ConcurrentHashMap<>();
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final Map<String, BucketEntry> buckets = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService evictor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "rate-limit-evictor");
+        t.setDaemon(true);
+        return t;
+    });
 
     public RateLimitFilter(RateLimitProperties properties,
                            JwtAuthenticationUtils jwtAuthenticationUtils,
@@ -91,6 +103,28 @@ public class RateLimitFilter extends OncePerRequestFilter {
             ruleIndex.put(rule.getPath(), rule);
             logger.debug("Registered rate limit rule: {} ({} per {}s, key={})",
                     rule.getPath(), rule.getLimit(), rule.getDuration(), rule.getKeyType());
+        }
+
+        evictor.scheduleAtFixedRate(this::evictStaleBuckets,
+                EVICT_INTERVAL_SECONDS, EVICT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    }
+
+    private record BucketEntry(Bucket bucket, long createdAt) {}
+
+    private void evictStaleBuckets() {
+        long now = System.nanoTime();
+        Iterator<Map.Entry<String, BucketEntry>> it = buckets.entrySet().iterator();
+        int removed = 0;
+        while (it.hasNext()) {
+            Map.Entry<String, BucketEntry> entry = it.next();
+            long ageSeconds = TimeUnit.NANOSECONDS.toSeconds(now - entry.getValue().createdAt());
+            if (ageSeconds > EVICT_AFTER_SECONDS) {
+                it.remove();
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            logger.debug("Evicted {} stale rate-limit buckets ({} remaining)", removed, buckets.size());
         }
     }
 
@@ -162,13 +196,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
             case USER_IP -> {
                 String token = jwtAuthenticationUtils.extractJwtFromCookies(request);
                 if (token == null) {
-                    yield null;
+                    yield "ip:" + remoteAddr;
                 }
                 try {
                     Long userId = jwtAuthenticationUtils.getUserIdFromToken(token);
                     yield "uid:" + userId + ":ip:" + remoteAddr;
                 } catch (Exception e) {
-                    yield null;
+                    yield "ip:" + remoteAddr;
                 }
             }
         };
@@ -183,13 +217,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * @return the bucket instance
      */
     private Bucket resolveBucket(String key, Rule rule) {
-        return buckets.computeIfAbsent(key, k -> {
+        BucketEntry entry = buckets.computeIfAbsent(key, k -> {
             Bandwidth bandwidth = Bandwidth.classic(
                     rule.getLimit(),
                     Refill.greedy(rule.getLimit(), Duration.ofSeconds(rule.getDuration()))
             );
-            return Bucket.builder().addLimit(bandwidth).build();
+            return new BucketEntry(Bucket.builder().addLimit(bandwidth).build(), System.nanoTime());
         });
+        return entry.bucket();
     }
 
     @Override

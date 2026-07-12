@@ -81,6 +81,9 @@ public class AuthController {
     @Value("${jwt.expiration}")
     private long expirationTime;
 
+    @Value("${jwt.refresh-max-age:2592000000}")
+    private long refreshMaxAge;
+
     @Value("${oauth.registration.timeout-minutes:10}")
     private int oauthRegistrationTimeoutMinutes;
 
@@ -251,7 +254,7 @@ logger.info("Google OAuth2 registration completed for user: {}", newRequest.user
         }
 
         User user = userRepository.findById(userId).orElse(null);
-        if (user == null || !jwtAuthenticationUtils.validateTokenForRefresh(token, user)) {
+        if (user == null || !jwtAuthenticationUtils.validateTokenForRefresh(token, user, refreshMaxAge)) {
             logger.debug("Refresh failed: user not found or token validation failed for userId={}", userId);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token refresh failed");
         }

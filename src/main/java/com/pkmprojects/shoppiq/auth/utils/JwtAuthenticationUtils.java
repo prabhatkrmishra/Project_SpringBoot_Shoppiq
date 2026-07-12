@@ -291,6 +291,10 @@ public class JwtAuthenticationUtils {
      * @return {@code true} if the token is valid for refresh
      */
     public boolean validateTokenForRefresh(String token, User user) {
+        return validateTokenForRefresh(token, user, Long.MAX_VALUE);
+    }
+
+    public boolean validateTokenForRefresh(String token, User user, long maxAgeMillis) {
         try {
             String tokenUsername = getUsernameFromToken(token);
             boolean usernameMatches = user.getUsername().equals(tokenUsername);
@@ -301,7 +305,17 @@ public class JwtAuthenticationUtils {
 
             boolean userEnabled = user.isEnabled();
 
-            return usernameMatches && tokenVersionMatches && userEnabled;
+            boolean ageOk = true;
+            if (maxAgeMillis < Long.MAX_VALUE) {
+                Date issuedAt = getClaimsFromToken(token).getIssuedAt();
+                long ageMillis = System.currentTimeMillis() - issuedAt.getTime();
+                ageOk = ageMillis <= maxAgeMillis;
+                if (!ageOk) {
+                    logger.debug("Token age {}ms exceeds max allowed {}ms", ageMillis, maxAgeMillis);
+                }
+            }
+
+            return usernameMatches && tokenVersionMatches && userEnabled && ageOk;
         } catch (Exception e) {
             logger.debug("Token refresh validation failed: {}", e.getMessage());
             return false;
