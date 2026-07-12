@@ -44,7 +44,7 @@ public class EmailServiceImpl implements EmailService {
     @Transactional
     public void sendEmail(EmailMessage message) {
         if (message.getUserId() != null && !shouldSendEmail(message.getUserId(), message.getEmailType())) {
-            log.info("Email skipped due to user preference: type={}, userId={}", message.getEmailType(), message.getUserId());
+            log.debug("Email skipped due to user preference: type={}, userId={}", message.getEmailType(), message.getUserId());
             logEmail(message, null, EmailStatus.PENDING);
             return;
         }
@@ -66,7 +66,7 @@ public class EmailServiceImpl implements EmailService {
             provider.send(message);
             emailLog.setStatus(EmailStatus.SENT);
             emailLog.setSentAt(LocalDateTime.now());
-            log.info("Email sent: type={}, to={}, provider={}", message.getEmailType(), message.getTo(), provider.getProviderName());
+            log.debug("Email sent: type={}, to={}, provider={}", message.getEmailType(), message.getTo(), provider.getProviderName());
         } catch (EmailSendException e) {
             emailLog.setStatus(EmailStatus.FAILED);
             emailLog.setErrorMessage(e.getMessage());

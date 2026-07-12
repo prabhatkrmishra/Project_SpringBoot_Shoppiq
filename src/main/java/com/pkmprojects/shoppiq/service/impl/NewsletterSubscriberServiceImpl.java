@@ -36,14 +36,14 @@ public class NewsletterSubscriberServiceImpl implements NewsletterSubscriberServ
         if (existing.isPresent()) {
             NewsletterSubscriber subscriber = existing.get();
             if (subscriber.isActive()) {
-                log.info("Newsletter subscription already active for {}", email);
+                log.debug("Newsletter subscription already active for {}", email);
                 return;
             }
             subscriber.setActive(true);
             subscriber.setSubscribedAt(Instant.now());
             subscriber.setUnsubscribedAt(null);
             subscriberRepository.save(subscriber);
-            log.info("Newsletter subscription reactivated for {}", email);
+            log.debug("Newsletter subscription reactivated for {}", email);
             return;
         }
 
@@ -54,7 +54,7 @@ public class NewsletterSubscriberServiceImpl implements NewsletterSubscriberServ
                 .subscribedAt(Instant.now())
                 .build();
         subscriberRepository.save(subscriber);
-        log.info("New newsletter subscription for {}", email);
+        log.debug("New newsletter subscription for {}", email);
     }
 
     @Override
@@ -64,14 +64,14 @@ public class NewsletterSubscriberServiceImpl implements NewsletterSubscriberServ
                 .orElseThrow(() -> new IllegalArgumentException("Invalid unsubscribe link."));
 
         if (!subscriber.isActive()) {
-            log.info("Newsletter subscription already inactive for {}", subscriber.getEmail());
+            log.debug("Newsletter subscription already inactive for {}", subscriber.getEmail());
             return;
         }
 
         subscriber.setActive(false);
         subscriber.setUnsubscribedAt(Instant.now());
         subscriberRepository.save(subscriber);
-        log.info("Newsletter subscription removed for {}", subscriber.getEmail());
+        log.debug("Newsletter subscription removed for {}", subscriber.getEmail());
     }
 
     @Override

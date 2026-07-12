@@ -48,7 +48,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
                 .build();
 
         verificationCodeRepository.save(verificationCode);
-        log.info("Verification code generated for user={}, type={}", user.getId(), emailType);
+        log.debug("Verification code generated for user={}, type={}", user.getId(), emailType);
 
         return code;
     }
@@ -82,7 +82,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
 
         verificationCode.markUsed();
         verificationCodeRepository.save(verificationCode);
-        log.info("Verification code validated successfully for user={}, type={}", userId, emailType);
+        log.debug("Verification code validated successfully for user={}, type={}", userId, emailType);
 
         return true;
     }

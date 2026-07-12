@@ -60,7 +60,7 @@ public class OrderEmailService {
                 .variables(vars)
                 .build());
 
-        log.info("Order status email sent: orderId={}, status={}, userId={}", order.getId(), newStatus, user.getId());
+        log.debug("Order status email sent: orderId={}, status={}, userId={}", order.getId(), newStatus, user.getId());
     }
 
     private String getStatusSubject(OrderStatus status, Long orderId) {

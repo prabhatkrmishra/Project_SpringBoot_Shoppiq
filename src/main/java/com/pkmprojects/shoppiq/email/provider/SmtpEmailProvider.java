@@ -71,7 +71,7 @@ public class SmtpEmailProvider implements EmailProvider {
             helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
-            log.info("Email sent successfully to {} via SMTP, type={}", message.getTo(), message.getEmailType());
+            log.debug("Email sent successfully to {} via SMTP, type={}", message.getTo(), message.getEmailType());
         } catch (MessagingException e) {
             log.error("Failed to send email to {} via SMTP: {}", message.getTo(), e.getMessage(), e);
             throw new EmailSendException("Failed to send email: " + e.getMessage(), e);

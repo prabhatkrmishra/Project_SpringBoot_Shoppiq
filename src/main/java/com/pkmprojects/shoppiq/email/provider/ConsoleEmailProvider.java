@@ -45,16 +45,14 @@ public class ConsoleEmailProvider implements EmailProvider {
     public void send(EmailMessage message) {
         String htmlContent = renderTemplate(message.getTemplateName(), message.getVariables());
 
-        log.info("========== EMAIL (Console Provider) ==========");
-        log.info("From: {}", fromAddress);
-        log.info("To: {}", message.getTo());
-        log.info("Subject: {}", message.getSubject());
-        log.info("Type: {}", message.getEmailType());
-        log.info("User ID: {}", message.getUserId());
-        log.info("Template: {}", message.getTemplateName());
-        log.info("--- HTML Content ---");
-        log.info(htmlContent);
-        log.info("==============================================");
+        log.debug("========== EMAIL (Console Provider) ==========");
+        log.debug("From: {}", fromAddress);
+        log.debug("To: {}", message.getTo());
+        log.debug("Subject: {}", message.getSubject());
+        log.debug("Type: {}", message.getEmailType());
+        log.debug("User ID: {}", message.getUserId());
+        log.debug("Template: {}", message.getTemplateName());
+        log.debug("==============================================");
     }
 
     @Override
