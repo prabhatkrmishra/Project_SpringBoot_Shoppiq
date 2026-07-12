@@ -23,11 +23,14 @@
       <option value="CANCELLED">Cancelled</option>
       <option value="RETURN_REQUEST">Return Requested</option>
       <option value="RETURN_PICKUP">Return Pickup</option>
+      <option value="PICKUP_ARRIVED">Pickup Arrived</option>
       <option value="RETURNED">Returned</option>
       <option value="REFUND_REQUEST">Refund Requested</option>
       <option value="REFUNDED">Refunded</option>
       <option value="REPLACE_REQUEST">Replace Requested</option>
       <option value="REPLACE_PICKUP">Replace Pickup</option>
+      <option value="ISSUE_REPLACE">Issue Replace</option>
+      <option value="REPLACE_DELIVERED">Replace Delivered</option>
       <option value="REPLACED">Replaced</option>
     </select>
   </div>
@@ -77,11 +80,27 @@
   var PAGE_SIZE = 20;
 
   function statusClass(s) {
-    if (s === 'DELIVERED' || s === 'COMPLETED') return 'active';
+    if (s === 'DELIVERED' || s === 'COMPLETED' || s === 'REPLACE_DELIVERED') return 'active';
     if (s === 'CANCELLED' || s === 'RETURNED' || s === 'REFUNDED' || s === 'REPLACED') return 'inactive';
     return 'pending';
   }
 
+  var nextStatusMap = {
+    'PLACED':        [{ value: 'CONFIRMED', label: 'Confirm' }, { value: 'CANCELLED', label: 'Cancel' }],
+    'CONFIRMED':     [{ value: 'SHIPPED', label: 'Ship' }],
+    'SHIPPED':       [{ value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' }],
+    'OUT_FOR_DELIVERY': [{ value: 'DELIVERED', label: 'Delivered' }],
+    'DELIVERED':     [{ value: 'RETURN_REQUEST', label: 'Return' }, { value: 'REFUND_REQUEST', label: 'Refund' }, { value: 'REPLACE_REQUEST', label: 'Replace' }],
+    'CANCEL_REQUEST': [{ value: 'CANCELLED', label: 'Approve Cancel' }],
+    'RETURN_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
+    'REFUND_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
+    'REPLACE_REQUEST': [{ value: 'REPLACE_PICKUP', label: 'Schedule Pickup' }],
+    'RETURN_PICKUP': [{ value: 'PICKUP_ARRIVED', label: 'Pickup Arrived' }],
+    'REPLACE_PICKUP': [{ value: 'PICKUP_ARRIVED', label: 'Pickup Arrived' }],
+    'PICKUP_ARRIVED': [{ value: 'RETURNED', label: 'Complete Return' }, { value: 'REFUNDED', label: 'Process Refund' }, { value: 'ISSUE_REPLACE', label: 'Issue Replace' }],
+    'ISSUE_REPLACE': [{ value: 'REPLACE_DELIVERED', label: 'Replace Delivered' }],
+    'REPLACE_DELIVERED': [{ value: 'REPLACED', label: 'Complete Replacement' }]
+  };
   function renderOrders(orders) {
     var filter = document.getElementById('statusFilter').value;
     var filtered = filter ? orders.filter(function (o) { return o.status === filter; }) : orders;
@@ -93,12 +112,16 @@
     tbody.innerHTML = '';
     filtered.forEach(function (o) {
       var itemCount = o.items ? o.items.length : 0;
-      var statusOptions = ['PLACED','CONFIRMED','SHIPPED','OUT_FOR_DELIVERY','DELIVERED','CANCEL_REQUEST','CANCELLED','RETURN_REQUEST','RETURN_PICKUP','RETURNED','REFUND_REQUEST','REFUNDED','REPLACE_REQUEST','REPLACE_PICKUP','REPLACED'];
-      var selectHtml = '<select class="form-select status-select" data-order-id="' + o.id + '" style="width:auto;display:inline-block;">';
-      statusOptions.forEach(function (s) {
-        selectHtml += '<option value="' + s + '"' + (s === o.status ? ' selected' : '') + '>' + s + '</option>';
-      });
-      selectHtml += '</select>';
+      var nextStatuses = nextStatusMap[o.status] || [];
+      var selectHtml = '';
+      if (nextStatuses.length > 0) {
+        selectHtml = '<select class="form-select status-select" data-order-id="' + o.id + '" style="width:170px;display:inline-block;margin-left:var(--space-xs);">';
+        selectHtml += '<option value="" disabled selected>Update Status</option>';
+        nextStatuses.forEach(function (s) {
+          selectHtml += '<option value="' + s.value + '">' + s.label + '</option>';
+        });
+        selectHtml += '</select>';
+      }
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td><a href="/order-detail?id=' + o.id + '&admin=true" class="btn-link">#' + o.id + '</a></td>' +
@@ -108,7 +131,7 @@
         '<td>' + formatCurrency(o.grandTotal) + '</td>' +
         '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
         '<td class="admin-table-actions">' +
-          '<button class="btn btn-sm btn-secondary view-order-btn" data-order-id="' + o.id + '">View</button> ' +
+          '<button class="btn btn-sm btn-secondary view-order-btn" data-order-id="' + o.id + '" style="min-width:60px;">View</button>' +
           selectHtml +
         '</td>';
       tbody.appendChild(tr);
@@ -117,6 +140,7 @@
       sel.addEventListener('change', function () {
         var orderId = this.dataset.orderId;
         var newStatus = this.value;
+        if (!newStatus) return;
         API.put('/api/admin/orders/' + orderId + '/status?status=' + newStatus).then(function () {
           showToast('Order status updated', 'success');
           loadOrders();

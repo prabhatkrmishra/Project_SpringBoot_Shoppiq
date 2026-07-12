@@ -49,10 +49,10 @@
   'use strict';
   var currentOrder = null;
   function badgeClass(status) {
-    if (status === 'DELIVERED' || status === 'COMPLETED') return 'badge-success';
+    if (status === 'DELIVERED' || status === 'COMPLETED' || status === 'REPLACE_DELIVERED') return 'badge-success';
     if (status === 'CANCELLED' || status === 'RETURNED' || status === 'REFUNDED' || status === 'REPLACED') return 'badge-danger';
     if (status === 'CANCEL_REQUEST' || status === 'RETURN_REQUEST' || status === 'REFUND_REQUEST' || status === 'REPLACE_REQUEST') return 'badge-info';
-    if (status === 'RETURN_PICKUP' || status === 'REPLACE_PICKUP') return 'badge-info';
+    if (status === 'RETURN_PICKUP' || status === 'REPLACE_PICKUP' || status === 'PICKUP_ARRIVED' || status === 'ISSUE_REPLACE') return 'badge-info';
     return 'badge-warning';
   }
   var nextStatusMap = {
@@ -60,12 +60,16 @@
     'CONFIRMED':     [{ value: 'SHIPPED', label: 'Ship' }],
     'SHIPPED':       [{ value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' }],
     'OUT_FOR_DELIVERY': [{ value: 'DELIVERED', label: 'Deliver' }],
+    'DELIVERED':     [{ value: 'RETURN_REQUEST', label: 'Return' }, { value: 'REFUND_REQUEST', label: 'Refund' }, { value: 'REPLACE_REQUEST', label: 'Replace' }],
     'CANCEL_REQUEST': [{ value: 'CANCELLED', label: 'Approve Cancel' }],
     'RETURN_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
     'REFUND_REQUEST': [{ value: 'RETURN_PICKUP', label: 'Schedule Pickup' }],
     'REPLACE_REQUEST': [{ value: 'REPLACE_PICKUP', label: 'Schedule Pickup' }],
-    'RETURN_PICKUP': [{ value: 'RETURNED', label: 'Complete Return' }, { value: 'REFUNDED', label: 'Process Refund' }],
-    'REPLACE_PICKUP': [{ value: 'REPLACED', label: 'Complete Replacement' }]
+    'RETURN_PICKUP': [{ value: 'PICKUP_ARRIVED', label: 'Pickup Arrived' }],
+    'REPLACE_PICKUP': [{ value: 'PICKUP_ARRIVED', label: 'Pickup Arrived' }],
+    'PICKUP_ARRIVED': [{ value: 'RETURNED', label: 'Complete Return' }, { value: 'REFUNDED', label: 'Process Refund' }, { value: 'ISSUE_REPLACE', label: 'Issue Replace' }],
+    'ISSUE_REPLACE': [{ value: 'REPLACE_DELIVERED', label: 'Replace Delivered' }],
+    'REPLACE_DELIVERED': [{ value: 'REPLACED', label: 'Complete Replacement' }]
   };
   function renderOrder(order) {
     currentOrder = order;

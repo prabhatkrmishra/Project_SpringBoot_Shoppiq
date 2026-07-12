@@ -126,10 +126,13 @@ public class SellerOrderServiceImpl implements SellerOrderService {
         if (from == OrderStatus.RETURN_REQUEST) return to == OrderStatus.RETURN_PICKUP;
         if (from == OrderStatus.REFUND_REQUEST) return to == OrderStatus.RETURN_PICKUP;
         if (from == OrderStatus.REPLACE_REQUEST) return to == OrderStatus.REPLACE_PICKUP;
-        if (from == OrderStatus.RETURN_PICKUP) {
-            return to == OrderStatus.RETURNED || to == OrderStatus.REFUNDED;
+        if (from == OrderStatus.RETURN_PICKUP) return to == OrderStatus.PICKUP_ARRIVED;
+        if (from == OrderStatus.PICKUP_ARRIVED) {
+            return to == OrderStatus.RETURNED || to == OrderStatus.REFUNDED || to == OrderStatus.ISSUE_REPLACE;
         }
-        if (from == OrderStatus.REPLACE_PICKUP) return to == OrderStatus.REPLACED;
+        if (from == OrderStatus.REPLACE_PICKUP) return to == OrderStatus.PICKUP_ARRIVED;
+        if (from == OrderStatus.ISSUE_REPLACE) return to == OrderStatus.REPLACE_DELIVERED;
+        if (from == OrderStatus.REPLACE_DELIVERED) return to == OrderStatus.REPLACED;
         return false;
     }
 

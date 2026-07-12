@@ -77,8 +77,11 @@ public class OrderEmailService {
             case REFUND_REQUEST -> "Order #%d Refund Requested".formatted(orderId);
             case REFUNDED -> "Order #%d Refund Processed".formatted(orderId);
             case RETURN_PICKUP -> "Order #%d Return Pickup Scheduled".formatted(orderId);
+            case PICKUP_ARRIVED -> "Order #%d Pickup Arrived at Warehouse".formatted(orderId);
             case REPLACE_PICKUP -> "Order #%d Replacement Pickup Scheduled".formatted(orderId);
             case REPLACE_REQUEST -> "Order #%d Replacement Requested".formatted(orderId);
+            case ISSUE_REPLACE -> "Order #%d Replacement Issue Logged".formatted(orderId);
+            case REPLACE_DELIVERED -> "Order #%d Replacement Delivered".formatted(orderId);
             case REPLACED -> "Order #%d Replacement Completed".formatted(orderId);
         };
     }
@@ -97,8 +100,11 @@ public class OrderEmailService {
             case REFUND_REQUEST -> "Your refund request has been received and is being processed.";
             case REFUNDED -> "Your refund has been processed. The amount will be credited to your account shortly.";
             case RETURN_PICKUP -> "A pickup has been scheduled for your return item(s). Please have them ready.";
+            case PICKUP_ARRIVED -> "Your returned item(s) have arrived at our warehouse and are being processed.";
             case REPLACE_PICKUP -> "A pickup has been scheduled for your replacement item(s). Please have them ready.";
             case REPLACE_REQUEST -> "Your replacement request has been received and is being processed.";
+            case ISSUE_REPLACE -> "A replacement issue has been logged and a new item will be dispatched.";
+            case REPLACE_DELIVERED -> "Your replacement item(s) have been delivered. Thank you for your patience!";
             case REPLACED -> "Your replacement has been completed. The new item(s) will be shipped shortly.";
         };
     }

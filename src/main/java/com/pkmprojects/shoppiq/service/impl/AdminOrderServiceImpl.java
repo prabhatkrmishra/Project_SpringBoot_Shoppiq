@@ -113,9 +113,9 @@ public class AdminOrderServiceImpl implements AdminOrderService {
      * PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED
      * PLACED → CANCEL_REQUEST → CANCELLED
      * PLACED → CANCELLED (direct)
-     * DELIVERED → RETURN_REQUEST → RETURN_PICKUP → RETURNED
-     * DELIVERED → REFUND_REQUEST → RETURN_PICKUP → REFUNDED
-     * DELIVERED → REPLACE_REQUEST → REPLACE_PICKUP → REPLACED
+     * DELIVERED → RETURN_REQUEST → RETURN_PICKUP → PICKUP_ARRIVED → RETURNED
+     * DELIVERED → REFUND_REQUEST → RETURN_PICKUP → PICKUP_ARRIVED → REFUNDED
+     * DELIVERED → REPLACE_REQUEST → REPLACE_PICKUP → PICKUP_ARRIVED → ISSUE_REPLACE → REPLACE_DELIVERED → REPLACED
      * </pre>
      */
     private boolean isValidTransition(OrderStatus from, OrderStatus to) {
@@ -168,13 +168,28 @@ public class AdminOrderServiceImpl implements AdminOrderService {
             return to == OrderStatus.REPLACE_PICKUP;
         }
 
-        // RETURN_PICKUP can go to RETURNED or REFUNDED
+        // RETURN_PICKUP can go to PICKUP_ARRIVED
         if (from == OrderStatus.RETURN_PICKUP) {
-            return to == OrderStatus.RETURNED || to == OrderStatus.REFUNDED;
+            return to == OrderStatus.PICKUP_ARRIVED;
         }
 
-        // REPLACE_PICKUP can go to REPLACED
+        // PICKUP_ARRIVED can go to RETURNED, REFUNDED, or ISSUE_REPLACE
+        if (from == OrderStatus.PICKUP_ARRIVED) {
+            return to == OrderStatus.RETURNED || to == OrderStatus.REFUNDED || to == OrderStatus.ISSUE_REPLACE;
+        }
+
+        // REPLACE_PICKUP can go to PICKUP_ARRIVED
         if (from == OrderStatus.REPLACE_PICKUP) {
+            return to == OrderStatus.PICKUP_ARRIVED;
+        }
+
+        // ISSUE_REPLACE can go to REPLACE_DELIVERED
+        if (from == OrderStatus.ISSUE_REPLACE) {
+            return to == OrderStatus.REPLACE_DELIVERED;
+        }
+
+        // REPLACE_DELIVERED can go to REPLACED
+        if (from == OrderStatus.REPLACE_DELIVERED) {
             return to == OrderStatus.REPLACED;
         }
 

@@ -312,21 +312,21 @@ class AdminOrderServiceImplTest {
         }
 
         @Test
-        @DisplayName("transitions RETURN_PICKUP to RETURNED")
+        @DisplayName("transitions RETURN_PICKUP to PICKUP_ARRIVED")
         void transitionsReturnPickupToReturned() {
             testOrder.setStatus(OrderStatus.RETURN_PICKUP);
             when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any())).thenReturn(testOrder);
 
-            orderService.updateOrderStatus(1L, OrderStatus.RETURNED);
+            orderService.updateOrderStatus(1L, OrderStatus.PICKUP_ARRIVED);
 
             verify(orderRepository).save(testOrder);
         }
 
         @Test
-        @DisplayName("transitions RETURN_PICKUP to REFUNDED")
+        @DisplayName("transitions PICKUP_ARRIVED to REFUNDED")
         void transitionsReturnPickupToRefunded() {
-            testOrder.setStatus(OrderStatus.RETURN_PICKUP);
+            testOrder.setStatus(OrderStatus.PICKUP_ARRIVED);
             when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any())).thenReturn(testOrder);
 
@@ -336,13 +336,13 @@ class AdminOrderServiceImplTest {
         }
 
         @Test
-        @DisplayName("transitions REPLACE_PICKUP to REPLACED")
+        @DisplayName("transitions REPLACE_PICKUP to PICKUP_ARRIVED")
         void transitionsReplacePickupToReplaced() {
             testOrder.setStatus(OrderStatus.REPLACE_PICKUP);
             when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any())).thenReturn(testOrder);
 
-            orderService.updateOrderStatus(1L, OrderStatus.REPLACED);
+            orderService.updateOrderStatus(1L, OrderStatus.PICKUP_ARRIVED);
 
             verify(orderRepository).save(testOrder);
         }
@@ -608,7 +608,7 @@ class AdminOrderServiceImplTest {
         }
 
         @Test
-        @DisplayName("full return flow — PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED → RETURN_REQUEST → RETURN_PICKUP → RETURNED")
+        @DisplayName("full return flow — PLACED → ... → RETURN_PICKUP → PICKUP_ARRIVED → RETURNED")
         void fullReturnFlow() {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any())).thenReturn(testOrder);
@@ -620,6 +620,7 @@ class AdminOrderServiceImplTest {
                     OrderStatus.DELIVERED,
                     OrderStatus.RETURN_REQUEST,
                     OrderStatus.RETURN_PICKUP,
+                    OrderStatus.PICKUP_ARRIVED,
                     OrderStatus.RETURNED
             };
 
@@ -632,7 +633,7 @@ class AdminOrderServiceImplTest {
         }
 
         @Test
-        @DisplayName("full refund flow — PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED → REFUND_REQUEST → RETURN_PICKUP → REFUNDED")
+        @DisplayName("full refund flow — PLACED → ... → RETURN_PICKUP → PICKUP_ARRIVED → REFUNDED")
         void fullRefundFlow() {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any())).thenReturn(testOrder);
@@ -644,6 +645,7 @@ class AdminOrderServiceImplTest {
                     OrderStatus.DELIVERED,
                     OrderStatus.REFUND_REQUEST,
                     OrderStatus.RETURN_PICKUP,
+                    OrderStatus.PICKUP_ARRIVED,
                     OrderStatus.REFUNDED
             };
 
@@ -656,7 +658,7 @@ class AdminOrderServiceImplTest {
         }
 
         @Test
-        @DisplayName("full replacement flow — PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED → REPLACE_REQUEST → REPLACE_PICKUP → REPLACED")
+        @DisplayName("full replacement flow — PLACED → ... → REPLACE_PICKUP → PICKUP_ARRIVED → ISSUE_REPLACE → REPLACE_DELIVERED → REPLACED")
         void fullReplacementFlow() {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any())).thenReturn(testOrder);
@@ -668,6 +670,9 @@ class AdminOrderServiceImplTest {
                     OrderStatus.DELIVERED,
                     OrderStatus.REPLACE_REQUEST,
                     OrderStatus.REPLACE_PICKUP,
+                    OrderStatus.PICKUP_ARRIVED,
+                    OrderStatus.ISSUE_REPLACE,
+                    OrderStatus.REPLACE_DELIVERED,
                     OrderStatus.REPLACED
             };
 

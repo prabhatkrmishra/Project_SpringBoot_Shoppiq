@@ -272,7 +272,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/items/slug/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/items/*/create/**").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/items/*/reviews").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/items/*/reviews").permitAll()
                         .requestMatchers(HttpMethod.GET, "/reviews/*").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/reviews/*/update").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/reviews/*/delete").hasAnyRole("CUSTOMER", "ADMIN")
@@ -293,16 +293,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/seller/register").authenticated()
                         .requestMatchers("/seller/**").hasAnyRole("SELLER", "ADMIN")
 
-                        // Cart: customer-only access
+                        // Cart: customer & admin access
                         .requestMatchers("/user/cart/**").hasAnyRole("CUSTOMER", "ADMIN")
 
-                        // Address: customer-only access
-                        .requestMatchers("/user/address/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        // Address: customer & seller, admin access
+                        .requestMatchers("/user/address/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
 
-                        // Order: customer-only access
+                        // Order: customer & admin access
                         .requestMatchers("/user/order/**").hasAnyRole("CUSTOMER", "ADMIN")
 
-                        // Payment: customer endpoints
+                        // Payment: customer & admin access
                         .requestMatchers("/user/payment/**").hasAnyRole("CUSTOMER", "ADMIN")
 
                         // Frontend order pages

@@ -12,12 +12,15 @@
             </div>
 
             <div id="order-content" style="display:none;">
-                <div class="page-header">
-                    <h1>Order #<span id="order-id"></span></h1>
-                    <div class="flex items-center gap-sm">
-                        <span class="badge" id="order-status"></span>
-                        <span class="text-muted text-sm" id="order-date"></span>
+                <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--space-sm);">
+                    <div>
+                        <h1 style="margin-bottom:4px;">Order #<span id="order-id"></span></h1>
+                        <div class="flex items-center gap-sm">
+                            <span class="badge" id="order-status"></span>
+                            <span class="text-muted text-sm" id="order-date"></span>
+                        </div>
                     </div>
+                    <select id="order-actions-dropdown" class="form-select" style="display:none;width:auto;"></select>
                 </div>
 
                 <div class="panel">
@@ -38,13 +41,10 @@
                     <p class="text-sm" style="margin:0;" id="order-address"></p>
                 </div>
 
-                <div class="mt-lg flex gap-sm">
+                <div class="mt-lg flex gap-sm" style="flex-wrap:wrap;">
                     <a id="admin-back-link" href="/admin/orders" class="btn btn-secondary" style="display:none;">&larr; Back to Order Management</a>
                     <a id="back-link" href="/orders" class="btn btn-secondary">&larr; Back to Orders</a>
                     <button id="cancel-order-btn" class="btn btn-danger" style="display:none;">Request Cancellation</button>
-                    <button id="return-order-btn" class="btn btn-warning" style="display:none;">Request Return</button>
-                    <button id="refund-order-btn" class="btn btn-warning" style="display:none;">Request Refund</button>
-                    <button id="replace-order-btn" class="btn btn-primary" style="display:none;">Request Replacement</button>
                 </div>
             </div>
         </div>
@@ -56,18 +56,16 @@
     (function () {
       'use strict';
       function badgeClass(status) {
-        if (status === 'DELIVERED' || status === 'COMPLETED') return 'badge-success';
+        if (status === 'DELIVERED' || status === 'COMPLETED' || status === 'REPLACE_DELIVERED') return 'badge-success';
         if (status === 'CANCELLED' || status === 'RETURNED' || status === 'REFUNDED' || status === 'REPLACED') return 'badge-danger';
         if (status === 'CANCEL_REQUEST' || status === 'RETURN_REQUEST' || status === 'REFUND_REQUEST' || status === 'REPLACE_REQUEST') return 'badge-info';
-        if (status === 'RETURN_PICKUP' || status === 'REPLACE_PICKUP') return 'badge-info';
+        if (status === 'RETURN_PICKUP' || status === 'REPLACE_PICKUP' || status === 'PICKUP_ARRIVED' || status === 'ISSUE_REPLACE') return 'badge-info';
         return 'badge-warning';
       }
       function renderOrder(order) {
         document.getElementById('order-loading').style.display = 'none';
         document.getElementById('cancel-order-btn').style.display = 'none';
-        document.getElementById('return-order-btn').style.display = 'none';
-        document.getElementById('refund-order-btn').style.display = 'none';
-        document.getElementById('replace-order-btn').style.display = 'none';
+        document.getElementById('order-actions-dropdown').style.display = 'none';
         document.getElementById('order-content').style.display = '';
         document.getElementById('order-id').textContent = order.id;
         var statusEl = document.getElementById('order-status');
@@ -126,48 +124,26 @@
           };
         }
         if (order.status === 'DELIVERED' && new URLSearchParams(window.location.search).get('admin') !== 'true') {
-          var returnBtn = document.getElementById('return-order-btn');
-          returnBtn.style.display = '';
-          returnBtn.onclick = function () {
-            showConfirmModal({ title: 'Request Return', message: 'Request a return for this order?', confirmText: 'Request Return' }).then(function (confirmed) {
-              if (!confirmed) return;
-              setButtonLoading(returnBtn, true);
-              API.put('/user/order/return/' + order.id).then(function () {
-                showToast('Return requested', 'success');
-                renderOrder(Object.assign(order, { status: 'RETURN_REQUEST' }));
+          var sel = document.getElementById('order-actions-dropdown');
+          sel.innerHTML = '<option value="">Select action...</option>' +
+            '<option value="RETURN_REQUEST">Request Return</option>' +
+            '<option value="REFUND_REQUEST">Request Refund</option>' +
+            '<option value="REPLACE_REQUEST">Request Replacement</option>';
+          sel.style.display = '';
+          sel.onchange = function () {
+            var val = this.value;
+            if (!val) return;
+            var titles = { RETURN_REQUEST: 'Request Return', REFUND_REQUEST: 'Request Refund', REPLACE_REQUEST: 'Request Replacement' };
+            var messages = { RETURN_REQUEST: 'Request a return for this order?', REFUND_REQUEST: 'Request a refund for this order?', REPLACE_REQUEST: 'Request a replacement for this order?' };
+            var urls = { RETURN_REQUEST: '/user/order/return/', REFUND_REQUEST: '/user/order/refund/', REPLACE_REQUEST: '/user/order/replace/' };
+            showConfirmModal({ title: titles[val], message: messages[val], confirmText: titles[val] }).then(function (confirmed) {
+              if (!confirmed) { sel.value = ''; return; }
+              API.put(urls[val] + order.id).then(function () {
+                showToast(titles[val].replace('Request ', '') + ' requested', 'success');
+                renderOrder(Object.assign(order, { status: val }));
               }).catch(function (err) {
-                showToast(err.message || 'Failed to request return', 'error');
-                setButtonLoading(returnBtn, false);
-              });
-            });
-          };
-          var refundBtn = document.getElementById('refund-order-btn');
-          refundBtn.style.display = '';
-          refundBtn.onclick = function () {
-            showConfirmModal({ title: 'Request Refund', message: 'Request a refund for this order?', confirmText: 'Request Refund' }).then(function (confirmed) {
-              if (!confirmed) return;
-              setButtonLoading(refundBtn, true);
-              API.put('/user/order/refund/' + order.id).then(function () {
-                showToast('Refund requested', 'success');
-                renderOrder(Object.assign(order, { status: 'REFUND_REQUEST' }));
-              }).catch(function (err) {
-                showToast(err.message || 'Failed to request refund', 'error');
-                setButtonLoading(refundBtn, false);
-              });
-            });
-          };
-          var replaceBtn = document.getElementById('replace-order-btn');
-          replaceBtn.style.display = '';
-          replaceBtn.onclick = function () {
-            showConfirmModal({ title: 'Request Replacement', message: 'Request a replacement for this order?', confirmText: 'Request Replacement' }).then(function (confirmed) {
-              if (!confirmed) return;
-              setButtonLoading(replaceBtn, true);
-              API.put('/user/order/replace/' + order.id).then(function () {
-                showToast('Replacement requested', 'success');
-                renderOrder(Object.assign(order, { status: 'REPLACE_REQUEST' }));
-              }).catch(function (err) {
-                showToast(err.message || 'Failed to request replacement', 'error');
-                setButtonLoading(replaceBtn, false);
+                showToast(err.message || 'Failed to request ' + val.toLowerCase(), 'error');
+                sel.value = '';
               });
             });
           };
@@ -185,9 +161,7 @@
           document.getElementById('admin-back-link').style.display = '';
           document.getElementById('back-link').style.display = 'none';
           document.getElementById('cancel-order-btn').style.display = 'none';
-          document.getElementById('return-order-btn').style.display = 'none';
-          document.getElementById('refund-order-btn').style.display = 'none';
-          document.getElementById('replace-order-btn').style.display = 'none';
+          document.getElementById('order-actions-dropdown').style.display = 'none';
         }
         API.get('/user/order/get/' + id).then(renderOrder).catch(function (err) {
           document.getElementById('order-loading').style.display = 'none';

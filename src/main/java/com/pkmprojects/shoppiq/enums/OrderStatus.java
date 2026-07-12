@@ -69,6 +69,11 @@ public enum OrderStatus {
     RETURN_PICKUP,
 
     /**
+     * Picked-up item has arrived at the warehouse.
+     */
+    PICKUP_ARRIVED,
+
+    /**
      * Item pickup scheduled for replacement.
      */
     REPLACE_PICKUP,
@@ -77,6 +82,16 @@ public enum OrderStatus {
      * Customer has requested a replacement.
      */
     REPLACE_REQUEST,
+
+    /**
+     * Replacement issue has been logged.
+     */
+    ISSUE_REPLACE,
+
+    /**
+     * Replacement has been delivered to the customer.
+     */
+    REPLACE_DELIVERED,
 
     /**
      * Replacement has been completed.
