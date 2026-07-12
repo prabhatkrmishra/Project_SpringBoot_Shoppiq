@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.auth.oauth2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,6 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
 
@@ -111,6 +118,14 @@ public class OAuthRegistrationCookieService {
     @Value("${oauth.registration.timeout-minutes:10}")
     private int timeoutMinutes;
 
+    private static final String HMAC_ALGORITHM = "HmacSHA256";
+
+    /**
+     * HMAC signing key derived from the JWT secret, used to sign the
+     * cookie payload to prevent tampering.
+     */
+    private SecretKeySpec hmacKey;
+
     /**
      * Jackson mapper used to serialize/deserialize {@link OAuthRegistrationSession}
      * to/from JSON.
@@ -124,6 +139,9 @@ public class OAuthRegistrationCookieService {
      */
     private final ObjectMapper objectMapper;
 
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
     /**
      * Constructs the service with the application's primary Jackson mapper.
      *
@@ -132,6 +150,12 @@ public class OAuthRegistrationCookieService {
      */
     public OAuthRegistrationCookieService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+    }
+
+    @PostConstruct
+    public void init() {
+        this.hmacKey = new SecretKeySpec(
+                jwtSecret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
     }
 
     /**
@@ -157,8 +181,10 @@ public class OAuthRegistrationCookieService {
     public void save(OAuthRegistrationSession session, HttpServletResponse response) {
         try {
             String json = objectMapper.writeValueAsString(session);
-            String encoded = Base64.getUrlEncoder().encodeToString(json.getBytes());
-            addCookie(response, OAUTH2_REGISTRATION_COOKIE, encoded, timeoutMinutes * 60);
+            String encoded = Base64.getUrlEncoder().withoutPadding().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+            String signature = computeHmac(encoded);
+            String signedValue = encoded + "." + signature;
+            addCookie(response, OAUTH2_REGISTRATION_COOKIE, signedValue, timeoutMinutes * 60);
             logger.debug("Saved OAuth2 registration session in cookie for email: {}", session.email());
         } catch (Exception e) {
             logger.error("Failed to save OAuth2 registration cookie", e);
@@ -193,7 +219,23 @@ public class OAuthRegistrationCookieService {
         String value = readCookieValue(request, OAUTH2_REGISTRATION_COOKIE);
         if (value == null || value.isBlank()) return null;
         try {
-            byte[] decoded = Base64.getUrlDecoder().decode(value);
+            int dotIndex = value.lastIndexOf('.');
+            if (dotIndex < 0) {
+                logger.warn("OAuth2 registration cookie missing signature");
+                return null;
+            }
+            String payload = value.substring(0, dotIndex);
+            String signature = value.substring(dotIndex + 1);
+
+            String expectedSignature = computeHmac(payload);
+            if (!MessageDigest.isEqual(
+                    expectedSignature.getBytes(StandardCharsets.UTF_8),
+                    signature.getBytes(StandardCharsets.UTF_8))) {
+                logger.warn("OAuth2 registration cookie signature mismatch — possible tampering");
+                return null;
+            }
+
+            byte[] decoded = Base64.getUrlDecoder().decode(payload);
             return objectMapper.readValue(decoded, OAuthRegistrationSession.class);
         } catch (Exception e) {
             logger.warn("Failed to deserialize OAuth2 registration cookie: {}", e.getMessage());
@@ -262,6 +304,20 @@ public class OAuthRegistrationCookieService {
         cookie.setMaxAge(maxAge);
         cookie.setAttribute("SameSite", "Strict");
         response.addCookie(cookie);
+    }
+
+    /**
+     * Computes an HMAC-SHA256 signature for the given data and returns it
+     * as a Base64url-encoded string without padding.
+     *
+     * @param data the data to sign
+     * @return Base64url-encoded HMAC signature
+     */
+    private String computeHmac(String data) throws NoSuchAlgorithmException, InvalidKeyException {
+        Mac mac = Mac.getInstance(HMAC_ALGORITHM);
+        mac.init(hmacKey);
+        byte[] hmacBytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(hmacBytes);
     }
 
     /**
