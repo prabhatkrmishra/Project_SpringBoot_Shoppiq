@@ -196,29 +196,8 @@
             });
         }
 
-        function renderProductCard(item) {
-            var imgUrl = item.imageUrl || "https://plus.unsplash.com/premium_photo-1683746792239-6ce8cdd3ac78?q=80&w=300&fit=crop";
-            var hasDiscount = item.discountPercentage && parseFloat(item.discountPercentage) > 0;
-            var priceHtml = '<span class="price-new">$' + escapeHtml(String(item.price)) + '</span>';
-            if (hasDiscount) {
-                var salePrice = (parseFloat(item.price) * (1 - parseFloat(item.discountPercentage) / 100)).toFixed(2);
-                priceHtml = '<span class="price-old">$' + escapeHtml(String(item.price)) + '</span> ' +
-                    '<span class="price-new">$' + salePrice + '</span> ' +
-                    '<span class="price-discount">' + item.discountPercentage + '% Off</span>';
-            }
-            return '<a href="/item/' + item.slug + '" class="card-link">' +
-                '<article class="card product-card">' +
-                '<div class="card-image-wrapper">' +
-                '<img class="card-image" src="' + escapeAttr(imgUrl) + '" alt="' + escapeAttr(item.name) + '" loading="lazy" width="300" height="300">' +
-                (hasDiscount ? '<span class="card-badge badge badge-success">Sale</span>' : '') +
-                '</div>' +
-                '<div class="card-body">' +
-                '<h3 class="card-title">' + escapeHtml(item.name) + '</h3>' +
-                '<p class="card-text">' + truncateWords(escapeHtml(item.description || ''), 12) + '</p>' +
-                '<div class="card-price">' + priceHtml + '</div>' +
-                '</div>' +
-                '</article>' +
-                '</a>';
+        function escapeAttr(str) {
+            return (str || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         async function loadTopSelling() {
@@ -229,7 +208,7 @@
                     return;
                 }
                 document.getElementById("topSellingHeader").style.display = "";
-                document.getElementById("topSellingGrid").innerHTML = items.map(renderProductCard).join("");
+                ProductCard.renderGrid(document.getElementById("topSellingGrid"), items, {showStock: false});
             } catch (e) {
                 document.getElementById("topSellingEmpty").style.display = "";
             }
@@ -250,7 +229,7 @@
                     return;
                 }
                 document.getElementById("featuredHeader").style.display = "";
-                document.getElementById("featuredGrid").innerHTML = featured.map(renderProductCard).join("");
+                ProductCard.renderGrid(document.getElementById("featuredGrid"), featured, {showStock: false});
             } catch (e) {
                 document.getElementById("featuredEmpty").style.display = "";
             }
@@ -271,21 +250,6 @@
             }
         }
 
-        function escapeHtml(str) {
-            var d = document.createElement("div");
-            d.appendChild(document.createTextNode(str || ""));
-            return d.innerHTML;
-        }
-
-        function escapeAttr(str) {
-            return (str || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-
-        function truncateWords(str, max) {
-            if (!str) return '';
-            var w = str.trim().split(/\s+/);
-            return w.length <= max ? str : w.slice(0, max).join(' ') + '...';
-        }
     </script>
 </body>
 </html>
