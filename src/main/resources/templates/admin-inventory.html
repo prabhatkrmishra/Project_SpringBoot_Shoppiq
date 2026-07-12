@@ -117,7 +117,7 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td><input type="checkbox" class="item-checkbox" data-item-id="' + item.itemId + '" aria-label="Select"></td>' +
-        '<td><a href="/item/' + item.itemId + '" class="btn-link">' + escapeHtml(item.itemName || '') + '</a></td>' +
+        '<td><a href="/item/' + item.slug + '" class="btn-link">' + escapeHtml(item.itemName || '') + '</a></td>' +
         '<td class="text-sm text-muted">' + escapeHtml(item.sku || '') + '</td>' +
         '<td>' + formatCurrency(item.effectivePrice || item.basePrice) + '</td>' +
         '<td>' +
@@ -128,7 +128,7 @@
         '</td>' +
         '<td>' + stockBadge(item.stockStatus) + '</td>' +
         '<td class="admin-table-actions">' +
-          '<a href="/item/' + item.itemId + '" class="btn btn-sm btn-ghost" aria-label="View"><i data-lucide="eye" class="icon-sm"></i></a>' +
+          '<a href="/item/' + item.slug + '" class="btn btn-sm btn-ghost" aria-label="View"><i data-lucide="eye" class="icon-sm"></i></a>' +
         '</td>';
       tbody.appendChild(tr);
     });
