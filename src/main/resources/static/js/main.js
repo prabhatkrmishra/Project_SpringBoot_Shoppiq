@@ -70,29 +70,37 @@ window.showConfirmModal = function (opts) {
         overlay.setAttribute('aria-modal', 'true');
         overlay.innerHTML =
             '<div class="modal">' +
-                '<div class="modal-header">' +
-                    '<h2>' + escapeHtml(title) + '</h2>' +
-                '</div>' +
-                '<div class="modal-body">' +
-                    '<p>' + escapeHtml(message) + '</p>' +
-                '</div>' +
-                '<div class="modal-actions">' +
-                    '<button class="btn btn-secondary confirm-cancel-btn">' + escapeHtml(cancelText) + '</button>' +
-                    '<button class="btn ' + (danger ? 'btn-danger' : 'btn-primary') + ' confirm-ok-btn">' + escapeHtml(confirmText) + '</button>' +
-                '</div>' +
+            '<div class="modal-header">' +
+            '<h2>' + escapeHtml(title) + '</h2>' +
+            '</div>' +
+            '<div class="modal-body">' +
+            '<p>' + escapeHtml(message) + '</p>' +
+            '</div>' +
+            '<div class="modal-actions">' +
+            '<button class="btn btn-secondary confirm-cancel-btn">' + escapeHtml(cancelText) + '</button>' +
+            '<button class="btn ' + (danger ? 'btn-danger' : 'btn-primary') + ' confirm-ok-btn">' + escapeHtml(confirmText) + '</button>' +
+            '</div>' +
             '</div>';
 
         document.body.appendChild(overlay);
 
         function close(result) {
             overlay.classList.remove('active');
-            setTimeout(function () { overlay.remove(); }, 200);
+            setTimeout(function () {
+                overlay.remove();
+            }, 200);
             resolve(result);
         }
 
-        overlay.querySelector('.confirm-ok-btn').addEventListener('click', function () { close(true); });
-        overlay.querySelector('.confirm-cancel-btn').addEventListener('click', function () { close(false); });
-        overlay.addEventListener('click', function (e) { if (e.target === overlay) close(false); });
+        overlay.querySelector('.confirm-ok-btn').addEventListener('click', function () {
+            close(true);
+        });
+        overlay.querySelector('.confirm-cancel-btn').addEventListener('click', function () {
+            close(false);
+        });
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) close(false);
+        });
         overlay.querySelector('.confirm-ok-btn').focus();
     });
 };
@@ -114,15 +122,15 @@ window.showAlertModal = function (opts) {
         overlay.setAttribute('aria-modal', 'true');
         overlay.innerHTML =
             '<div class="modal">' +
-                '<div class="modal-header">' +
-                    '<h2><i data-lucide="' + iconName + '" class="icon-sm" style="margin-right:8px;"></i>' + escapeHtml(title) + '</h2>' +
-                '</div>' +
-                '<div class="modal-body">' +
-                    '<p>' + escapeHtml(message) + '</p>' +
-                '</div>' +
-                '<div class="modal-actions">' +
-                    '<button class="btn btn-primary alert-ok-btn">' + escapeHtml(buttonText) + '</button>' +
-                '</div>' +
+            '<div class="modal-header">' +
+            '<h2><i data-lucide="' + iconName + '" class="icon-sm" style="margin-right:8px;"></i>' + escapeHtml(title) + '</h2>' +
+            '</div>' +
+            '<div class="modal-body">' +
+            '<p>' + escapeHtml(message) + '</p>' +
+            '</div>' +
+            '<div class="modal-actions">' +
+            '<button class="btn btn-primary alert-ok-btn">' + escapeHtml(buttonText) + '</button>' +
+            '</div>' +
             '</div>';
 
         document.body.appendChild(overlay);
@@ -132,12 +140,16 @@ window.showAlertModal = function (opts) {
 
         function close() {
             overlay.classList.remove('active');
-            setTimeout(function () { overlay.remove(); }, 200);
+            setTimeout(function () {
+                overlay.remove();
+            }, 200);
             resolve();
         }
 
         overlay.querySelector('.alert-ok-btn').addEventListener('click', close);
-        overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) close();
+        });
         overlay.querySelector('.alert-ok-btn').focus();
     });
 };
