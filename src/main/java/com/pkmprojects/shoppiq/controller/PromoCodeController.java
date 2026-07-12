@@ -1,12 +1,14 @@
 package com.pkmprojects.shoppiq.controller;
 
+import com.pkmprojects.shoppiq.dto.promo.PromoCodeValidateRequest;
+import com.pkmprojects.shoppiq.dto.promo.PromoCodeValidateResponse;
 import com.pkmprojects.shoppiq.entity.PromoCode;
 import com.pkmprojects.shoppiq.service.PromoCodeService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 /**
  * Public controller for promo code validation.
@@ -28,21 +30,18 @@ public class PromoCodeController {
      * Validates a promo code and returns the discount amount.
      *
      * @param body request body containing code and subtotal
-     * @return discount amount
+     * @return discount details
      */
     @PostMapping("/validate")
-    public ResponseEntity<Map<String, Object>> validate(@RequestBody Map<String, Object> body) {
-        String code = (String) body.get("code");
-        BigDecimal subtotal = new BigDecimal(body.get("subtotal").toString());
+    public ResponseEntity<PromoCodeValidateResponse> validate(@Valid @RequestBody PromoCodeValidateRequest body) {
+        PromoCode promoCode = promoCodeService.validateForPreview(body.code(), body.subtotal());
+        BigDecimal discount = promoCodeService.calculateDiscount(promoCode, body.subtotal());
 
-        PromoCode promoCode = promoCodeService.validateForPreview(code, subtotal);
-        BigDecimal discount = promoCodeService.calculateDiscount(promoCode, subtotal);
-
-        return ResponseEntity.ok(Map.of(
-                "code", promoCode.getCode(),
-                "discount", discount,
-                "discountType", promoCode.getDiscountType(),
-                "discountValue", promoCode.getDiscountValue()
+        return ResponseEntity.ok(new PromoCodeValidateResponse(
+                promoCode.getCode(),
+                discount,
+                promoCode.getDiscountType(),
+                promoCode.getDiscountValue()
         ));
     }
 }
