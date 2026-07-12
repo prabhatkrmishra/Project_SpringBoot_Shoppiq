@@ -98,7 +98,7 @@
         '<tr><td colspan="8" class="text-center text-muted">Failed to load</td></tr>';
     });
   }
-  document.addEventListener('DOMContentLoaded', loadProducts);
+  document.addEventListener('DOMContentLoaded', function () { loadProducts(); });
 })();
 </script>
 </body>
