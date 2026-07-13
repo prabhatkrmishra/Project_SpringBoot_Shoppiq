@@ -1,8 +1,8 @@
-kind: Application
-
 spring:
   application:
     name: shoppiq
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:default}
   datasource:
     url: ${DATASOURCE_URL}
     username: ${DATASOURCE_USERNAME}
@@ -27,6 +27,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
+  web:
+    error:
+      include-message: always    # Production recommendation: never
+      include-binding-errors: always    # Production recommendation: never
+      include-stacktrace: never    # Production recommendation: never
 jwt:
   secret: ${JWT_SECRET}
   expiration: 2592000000
@@ -123,13 +128,10 @@ app:
 logging:
   level:
     com.pkmprojects.shoppiq: TRACE    # Production recommendation: WARN or ERROR
+    dev.langchain4j: DEBUG              # Reduce langchain4j HTTP client verbosity
 
 server:
   port: 8090
-  error:
-    include-message: always           # Production recommendation: never
-    include-binding-errors: always    # Production recommendation: never
-    include-stacktrace: never
 
 # ============================================================
 # Payment & email gateway integrations
@@ -169,3 +171,36 @@ shoppiq:
         api-key: ${UPI_MERCHANT_KEY:upi_merchant_dummy}
         merchant-vpa: ${UPI_MERCHANT_VPA:shoppiq@bank}
         enabled: false
+  ai:
+    enabled: ${AI_SERVICE_ENABLED:false}
+    resolve-threshold: 3          # Messages of closing intent before auto-resolve
+    rag:
+      max-results: 5             # Top-k product chunks injected per query
+      min-score: 0.75            # Cosine similarity threshold for retrieval
+      reindex-on-startup: false  # Full catalog reindex on boot (events handle the rest)
+
+# ============================================================
+# LangChain4j — AI model configuration (NVIDIA NIM / OpenAI-compatible)
+# Only loaded when the "ai-enabled" profile is active.
+# ============================================================
+langchain4j:
+  open-ai:
+    chat-model:
+      api-key: ${AI_NVIDIA_API_KEY}
+      base-url: https://integrate.api.nvidia.com/v1
+      model-name: nvidia/llama-3.3-nemotron-super-49b-v1.5
+      max-tokens: 4096
+      log-requests: true
+      log-responses: true
+    streaming-chat-model:
+      api-key: ${AI_NVIDIA_API_KEY}
+      base-url: https://integrate.api.nvidia.com/v1
+      model-name: nvidia/llama-3.3-nemotron-super-49b-v1.5
+      max-tokens: 4096
+      log-requests: true
+      log-responses: true
+  # Qdrant vector store (docker-compose service)
+  qdrant:
+    host: ${QDRANT_HOST:localhost}
+    port: ${QDRANT_PORT:6334}
+    collection-name: ${QDRANT_COLLECTION:shoppiq_products}

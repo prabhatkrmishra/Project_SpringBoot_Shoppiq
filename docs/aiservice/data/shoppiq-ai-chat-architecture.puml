@@ -1,0 +1,88 @@
+@startuml
+title Shoppiq AI Chat Architecture
+
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam wrapWidth 220
+skinparam maxMessageSize 200
+skinparam nodesep 60
+skinparam ranksep 60
+top to bottom direction
+
+package "Frontend (Vanilla JS + Thymeleaf)" {
+
+  component "<b>chat.js</b>\n<i><color:#555555>(IIFE module AIChat)</color></i>" as ChatJS
+  component "<b>chat.css</b>" as ChatCSS
+  component "<b>chat-widget.html</b> <i><color:#555555>(fragment)</color></i>\n<i><color:#555555>Model dropdown, user ID, toggle</color></i>" as Widget
+
+  Widget --> ChatJS
+  Widget --> ChatCSS
+}
+
+note bottom of ChatJS
+fetch() →
+POST /api/ai/chat
+POST /api/ai/guest
+end note
+
+package "Backend (Spring Boot 4.1 / LangChain4j 1.17.2-beta27)" {
+
+  package "Controllers (REST API layer)" {
+    component "<b>AiChatController</b>\n<font:monospaced>/api/ai/chat/**</font>\n<i><color:#555555>(authenticated)</color></i>" as ChatController
+    component "<b>AiGuestChatController</b>\n<font:monospaced>/api/ai/guest/**</font>\n<i><color:#555555>(public)</color></i>" as GuestController
+    component "<b>AiAdminController</b>\n<font:monospaced>/api/ai/admin/**</font>\n<i><color:#555555>(admin only)</color></i>" as AdminController
+    component "<b>AdminAiChatController</b>\n<font:monospaced>/api/admin/ai-chats/**</font>\n<i><color:#555555>(admin CRUD)</color></i>" as AdminCrudController
+  }
+
+  package "AiService Layer" {
+    interface "AiService" as AiService
+    component "AiServiceImpl" as AiServiceImpl
+
+    component "<b>Processing Pipeline</b>\n<b>1.</b> Validate conversation ownership / status\n<b>2.</b> Persist USER message to <font:monospaced>chat_messages</font> table\n<b>3.</b> Build LangChain4j AiServices dynamic proxy\n<i><color:#555555>      -> ShoppiqAssistant (synchronous), or</color></i>\n<i><color:#555555>      -> ShoppiqStreamingAssistant (reactive stream)</color></i>\n<b>4.</b> Configure system prompt + ChatMemory + Tools\n<i><color:#555555>      + ContentRetriever (RAG context injection)</color></i>\n<b>5.</b> <font:monospaced>proxy.chat()</font> <i><color:#555555>-> LLM invocation (tool loop)</color></i>\n<b>6.</b> Persist ASSISTANT response to <font:monospaced>chat_messages</font>\n<b>7.</b> Check auto-resolve <i><color:#555555>(closing intent detection)</color></i>" as Pipeline
+
+    AiService <|.. AiServiceImpl
+    AiServiceImpl --> Pipeline
+  }
+
+  ChatController --> AiServiceImpl
+  GuestController --> AiServiceImpl
+  AdminController --> AiServiceImpl
+  AdminCrudController --> AiServiceImpl
+
+  package "LangChain4j Orchestration Layer" {
+
+    component "<b>ChatModel</b> bean\n<i><color:#555555>(OpenAiChatModel)</color></i>" as ChatModel
+    component "<b>StreamingChatModel</b> bean\n<i><color:#555555>(OpenAiStreamingChatModel)</color></i>" as StreamingModel
+
+    component "<b>AiServices.builder()</b>\n<i><color:#555555>// Dynamic proxy pattern</color></i>\n<font:monospaced>.chatModel(resolvedModel)</font>\n<font:monospaced>.chatMemoryProvider(chatMemoryProvider)</font>\n<font:monospaced>.systemMessageProvider(memoryId -> prompt)</font>\n<font:monospaced>.tools(shoppiqTools)</font>\n<i><color:#555555>// function calling</color></i>\n<font:monospaced>.contentRetriever(contentRetriever)</font>\n<i><color:#555555>// RAG</color></i>\n<font:monospaced>.build()</font>\n<i><color:#555555>// JDK dynamic proxy (reflection)</color></i>" as Builder
+
+    component "<b>Agentic Tool Loop</b>\n<i><color:#555555>// auto-managed by LangChain4j</color></i>\n<b>1.</b> LLM receives user msg + function schemas\n<b>2.</b> LLM responds with <font:monospaced>tool_call</font> <i><color:#555555>// if needed</color></i>\n<b>3.</b> LangChain4j resolves <font:monospaced>@Tool</font> by name\n<b>4.</b> Executes <font:monospaced>@Tool</font> method, returns result\n<b>5.</b> Tool result -> back to LLM as tool message\n<b>6.</b> Loop until final text response <i><color:#555555>// max iterations</color></i>" as ToolLoop
+
+    ChatModel --> Builder
+    StreamingModel --> Builder
+    Builder --> ToolLoop
+  }
+
+  Pipeline --> Builder
+
+  package "Supporting Infrastructure" {
+    component "<b>ChatMemoryConfig</b>\n<i><color:#555555>ConcurrentHashMap + sliding window</color></i>\n<i><color:#555555>clearMemory() frees memory on resolve</color></i>" as Memory
+    component "<b>RagConfig</b>\n<i><color:#555555>QdrantClient + EmbeddingStore + RAG</color></i>" as Rag
+    component "<b>ShoppiqTools</b>\n<i><color:#555555>6 @Tool methods (function calling)</color></i>" as Tools
+    component "<b>ProductCatalogIngester</b>\n<i><color:#555555>Event-driven vector sync (dual-store)</color></i>" as Ingester
+    component "<b>ItemEmbeddingEntityListener</b>\n<i><color:#555555>JPA lifecycle -> domain event</color></i>" as Listener
+
+    Listener --> Ingester
+    Ingester --> Rag
+  }
+
+  Builder --> Memory
+  Builder --> Tools
+  Builder --> Rag
+}
+
+Widget --> ChatController
+
+@enduml

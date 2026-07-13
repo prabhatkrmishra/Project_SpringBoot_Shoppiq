@@ -235,6 +235,16 @@ public class FrontEndController {
         return "admin-messages";
     }
 
+    @GetMapping("/admin/ai-chats")
+    public String adminAiChatsPage() {
+        return "admin-ai-chats";
+    }
+
+    @GetMapping("/admin/ai-chats/{chatId}")
+    public String adminAiChatDetailPage() {
+        return "admin-ai-chat-detail";
+    }
+
     @GetMapping("/seller-panel/dashboard")
     public String sellerDashboardPage() {
         return "seller/dashboard";

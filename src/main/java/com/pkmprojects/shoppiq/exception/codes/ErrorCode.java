@@ -468,7 +468,17 @@ public enum ErrorCode {
     /**
      * Admin cannot unblock their own account.
      */
-    AUTH_UNBLOCK_SELF("ADMIN-403-002", "Administrators cannot enable their own account.");
+    AUTH_UNBLOCK_SELF("ADMIN-403-002", "Administrators cannot enable their own account."),
+
+    // =========================================================
+    // AI Chat Errors
+    // =========================================================
+
+    AI_CONVERSATION_NOT_FOUND("AI_CHAT-404-001", "AI conversation not found."),
+    AI_API_ERROR("AI_CHAT-500-001", "An error occurred with the AI assistant."),
+    AI_RATE_LIMITED("AI_CHAT-429-001", "Too many AI requests. Please try again later."),
+    AI_TIMEOUT("AI_CHAT-504-001", "AI assistant timed out. Please try again."),
+    AI_CONVERSATION_RESOLVED("AI_CHAT-410-001", "This conversation has been resolved.");
 
     /**
      * Stable machine-readable error identifier.

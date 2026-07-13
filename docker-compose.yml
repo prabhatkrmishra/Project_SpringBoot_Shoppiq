@@ -1,0 +1,21 @@
+# Shoppiq supporting infrastructure
+# MySQL runs locally (127.0.0.1:3306)
+# The RAG vector store is containerized.
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.13.0
+    container_name: shoppiq-qdrant
+    ports:
+      - "6333:6333"   # REST API
+      - "6334:6334"   # LangChain4j gRPC API
+    volumes:
+      - qdrant_data:/qdrant/storage
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:

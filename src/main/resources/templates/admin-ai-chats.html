@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('AI Chat Management')}"></head>
+<body>
+    <th:block th:replace="~{fragments/admin-header :: admin-header('ai-chats')}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+    <main class="admin-main">
+        <div class="page-header">
+            <h1>AI Chat Management</h1>
+            <p>Monitor and review AI assistant conversations</p>
+        </div>
+
+        <div class="admin-filters">
+            <input type="text" id="searchInput" placeholder="Search by chat ID, user, or title..."
+                   style="max-width: 300px;">
+            <select id="statusFilter">
+                <option value="">All Status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="RESOLVED">Resolved</option>
+            </select>
+        </div>
+
+        <div class="admin-panel">
+            <div class="admin-panel-title">Conversations</div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Chat ID</th>
+                            <th>User</th>
+                            <th>Title</th>
+                            <th>Messages</th>
+                            <th>Status</th>
+                            <th>Last Activity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chats-body">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="chats-pagination"></div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:src="@{/js/pagination.js}"></script>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var currentPage = 0;
+            var PAGE_SIZE = 20;
+            var searchTimeout = null;
+            var apiRetries = 0;
+            var MAX_API_RETRIES = 50;
+
+            document.getElementById('searchInput').addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function () {
+                    currentPage = 0;
+                    loadChats();
+                }, 300);
+            });
+
+            document.getElementById('statusFilter').addEventListener('change', function () {
+                currentPage = 0;
+                loadChats();
+            });
+
+            function loadChats() {
+                if (typeof API === 'undefined') {
+                    if (++apiRetries > MAX_API_RETRIES) {
+                        document.getElementById('chats-body').innerHTML = '<tr><td colspan="7" class="text-center text-muted">Failed to load — refresh the page</td></tr>';
+                        return;
+                    }
+                    setTimeout(loadChats, 50);
+                    return;
+                }
+                var params = new URLSearchParams();
+                params.set('page', currentPage);
+                params.set('size', PAGE_SIZE);
+
+                var query = document.getElementById('searchInput').value.trim();
+                var status = document.getElementById('statusFilter').value;
+                if (query) params.set('query', query);
+                if (status) params.set('status', status);
+
+                API.get('/api/admin/ai-chats?' + params.toString()).then(function (data) {
+                    renderChats(data.content || []);
+                    renderPagination(data.totalPages || 0, data.number || 0);
+                }).catch(function (e) {
+                    showToast(e.message || 'Failed to load conversations', 'error');
+                });
+            }
+
+            function renderChats(chats) {
+                var tbody = document.getElementById('chats-body');
+                if (!chats || chats.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No conversations found</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                chats.forEach(function (chat) {
+                    var statusClass = chat.status === 'ACTIVE' ? 'active' : 'resolved';
+                    var userParts = [];
+                    if (chat.userName) userParts.push(chat.userName);
+                    if (chat.userId) userParts.push('#' + chat.userId);
+                    var userDisplay = userParts.join(' ') || 'Guest';
+                    var title = chat.title || 'Untitled';
+                    if (title.length > 40) title = title.substring(0, 40) + '...';
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td><a href="/admin/ai-chats/' + escapeHtml(chat.chatId) + '" class="btn-link mono">' + escapeHtml(chat.chatId) + '</a></td>' +
+                        '<td class="text-sm">' + escapeHtml(userDisplay) + '</td>' +
+                        '<td class="text-sm">' + escapeHtml(title) + '</td>' +
+                        '<td class="text-center">' + chat.messageCount + '</td>' +
+                        '<td><span class="status-badge ' + statusClass + '">' + chat.status + '</span></td>' +
+                        '<td class="text-sm text-muted">' + formatDateTime(chat.lastActivityAt) + '</td>' +
+                        '<td>' +
+                        (chat.status === 'ACTIVE'
+                            ? '<button class="btn btn-sm btn-success resolve-chat-btn" data-chat-id="' + escapeAttr(chat.chatId) + '" title="Mark as resolved" style="margin-right:4px;">' +
+                            '<i data-lucide="check-circle" class="icon-sm"></i>' +
+                            '</button>'
+                            : '') +
+                        '<button class="btn btn-sm btn-danger delete-chat-btn" data-chat-id="' + escapeAttr(chat.chatId) + '" title="Delete conversation">' +
+                        '<i data-lucide="trash-2" class="icon-sm"></i>' +
+                        '</button>' +
+                        '</td>';
+                    tbody.appendChild(tr);
+                });
+                initIcons();
+                document.querySelectorAll('.delete-chat-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var chatId = this.getAttribute('data-chat-id');
+                        showConfirmModal({
+                            title: 'Delete Conversation',
+                            message: 'Delete this conversation and all its messages? This cannot be undone.',
+                            confirmText: 'Delete',
+                            danger: true
+                        }).then(function (confirmed) {
+                            if (confirmed) {
+                                deleteConversation(chatId, btn);
+                            }
+                        });
+                    });
+                });
+                document.querySelectorAll('.resolve-chat-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var chatId = this.getAttribute('data-chat-id');
+                        showConfirmModal({
+                            title: 'Mark as Resolved',
+                            message: 'Mark this conversation as resolved?',
+                            confirmText: 'Resolve',
+                            danger: false
+                        }).then(function (confirmed) {
+                            if (confirmed) {
+                                resolveConversation(chatId, btn);
+                            }
+                        });
+                    });
+                });
+            }
+
+            function renderPagination(totalPages, current) {
+                var container = document.getElementById('chats-pagination');
+                if (totalPages <= 1) {
+                    container.innerHTML = '';
+                    return;
+                }
+                window.Pagination.render(container, current, totalPages, function (page) {
+                    currentPage = page;
+                    loadChats();
+                });
+            }
+
+            function deleteConversation(chatId, btn) {
+                btn.disabled = true;
+                API.del('/api/admin/ai-chats/' + encodeURIComponent(chatId)).then(function () {
+                    showToast('Conversation deleted', 'success');
+                    loadChats();
+                }).catch(function (e) {
+                    btn.disabled = false;
+                    showToast(e.message || 'Failed to delete conversation', 'error');
+                });
+            }
+
+            function resolveConversation(chatId, btn) {
+                btn.disabled = true;
+                API.patch('/api/admin/ai-chats/' + encodeURIComponent(chatId) + '/resolve').then(function () {
+                    showToast('Conversation marked as resolved', 'success');
+                    loadChats();
+                }).catch(function (e) {
+                    btn.disabled = false;
+                    showToast(e.message || 'Failed to resolve conversation', 'error');
+                });
+            }
+
+            loadChats();
+        })();
+    </script>
+</body>
+</html>

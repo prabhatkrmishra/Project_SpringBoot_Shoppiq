@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.pkmprojects.shoppiq.audit.AuditableEntity;
+import com.pkmprojects.shoppiq.aiservice.events.ItemEmbeddingEntityListener;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
@@ -52,6 +53,7 @@ import java.util.List;
  * @since 1.0.0
  */
 @Entity
+@EntityListeners(ItemEmbeddingEntityListener.class)
 @Table(name = "items")
 @Getter
 @Setter

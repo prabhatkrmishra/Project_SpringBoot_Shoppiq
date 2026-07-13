@@ -3608,11 +3608,11 @@ small {
 /* ── Back to Top ── */
 .back-to-top {
     position: fixed;
-    bottom: 24px;
+    bottom: 88px;
     right: 24px;
-    z-index: 150;
-    width: 44px;
-    height: 44px;
+    z-index: 10001;
+    width: 56px;
+    height: 56px;
     border-radius: var(--radius-pill);
     background: var(--color-surface);
     color: #fff;

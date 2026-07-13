@@ -30,8 +30,18 @@ app:
   rate-limit:
     enabled: false
 
+server:
+  forward-headers-strategy: framework
+  tomcat:
+    remoteip:
+      internal-proxies: ".*"
+
 shoppiq:
+  ai:
+    enabled: false
   email:
     provider: console
     from: test@shoppiq.com
     enabled: true
+
+AI_NVIDIA_API_KEY: test-dummy-key-for-startup

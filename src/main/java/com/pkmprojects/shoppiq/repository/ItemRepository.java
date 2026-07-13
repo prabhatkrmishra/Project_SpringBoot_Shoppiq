@@ -125,6 +125,18 @@ public interface ItemRepository
     boolean existsBySlug(String slug);
 
     /**
+     * Finds items whose name contains the given text (case-insensitive).
+     *
+     * <p>Used by the AI assistant's product-detail lookup as a fallback when no
+     * exact slug match is found. The RAG retriever is the primary discovery path.</p>
+     *
+     * @param name partial product name
+     * @param pageable pagination parameters
+     * @return matching items
+     */
+    List<Item> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
+    /**
      * Retrieves the latest published items ordered by creation date.
      *
      * @param status publishing status filter
@@ -177,4 +189,5 @@ public interface ItemRepository
             @Param("since") java.time.Instant since,
             @Param("limit") int limit
     );
+
 }

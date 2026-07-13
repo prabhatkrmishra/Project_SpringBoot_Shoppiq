@@ -200,7 +200,9 @@ public class SecurityConfig {
                                 "/auth/google/**",
                                 "/user/register",
                                 "/api/newsletter/**",
-                                "/api/banners/active"
+                                "/api/banners/active",
+                                "/api/ai/guest/**",
+                                "/api/ai/chat"
                         )
                 )
 
@@ -329,6 +331,12 @@ public class SecurityConfig {
 
                         // Frontend payment page
                         .requestMatchers("/payment").hasAnyRole("CUSTOMER", "ADMIN")
+
+                        // AI chat
+                        .requestMatchers(HttpMethod.POST, "/api/ai/guest/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ai/guest/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/ai/guest/**").permitAll()
+                        .requestMatchers("/api/ai/**").hasAnyRole("CUSTOMER", "ADMIN")
 
                         .anyRequest().authenticated()
                 )

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('AI Chat Detail')}"></head>
+<body>
+    <th:block th:replace="~{fragments/admin-header :: admin-header('ai-chats')}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
+
+    <main class="admin-main">
+        <div class="page-header">
+            <div>
+                <a href="/admin/ai-chats" class="btn btn-sm btn-ghost" style="margin-bottom: 8px;">
+                    <i data-lucide="arrow-left" class="icon-sm"></i> Back to Chats
+                </a>
+                <h1 id="detail-title">Loading...</h1>
+            </div>
+        </div>
+
+        <div class="admin-panel" style="margin-bottom: 16px;">
+            <div class="admin-panel-title">Conversation Info</div>
+            <div class="detail-grid" id="detail-info">
+                <div class="detail-row"><span class="detail-label">Chat ID</span><span id="info-chat-id">-</span></div>
+                <div class="detail-row"><span class="detail-label">User</span><span id="info-user">-</span></div>
+                <div class="detail-row"><span class="detail-label">Status</span><span id="info-status">-</span>
+                    <button id="resolve-btn" class="btn btn-sm btn-success" style="display:none; margin-left:8px;"
+                            title="Mark as Resolved">
+                        <i data-lucide="check-circle" class="icon-sm"></i> Resolve
+                    </button>
+                </div>
+                <div class="detail-row"><span class="detail-label">Created</span><span id="info-created">-</span></div>
+                <div class="detail-row"><span class="detail-label">Resolved</span><span id="info-resolved">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-panel">
+            <div class="admin-panel-title">Messages</div>
+            <div id="messages-container" style="padding: 16px;">
+                <p class="text-center text-muted">Loading messages...</p>
+            </div>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var chatId = window.location.pathname.split('/').pop();
+            var apiRetries = 0;
+            var MAX_API_RETRIES = 50;
+
+            function loadDetail() {
+                if (typeof API === 'undefined') {
+                    if (++apiRetries > MAX_API_RETRIES) {
+                        document.getElementById('messages-container').innerHTML = '<p class="text-center text-muted">Failed to load — refresh the page</p>';
+                        return;
+                    }
+                    setTimeout(loadDetail, 50);
+                    return;
+                }
+                API.get('/api/admin/ai-chats/' + encodeURIComponent(chatId)).then(function (data) {
+                    document.getElementById('detail-title').textContent = data.title || 'Untitled Conversation';
+                    document.getElementById('info-chat-id').textContent = data.chatId;
+                    var userParts = [];
+                    if (data.userName) userParts.push(data.userName);
+                    if (data.userId) userParts.push('#' + data.userId);
+                    if (data.userEmail) userParts.push('(' + data.userEmail + ')');
+                    document.getElementById('info-user').textContent = userParts.join(' ') || 'Guest';
+                    document.getElementById('info-status').innerHTML = '<span class="status-badge ' + (data.status === 'ACTIVE' ? 'active' : 'resolved') + '">' + data.status + '</span>';
+                    document.getElementById('info-created').textContent = formatDateTime(data.createdAt);
+                    document.getElementById('info-resolved').textContent = data.resolvedAt ? formatDateTime(data.resolvedAt) : '-';
+                    var resolveBtn = document.getElementById('resolve-btn');
+                    if (data.status === 'ACTIVE') {
+                        resolveBtn.style.display = 'inline-flex';
+                        resolveBtn.onclick = function () {
+                            showConfirmModal({
+                                title: 'Mark as Resolved',
+                                message: 'Mark this conversation as resolved?',
+                                confirmText: 'Resolve',
+                                danger: false
+                            }).then(function (confirmed) {
+                                if (confirmed) resolveConversation();
+                            });
+                        };
+                    } else {
+                        resolveBtn.style.display = 'none';
+                    }
+                    renderMessages(data.messages || []);
+                }).catch(function (e) {
+                    document.getElementById('messages-container').innerHTML = '<p class="text-center text-muted">Failed to load messages.</p>';
+                    showToast(e.message || 'Failed to load conversation', 'error');
+                });
+            }
+
+            function resolveConversation() {
+                API.patch('/api/admin/ai-chats/' + encodeURIComponent(chatId) + '/resolve').then(function () {
+                    showToast('Conversation marked as resolved', 'success');
+                    loadDetail();
+                }).catch(function (e) {
+                    showToast(e.message || 'Failed to resolve conversation', 'error');
+                });
+            }
+
+            function renderMessages(messages) {
+                var container = document.getElementById('messages-container');
+                if (!messages || messages.length === 0) {
+                    container.innerHTML = '<p class="text-center text-muted">No messages in this conversation.</p>';
+                    return;
+                }
+                var html = '';
+                messages.forEach(function (msg) {
+                    var role = (msg.role || '').toLowerCase();
+                    var roleLabel = msg.role;
+                    var roleClass = 'msg-role-' + role;
+                    if (role === 'tool') roleLabel = 'TOOL (' + (msg.toolName || '') + ')';
+
+                    var content = escapeHtml(msg.content || '');
+                    content = content.replace(/\n/g, '<br>');
+
+                    html += '<div class="chat-msg-row" data-msg-id="' + msg.id + '">' +
+                        '<div class="chat-msg-header">' +
+                        '<span class="chat-msg-role ' + roleClass + '">' + roleLabel + '</span>' +
+                        '<div class="chat-msg-header-right">' +
+                        '<span class="chat-msg-time">' + formatDateTime(msg.createdAt) + '</span>' +
+                        '<button class="btn btn-sm btn-danger delete-msg-btn" data-msg-id="' + msg.id + '" title="Delete message">' +
+                        '<i data-lucide="trash-2" class="icon-sm"></i>' +
+                        '</button>' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="chat-msg-body">' + content + '</div>' +
+                        '</div>';
+                });
+                container.innerHTML = html;
+                initIcons();
+                document.querySelectorAll('.delete-msg-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var msgId = this.getAttribute('data-msg-id');
+                        var btnRef = this;
+                        showConfirmModal({
+                            title: 'Delete Message',
+                            message: 'Delete this message? This cannot be undone.',
+                            confirmText: 'Delete',
+                            danger: true
+                        }).then(function (confirmed) {
+                            if (confirmed) {
+                                deleteMessage(msgId, btnRef);
+                            }
+                        });
+                    });
+                });
+            }
+
+            function deleteMessage(msgId, btn) {
+                btn.disabled = true;
+                API.del('/api/admin/ai-chats/messages/' + msgId).then(function () {
+                    var row = document.querySelector('[data-msg-id="' + msgId + '"]');
+                    if (row) row.remove();
+                    showToast('Message deleted', 'success');
+                }).catch(function (e) {
+                    btn.disabled = false;
+                    showToast(e.message || 'Failed to delete message', 'error');
+                });
+            }
+
+            loadDetail();
+        })();
+    </script>
+    <style>
+        .detail-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            min-width: 100px;
+            color: var(--muted, #6b7280);
+            font-size: 0.85rem;
+        }
+
+        .chat-msg-row {
+            border: 1px solid var(--border, #e5e7eb);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .chat-msg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .chat-msg-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-msg-role {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .chat-msg-role.msg-role-user {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .chat-msg-role.msg-role-assistant {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .chat-msg-role.msg-role-system {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .chat-msg-role.msg-role-tool {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .chat-msg-time {
+            font-size: 0.75rem;
+            color: var(--muted, #6b7280);
+        }
+
+        .chat-msg-body {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .mono {
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .delete-msg-btn {
+            padding: 2px 6px;
+            min-width: auto;
+        }
+
+        .delete-msg-btn .icon-sm {
+            width: 14px;
+            height: 14px;
+        }
+    </style>
+</body>
+</html>
