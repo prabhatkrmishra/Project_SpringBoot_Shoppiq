@@ -47,10 +47,18 @@ app:
     admin-page-size: 20
     seller-page-size: 15
     catalog-page-size: 12
+  cors:
+    enabled: false                              # Recommendation: true for separate-frontend / microservice deployments
+    allowed-origins: http://localhost:3000       # Comma-separated; supports patterns like https://*.example.com
+    allowed-methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
+    allowed-headers: Authorization, Content-Type, X-Requested-With, Accept, Origin, Cache-Control, X-Request-Id
+    exposed-headers: X-Request-Id
+    allow-credentials: true
+    max-age: 3600
   rate-limit:
     enabled: true
     rules:
-      # ── Unauthenticated (IP-based) ──
+      # Unauthenticated : IP-based
       - path: /auth/login
         limit: 10
         duration: 900
@@ -91,7 +99,7 @@ app:
         limit: 10
         duration: 3600
         key-type: IP
-      # ── Authenticated critical (userId:IP-based) ──
+      # Authenticated critical : userId:IP-based
       - path: /user/order/checkout
         limit: 10
         duration: 60

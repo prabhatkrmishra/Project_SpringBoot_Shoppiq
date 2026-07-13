@@ -1,23 +1,37 @@
 <header class="admin-header" th:fragment="admin-header(activePage)">
     <h1>Shoppiq Admin</h1>
     <nav class="admin-nav">
+        <!-- Overview -->
         <a th:href="@{/admin/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active' : ''">Dashboard</a>
+
+        <!-- Products -->
         <a th:href="@{/admin/inventory}" th:classappend="${activePage == 'inventory'} ? 'active' : ''">Inventory</a>
-        <a th:href="@{/admin/sale}" th:classappend="${activePage == 'sale'} ? 'active' : ''">Sale</a>
-        <a th:href="@{/admin/orders}" th:classappend="${activePage == 'orders'} ? 'active' : ''">Orders</a>
-        <a th:href="@{/admin/users}" th:classappend="${activePage == 'users'} ? 'active' : ''">Customers</a>
-        <a th:href="@{/admin/payments}" th:classappend="${activePage == 'payments'} ? 'active' : ''">Payments</a>
-        <a th:href="@{/admin/reviews}" th:classappend="${activePage == 'reviews'} ? 'active' : ''">Reviews</a>
         <a th:href="@{/admin/categories}" th:classappend="${activePage == 'categories'} ? 'active' : ''">Categories</a>
+        <a th:href="@{/admin/sale}" th:classappend="${activePage == 'sale'} ? 'active' : ''">Sale</a>
+        <a th:href="@{/admin/promo-codes}" th:classappend="${activePage == 'promo-codes'} ? 'active' : ''">Promo Codes</a>
+
+        <!-- Orders & Payments -->
+        <a th:href="@{/admin/orders}" th:classappend="${activePage == 'orders'} ? 'active' : ''">Orders</a>
+        <a th:href="@{/admin/payments}" th:classappend="${activePage == 'payments'} ? 'active' : ''">Payments</a>
+
+        <!-- People -->
+        <a th:href="@{/admin/users}" th:classappend="${activePage == 'users'} ? 'active' : ''">Customers</a>
         <a th:href="@{/admin/sellers}" th:classappend="${activePage == 'sellers'} ? 'active' : ''">Sellers</a>
         <a th:href="@{/admin/pending}" th:classappend="${activePage == 'pending'} ? 'active' : ''">Pending</a>
         <a th:href="@{/admin/roles}" th:classappend="${activePage == 'roles'} ? 'active' : ''">Roles</a>
-        <a th:href="@{/admin/promo-codes}" th:classappend="${activePage == 'promo-codes'} ? 'active' : ''">Promo
-            Codes</a>
+
+        <!-- Content -->
         <a th:href="@{/admin/banners}" th:classappend="${activePage == 'banners'} ? 'active' : ''">Banners</a>
+        <a th:href="@{/admin/reviews}" th:classappend="${activePage == 'reviews'} ? 'active' : ''">Reviews</a>
+
+        <!-- Communication -->
         <a th:href="@{/admin/mail}" th:classappend="${activePage == 'mail'} ? 'active' : ''">Mail</a>
         <a th:href="@{/admin/messages}" th:classappend="${activePage == 'messages'} ? 'active' : ''">Messages</a>
+
+        <!-- Analytics -->
         <a th:href="@{/admin/reports}" th:classappend="${activePage == 'reports'} ? 'active' : ''">Reports</a>
+
+        <!-- External -->
         <a th:href="@{/allitems}" class="admin-nav-muted">Store</a>
     </nav>
 </header>

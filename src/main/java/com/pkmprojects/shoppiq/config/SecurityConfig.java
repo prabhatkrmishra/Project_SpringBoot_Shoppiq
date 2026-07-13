@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -94,6 +95,7 @@ public class SecurityConfig {
     private final ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler;
     private final OAuthReturnUrlFilter oauthReturnUrlFilter;
     private final Optional<RateLimitFilter> rateLimitFilter;
+    private final Optional<CorsConfigurationSource> corsConfigurationSource;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           OAuth2SuccessHandler oAuth2SuccessHandler,
@@ -103,7 +105,8 @@ public class SecurityConfig {
                           ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint,
                           ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler,
                           OAuthReturnUrlFilter oauthReturnUrlFilter,
-                          Optional<RateLimitFilter> rateLimitFilter) {
+                          Optional<RateLimitFilter> rateLimitFilter,
+                          Optional<CorsConfigurationSource> corsConfigurationSource) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
         this.cookieAuthorizationRequestRepository = cookieAuthorizationRequestRepository;
@@ -113,6 +116,7 @@ public class SecurityConfig {
         this.shoppiqAccessDeniedHandler = shoppiqAccessDeniedHandler;
         this.oauthReturnUrlFilter = oauthReturnUrlFilter;
         this.rateLimitFilter = rateLimitFilter;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     /**
@@ -183,6 +187,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> corsConfigurationSource.ifPresent(cors::configurationSource))
+
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session -> session
