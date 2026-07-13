@@ -27,11 +27,6 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
-  web:
-    error:
-      include-message: always           # Production recommendation: never
-      include-binding-errors: always    # Production recommendation: never
-      include-stacktrace: never
 jwt:
   secret: ${JWT_SECRET}
   expiration: 2592000000
@@ -131,6 +126,10 @@ logging:
 
 server:
   port: 8090
+  error:
+    include-message: always           # Production recommendation: never
+    include-binding-errors: always    # Production recommendation: never
+    include-stacktrace: never
 
 # ============================================================
 # Payment & email gateway integrations

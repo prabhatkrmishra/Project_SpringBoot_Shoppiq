@@ -51,6 +51,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(SellerProductController.class)
 @Import({
@@ -145,7 +146,7 @@ class SellerProductControllerTest {
             when(sellerProductService.createProduct(any(ItemRequest.class), any(User.class)))
                     .thenReturn(stubResponse(ITEM_ID));
 
-            mockMvc.perform(post("/seller/products/create")
+            mockMvc.perform(post("/seller/products/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
                     .andExpect(status().isCreated())
@@ -161,7 +162,7 @@ class SellerProductControllerTest {
                     "", ITEM_DESC, BRAND, SKU, PRICE, STOCK, DISCOUNT, null, CATEGORY_ID
             );
 
-            mockMvc.perform(post("/seller/products/create")
+            mockMvc.perform(post("/seller/products/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalid)))
                     .andExpect(status().isBadRequest())
@@ -176,7 +177,7 @@ class SellerProductControllerTest {
             when(sellerProductService.createProduct(any(ItemRequest.class), any(User.class)))
                     .thenThrow(DuplicateItemException.sku(SKU));
 
-            mockMvc.perform(post("/seller/products/create")
+            mockMvc.perform(post("/seller/products/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
                     .andExpect(status().isConflict())
@@ -189,7 +190,7 @@ class SellerProductControllerTest {
             when(sellerProductService.createProduct(any(ItemRequest.class), any(User.class)))
                     .thenThrow(SellerNotFoundException.userId(1L));
 
-            mockMvc.perform(post("/seller/products/create")
+            mockMvc.perform(post("/seller/products/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
                     .andExpect(status().isNotFound())
@@ -202,7 +203,7 @@ class SellerProductControllerTest {
             when(sellerProductService.createProduct(any(ItemRequest.class), any(User.class)))
                     .thenThrow(SellerNotVerifiedException.forAction(1L, "manage products"));
 
-            mockMvc.perform(post("/seller/products/create")
+            mockMvc.perform(post("/seller/products/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
                     .andExpect(status().isBadRequest())
@@ -215,7 +216,7 @@ class SellerProductControllerTest {
             when(sellerProductService.createProduct(any(ItemRequest.class), any(User.class)))
                     .thenThrow(SellerSuspendedException.forAction(1L, "manage products"));
 
-            mockMvc.perform(post("/seller/products/create")
+            mockMvc.perform(post("/seller/products/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
                     .andExpect(status().isBadRequest())
@@ -290,7 +291,7 @@ class SellerProductControllerTest {
             when(sellerProductService.updateProduct(eq(1L), any(ItemRequest.class), any(User.class)))
                     .thenReturn(stubResponse(1L));
 
-            mockMvc.perform(put("/seller/products/update/1")
+            mockMvc.perform(put("/seller/products/update/1").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
                     .andExpect(status().isOk())
@@ -304,7 +305,7 @@ class SellerProductControllerTest {
             when(sellerProductService.updateProduct(eq(99L), any(ItemRequest.class), any(User.class)))
                     .thenThrow(ItemNotFoundException.id(99L));
 
-            mockMvc.perform(put("/seller/products/update/99")
+            mockMvc.perform(put("/seller/products/update/99").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
                     .andExpect(status().isNotFound())
@@ -317,7 +318,7 @@ class SellerProductControllerTest {
             when(sellerProductService.updateProduct(eq(1L), any(ItemRequest.class), any(User.class)))
                     .thenThrow(DuplicateItemException.sku("TST-002"));
 
-            mockMvc.perform(put("/seller/products/update/1")
+            mockMvc.perform(put("/seller/products/update/1").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
                     .andExpect(status().isConflict())
@@ -334,7 +335,7 @@ class SellerProductControllerTest {
         void delete_existingProduct_returns200() throws Exception {
             doNothing().when(sellerProductService).deleteProduct(eq(1L), any(User.class));
 
-            mockMvc.perform(delete("/seller/products/delete/1"))
+            mockMvc.perform(delete("/seller/products/delete/1").with(csrf()))
                     .andExpect(status().isOk());
 
             verify(sellerProductService).deleteProduct(eq(1L), any(User.class));
@@ -346,7 +347,7 @@ class SellerProductControllerTest {
             doThrow(ItemNotFoundException.id(99L))
                     .when(sellerProductService).deleteProduct(eq(99L), any(User.class));
 
-            mockMvc.perform(delete("/seller/products/delete/99"))
+            mockMvc.perform(delete("/seller/products/delete/99").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("ITEM-404-001"));
         }

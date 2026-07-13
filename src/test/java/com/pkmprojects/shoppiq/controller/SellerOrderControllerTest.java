@@ -50,6 +50,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(SellerOrderController.class)
 @Import({
@@ -204,7 +205,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenReturn(stubResponse(1L, OrderStatus.CONFIRMED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(1))
@@ -217,7 +218,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(OrderNotFullyOwnedException.forOrder(1L));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.errorCode").value("SYSTEM-400-001"));
@@ -229,7 +230,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(99L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(OrderNotFoundException.id(99L));
 
-            mockMvc.perform(put("/seller/orders/99/status")
+            mockMvc.perform(put("/seller/orders/99/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("ORDER-404-001"));
@@ -241,7 +242,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(SellerSuspendedException.forAction(1L, "manage orders"));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.errorCode").value("SELLER-400-002"));
@@ -253,7 +254,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(SellerNotVerifiedException.forAction(1L, "manage orders"));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.errorCode").value("SELLER-400-001"));
@@ -262,7 +263,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 400 when status parameter is missing")
         void updateOrderStatus_missingStatus_returns400() throws Exception {
-            mockMvc.perform(put("/seller/orders/1/status"))
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf()))
                     .andExpect(status().isBadRequest());
 
             verify(sellerOrderService, never()).updateOrderStatus(any(), anyLong(), any());
@@ -274,7 +275,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.RETURN_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.RETURN_REQUEST));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "RETURN_REQUEST"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("RETURN_REQUEST"));
@@ -286,7 +287,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.RETURN_PICKUP)))
                     .thenReturn(stubResponse(1L, OrderStatus.RETURN_PICKUP));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "RETURN_PICKUP"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("RETURN_PICKUP"));
@@ -298,7 +299,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REFUND_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.REFUND_REQUEST));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "REFUND_REQUEST"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("REFUND_REQUEST"));
@@ -310,7 +311,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REPLACE_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.REPLACE_REQUEST));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "REPLACE_REQUEST"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("REPLACE_REQUEST"));
@@ -322,7 +323,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REPLACE_PICKUP)))
                     .thenReturn(stubResponse(1L, OrderStatus.REPLACE_PICKUP));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "REPLACE_PICKUP"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("REPLACE_PICKUP"));
@@ -335,7 +336,7 @@ class SellerOrderControllerTest {
                     .thenThrow(new com.pkmprojects.shoppiq.exception.OrderInvalidStatusTransitionException(
                             OrderStatus.CONFIRMED, OrderStatus.DELIVERED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "DELIVERED"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.errorCode").value("ORDER-400-002"));
@@ -347,7 +348,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(99L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(OrderNotFoundException.id(99L));
 
-            mockMvc.perform(put("/seller/orders/99/status")
+            mockMvc.perform(put("/seller/orders/99/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("ORDER-404-001"));
@@ -359,7 +360,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(SellerNotFoundException.userId(1L));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("SELLER-404-001"));
@@ -373,7 +374,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenReturn(stubResponse(1L, OrderStatus.CONFIRMED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("CONFIRMED"));
@@ -385,7 +386,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.SHIPPED)))
                     .thenReturn(stubResponse(1L, OrderStatus.SHIPPED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "SHIPPED"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SHIPPED"));
@@ -397,7 +398,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.OUT_FOR_DELIVERY)))
                     .thenReturn(stubResponse(1L, OrderStatus.OUT_FOR_DELIVERY));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "OUT_FOR_DELIVERY"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("OUT_FOR_DELIVERY"));
@@ -409,7 +410,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.DELIVERED)))
                     .thenReturn(stubResponse(1L, OrderStatus.DELIVERED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "DELIVERED"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("DELIVERED"));
@@ -423,7 +424,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.RETURN_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.RETURN_REQUEST));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "RETURN_REQUEST"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("RETURN_REQUEST"));
@@ -435,7 +436,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REFUND_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.REFUND_REQUEST));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "REFUND_REQUEST"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("REFUND_REQUEST"));
@@ -447,7 +448,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REPLACE_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.REPLACE_REQUEST));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "REPLACE_REQUEST"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("REPLACE_REQUEST"));
@@ -459,7 +460,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.RETURNED)))
                     .thenReturn(stubResponse(1L, OrderStatus.RETURNED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "RETURNED"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("RETURNED"));
@@ -471,7 +472,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REFUNDED)))
                     .thenReturn(stubResponse(1L, OrderStatus.REFUNDED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "REFUNDED"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("REFUNDED"));
@@ -483,7 +484,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REPLACED)))
                     .thenReturn(stubResponse(1L, OrderStatus.REPLACED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "REPLACED"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("REPLACED"));
@@ -497,7 +498,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CANCEL_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.CANCEL_REQUEST));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CANCEL_REQUEST"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("CANCEL_REQUEST"));
@@ -509,7 +510,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CANCELLED)))
                     .thenReturn(stubResponse(1L, OrderStatus.CANCELLED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CANCELLED"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("CANCELLED"));
@@ -521,7 +522,7 @@ class SellerOrderControllerTest {
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CANCELLED)))
                     .thenReturn(stubResponse(1L, OrderStatus.CANCELLED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CANCELLED"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("CANCELLED"));
@@ -534,7 +535,7 @@ class SellerOrderControllerTest {
         void updateOrderStatus_unauthenticated_returns401() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isUnauthorized());
         }
@@ -548,7 +549,7 @@ class SellerOrderControllerTest {
                     .thenThrow(new com.pkmprojects.shoppiq.exception.OrderInvalidStatusTransitionException(
                             OrderStatus.PLACED, OrderStatus.DELIVERED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "DELIVERED"))
                     .andExpect(status().isBadRequest());
         }
@@ -560,7 +561,7 @@ class SellerOrderControllerTest {
                     .thenThrow(new com.pkmprojects.shoppiq.exception.OrderInvalidStatusTransitionException(
                             OrderStatus.CONFIRMED, OrderStatus.CANCELLED));
 
-            mockMvc.perform(put("/seller/orders/1/status")
+            mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CANCELLED"))
                     .andExpect(status().isBadRequest());
         }

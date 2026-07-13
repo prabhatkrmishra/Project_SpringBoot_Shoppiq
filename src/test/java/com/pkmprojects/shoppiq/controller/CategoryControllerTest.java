@@ -38,6 +38,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
  * Controller-slice tests for {@link CategoryController}.
@@ -105,7 +106,7 @@ class CategoryControllerTest {
 
             when(categoryService.create(any(CategoryRequest.class))).thenReturn(response);
 
-            mockMvc.perform(post("/categories")
+            mockMvc.perform(post("/categories").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
@@ -123,7 +124,7 @@ class CategoryControllerTest {
             when(categoryService.create(any(CategoryRequest.class)))
                     .thenThrow(DuplicateCategoryException.category("Electronics"));
 
-            mockMvc.perform(post("/categories")
+            mockMvc.perform(post("/categories").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isConflict())
@@ -136,7 +137,7 @@ class CategoryControllerTest {
         void create_blankName_returns400() throws Exception {
             CategoryRequest request = new CategoryRequest("", "Some description");
 
-            mockMvc.perform(post("/categories")
+            mockMvc.perform(post("/categories").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -151,7 +152,7 @@ class CategoryControllerTest {
         void create_blankDescription_returns400() throws Exception {
             CategoryRequest request = new CategoryRequest("Electronics", "");
 
-            mockMvc.perform(post("/categories")
+            mockMvc.perform(post("/categories").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -165,7 +166,7 @@ class CategoryControllerTest {
             String longName = "A".repeat(101);
             CategoryRequest request = new CategoryRequest(longName, "Valid desc");
 
-            mockMvc.perform(post("/categories")
+            mockMvc.perform(post("/categories").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -190,7 +191,7 @@ class CategoryControllerTest {
 
             when(categoryService.update(eq(1L), any(CategoryRequest.class))).thenReturn(response);
 
-            mockMvc.perform(put("/categories/1/update")
+            mockMvc.perform(put("/categories/1/update").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -207,7 +208,7 @@ class CategoryControllerTest {
             when(categoryService.update(eq(999L), any(CategoryRequest.class)))
                     .thenThrow(CategoryNotFoundException.id(999L));
 
-            mockMvc.perform(put("/categories/999/update")
+            mockMvc.perform(put("/categories/999/update").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound())
@@ -223,7 +224,7 @@ class CategoryControllerTest {
             when(categoryService.update(eq(1L), any(CategoryRequest.class)))
                     .thenThrow(DuplicateCategoryException.category("Fashion"));
 
-            mockMvc.perform(put("/categories/1/update")
+            mockMvc.perform(put("/categories/1/update").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isConflict())
@@ -245,7 +246,7 @@ class CategoryControllerTest {
         void delete_exists_returns204() throws Exception {
             doNothing().when(categoryService).delete(1L);
 
-            mockMvc.perform(delete("/categories/1/delete"))
+            mockMvc.perform(delete("/categories/1/delete").with(csrf()))
                     .andExpect(status().isNoContent());
 
             verify(categoryService).delete(1L);
@@ -257,7 +258,7 @@ class CategoryControllerTest {
         void delete_notFound_returns404() throws Exception {
             doThrow(CategoryNotFoundException.id(999L)).when(categoryService).delete(999L);
 
-            mockMvc.perform(delete("/categories/999/delete"))
+            mockMvc.perform(delete("/categories/999/delete").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("CATEGORY-404-001"));
         }

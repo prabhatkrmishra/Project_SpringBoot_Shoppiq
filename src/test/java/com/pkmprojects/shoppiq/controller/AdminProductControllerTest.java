@@ -39,6 +39,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(AdminProductController.class)
 @Import({
@@ -133,7 +134,7 @@ class AdminProductControllerTest {
             when(adminProductService.publishProduct(1L))
                     .thenReturn(stubResponse(1L, ProductPublishingStatus.PUBLISHED));
 
-            mockMvc.perform(put("/api/admin/products/1/publish"))
+            mockMvc.perform(put("/api/admin/products/1/publish").with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.itemId").value(1))
                     .andExpect(jsonPath("$.publishingStatus").value("PUBLISHED"));
@@ -146,7 +147,7 @@ class AdminProductControllerTest {
             when(adminProductService.publishProduct(99L))
                     .thenThrow(ItemNotFoundException.id(99L));
 
-            mockMvc.perform(put("/api/admin/products/99/publish"))
+            mockMvc.perform(put("/api/admin/products/99/publish").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("ITEM-404-001"));
         }
@@ -163,7 +164,7 @@ class AdminProductControllerTest {
             when(adminProductService.rejectProduct(1L))
                     .thenReturn(stubResponse(1L, ProductPublishingStatus.REJECTED));
 
-            mockMvc.perform(put("/api/admin/products/1/reject"))
+            mockMvc.perform(put("/api/admin/products/1/reject").with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.itemId").value(1))
                     .andExpect(jsonPath("$.publishingStatus").value("REJECTED"));
@@ -176,7 +177,7 @@ class AdminProductControllerTest {
             when(adminProductService.rejectProduct(99L))
                     .thenThrow(ItemNotFoundException.id(99L));
 
-            mockMvc.perform(put("/api/admin/products/99/reject"))
+            mockMvc.perform(put("/api/admin/products/99/reject").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("ITEM-404-001"));
         }

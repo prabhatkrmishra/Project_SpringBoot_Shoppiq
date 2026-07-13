@@ -39,6 +39,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(UserController.class)
 @Import({
@@ -109,7 +110,7 @@ class GlobalControllerAdviceTest {
     void invalidRequestBody_returns400WithValidationError() throws Exception {
         UserRequest invalidRequest = new UserRequest();
 
-        mockMvc.perform(post("/user/register")
+        mockMvc.perform(post("/user/register").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest())
@@ -127,7 +128,7 @@ class GlobalControllerAdviceTest {
         request.setUsername("testuser");
         request.setPassword("password123");
 
-        mockMvc.perform(post("/user/register")
+        mockMvc.perform(post("/user/register").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -145,7 +146,7 @@ class GlobalControllerAdviceTest {
         request.setUsername("ab");
         request.setPassword("password123");
 
-        mockMvc.perform(post("/user/register")
+        mockMvc.perform(post("/user/register").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())

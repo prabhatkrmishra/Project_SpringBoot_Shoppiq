@@ -42,6 +42,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(AdminSellerController.class)
 @Import({
@@ -153,7 +154,7 @@ class AdminSellerControllerTest {
             when(adminSellerService.approveSeller(1L))
                     .thenReturn(stubResponse(1L, VerificationStatus.APPROVED));
 
-            mockMvc.perform(put("/api/admin/sellers/1/approve"))
+            mockMvc.perform(put("/api/admin/sellers/1/approve").with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(1))
                     .andExpect(jsonPath("$.verificationStatus").value("APPROVED"));
@@ -166,7 +167,7 @@ class AdminSellerControllerTest {
             when(adminSellerService.approveSeller(99L))
                     .thenThrow(SellerNotFoundException.id(99L));
 
-            mockMvc.perform(put("/api/admin/sellers/99/approve"))
+            mockMvc.perform(put("/api/admin/sellers/99/approve").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("SELLER-404-001"));
         }
@@ -178,7 +179,7 @@ class AdminSellerControllerTest {
             when(adminSellerService.approveSeller(1L))
                     .thenThrow(SellerApprovalInvalidException.notPending(1L));
 
-            mockMvc.perform(put("/api/admin/sellers/1/approve"))
+            mockMvc.perform(put("/api/admin/sellers/1/approve").with(csrf()))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.errorCode").value("SYSTEM-400-001"));
         }
@@ -195,7 +196,7 @@ class AdminSellerControllerTest {
             when(adminSellerService.rejectSeller(1L))
                     .thenReturn(stubResponse(1L, VerificationStatus.REJECTED));
 
-            mockMvc.perform(put("/api/admin/sellers/1/reject"))
+            mockMvc.perform(put("/api/admin/sellers/1/reject").with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(1))
                     .andExpect(jsonPath("$.verificationStatus").value("REJECTED"));
@@ -208,7 +209,7 @@ class AdminSellerControllerTest {
             when(adminSellerService.rejectSeller(99L))
                     .thenThrow(SellerNotFoundException.id(99L));
 
-            mockMvc.perform(put("/api/admin/sellers/99/reject"))
+            mockMvc.perform(put("/api/admin/sellers/99/reject").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("SELLER-404-001"));
         }
@@ -220,7 +221,7 @@ class AdminSellerControllerTest {
             when(adminSellerService.rejectSeller(1L))
                     .thenThrow(SellerApprovalInvalidException.notPending(1L));
 
-            mockMvc.perform(put("/api/admin/sellers/1/reject"))
+            mockMvc.perform(put("/api/admin/sellers/1/reject").with(csrf()))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.errorCode").value("SYSTEM-400-001"));
         }

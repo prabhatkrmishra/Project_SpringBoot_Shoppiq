@@ -48,6 +48,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(SellerInventoryController.class)
 @Import({
@@ -216,7 +217,7 @@ class SellerInventoryControllerTest {
             when(sellerInventoryService.adjustStock(eq(1L), eq(5), eq("New shipment"), any(User.class)))
                     .thenReturn(stubResponse(1L, 15));
 
-            mockMvc.perform(put("/seller/inventory/1/adjust")
+            mockMvc.perform(put("/seller/inventory/1/adjust").with(csrf())
                             .param("quantity", "5")
                             .param("reason", "New shipment"))
                     .andExpect(status().isOk())
@@ -231,7 +232,7 @@ class SellerInventoryControllerTest {
             when(sellerInventoryService.adjustStock(eq(1L), eq(-50), eq("Damage write-off"), any(User.class)))
                     .thenThrow(ItemStockNegativeException.forAdjustment(10, -50));
 
-            mockMvc.perform(put("/seller/inventory/1/adjust")
+            mockMvc.perform(put("/seller/inventory/1/adjust").with(csrf())
                             .param("quantity", "-50")
                             .param("reason", "Damage write-off"))
                     .andExpect(status().isBadRequest())
@@ -244,7 +245,7 @@ class SellerInventoryControllerTest {
             when(sellerInventoryService.adjustStock(eq(99L), eq(5), eq("Test"), any(User.class)))
                     .thenThrow(ItemNotFoundException.id(99L));
 
-            mockMvc.perform(put("/seller/inventory/99/adjust")
+            mockMvc.perform(put("/seller/inventory/99/adjust").with(csrf())
                             .param("quantity", "5")
                             .param("reason", "Test"))
                     .andExpect(status().isNotFound())
@@ -257,7 +258,7 @@ class SellerInventoryControllerTest {
             when(sellerInventoryService.adjustStock(eq(1L), anyInt(), anyString(), any(User.class)))
                     .thenThrow(SellerNotVerifiedException.forAction(1L, "manage inventory"));
 
-            mockMvc.perform(put("/seller/inventory/1/adjust")
+            mockMvc.perform(put("/seller/inventory/1/adjust").with(csrf())
                             .param("quantity", "5")
                             .param("reason", "Test"))
                     .andExpect(status().isBadRequest())
@@ -270,7 +271,7 @@ class SellerInventoryControllerTest {
             when(sellerInventoryService.adjustStock(eq(1L), anyInt(), anyString(), any(User.class)))
                     .thenThrow(SellerSuspendedException.forAction(1L, "manage inventory"));
 
-            mockMvc.perform(put("/seller/inventory/1/adjust")
+            mockMvc.perform(put("/seller/inventory/1/adjust").with(csrf())
                             .param("quantity", "5")
                             .param("reason", "Test"))
                     .andExpect(status().isBadRequest())
@@ -280,7 +281,7 @@ class SellerInventoryControllerTest {
         @Test
         @DisplayName("Returns 400 when quantity parameter is missing")
         void adjustStock_missingQuantity_returns400() throws Exception {
-            mockMvc.perform(put("/seller/inventory/1/adjust")
+            mockMvc.perform(put("/seller/inventory/1/adjust").with(csrf())
                             .param("reason", "Test"))
                     .andExpect(status().isBadRequest());
 
@@ -290,7 +291,7 @@ class SellerInventoryControllerTest {
         @Test
         @DisplayName("Returns 400 when reason parameter is missing")
         void adjustStock_missingReason_returns400() throws Exception {
-            mockMvc.perform(put("/seller/inventory/1/adjust")
+            mockMvc.perform(put("/seller/inventory/1/adjust").with(csrf())
                             .param("quantity", "5"))
                     .andExpect(status().isBadRequest());
 

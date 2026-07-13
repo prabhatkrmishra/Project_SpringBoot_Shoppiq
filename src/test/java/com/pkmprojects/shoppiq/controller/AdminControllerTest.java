@@ -45,6 +45,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(AdminController.class)
 @Import({
@@ -218,7 +219,7 @@ class AdminControllerTest {
             );
             when(inventoryService.adjustStock(eq(1L), any())).thenReturn(response);
 
-            mockMvc.perform(put("/api/admin/inventory/1")
+            mockMvc.perform(put("/api/admin/inventory/1").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -262,7 +263,7 @@ class AdminControllerTest {
             AdminOrderResponse response = mock(AdminOrderResponse.class);
             when(orderService.updateOrderStatus(eq(1L), eq(OrderStatus.CONFIRMED))).thenReturn(response);
 
-            mockMvc.perform(put("/api/admin/orders/1/status")
+            mockMvc.perform(put("/api/admin/orders/1/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isOk());
         }
@@ -297,7 +298,7 @@ class AdminControllerTest {
             AdminUserResponse response = mock(AdminUserResponse.class);
             when(userService.blockCustomer(eq(2L))).thenReturn(response);
 
-            mockMvc.perform(put("/api/admin/users/2/block"))
+            mockMvc.perform(put("/api/admin/users/2/block").with(csrf()))
                     .andExpect(status().isOk());
         }
 
@@ -315,7 +316,7 @@ class AdminControllerTest {
             AdminUserResponse response = mock(AdminUserResponse.class);
             when(userService.unblockCustomer(eq(2L))).thenReturn(response);
 
-            mockMvc.perform(put("/api/admin/users/2/unblock"))
+            mockMvc.perform(put("/api/admin/users/2/unblock").with(csrf()))
                     .andExpect(status().isOk());
         }
 
@@ -356,7 +357,7 @@ class AdminControllerTest {
             AdminPaymentResponse response = mock(AdminPaymentResponse.class);
             when(paymentService.refundPayment(eq(1L))).thenReturn(response);
 
-            mockMvc.perform(put("/api/admin/payments/1/refund"))
+            mockMvc.perform(put("/api/admin/payments/1/refund").with(csrf()))
                     .andExpect(status().isOk());
         }
 
@@ -394,7 +395,7 @@ class AdminControllerTest {
         @DisplayName("DELETE /admin/reviews/{id} - deletes review")
         @WithMockUser(roles = "ADMIN")
         void deleteReview_returnsNoContent() throws Exception {
-            mockMvc.perform(delete("/api/admin/reviews/1"))
+            mockMvc.perform(delete("/api/admin/reviews/1").with(csrf()))
                     .andExpect(status().isNoContent());
         }
     }

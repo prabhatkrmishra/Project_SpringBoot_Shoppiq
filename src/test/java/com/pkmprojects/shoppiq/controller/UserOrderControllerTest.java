@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
  * Controller-slice integration tests for {@link UserOrderController}.
@@ -149,7 +150,7 @@ class UserOrderControllerTest {
             when(checkoutService.checkout(eq(customer), any(CheckoutRequest.class)))
                     .thenReturn(checkoutResponse(25L));
 
-            mockMvc.perform(post("/user/order/checkout")
+            mockMvc.perform(post("/user/order/checkout").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
@@ -164,7 +165,7 @@ class UserOrderControllerTest {
             CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
             when(checkoutService.checkout(any(), any())).thenThrow(new CartEmptyException());
 
-            mockMvc.perform(post("/user/order/checkout")
+            mockMvc.perform(post("/user/order/checkout").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -177,7 +178,7 @@ class UserOrderControllerTest {
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(AddressNotFoundException.id(99L));
 
-            mockMvc.perform(post("/user/order/checkout")
+            mockMvc.perform(post("/user/order/checkout").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound());
@@ -190,7 +191,7 @@ class UserOrderControllerTest {
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
 
-            mockMvc.perform(post("/user/order/checkout")
+            mockMvc.perform(post("/user/order/checkout").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isForbidden());
@@ -203,7 +204,7 @@ class UserOrderControllerTest {
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(InsufficientStockException.forItem("SKU-1", 3, 1));
 
-            mockMvc.perform(post("/user/order/checkout")
+            mockMvc.perform(post("/user/order/checkout").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -212,7 +213,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — missing addressId")
         void checkout_validation_missingAddressId() throws Exception {
-            mockMvc.perform(post("/user/order/checkout")
+            mockMvc.perform(post("/user/order/checkout").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"paymentMethod\":\"COD\"}"))
                     .andExpect(status().isBadRequest());
@@ -223,7 +224,7 @@ class UserOrderControllerTest {
         void checkout_unauthenticated() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(post("/user/order/checkout")
+            mockMvc.perform(post("/user/order/checkout").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"addressId\":1,\"paymentMethod\":\"COD\"}"))
                     .andExpect(status().isUnauthorized());
@@ -316,7 +317,7 @@ class UserOrderControllerTest {
         void cancelOrder_success() throws Exception {
             doNothing().when(checkoutService).cancelOrder(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/cancel/10"))
+            mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
                     .andExpect(status().isNoContent());
         }
 
@@ -326,7 +327,7 @@ class UserOrderControllerTest {
             doThrow(new OrderNotFoundException("Order '99' not found."))
                     .when(checkoutService).cancelOrder(any(), eq(99L));
 
-            mockMvc.perform(put("/user/order/cancel/99"))
+            mockMvc.perform(put("/user/order/cancel/99").with(csrf()))
                     .andExpect(status().isNotFound());
         }
 
@@ -336,7 +337,7 @@ class UserOrderControllerTest {
             doThrow(OrderAccessDeniedException.forOrder(10L))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/cancel/10"))
+            mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
                     .andExpect(status().isForbidden());
         }
 
@@ -346,7 +347,7 @@ class UserOrderControllerTest {
             doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.SHIPPED))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/cancel/10"))
+            mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -364,7 +365,7 @@ class UserOrderControllerTest {
         void requestReturn_success() throws Exception {
             doNothing().when(checkoutService).requestReturn(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/return/10"))
+            mockMvc.perform(put("/user/order/return/10").with(csrf()))
                     .andExpect(status().isNoContent());
         }
 
@@ -374,7 +375,7 @@ class UserOrderControllerTest {
             doThrow(new OrderNotFoundException("Order '99' not found."))
                     .when(checkoutService).requestReturn(any(), eq(99L));
 
-            mockMvc.perform(put("/user/order/return/99"))
+            mockMvc.perform(put("/user/order/return/99").with(csrf()))
                     .andExpect(status().isNotFound());
         }
 
@@ -384,7 +385,7 @@ class UserOrderControllerTest {
             doThrow(OrderAccessDeniedException.forOrder(10L))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/return/10"))
+            mockMvc.perform(put("/user/order/return/10").with(csrf()))
                     .andExpect(status().isForbidden());
         }
 
@@ -394,7 +395,7 @@ class UserOrderControllerTest {
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.SHIPPED, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/return/10"))
+            mockMvc.perform(put("/user/order/return/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -412,7 +413,7 @@ class UserOrderControllerTest {
         void requestRefund_success() throws Exception {
             doNothing().when(checkoutService).requestRefund(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/refund/10"))
+            mockMvc.perform(put("/user/order/refund/10").with(csrf()))
                     .andExpect(status().isNoContent());
         }
 
@@ -422,7 +423,7 @@ class UserOrderControllerTest {
             doThrow(new OrderNotFoundException("Order '99' not found."))
                     .when(checkoutService).requestRefund(any(), eq(99L));
 
-            mockMvc.perform(put("/user/order/refund/99"))
+            mockMvc.perform(put("/user/order/refund/99").with(csrf()))
                     .andExpect(status().isNotFound());
         }
 
@@ -432,7 +433,7 @@ class UserOrderControllerTest {
             doThrow(OrderAccessDeniedException.forOrder(10L))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/refund/10"))
+            mockMvc.perform(put("/user/order/refund/10").with(csrf()))
                     .andExpect(status().isForbidden());
         }
 
@@ -442,7 +443,7 @@ class UserOrderControllerTest {
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.PLACED, OrderStatus.REFUND_REQUEST))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/refund/10"))
+            mockMvc.perform(put("/user/order/refund/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -460,7 +461,7 @@ class UserOrderControllerTest {
         void requestReplacement_success() throws Exception {
             doNothing().when(checkoutService).requestReplacement(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/replace/10"))
+            mockMvc.perform(put("/user/order/replace/10").with(csrf()))
                     .andExpect(status().isNoContent());
         }
 
@@ -470,7 +471,7 @@ class UserOrderControllerTest {
             doThrow(new OrderNotFoundException("Order '99' not found."))
                     .when(checkoutService).requestReplacement(any(), eq(99L));
 
-            mockMvc.perform(put("/user/order/replace/99"))
+            mockMvc.perform(put("/user/order/replace/99").with(csrf()))
                     .andExpect(status().isNotFound());
         }
 
@@ -480,7 +481,7 @@ class UserOrderControllerTest {
             doThrow(OrderAccessDeniedException.forOrder(10L))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/replace/10"))
+            mockMvc.perform(put("/user/order/replace/10").with(csrf()))
                     .andExpect(status().isForbidden());
         }
 
@@ -490,7 +491,7 @@ class UserOrderControllerTest {
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.CANCELLED, OrderStatus.REPLACE_REQUEST))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/replace/10"))
+            mockMvc.perform(put("/user/order/replace/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -526,7 +527,7 @@ class UserOrderControllerTest {
         void cancelOrder_unauthenticated() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(put("/user/order/cancel/10"))
+            mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
 
@@ -535,7 +536,7 @@ class UserOrderControllerTest {
         void requestReturn_unauthenticated() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(put("/user/order/return/10"))
+            mockMvc.perform(put("/user/order/return/10").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
 
@@ -544,7 +545,7 @@ class UserOrderControllerTest {
         void requestRefund_unauthenticated() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(put("/user/order/refund/10"))
+            mockMvc.perform(put("/user/order/refund/10").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
 
@@ -553,7 +554,7 @@ class UserOrderControllerTest {
         void requestReplacement_unauthenticated() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(put("/user/order/replace/10"))
+            mockMvc.perform(put("/user/order/replace/10").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
     }
@@ -572,7 +573,7 @@ class UserOrderControllerTest {
             doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.CANCEL_REQUEST))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/cancel/10"))
+            mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
 
@@ -582,7 +583,7 @@ class UserOrderControllerTest {
             doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/cancel/10"))
+            mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -601,7 +602,7 @@ class UserOrderControllerTest {
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.RETURN_REQUEST, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/return/10"))
+            mockMvc.perform(put("/user/order/return/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
 
@@ -611,7 +612,7 @@ class UserOrderControllerTest {
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.RETURNED, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/return/10"))
+            mockMvc.perform(put("/user/order/return/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -630,7 +631,7 @@ class UserOrderControllerTest {
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REFUND_REQUEST, OrderStatus.REFUND_REQUEST))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/refund/10"))
+            mockMvc.perform(put("/user/order/refund/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
 
@@ -640,7 +641,7 @@ class UserOrderControllerTest {
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REFUNDED, OrderStatus.REFUND_REQUEST))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/refund/10"))
+            mockMvc.perform(put("/user/order/refund/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -659,7 +660,7 @@ class UserOrderControllerTest {
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REPLACE_REQUEST, OrderStatus.REPLACE_REQUEST))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/replace/10"))
+            mockMvc.perform(put("/user/order/replace/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
 
@@ -669,7 +670,7 @@ class UserOrderControllerTest {
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REPLACED, OrderStatus.REPLACE_REQUEST))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
-            mockMvc.perform(put("/user/order/replace/10"))
+            mockMvc.perform(put("/user/order/replace/10").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
     }

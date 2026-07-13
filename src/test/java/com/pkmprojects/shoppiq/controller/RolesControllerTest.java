@@ -36,6 +36,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(RolesController.class)
 @Import({
@@ -129,7 +130,7 @@ class RolesControllerTest {
             when(rolesService.createNewRole("MODERATOR"))
                     .thenReturn(createdRole);
 
-            mockMvc.perform(post("/roles/create/MODERATOR"))
+            mockMvc.perform(post("/roles/create/MODERATOR").with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.roleName").value("ROLE_MODERATOR"));
         }

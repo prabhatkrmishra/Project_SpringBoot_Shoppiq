@@ -41,6 +41,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
  * Controller slice integration tests for {@link UserPaymentController}.
@@ -180,7 +181,7 @@ class UserPaymentControllerTest {
             when(paymentService.pay(eq(customer), eq(1L)))
                     .thenReturn(statusResponse(PaymentStatus.PROCESSING));
 
-            mockMvc.perform(post("/user/payment/pay/1"))
+            mockMvc.perform(post("/user/payment/pay/1").with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("PROCESSING"));
         }
@@ -191,7 +192,7 @@ class UserPaymentControllerTest {
             when(paymentService.pay(any(), eq(1L)))
                     .thenThrow(PaymentInvalidStateException.alreadyPaid(1L));
 
-            mockMvc.perform(post("/user/payment/pay/1"))
+            mockMvc.perform(post("/user/payment/pay/1").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
 
@@ -201,7 +202,7 @@ class UserPaymentControllerTest {
             when(paymentService.pay(any(), eq(99L)))
                     .thenThrow(PaymentNotFoundException.forId(99L));
 
-            mockMvc.perform(post("/user/payment/pay/99"))
+            mockMvc.perform(post("/user/payment/pay/99").with(csrf()))
                     .andExpect(status().isNotFound());
         }
 
@@ -211,7 +212,7 @@ class UserPaymentControllerTest {
             when(paymentService.pay(any(), eq(1L)))
                     .thenThrow(PaymentAccessDeniedException.forPayment(1L));
 
-            mockMvc.perform(post("/user/payment/pay/1"))
+            mockMvc.perform(post("/user/payment/pay/1").with(csrf()))
                     .andExpect(status().isForbidden());
         }
     }
@@ -230,7 +231,7 @@ class UserPaymentControllerTest {
             when(paymentService.verifyPayment(eq(customer), eq(1L), eq("TXN-001")))
                     .thenReturn(statusResponse(PaymentStatus.PAID));
 
-            mockMvc.perform(post("/user/payment/verify")
+            mockMvc.perform(post("/user/payment/verify").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"paymentId\":1,\"transactionId\":\"TXN-001\"}"))
                     .andExpect(status().isOk())
@@ -240,7 +241,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("400 Bad Request — missing paymentId/transactionId")
         void verifyPayment_missingField() throws Exception {
-            mockMvc.perform(post("/user/payment/verify")
+            mockMvc.perform(post("/user/payment/verify").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
                     .andExpect(status().isBadRequest());
@@ -252,7 +253,7 @@ class UserPaymentControllerTest {
             when(paymentService.verifyPayment(any(), eq(1L), eq("BAD-ID")))
                     .thenThrow(PaymentNotFoundException.forTransactionId("BAD-ID"));
 
-            mockMvc.perform(post("/user/payment/verify")
+            mockMvc.perform(post("/user/payment/verify").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"paymentId\":1,\"transactionId\":\"BAD-ID\"}"))
                     .andExpect(status().isNotFound());
@@ -273,7 +274,7 @@ class UserPaymentControllerTest {
             when(paymentService.cancelPayment(eq(customer), eq(1L)))
                     .thenReturn(statusResponse(PaymentStatus.CANCELLED));
 
-            mockMvc.perform(put("/user/payment/cancel/1"))
+            mockMvc.perform(put("/user/payment/cancel/1").with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("CANCELLED"));
         }
@@ -284,7 +285,7 @@ class UserPaymentControllerTest {
             when(paymentService.cancelPayment(any(), eq(1L)))
                     .thenThrow(PaymentInvalidStateException.cannotCancel(1L, PaymentStatus.PAID));
 
-            mockMvc.perform(put("/user/payment/cancel/1"))
+            mockMvc.perform(put("/user/payment/cancel/1").with(csrf()))
                     .andExpect(status().isBadRequest());
         }
     }

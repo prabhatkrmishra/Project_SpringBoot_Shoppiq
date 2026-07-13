@@ -44,6 +44,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(SellerController.class)
 @Import({
@@ -148,7 +149,7 @@ class SellerControllerTest {
             when(sellerService.register(any(SellerRegistrationRequest.class), any(User.class)))
                     .thenReturn(stubSellerResponse());
 
-            mockMvc.perform(post("/seller/register")
+            mockMvc.perform(post("/seller/register").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
@@ -163,7 +164,7 @@ class SellerControllerTest {
                     "", BUSINESS_EMAIL, PHONE, GST_NUMBER, PAN_NUMBER
             );
 
-            mockMvc.perform(post("/seller/register")
+            mockMvc.perform(post("/seller/register").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -210,7 +211,7 @@ class SellerControllerTest {
             when(sellerService.updateProfile(any(SellerProfileUpdateRequest.class), any(User.class)))
                     .thenReturn(updatedResponse);
 
-            mockMvc.perform(put("/seller/update")
+            mockMvc.perform(put("/seller/update").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -227,7 +228,7 @@ class SellerControllerTest {
         void delete_returns200() throws Exception {
             doNothing().when(sellerService).deleteProfile(any(User.class));
 
-            mockMvc.perform(delete("/seller/delete"))
+            mockMvc.perform(delete("/seller/delete").with(csrf()))
                     .andExpect(status().isOk());
 
             verify(sellerService).deleteProfile(any(User.class));

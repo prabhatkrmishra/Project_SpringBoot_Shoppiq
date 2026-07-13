@@ -41,6 +41,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(NotificationController.class)
 @Import({
@@ -150,7 +151,7 @@ class NotificationControllerTest {
 
             when(notificationService.updatePreferences(any(), any())).thenReturn(response);
 
-            mockMvc.perform(put("/user/notifications")
+            mockMvc.perform(put("/user/notifications").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -166,7 +167,7 @@ class NotificationControllerTest {
 
             UpdateNotificationPreferenceRequest request = new UpdateNotificationPreferenceRequest(null, null, null, null);
 
-            mockMvc.perform(put("/user/notifications")
+            mockMvc.perform(put("/user/notifications").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isUnauthorized());

@@ -65,13 +65,7 @@
         /*<![CDATA[*/
         async function loadGoogleProfile() {
             try {
-                const response = await fetch("/auth/google/get-profile", {
-                    credentials: "include"
-                });
-                if (!response.ok) {
-                    throw new Error("Unable to load profile");
-                }
-                const profile = await response.json();
+                const profile = await API.get('/auth/google/get-profile');
                 document.getElementById("name").value = profile.name || "";
                 document.getElementById("email").value = profile.email || "";
             } catch (err) {
@@ -80,7 +74,7 @@
             }
         }
 
-        loadGoogleProfile();
+        document.addEventListener("DOMContentLoaded", loadGoogleProfile);
 
         const passwordInput = document.getElementById("password");
         const confirmPasswordInput = document.getElementById("confirmPassword");
@@ -177,17 +171,10 @@
             }
             if (hasError) return;
             try {
-                const response = await fetch("/auth/google/complete-profile", {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({username: username, password: password})
+                await API.post('/auth/google/complete-profile', {
+                    username: username,
+                    password: password
                 });
-                if (!response.ok) {
-                    const data = await response.json().catch(() => ({}));
-                    showToast(data.detail || "Registration failed. Please try again.", "error");
-                    return;
-                }
                 showToast("Registration completed successfully!", "success");
                 var ru = new URLSearchParams(window.location.search).get("returnUrl");
                 var dest = (ru && ru.startsWith("/") && !ru.startsWith("//")) ? ru : "/allitems";
@@ -195,7 +182,7 @@
                     window.location.href = dest;
                 }, 800);
             } catch (err) {
-                showToast("Unable to connect to server", "error");
+                showToast(err.message || "Unable to connect to server", "error");
             }
         });
         /*]]>*/

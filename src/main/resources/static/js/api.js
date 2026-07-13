@@ -3,6 +3,8 @@
  *  communication. Uses cookies (credentials: "include")
  *  for JWT auth — no manual token handling required.
  *  Auto-refreshes access token on 401 for mutating requests.
+ *  Reads XSRF-TOKEN cookie and sends X-XSRF-TOKEN header
+ *  on mutating requests for CSRF protection.
  * ──────────────────────────────────────────────────────── */
 
 window.API = (function () {
@@ -10,13 +12,23 @@ window.API = (function () {
     var isRefreshing = false;
     var refreshPromise = null;
 
+    function getCsrfToken() {
+        var match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function csrfHeaders() {
+        var token = getCsrfToken();
+        return token ? {"X-XSRF-TOKEN": token} : {};
+    }
+
     async function refreshAccessToken() {
         if (refreshPromise) return refreshPromise;
         isRefreshing = true;
         refreshPromise = fetch("/auth/refresh", {
             method: "POST",
             credentials: "include",
-            headers: {"Accept": "application/json"}
+            headers: Object.assign({"Accept": "application/json"}, csrfHeaders())
         })
             .then(function (response) {
                 if (!response.ok) throw new Error("Refresh failed");
@@ -41,11 +53,17 @@ window.API = (function () {
             headers: {"Accept": "application/json"}
         };
         var config = Object.assign({}, defaults, options || {});
+        var isMutating = config.method && ["POST", "PUT", "PATCH", "DELETE"].includes(config.method.toUpperCase());
+        config.headers = Object.assign(
+            {},
+            defaults.headers,
+            (options && options.headers) || {},
+            isMutating ? csrfHeaders() : {}
+        );
         if (config.body && typeof config.body === "object" && !(config.body instanceof FormData)) {
             config.headers["Content-Type"] = "application/json";
             config.body = JSON.stringify(config.body);
         }
-        var isMutating = config.method && ["POST", "PUT", "PATCH", "DELETE"].includes(config.method.toUpperCase());
         try {
             var response = await fetch(url, config);
             if (response.status === 401 && isMutating && !config._retry) {

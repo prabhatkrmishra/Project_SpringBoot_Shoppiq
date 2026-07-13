@@ -189,7 +189,20 @@ public class SecurityConfig {
         http
                 .cors(cors -> corsConfigurationSource.ifPresent(cors::configurationSource))
 
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf
+                        .spa()
+                        .ignoringRequestMatchers(
+                                "/auth/login",
+                                "/auth/logout",
+                                "/auth/refresh",
+                                "/auth/forgot-password",
+                                "/auth/reset-password",
+                                "/auth/google/**",
+                                "/user/register",
+                                "/api/newsletter/**",
+                                "/api/banners/active"
+                        )
+                )
 
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

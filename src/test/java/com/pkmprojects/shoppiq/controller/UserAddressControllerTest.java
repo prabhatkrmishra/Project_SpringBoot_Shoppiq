@@ -43,6 +43,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
  * Controller-slice tests for {@link UserAddressController}.
@@ -166,7 +167,7 @@ class UserAddressControllerTest {
             when(addressService.create(any(User.class), any(CreateAddressRequest.class)))
                     .thenReturn(response);
 
-            mockMvc.perform(post("/user/address/create")
+            mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validCreateRequest(false))))
                     .andExpect(status().isCreated())
@@ -184,7 +185,7 @@ class UserAddressControllerTest {
             when(addressService.create(any(User.class), any(CreateAddressRequest.class)))
                     .thenReturn(response);
 
-            mockMvc.perform(post("/user/address/create")
+            mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validCreateRequest(true))))
                     .andExpect(status().isCreated())
@@ -200,7 +201,7 @@ class UserAddressControllerTest {
                     "postalCode":"110001","country":"India","default":false}
                     """;
 
-            mockMvc.perform(post("/user/address/create")
+            mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -218,7 +219,7 @@ class UserAddressControllerTest {
                     "postalCode":"110001","country":"India","default":false}
                     """;
 
-            mockMvc.perform(post("/user/address/create")
+            mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -236,7 +237,7 @@ class UserAddressControllerTest {
                     "postalCode":"110001","country":"India","default":false}
                     """;
 
-            mockMvc.perform(post("/user/address/create")
+            mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -254,7 +255,7 @@ class UserAddressControllerTest {
                     "postalCode":"110001","country":"India","default":false}
                     """;
 
-            mockMvc.perform(post("/user/address/create")
+            mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -272,7 +273,7 @@ class UserAddressControllerTest {
                     "postalCode":"110001","country":"India","default":false}
                     """;
 
-            mockMvc.perform(post("/user/address/create")
+            mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -290,7 +291,7 @@ class UserAddressControllerTest {
                     "postalCode":"110001","country":"","default":false}
                     """;
 
-            mockMvc.perform(post("/user/address/create")
+            mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -304,7 +305,7 @@ class UserAddressControllerTest {
         void create_unauthenticated_returns401() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(post("/user/address/create")
+            mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validCreateRequest(false))))
                     .andExpect(status().isUnauthorized());
@@ -430,7 +431,7 @@ class UserAddressControllerTest {
             when(addressService.update(any(User.class), eq(5L), any(UpdateAddressRequest.class)))
                     .thenReturn(response);
 
-            mockMvc.perform(put("/user/address/update/5")
+            mockMvc.perform(put("/user/address/update/5").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validUpdateRequest(false))))
                     .andExpect(status().isOk())
@@ -448,7 +449,7 @@ class UserAddressControllerTest {
                     "postalCode":"110001","country":"India","default":false}
                     """;
 
-            mockMvc.perform(put("/user/address/update/5")
+            mockMvc.perform(put("/user/address/update/5").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -466,7 +467,7 @@ class UserAddressControllerTest {
                     "postalCode":"110001","country":"India","default":false}
                     """;
 
-            mockMvc.perform(put("/user/address/update/5")
+            mockMvc.perform(put("/user/address/update/5").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -481,7 +482,7 @@ class UserAddressControllerTest {
             when(addressService.update(any(User.class), eq(99L), any(UpdateAddressRequest.class)))
                     .thenThrow(AddressNotFoundException.id(99L));
 
-            mockMvc.perform(put("/user/address/update/99")
+            mockMvc.perform(put("/user/address/update/99").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validUpdateRequest(false))))
                     .andExpect(status().isNotFound())
@@ -494,7 +495,7 @@ class UserAddressControllerTest {
             when(addressService.update(any(User.class), eq(5L), any(UpdateAddressRequest.class)))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
 
-            mockMvc.perform(put("/user/address/update/5")
+            mockMvc.perform(put("/user/address/update/5").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validUpdateRequest(false))))
                     .andExpect(status().isForbidden())
@@ -506,7 +507,7 @@ class UserAddressControllerTest {
         void update_unauthenticated_returns401() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(put("/user/address/update/5")
+            mockMvc.perform(put("/user/address/update/5").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validUpdateRequest(false))))
                     .andExpect(status().isUnauthorized());
@@ -526,7 +527,7 @@ class UserAddressControllerTest {
         void delete_owned_returns204() throws Exception {
             doNothing().when(addressService).delete(any(User.class), eq(5L));
 
-            mockMvc.perform(delete("/user/address/delete/5"))
+            mockMvc.perform(delete("/user/address/delete/5").with(csrf()))
                     .andExpect(status().isNoContent());
 
             verify(addressService).delete(any(User.class), eq(5L));
@@ -538,7 +539,7 @@ class UserAddressControllerTest {
             doThrow(AddressNotFoundException.id(99L))
                     .when(addressService).delete(any(User.class), eq(99L));
 
-            mockMvc.perform(delete("/user/address/delete/99"))
+            mockMvc.perform(delete("/user/address/delete/99").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("ADDRESS-404-001"));
         }
@@ -549,7 +550,7 @@ class UserAddressControllerTest {
             doThrow(AddressAccessDeniedException.forAddress(5L))
                     .when(addressService).delete(any(User.class), eq(5L));
 
-            mockMvc.perform(delete("/user/address/delete/5"))
+            mockMvc.perform(delete("/user/address/delete/5").with(csrf()))
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.errorCode").value("ADDRESS-403-001"));
         }
@@ -559,7 +560,7 @@ class UserAddressControllerTest {
         void delete_unauthenticated_returns401() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(delete("/user/address/delete/5"))
+            mockMvc.perform(delete("/user/address/delete/5").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
     }
@@ -578,7 +579,7 @@ class UserAddressControllerTest {
             AddressResponse response = stubResponse(5L, true);
             when(addressService.setDefault(any(User.class), eq(5L))).thenReturn(response);
 
-            mockMvc.perform(put("/user/address/default/5"))
+            mockMvc.perform(put("/user/address/default/5").with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(5))
                     .andExpect(jsonPath("$.default").value(true));
@@ -590,7 +591,7 @@ class UserAddressControllerTest {
             when(addressService.setDefault(any(User.class), eq(99L)))
                     .thenThrow(AddressNotFoundException.id(99L));
 
-            mockMvc.perform(put("/user/address/default/99"))
+            mockMvc.perform(put("/user/address/default/99").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("ADDRESS-404-001"));
         }
@@ -601,7 +602,7 @@ class UserAddressControllerTest {
             when(addressService.setDefault(any(User.class), eq(5L)))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
 
-            mockMvc.perform(put("/user/address/default/5"))
+            mockMvc.perform(put("/user/address/default/5").with(csrf()))
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.errorCode").value("ADDRESS-403-001"));
         }
@@ -611,7 +612,7 @@ class UserAddressControllerTest {
         void setDefault_unauthenticated_returns401() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(put("/user/address/default/5"))
+            mockMvc.perform(put("/user/address/default/5").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
     }

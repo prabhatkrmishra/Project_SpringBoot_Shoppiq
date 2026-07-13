@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
  * Controller-slice tests for {@link ItemReviewController}.
@@ -150,7 +151,7 @@ class ItemReviewControllerTest {
             when(itemReviewService.create(eq(1L), any(User.class), any(ItemReviewRequest.class)))
                     .thenReturn(response);
 
-            mockMvc.perform(post("/items/1/create/review")
+            mockMvc.perform(post("/items/1/create/review").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
@@ -167,7 +168,7 @@ class ItemReviewControllerTest {
             when(itemReviewService.create(eq(1L), any(User.class), any(ItemReviewRequest.class)))
                     .thenThrow(DuplicateItemReviewException.userId(42L));
 
-            mockMvc.perform(post("/items/1/create/review")
+            mockMvc.perform(post("/items/1/create/review").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isConflict())
@@ -182,7 +183,7 @@ class ItemReviewControllerTest {
             when(itemReviewService.create(eq(99L), any(User.class), any(ItemReviewRequest.class)))
                     .thenThrow(ItemNotFoundException.id(99L));
 
-            mockMvc.perform(post("/items/99/create/review")
+            mockMvc.perform(post("/items/99/create/review").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound())
@@ -194,7 +195,7 @@ class ItemReviewControllerTest {
         void create_ratingTooLow_returns400() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(0, "Bad rating");
 
-            mockMvc.perform(post("/items/1/create/review")
+            mockMvc.perform(post("/items/1/create/review").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -208,7 +209,7 @@ class ItemReviewControllerTest {
         void create_ratingTooHigh_returns400() throws Exception {
             ItemReviewRequest request = new ItemReviewRequest(6, "Out of range");
 
-            mockMvc.perform(post("/items/1/create/review")
+            mockMvc.perform(post("/items/1/create/review").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -220,7 +221,7 @@ class ItemReviewControllerTest {
         void create_nullRating_returns400() throws Exception {
             String body = "{\"review\":\"No rating supplied\"}";
 
-            mockMvc.perform(post("/items/1/create/review")
+            mockMvc.perform(post("/items/1/create/review").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -232,7 +233,7 @@ class ItemReviewControllerTest {
         void create_arrayBody_returns400() throws Exception {
             String arrayBody = "[{\"rating\":5,\"review\":\"test\"}]";
 
-            mockMvc.perform(post("/items/1/create/review")
+            mockMvc.perform(post("/items/1/create/review").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(arrayBody))
                     .andExpect(status().isBadRequest());
@@ -326,7 +327,7 @@ class ItemReviewControllerTest {
             when(itemReviewService.update(eq(100L), any(User.class), any(ItemReviewRequest.class)))
                     .thenReturn(stubResponse(2, "Changed my mind."));
 
-            mockMvc.perform(put("/reviews/100/update")
+            mockMvc.perform(put("/reviews/100/update").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -342,7 +343,7 @@ class ItemReviewControllerTest {
             when(itemReviewService.update(eq(999L), any(User.class), any(ItemReviewRequest.class)))
                     .thenThrow(ItemReviewNotFoundException.id(999L));
 
-            mockMvc.perform(put("/reviews/999/update")
+            mockMvc.perform(put("/reviews/999/update").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound())
@@ -354,7 +355,7 @@ class ItemReviewControllerTest {
         void update_nullRating_returns400() throws Exception {
             String body = "{\"review\":\"Missing rating\"}";
 
-            mockMvc.perform(put("/reviews/100/update")
+            mockMvc.perform(put("/reviews/100/update").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -375,7 +376,7 @@ class ItemReviewControllerTest {
         void delete_existingReview_returns204() throws Exception {
             doNothing().when(itemReviewService).delete(eq(100L), any(User.class));
 
-            mockMvc.perform(delete("/reviews/100/delete"))
+            mockMvc.perform(delete("/reviews/100/delete").with(csrf()))
                     .andExpect(status().isNoContent());
 
             verify(itemReviewService).delete(eq(100L), any(User.class));
@@ -387,7 +388,7 @@ class ItemReviewControllerTest {
             doThrow(ItemReviewNotFoundException.id(999L))
                     .when(itemReviewService).delete(eq(999L), any(User.class));
 
-            mockMvc.perform(delete("/reviews/999/delete"))
+            mockMvc.perform(delete("/reviews/999/delete").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("ITEM_REVIEW-404-001"));
         }

@@ -97,24 +97,17 @@
                 return;
             }
             try {
-                const response = await fetch("/auth/login", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    /* credentials: "include" ensures the browser sends/accepts cookies */
-                    credentials: "include",
-                    body: JSON.stringify({username: username, password: password, rememberMe: rememberMe})
+                const data = await API.post('/auth/login', {
+                    username: username,
+                    password: password,
+                    rememberMe: rememberMe
                 });
-                if (!response.ok) {
-                    const data = await response.json().catch(() => ({}));
-                    showToast(data.detail || "Invalid username or password", "error");
-                    return;
-                }
                 showToast("Login successful", "success");
                 setTimeout(() => {
                     window.location.href = returnUrl || "/allitems";
                 }, 800);
             } catch (err) {
-                showToast("Unable to connect to server", "error");
+                showToast(err.message || "Unable to connect to server", "error");
             }
         });
         /*]]>*/

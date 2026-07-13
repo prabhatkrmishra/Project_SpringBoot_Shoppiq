@@ -38,6 +38,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(AdminBannerController.class)
 @Import({
@@ -172,7 +173,7 @@ class AdminBannerControllerTest {
         void create_success() throws Exception {
             when(bannerService.create(any(BannerRequest.class))).thenReturn(bannerResponse);
 
-            mockMvc.perform(post("/api/admin/banners")
+            mockMvc.perform(post("/api/admin/banners").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(buildRequest())))
                     .andExpect(status().isCreated())
@@ -187,7 +188,7 @@ class AdminBannerControllerTest {
                     {"badgeText": "", "heading": ""}
                     """;
 
-            mockMvc.perform(post("/api/admin/banners")
+            mockMvc.perform(post("/api/admin/banners").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidBody))
                     .andExpect(status().isBadRequest());
@@ -213,7 +214,7 @@ class AdminBannerControllerTest {
             );
             when(bannerService.update(eq(1L), any(BannerRequest.class))).thenReturn(updated);
 
-            mockMvc.perform(put("/api/admin/banners/1")
+            mockMvc.perform(put("/api/admin/banners/1").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(buildRequest())))
                     .andExpect(status().isOk())
@@ -227,7 +228,7 @@ class AdminBannerControllerTest {
             when(bannerService.update(eq(99L), any(BannerRequest.class)))
                     .thenThrow(BannerNotFoundException.forId(99L));
 
-            mockMvc.perform(put("/api/admin/banners/99")
+            mockMvc.perform(put("/api/admin/banners/99").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(buildRequest())))
                     .andExpect(status().isNotFound());
@@ -253,7 +254,7 @@ class AdminBannerControllerTest {
             );
             when(bannerService.toggleActive(1L)).thenReturn(toggled);
 
-            mockMvc.perform(patch("/api/admin/banners/1/toggle"))
+            mockMvc.perform(patch("/api/admin/banners/1/toggle").with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.active").value(false));
         }
@@ -273,7 +274,7 @@ class AdminBannerControllerTest {
         void delete_success() throws Exception {
             doNothing().when(bannerService).delete(1L);
 
-            mockMvc.perform(delete("/api/admin/banners/1"))
+            mockMvc.perform(delete("/api/admin/banners/1").with(csrf()))
                     .andExpect(status().isNoContent());
         }
 
@@ -283,7 +284,7 @@ class AdminBannerControllerTest {
         void delete_notFound() throws Exception {
             doThrow(BannerNotFoundException.forId(99L)).when(bannerService).delete(99L);
 
-            mockMvc.perform(delete("/api/admin/banners/99"))
+            mockMvc.perform(delete("/api/admin/banners/99").with(csrf()))
                     .andExpect(status().isNotFound());
         }
     }

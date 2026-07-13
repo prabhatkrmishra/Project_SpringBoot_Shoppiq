@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
  * Controller-slice tests for {@link UserCartController}.
@@ -162,7 +163,7 @@ class UserCartControllerTest {
             when(cartService.create(any(User.class), any(AddCartItemRequest.class)))
                     .thenReturn(response);
 
-            mockMvc.perform(post("/user/cart/create")
+            mockMvc.perform(post("/user/cart/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
@@ -178,7 +179,7 @@ class UserCartControllerTest {
         void create_nullItemId_returns400() throws Exception {
             String body = "{\"itemDetailsId\": null, \"quantity\": 1}";
 
-            mockMvc.perform(post("/user/cart/create")
+            mockMvc.perform(post("/user/cart/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -192,7 +193,7 @@ class UserCartControllerTest {
         void create_zeroQuantity_returns400() throws Exception {
             String body = "{\"itemDetailsId\": 10, \"quantity\": 0}";
 
-            mockMvc.perform(post("/user/cart/create")
+            mockMvc.perform(post("/user/cart/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -206,7 +207,7 @@ class UserCartControllerTest {
         void create_negativeQuantity_returns400() throws Exception {
             String body = "{\"itemDetailsId\": 10, \"quantity\": -5}";
 
-            mockMvc.perform(post("/user/cart/create")
+            mockMvc.perform(post("/user/cart/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest());
@@ -222,7 +223,7 @@ class UserCartControllerTest {
             when(cartService.create(any(User.class), any(AddCartItemRequest.class)))
                     .thenThrow(InsufficientStockException.forItem("SKU-001", 999, 50));
 
-            mockMvc.perform(post("/user/cart/create")
+            mockMvc.perform(post("/user/cart/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -238,7 +239,7 @@ class UserCartControllerTest {
                     .thenThrow(new ItemDetailsNotFoundException(
                             "Item details with id '999' were not found."));
 
-            mockMvc.perform(post("/user/cart/create")
+            mockMvc.perform(post("/user/cart/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound())
@@ -251,7 +252,7 @@ class UserCartControllerTest {
             SecurityContextHolder.clearContext();
             AddCartItemRequest request = new AddCartItemRequest(10L, 1);
 
-            mockMvc.perform(post("/user/cart/create")
+            mockMvc.perform(post("/user/cart/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isUnauthorized());
@@ -331,7 +332,7 @@ class UserCartControllerTest {
             when(cartService.update(any(User.class), eq(100L), any(UpdateCartItemRequest.class)))
                     .thenReturn(response);
 
-            mockMvc.perform(put("/user/cart/update/100")
+            mockMvc.perform(put("/user/cart/update/100").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -344,7 +345,7 @@ class UserCartControllerTest {
         void update_zeroQuantity_returns400() throws Exception {
             String body = "{\"quantity\": 0}";
 
-            mockMvc.perform(put("/user/cart/update/100")
+            mockMvc.perform(put("/user/cart/update/100").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -361,7 +362,7 @@ class UserCartControllerTest {
             when(cartService.update(any(User.class), eq(100L), any(UpdateCartItemRequest.class)))
                     .thenThrow(InsufficientStockException.forItem("SKU-001", 999, 50));
 
-            mockMvc.perform(put("/user/cart/update/100")
+            mockMvc.perform(put("/user/cart/update/100").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -376,7 +377,7 @@ class UserCartControllerTest {
             when(cartService.update(any(User.class), eq(999L), any(UpdateCartItemRequest.class)))
                     .thenThrow(CartItemNotFoundException.id(999L));
 
-            mockMvc.perform(put("/user/cart/update/999")
+            mockMvc.perform(put("/user/cart/update/999").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound())
@@ -391,7 +392,7 @@ class UserCartControllerTest {
             when(cartService.update(any(User.class), eq(200L), any(UpdateCartItemRequest.class)))
                     .thenThrow(CartItemAccessDeniedException.forItem(200L));
 
-            mockMvc.perform(put("/user/cart/update/200")
+            mockMvc.perform(put("/user/cart/update/200").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isForbidden())
@@ -404,7 +405,7 @@ class UserCartControllerTest {
             SecurityContextHolder.clearContext();
             UpdateCartItemRequest request = new UpdateCartItemRequest(2);
 
-            mockMvc.perform(put("/user/cart/update/100")
+            mockMvc.perform(put("/user/cart/update/100").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isUnauthorized());
@@ -424,7 +425,7 @@ class UserCartControllerTest {
         void delete_owned_returns204() throws Exception {
             doNothing().when(cartService).delete(any(User.class), eq(100L));
 
-            mockMvc.perform(delete("/user/cart/delete/100"))
+            mockMvc.perform(delete("/user/cart/delete/100").with(csrf()))
                     .andExpect(status().isNoContent());
 
             verify(cartService).delete(any(User.class), eq(100L));
@@ -436,7 +437,7 @@ class UserCartControllerTest {
             doThrow(CartItemNotFoundException.id(999L))
                     .when(cartService).delete(any(User.class), eq(999L));
 
-            mockMvc.perform(delete("/user/cart/delete/999"))
+            mockMvc.perform(delete("/user/cart/delete/999").with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.errorCode").value("CART-404-001"));
         }
@@ -447,7 +448,7 @@ class UserCartControllerTest {
             doThrow(CartItemAccessDeniedException.forItem(200L))
                     .when(cartService).delete(any(User.class), eq(200L));
 
-            mockMvc.perform(delete("/user/cart/delete/200"))
+            mockMvc.perform(delete("/user/cart/delete/200").with(csrf()))
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.errorCode").value("CART-403-001"));
         }
@@ -457,7 +458,7 @@ class UserCartControllerTest {
         void delete_unauthenticated_returns401() throws Exception {
             SecurityContextHolder.clearContext();
 
-            mockMvc.perform(delete("/user/cart/delete/100"))
+            mockMvc.perform(delete("/user/cart/delete/100").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
     }

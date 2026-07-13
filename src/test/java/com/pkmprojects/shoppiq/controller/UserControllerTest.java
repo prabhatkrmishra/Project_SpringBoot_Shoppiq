@@ -42,6 +42,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.http.MediaType;
 import static org.mockito.Mockito.doNothing;
 
@@ -156,7 +157,7 @@ class UserControllerTest {
             doNothing().when(userService).updateProfile(any(), any());
             when(userService.getProfile(any())).thenReturn(updated);
 
-            mockMvc.perform(put("/user/profile")
+            mockMvc.perform(put("/user/profile").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -170,7 +171,7 @@ class UserControllerTest {
         void updateProfile_emptyName_returns400() throws Exception {
             UpdateProfileRequest request = new UpdateProfileRequest("");
 
-            mockMvc.perform(put("/user/profile")
+            mockMvc.perform(put("/user/profile").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -183,7 +184,7 @@ class UserControllerTest {
 
             UpdateProfileRequest request = new UpdateProfileRequest("Name");
 
-            mockMvc.perform(put("/user/profile")
+            mockMvc.perform(put("/user/profile").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isUnauthorized());
@@ -201,7 +202,7 @@ class UserControllerTest {
 
             doNothing().when(userService).changePassword(any(), any());
 
-            mockMvc.perform(put("/user/password")
+            mockMvc.perform(put("/user/password").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk());
@@ -216,7 +217,7 @@ class UserControllerTest {
 
             doNothing().when(userService).changePassword(any(), any());
 
-            mockMvc.perform(put("/user/password")
+            mockMvc.perform(put("/user/password").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk());
@@ -227,7 +228,7 @@ class UserControllerTest {
         void changePassword_shortNewPassword_returns400() throws Exception {
             ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "123", "123");
 
-            mockMvc.perform(put("/user/password")
+            mockMvc.perform(put("/user/password").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -238,7 +239,7 @@ class UserControllerTest {
         void changePassword_blankNewPassword_returns400() throws Exception {
             ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "", "");
 
-            mockMvc.perform(put("/user/password")
+            mockMvc.perform(put("/user/password").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -251,7 +252,7 @@ class UserControllerTest {
 
             ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "NewPass123!", "NewPass123!");
 
-            mockMvc.perform(put("/user/password")
+            mockMvc.perform(put("/user/password").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isUnauthorized());
