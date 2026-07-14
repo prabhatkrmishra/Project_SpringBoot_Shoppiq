@@ -6,6 +6,7 @@ import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
@@ -71,7 +72,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         JwtCookieFactory.class,
         ShoppiqAuthenticationEntryPoint.class,
         ShoppiqAccessDeniedHandler.class,
-        ProblemDetailResponseWriter.class
+        ProblemDetailResponseWriter.class,
+        OAuthReturnUrlFilter.class
 })
 @DisplayName("UserOrderController Tests")
 class UserOrderControllerTest {
@@ -96,8 +98,7 @@ class UserOrderControllerTest {
         f.set(entity, id);
     }
 
-    @BeforeEach
-    void setupSecurityContext() throws Exception {
+    private void authenticateCustomer() throws Exception {
         customer = User.builder()
                 .name("Alice").username("alice")
                 .email("alice@test.com").password("hashed")
@@ -109,11 +110,6 @@ class UserOrderControllerTest {
                 List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
         );
         SecurityContextHolder.getContext().setAuthentication(auth);
-    }
-
-    @AfterEach
-    void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
     }
 
     private CheckoutResponse checkoutResponse(Long orderId) {
@@ -146,6 +142,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("201 Created — successful checkout")
         void checkout_success() throws Exception {
+            authenticateCustomer();
             CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
             when(checkoutService.checkout(eq(customer), any(CheckoutRequest.class)))
                     .thenReturn(checkoutResponse(25L));
@@ -162,6 +159,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — empty cart")
         void checkout_emptyCart() throws Exception {
+            authenticateCustomer();
             CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
             when(checkoutService.checkout(any(), any())).thenThrow(new CartEmptyException());
 
@@ -174,6 +172,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("404 Not Found — invalid address")
         void checkout_invalidAddress() throws Exception {
+            authenticateCustomer();
             CheckoutRequest request = new CheckoutRequest(99L, PaymentMethod.COD, null);
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(AddressNotFoundException.id(99L));
@@ -187,6 +186,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("403 Forbidden — address belongs to different user")
         void checkout_addressWrongOwner() throws Exception {
+            authenticateCustomer();
             CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, null);
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
@@ -200,6 +200,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — insufficient stock")
         void checkout_insufficientStock() throws Exception {
+            authenticateCustomer();
             CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(InsufficientStockException.forItem("SKU-1", 3, 1));
@@ -213,6 +214,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — missing addressId")
         void checkout_validation_missingAddressId() throws Exception {
+            authenticateCustomer();
             mockMvc.perform(post("/user/order/checkout").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"paymentMethod\":\"COD\"}"))
@@ -222,8 +224,6 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("401 Unauthorized — unauthenticated request")
         void checkout_unauthenticated() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(post("/user/order/checkout").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"addressId\":1,\"paymentMethod\":\"COD\"}"))
@@ -242,6 +242,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("200 OK — returns list of orders")
         void getMyOrders_success() throws Exception {
+            authenticateCustomer();
             when(checkoutService.getMyOrders(eq(customer), anyInt(), anyInt()))
                     .thenReturn(new PageResponse<>(List.of(orderResponse(1L), orderResponse(2L)), 0, 20, 2, 1, true, false));
 
@@ -255,6 +256,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("200 OK — empty list when no orders")
         void getMyOrders_empty() throws Exception {
+            authenticateCustomer();
             when(checkoutService.getMyOrders(eq(customer), anyInt(), anyInt()))
                     .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, true));
 
@@ -275,6 +277,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("200 OK — returns single order")
         void getMyOrder_success() throws Exception {
+            authenticateCustomer();
             when(checkoutService.getMyOrder(customer, 10L)).thenReturn(orderResponse(10L));
 
             mockMvc.perform(get("/user/order/get/10"))
@@ -286,6 +289,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("404 Not Found — order does not exist")
         void getMyOrder_notFound() throws Exception {
+            authenticateCustomer();
             when(checkoutService.getMyOrder(any(), eq(99L)))
                     .thenThrow(new OrderNotFoundException("Order '99' not found."));
 
@@ -296,6 +300,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("403 Forbidden — order belongs to another user")
         void getMyOrder_wrongOwner() throws Exception {
+            authenticateCustomer();
             when(checkoutService.getMyOrder(any(), eq(10L)))
                     .thenThrow(OrderAccessDeniedException.forOrder(10L));
 
@@ -315,6 +320,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("204 No Content — order cancelled successfully")
         void cancelOrder_success() throws Exception {
+            authenticateCustomer();
             doNothing().when(checkoutService).cancelOrder(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
@@ -324,6 +330,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("404 Not Found — order does not exist")
         void cancelOrder_notFound() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderNotFoundException("Order '99' not found."))
                     .when(checkoutService).cancelOrder(any(), eq(99L));
 
@@ -334,6 +341,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("403 Forbidden — order belongs to another user")
         void cancelOrder_wrongOwner() throws Exception {
+            authenticateCustomer();
             doThrow(OrderAccessDeniedException.forOrder(10L))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
@@ -344,6 +352,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order in non-cancellable state")
         void cancelOrder_notCancellable() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.SHIPPED))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
@@ -363,6 +372,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("204 No Content — return requested successfully")
         void requestReturn_success() throws Exception {
+            authenticateCustomer();
             doNothing().when(checkoutService).requestReturn(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/return/10").with(csrf()))
@@ -372,6 +382,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("404 Not Found — order does not exist")
         void requestReturn_notFound() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderNotFoundException("Order '99' not found."))
                     .when(checkoutService).requestReturn(any(), eq(99L));
 
@@ -382,6 +393,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("403 Forbidden — order belongs to another user")
         void requestReturn_wrongOwner() throws Exception {
+            authenticateCustomer();
             doThrow(OrderAccessDeniedException.forOrder(10L))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
@@ -392,6 +404,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order not in DELIVERED state")
         void requestReturn_notDelivered() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.SHIPPED, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
@@ -411,6 +424,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("204 No Content — refund requested successfully")
         void requestRefund_success() throws Exception {
+            authenticateCustomer();
             doNothing().when(checkoutService).requestRefund(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/refund/10").with(csrf()))
@@ -420,6 +434,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("404 Not Found — order does not exist")
         void requestRefund_notFound() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderNotFoundException("Order '99' not found."))
                     .when(checkoutService).requestRefund(any(), eq(99L));
 
@@ -430,6 +445,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("403 Forbidden — order belongs to another user")
         void requestRefund_wrongOwner() throws Exception {
+            authenticateCustomer();
             doThrow(OrderAccessDeniedException.forOrder(10L))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
@@ -440,6 +456,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order not in DELIVERED state")
         void requestRefund_notDelivered() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.PLACED, OrderStatus.REFUND_REQUEST))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
@@ -459,6 +476,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("204 No Content — replacement requested successfully")
         void requestReplacement_success() throws Exception {
+            authenticateCustomer();
             doNothing().when(checkoutService).requestReplacement(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/replace/10").with(csrf()))
@@ -468,6 +486,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("404 Not Found — order does not exist")
         void requestReplacement_notFound() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderNotFoundException("Order '99' not found."))
                     .when(checkoutService).requestReplacement(any(), eq(99L));
 
@@ -478,6 +497,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("403 Forbidden — order belongs to another user")
         void requestReplacement_wrongOwner() throws Exception {
+            authenticateCustomer();
             doThrow(OrderAccessDeniedException.forOrder(10L))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
@@ -488,6 +508,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order not in DELIVERED state")
         void requestReplacement_notDelivered() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.CANCELLED, OrderStatus.REPLACE_REQUEST))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
@@ -507,8 +528,6 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("401 Unauthorized — GET /user/order/get/all")
         void getMyOrders_unauthenticated() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(get("/user/order/get/all?page=0&size=20"))
                     .andExpect(status().isUnauthorized());
         }
@@ -516,8 +535,6 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("401 Unauthorized — GET /user/order/get/{id}")
         void getMyOrder_unauthenticated() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(get("/user/order/get/10"))
                     .andExpect(status().isUnauthorized());
         }
@@ -525,8 +542,6 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("401 Unauthorized — PUT /user/order/cancel/{id}")
         void cancelOrder_unauthenticated() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
@@ -534,8 +549,6 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("401 Unauthorized — PUT /user/order/return/{id}")
         void requestReturn_unauthenticated() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(put("/user/order/return/10").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
@@ -543,8 +556,6 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("401 Unauthorized — PUT /user/order/refund/{id}")
         void requestRefund_unauthenticated() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(put("/user/order/refund/10").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
@@ -552,8 +563,6 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("401 Unauthorized — PUT /user/order/replace/{id}")
         void requestReplacement_unauthenticated() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(put("/user/order/replace/10").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
@@ -570,6 +579,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order already in CANCEL_REQUEST state")
         void cancelOrder_alreadyCancelRequest() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.CANCEL_REQUEST))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
@@ -580,6 +590,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order in RETURN_REQUEST state")
         void cancelOrder_returnRequest() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
@@ -599,6 +610,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order already in RETURN_REQUEST state")
         void requestReturn_alreadyReturnRequest() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.RETURN_REQUEST, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
@@ -609,6 +621,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order already RETURNED")
         void requestReturn_alreadyReturned() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.RETURNED, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
@@ -628,6 +641,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order already in REFUND_REQUEST state")
         void requestRefund_alreadyRefundRequest() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REFUND_REQUEST, OrderStatus.REFUND_REQUEST))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
@@ -638,6 +652,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order already REFUNDED")
         void requestRefund_alreadyRefunded() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REFUNDED, OrderStatus.REFUND_REQUEST))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
@@ -657,6 +672,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order already in REPLACE_REQUEST state")
         void requestReplacement_alreadyReplaceRequest() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REPLACE_REQUEST, OrderStatus.REPLACE_REQUEST))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
@@ -667,6 +683,7 @@ class UserOrderControllerTest {
         @Test
         @DisplayName("400 Bad Request — order already REPLACED")
         void requestReplacement_alreadyReplaced() throws Exception {
+            authenticateCustomer();
             doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REPLACED, OrderStatus.REPLACE_REQUEST))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 

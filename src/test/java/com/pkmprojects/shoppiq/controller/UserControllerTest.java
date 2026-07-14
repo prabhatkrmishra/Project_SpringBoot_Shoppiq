@@ -5,6 +5,7 @@ import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
@@ -56,7 +57,8 @@ import static org.mockito.Mockito.doNothing;
         JwtCookieFactory.class,
         ShoppiqAuthenticationEntryPoint.class,
         ShoppiqAccessDeniedHandler.class,
-        ProblemDetailResponseWriter.class
+        ProblemDetailResponseWriter.class,
+        OAuthReturnUrlFilter.class
 })
 @DisplayName("UserController Tests")
 class UserControllerTest {
@@ -84,8 +86,7 @@ class UserControllerTest {
 
     private User authenticatedUser;
 
-    @BeforeEach
-    void setUp() {
+    private void authenticateUser() {
         authenticatedUser = User.builder()
                 .name("Customer User")
                 .username("customeruser")
@@ -111,11 +112,6 @@ class UserControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
-
     @Nested
     @DisplayName("GET /user/profile")
     class GetProfile {
@@ -123,6 +119,7 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 200 with user profile when authenticated")
         void getProfile_authenticated_returns200() throws Exception {
+            authenticateUser();
             UserResponse profile = UserResponse.of(authenticatedUser, null, true);
 
             when(userService.getProfile(any())).thenReturn(profile);
@@ -137,8 +134,6 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void getProfile_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(get("/user/profile"))
                     .andExpect(status().isUnauthorized());
         }
@@ -151,6 +146,7 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 200 with updated profile when name is valid")
         void updateProfile_validName_returns200() throws Exception {
+            authenticateUser();
             UpdateProfileRequest request = new UpdateProfileRequest("Updated Name");
             UserResponse updated = UserResponse.of(authenticatedUser, null, true);
 
@@ -169,6 +165,7 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 400 when name is empty")
         void updateProfile_emptyName_returns400() throws Exception {
+            authenticateUser();
             UpdateProfileRequest request = new UpdateProfileRequest("");
 
             mockMvc.perform(put("/user/profile").with(csrf())
@@ -180,8 +177,6 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void updateProfile_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             UpdateProfileRequest request = new UpdateProfileRequest("Name");
 
             mockMvc.perform(put("/user/profile").with(csrf())
@@ -198,6 +193,7 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 200 when password is changed")
         void changePassword_validRequest_returns200() throws Exception {
+            authenticateUser();
             ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "NewPass123!", "NewPass123!");
 
             doNothing().when(userService).changePassword(any(), any());
@@ -213,6 +209,7 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 200 when current password is null (OAuth account)")
         void changePassword_noCurrentPassword_returns200() throws Exception {
+            authenticateUser();
             ChangePasswordRequest request = new ChangePasswordRequest(null, "NewPass123!", "NewPass123!");
 
             doNothing().when(userService).changePassword(any(), any());
@@ -226,6 +223,7 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 400 when new password is too short")
         void changePassword_shortNewPassword_returns400() throws Exception {
+            authenticateUser();
             ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "123", "123");
 
             mockMvc.perform(put("/user/password").with(csrf())
@@ -237,6 +235,7 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 400 when new password is blank")
         void changePassword_blankNewPassword_returns400() throws Exception {
+            authenticateUser();
             ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "", "");
 
             mockMvc.perform(put("/user/password").with(csrf())
@@ -248,8 +247,6 @@ class UserControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void changePassword_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             ChangePasswordRequest request = new ChangePasswordRequest("currentPass", "NewPass123!", "NewPass123!");
 
             mockMvc.perform(put("/user/password").with(csrf())

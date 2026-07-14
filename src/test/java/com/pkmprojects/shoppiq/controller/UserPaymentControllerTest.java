@@ -8,6 +8,7 @@ import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestR
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.payment.PaymentResponse;
@@ -59,7 +60,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         JwtCookieFactory.class,
         ShoppiqAuthenticationEntryPoint.class,
         ShoppiqAccessDeniedHandler.class,
-        ProblemDetailResponseWriter.class
+        ProblemDetailResponseWriter.class,
+        OAuthReturnUrlFilter.class
 })
 @DisplayName("UserPaymentController Tests")
 class UserPaymentControllerTest {
@@ -74,25 +76,11 @@ class UserPaymentControllerTest {
     @MockitoBean OAuth2SuccessHandler oAuth2SuccessHandler;
 
     private User customer;
-    private User admin;
 
-    private static void setId(Object entity, Long id) throws Exception {
-        Field f = entity.getClass().getSuperclass().getSuperclass().getDeclaredField("id");
-        f.setAccessible(true);
-        f.set(entity, id);
-    }
-
-    @BeforeEach
-    void setupCustomer() throws Exception {
-        customer = User.builder().name("Alice").username("alice")
-                .email("alice@test.com").password("hashed").enabled(true).build();
-        setId(customer, 1L);
-        setSecurityContext(customer, "ROLE_CUSTOMER");
-    }
-
-    @AfterEach
-    void clearContext() {
-        SecurityContextHolder.clearContext();
+    private void authenticateCustomer() {
+        var auth = new UsernamePasswordAuthenticationToken(
+                customer, null, List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     private void setSecurityContext(User user, String role) {
@@ -127,6 +115,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("200 OK — returns payment detail")
         void getPayment_success() throws Exception {
+            authenticateCustomer();
             when(paymentService.getPayment(eq(customer), eq(1L)))
                     .thenReturn(paymentResponse(1L));
 
@@ -140,6 +129,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("404 Not Found — payment does not exist")
         void getPayment_notFound() throws Exception {
+            authenticateCustomer();
             when(paymentService.getPayment(any(), eq(99L)))
                     .thenThrow(PaymentNotFoundException.forId(99L));
 
@@ -150,6 +140,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("403 Forbidden — payment belongs to another user")
         void getPayment_wrongOwner() throws Exception {
+            authenticateCustomer();
             when(paymentService.getPayment(any(), eq(1L)))
                     .thenThrow(PaymentAccessDeniedException.forPayment(1L));
 
@@ -160,8 +151,6 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("401 Unauthorized — unauthenticated request")
         void getPayment_unauthenticated() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(get("/user/payment/get/1"))
                     .andExpect(status().isUnauthorized());
         }
@@ -178,6 +167,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("200 OK — payment initiated")
         void pay_success() throws Exception {
+            authenticateCustomer();
             when(paymentService.pay(eq(customer), eq(1L)))
                     .thenReturn(statusResponse(PaymentStatus.PROCESSING));
 
@@ -189,6 +179,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("400 Bad Request — payment already paid")
         void pay_alreadyPaid() throws Exception {
+            authenticateCustomer();
             when(paymentService.pay(any(), eq(1L)))
                     .thenThrow(PaymentInvalidStateException.alreadyPaid(1L));
 
@@ -199,6 +190,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("404 Not Found — payment not found")
         void pay_notFound() throws Exception {
+            authenticateCustomer();
             when(paymentService.pay(any(), eq(99L)))
                     .thenThrow(PaymentNotFoundException.forId(99L));
 
@@ -209,6 +201,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("403 Forbidden — wrong user")
         void pay_wrongOwner() throws Exception {
+            authenticateCustomer();
             when(paymentService.pay(any(), eq(1L)))
                     .thenThrow(PaymentAccessDeniedException.forPayment(1L));
 
@@ -228,6 +221,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("200 OK — payment verified as PAID")
         void verifyPayment_success() throws Exception {
+            authenticateCustomer();
             when(paymentService.verifyPayment(eq(customer), eq(1L), eq("TXN-001")))
                     .thenReturn(statusResponse(PaymentStatus.PAID));
 
@@ -241,6 +235,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("400 Bad Request — missing paymentId/transactionId")
         void verifyPayment_missingField() throws Exception {
+            authenticateCustomer();
             mockMvc.perform(post("/user/payment/verify").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
@@ -250,6 +245,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("404 Not Found — unknown paymentId")
         void verifyPayment_notFound() throws Exception {
+            authenticateCustomer();
             when(paymentService.verifyPayment(any(), eq(1L), eq("BAD-ID")))
                     .thenThrow(PaymentNotFoundException.forTransactionId("BAD-ID"));
 
@@ -271,6 +267,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("200 OK — payment cancelled")
         void cancelPayment_success() throws Exception {
+            authenticateCustomer();
             when(paymentService.cancelPayment(eq(customer), eq(1L)))
                     .thenReturn(statusResponse(PaymentStatus.CANCELLED));
 
@@ -282,6 +279,7 @@ class UserPaymentControllerTest {
         @Test
         @DisplayName("400 Bad Request — payment cannot be cancelled (PAID)")
         void cancelPayment_invalidState() throws Exception {
+            authenticateCustomer();
             when(paymentService.cancelPayment(any(), eq(1L)))
                     .thenThrow(PaymentInvalidStateException.cannotCancel(1L, PaymentStatus.PAID));
 

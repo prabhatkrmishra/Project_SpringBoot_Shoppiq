@@ -6,6 +6,7 @@ import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
@@ -77,7 +78,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         JwtCookieFactory.class,
         ShoppiqAuthenticationEntryPoint.class,
         ShoppiqAccessDeniedHandler.class,
-        ProblemDetailResponseWriter.class
+        ProblemDetailResponseWriter.class,
+        OAuthReturnUrlFilter.class
 })
 @DisplayName("UserCartController Tests")
 class UserCartControllerTest {
@@ -127,8 +129,7 @@ class UserCartControllerTest {
         return new CartResponse(1L, items.size(), subtotal, items);
     }
 
-    @BeforeEach
-    void setUp() {
+    private void authenticateUser() {
         authenticatedUser = User.builder()
                 .name("Alice")
                 .username("alice")
@@ -157,6 +158,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 201 Created with cart item body on success")
         void create_validRequest_returns201() throws Exception {
+            authenticateUser();
             AddCartItemRequest request = new AddCartItemRequest(10L, 2);
             CartItemResponse response = stubCartItemResponse(2);
 
@@ -177,6 +179,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 400 when itemDetailsId is null")
         void create_nullItemId_returns400() throws Exception {
+            authenticateUser();
             String body = "{\"itemDetailsId\": null, \"quantity\": 1}";
 
             mockMvc.perform(post("/user/cart/create").with(csrf())
@@ -191,6 +194,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 400 when quantity is zero")
         void create_zeroQuantity_returns400() throws Exception {
+            authenticateUser();
             String body = "{\"itemDetailsId\": 10, \"quantity\": 0}";
 
             mockMvc.perform(post("/user/cart/create").with(csrf())
@@ -205,6 +209,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 400 when quantity is negative")
         void create_negativeQuantity_returns400() throws Exception {
+            authenticateUser();
             String body = "{\"itemDetailsId\": 10, \"quantity\": -5}";
 
             mockMvc.perform(post("/user/cart/create").with(csrf())
@@ -218,6 +223,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 400 when requested quantity exceeds stock")
         void create_insufficientStock_returns400() throws Exception {
+            authenticateUser();
             AddCartItemRequest request = new AddCartItemRequest(10L, 999);
 
             when(cartService.create(any(User.class), any(AddCartItemRequest.class)))
@@ -233,6 +239,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 404 when item details are not found")
         void create_itemDetailsNotFound_returns404() throws Exception {
+            authenticateUser();
             AddCartItemRequest request = new AddCartItemRequest(999L, 1);
 
             when(cartService.create(any(User.class), any(AddCartItemRequest.class)))
@@ -249,7 +256,6 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 401 when request is unauthenticated")
         void create_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
             AddCartItemRequest request = new AddCartItemRequest(10L, 1);
 
             mockMvc.perform(post("/user/cart/create").with(csrf())
@@ -270,6 +276,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 200 with full cart when user has items")
         void get_withItems_returns200() throws Exception {
+            authenticateUser();
             List<CartItemResponse> items = List.of(
                     stubCartItemResponse(2),
                     stubCartItemResponse(3)
@@ -290,6 +297,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 200 with empty cart when user has no items")
         void get_emptyCart_returns200() throws Exception {
+            authenticateUser();
             CartResponse empty = new CartResponse(null, 0, BigDecimal.ZERO, List.of());
 
             when(cartService.get(any(User.class))).thenReturn(empty);
@@ -304,8 +312,6 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void get_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(get("/user/cart/get"))
                     .andExpect(status().isUnauthorized());
         }
@@ -326,6 +332,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 200 with updated item body on success")
         void update_valid_returns200() throws Exception {
+            authenticateUser();
             UpdateCartItemRequest request = new UpdateCartItemRequest(5);
             CartItemResponse response = stubCartItemResponse(5);
 
@@ -343,6 +350,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 400 when quantity is zero")
         void update_zeroQuantity_returns400() throws Exception {
+            authenticateUser();
             String body = "{\"quantity\": 0}";
 
             mockMvc.perform(put("/user/cart/update/100").with(csrf())
@@ -357,6 +365,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 400 when new quantity exceeds stock")
         void update_exceedsStock_returns400() throws Exception {
+            authenticateUser();
             UpdateCartItemRequest request = new UpdateCartItemRequest(999);
 
             when(cartService.update(any(User.class), eq(100L), any(UpdateCartItemRequest.class)))
@@ -372,6 +381,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 404 when cart item does not exist")
         void update_notFound_returns404() throws Exception {
+            authenticateUser();
             UpdateCartItemRequest request = new UpdateCartItemRequest(2);
 
             when(cartService.update(any(User.class), eq(999L), any(UpdateCartItemRequest.class)))
@@ -387,6 +397,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 403 when cart item belongs to another user")
         void update_wrongOwner_returns403() throws Exception {
+            authenticateUser();
             UpdateCartItemRequest request = new UpdateCartItemRequest(2);
 
             when(cartService.update(any(User.class), eq(200L), any(UpdateCartItemRequest.class)))
@@ -402,7 +413,6 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void update_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
             UpdateCartItemRequest request = new UpdateCartItemRequest(2);
 
             mockMvc.perform(put("/user/cart/update/100").with(csrf())
@@ -423,6 +433,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 204 No Content on successful deletion")
         void delete_owned_returns204() throws Exception {
+            authenticateUser();
             doNothing().when(cartService).delete(any(User.class), eq(100L));
 
             mockMvc.perform(delete("/user/cart/delete/100").with(csrf()))
@@ -434,6 +445,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 404 when cart item does not exist")
         void delete_notFound_returns404() throws Exception {
+            authenticateUser();
             doThrow(CartItemNotFoundException.id(999L))
                     .when(cartService).delete(any(User.class), eq(999L));
 
@@ -445,6 +457,7 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 403 when cart item belongs to another user")
         void delete_wrongOwner_returns403() throws Exception {
+            authenticateUser();
             doThrow(CartItemAccessDeniedException.forItem(200L))
                     .when(cartService).delete(any(User.class), eq(200L));
 
@@ -456,8 +469,6 @@ class UserCartControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void delete_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(delete("/user/cart/delete/100").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }

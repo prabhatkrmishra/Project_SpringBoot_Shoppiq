@@ -3,6 +3,7 @@ package com.pkmprojects.shoppiq.controller;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
@@ -62,7 +63,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         JwtCookieFactory.class,
         ShoppiqAuthenticationEntryPoint.class,
         ShoppiqAccessDeniedHandler.class,
-        ProblemDetailResponseWriter.class
+        ProblemDetailResponseWriter.class,
+        OAuthReturnUrlFilter.class
 })
 @DisplayName("SellerOrderController Tests")
 class SellerOrderControllerTest {
@@ -96,23 +98,22 @@ class SellerOrderControllerTest {
 
     private User authenticatedUser;
 
-    @BeforeEach
-    void setUp() {
-        authenticatedUser = User.builder()
-                .name("Seller User")
-                .username("selleruser")
-                .email("seller@example.com")
-                .password("hashed")
-                .enabled(true)
-                .build();
-
+    private void authenticateSeller() {
+        if (authenticatedUser == null) {
+            authenticatedUser = User.builder()
+                    .name("Seller User")
+                    .username("selleruser")
+                    .email("seller@example.com")
+                    .password("hashed")
+                    .enabled(true)
+                    .build();
+        }
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         authenticatedUser,
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_SELLER"))
                 );
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
@@ -123,6 +124,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with order list")
         void getOrders_returnsList() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.getOrders(any(User.class), anyInt(), anyInt()))
                     .thenReturn(new PageResponse<>(
                             List.of(
@@ -143,6 +145,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with empty list when no orders")
         void getOrders_emptyList() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.getOrders(any(User.class), anyInt(), anyInt()))
                     .thenReturn(new PageResponse<>(
                             List.of(),
@@ -157,6 +160,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 404 when seller profile does not exist")
         void getOrders_sellerNotFound_returns404() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.getOrders(any(User.class), anyInt(), anyInt()))
                     .thenThrow(SellerNotFoundException.userId(1L));
 
@@ -173,6 +177,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with order details")
         void getOrder_returnsOrder() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.getOrder(any(User.class), eq(1L)))
                     .thenReturn(stubResponse(1L, OrderStatus.PLACED));
 
@@ -186,6 +191,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 404 when order does not exist")
         void getOrder_notFound_returns404() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.getOrder(any(User.class), eq(99L)))
                     .thenThrow(OrderNotFoundException.id(99L));
 
@@ -202,6 +208,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with updated order on success")
         void updateOrderStatus_valid_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenReturn(stubResponse(1L, OrderStatus.CONFIRMED));
 
@@ -215,6 +222,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 400 when order has items from other sellers")
         void updateOrderStatus_notFullyOwned_returns400() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(OrderNotFullyOwnedException.forOrder(1L));
 
@@ -227,6 +235,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 404 when order does not exist")
         void updateOrderStatus_notFound_returns404() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(99L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(OrderNotFoundException.id(99L));
 
@@ -239,6 +248,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 400 when seller is suspended")
         void updateOrderStatus_sellerSuspended_returns400() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(SellerSuspendedException.forAction(1L, "manage orders"));
 
@@ -251,6 +261,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 400 when seller is not verified")
         void updateOrderStatus_sellerNotVerified_returns400() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(SellerNotVerifiedException.forAction(1L, "manage orders"));
 
@@ -263,6 +274,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 400 when status parameter is missing")
         void updateOrderStatus_missingStatus_returns400() throws Exception {
+            authenticateSeller();
             mockMvc.perform(put("/seller/orders/1/status").with(csrf()))
                     .andExpect(status().isBadRequest());
 
@@ -272,6 +284,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with RETURN_REQUEST status")
         void updateOrderStatus_returnRequest_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.RETURN_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.RETURN_REQUEST));
 
@@ -284,6 +297,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with RETURN_PICKUP status")
         void updateOrderStatus_returnPickup_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.RETURN_PICKUP)))
                     .thenReturn(stubResponse(1L, OrderStatus.RETURN_PICKUP));
 
@@ -296,6 +310,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with REFUND_REQUEST status")
         void updateOrderStatus_refundRequest_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REFUND_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.REFUND_REQUEST));
 
@@ -308,6 +323,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with REPLACE_REQUEST status")
         void updateOrderStatus_replaceRequest_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REPLACE_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.REPLACE_REQUEST));
 
@@ -320,6 +336,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 with REPLACE_PICKUP status")
         void updateOrderStatus_replacePickup_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REPLACE_PICKUP)))
                     .thenReturn(stubResponse(1L, OrderStatus.REPLACE_PICKUP));
 
@@ -332,6 +349,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 400 on invalid transition")
         void updateOrderStatus_invalidTransition_returns400() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.DELIVERED)))
                     .thenThrow(new com.pkmprojects.shoppiq.exception.OrderInvalidStatusTransitionException(
                             OrderStatus.CONFIRMED, OrderStatus.DELIVERED));
@@ -345,6 +363,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 404 when order not found on status update")
         void updateOrderStatus_orderNotFound_returns404() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(99L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(OrderNotFoundException.id(99L));
 
@@ -357,6 +376,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 400 when seller not found on status update")
         void updateOrderStatus_sellerNotFound_returns404() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenThrow(SellerNotFoundException.userId(1L));
 
@@ -371,6 +391,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — PLACED → CONFIRMED")
         void updateOrderStatus_placedToConfirmed_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CONFIRMED)))
                     .thenReturn(stubResponse(1L, OrderStatus.CONFIRMED));
 
@@ -383,6 +404,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — CONFIRMED → SHIPPED")
         void updateOrderStatus_confirmedToShipped_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.SHIPPED)))
                     .thenReturn(stubResponse(1L, OrderStatus.SHIPPED));
 
@@ -395,6 +417,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — SHIPPED → OUT_FOR_DELIVERY")
         void updateOrderStatus_shippedToOutForDelivery_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.OUT_FOR_DELIVERY)))
                     .thenReturn(stubResponse(1L, OrderStatus.OUT_FOR_DELIVERY));
 
@@ -407,6 +430,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — OUT_FOR_DELIVERY → DELIVERED")
         void updateOrderStatus_outForDeliveryToDelivered_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.DELIVERED)))
                     .thenReturn(stubResponse(1L, OrderStatus.DELIVERED));
 
@@ -421,6 +445,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — DELIVERED → RETURN_REQUEST")
         void updateOrderStatus_deliveredToReturnRequest_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.RETURN_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.RETURN_REQUEST));
 
@@ -433,6 +458,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — DELIVERED → REFUND_REQUEST")
         void updateOrderStatus_deliveredToRefundRequest_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REFUND_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.REFUND_REQUEST));
 
@@ -445,6 +471,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — DELIVERED → REPLACE_REQUEST")
         void updateOrderStatus_deliveredToReplaceRequest_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REPLACE_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.REPLACE_REQUEST));
 
@@ -457,6 +484,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — RETURN_PICKUP → RETURNED")
         void updateOrderStatus_returnPickupToReturned_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.RETURNED)))
                     .thenReturn(stubResponse(1L, OrderStatus.RETURNED));
 
@@ -469,6 +497,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — RETURN_PICKUP → REFUNDED")
         void updateOrderStatus_returnPickupToRefunded_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REFUNDED)))
                     .thenReturn(stubResponse(1L, OrderStatus.REFUNDED));
 
@@ -481,6 +510,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — REPLACE_PICKUP → REPLACED")
         void updateOrderStatus_replacePickupToReplaced_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.REPLACED)))
                     .thenReturn(stubResponse(1L, OrderStatus.REPLACED));
 
@@ -495,6 +525,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — PLACED → CANCEL_REQUEST")
         void updateOrderStatus_placedToCancelRequest_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CANCEL_REQUEST)))
                     .thenReturn(stubResponse(1L, OrderStatus.CANCEL_REQUEST));
 
@@ -507,6 +538,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — PLACED → CANCELLED (direct)")
         void updateOrderStatus_placedToCancelled_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CANCELLED)))
                     .thenReturn(stubResponse(1L, OrderStatus.CANCELLED));
 
@@ -519,6 +551,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 200 — CANCEL_REQUEST → CANCELLED")
         void updateOrderStatus_cancelRequestToCancelled_returns200() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CANCELLED)))
                     .thenReturn(stubResponse(1L, OrderStatus.CANCELLED));
 
@@ -533,8 +566,6 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("401 Unauthorized — status update without auth")
         void updateOrderStatus_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(put("/seller/orders/1/status").with(csrf())
                             .param("status", "CONFIRMED"))
                     .andExpect(status().isUnauthorized());
@@ -545,6 +576,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 400 — PLACED → DELIVERED (skip flow)")
         void updateOrderStatus_placedToDelivered_returns400() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.DELIVERED)))
                     .thenThrow(new com.pkmprojects.shoppiq.exception.OrderInvalidStatusTransitionException(
                             OrderStatus.PLACED, OrderStatus.DELIVERED));
@@ -557,6 +589,7 @@ class SellerOrderControllerTest {
         @Test
         @DisplayName("Returns 400 — CONFIRMED → CANCELLED")
         void updateOrderStatus_confirmedToCancelled_returns400() throws Exception {
+            authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CANCELLED)))
                     .thenThrow(new com.pkmprojects.shoppiq.exception.OrderInvalidStatusTransitionException(
                             OrderStatus.CONFIRMED, OrderStatus.CANCELLED));

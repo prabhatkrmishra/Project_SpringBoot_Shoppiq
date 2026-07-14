@@ -6,6 +6,7 @@ import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
@@ -74,7 +75,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         JwtCookieFactory.class,
         ShoppiqAuthenticationEntryPoint.class,
         ShoppiqAccessDeniedHandler.class,
-        ProblemDetailResponseWriter.class
+        ProblemDetailResponseWriter.class,
+        OAuthReturnUrlFilter.class
 })
 @DisplayName("UserAddressController Tests")
 class UserAddressControllerTest {
@@ -133,8 +135,7 @@ class UserAddressControllerTest {
         );
     }
 
-    @BeforeEach
-    void setUp() {
+    private void authenticateUser() {
         authenticatedUser = User.builder()
                 .name("Alice")
                 .username("alice")
@@ -163,6 +164,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 201 Created with address body on success")
         void create_validRequest_returns201() throws Exception {
+            authenticateUser();
             AddressResponse response = stubResponse(1L, false);
             when(addressService.create(any(User.class), any(CreateAddressRequest.class)))
                     .thenReturn(response);
@@ -181,6 +183,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 201 with default=true when address is marked as default")
         void create_asDefault_returnsDefaultTrue() throws Exception {
+            authenticateUser();
             AddressResponse response = stubResponse(2L, true);
             when(addressService.create(any(User.class), any(CreateAddressRequest.class)))
                     .thenReturn(response);
@@ -195,6 +198,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 400 when label is blank")
         void create_blankLabel_returns400() throws Exception {
+            authenticateUser();
             String body = """
                     {"label":"","fullName":"Alice","phone":"9876543210",
                     "line1":"Street","city":"Delhi","state":"Delhi",
@@ -213,6 +217,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 400 when fullName is missing")
         void create_missingFullName_returns400() throws Exception {
+            authenticateUser();
             String body = """
                     {"label":"Home","phone":"9876543210",
                     "line1":"Street","city":"Delhi","state":"Delhi",
@@ -231,6 +236,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 400 when phone fails pattern validation")
         void create_invalidPhone_returns400() throws Exception {
+            authenticateUser();
             String body = """
                     {"label":"Home","fullName":"Alice Smith","phone":"abc",
                     "line1":"Street","city":"Delhi","state":"Delhi",
@@ -249,6 +255,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 400 when line1 is blank")
         void create_blankLine1_returns400() throws Exception {
+            authenticateUser();
             String body = """
                     {"label":"Home","fullName":"Alice Smith","phone":"9876543210",
                     "line1":"","city":"Delhi","state":"Delhi",
@@ -267,6 +274,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 400 when city is missing")
         void create_missingCity_returns400() throws Exception {
+            authenticateUser();
             String body = """
                     {"label":"Home","fullName":"Alice Smith","phone":"9876543210",
                     "line1":"Street","state":"Delhi",
@@ -285,6 +293,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 400 when country is blank")
         void create_blankCountry_returns400() throws Exception {
+            authenticateUser();
             String body = """
                     {"label":"Home","fullName":"Alice Smith","phone":"9876543210",
                     "line1":"Street","city":"Delhi","state":"Delhi",
@@ -303,8 +312,6 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 401 when request is unauthenticated")
         void create_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(post("/user/address/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validCreateRequest(false))))
@@ -323,6 +330,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 200 with address list when user has addresses")
         void getAll_withAddresses_returns200() throws Exception {
+            authenticateUser();
             List<AddressResponse> list = List.of(
                     stubResponse(1L, true),
                     stubResponse(2L, false)
@@ -341,6 +349,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 200 with empty array when user has no addresses")
         void getAll_noAddresses_returnsEmptyArray() throws Exception {
+            authenticateUser();
             when(addressService.getAll(any(User.class))).thenReturn(List.of());
 
             mockMvc.perform(get("/user/address/get/all"))
@@ -351,8 +360,6 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void getAll_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(get("/user/address/get/all"))
                     .andExpect(status().isUnauthorized());
         }
@@ -369,6 +376,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 200 with address body when found and owned")
         void getById_found_returns200() throws Exception {
+            authenticateUser();
             AddressResponse response = stubResponse(5L, false);
             when(addressService.getById(any(User.class), eq(5L))).thenReturn(response);
 
@@ -382,6 +390,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 404 when address does not exist")
         void getById_notFound_returns404() throws Exception {
+            authenticateUser();
             when(addressService.getById(any(User.class), eq(99L)))
                     .thenThrow(AddressNotFoundException.id(99L));
 
@@ -393,6 +402,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 403 when address belongs to another user")
         void getById_wrongOwner_returns403() throws Exception {
+            authenticateUser();
             when(addressService.getById(any(User.class), eq(5L)))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
 
@@ -404,8 +414,6 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void getById_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(get("/user/address/get/5"))
                     .andExpect(status().isUnauthorized());
         }
@@ -422,6 +430,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 200 with updated address body on success")
         void update_valid_returns200() throws Exception {
+            authenticateUser();
             AddressResponse response = new AddressResponse(
                     5L, "Office", "Alice Smith", "9876543210",
                     "42 Connaught Place", null,
@@ -443,6 +452,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 400 when label is blank in update request")
         void update_blankLabel_returns400() throws Exception {
+            authenticateUser();
             String body = """
                     {"label":"","fullName":"Alice","phone":"9876543210",
                     "line1":"Street","city":"Delhi","state":"Delhi",
@@ -461,6 +471,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 400 when phone is invalid in update request")
         void update_invalidPhone_returns400() throws Exception {
+            authenticateUser();
             String body = """
                     {"label":"Home","fullName":"Alice","phone":"INVALID",
                     "line1":"Street","city":"Delhi","state":"Delhi",
@@ -479,6 +490,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 404 when address does not exist")
         void update_notFound_returns404() throws Exception {
+            authenticateUser();
             when(addressService.update(any(User.class), eq(99L), any(UpdateAddressRequest.class)))
                     .thenThrow(AddressNotFoundException.id(99L));
 
@@ -492,6 +504,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 403 when address belongs to another user")
         void update_wrongOwner_returns403() throws Exception {
+            authenticateUser();
             when(addressService.update(any(User.class), eq(5L), any(UpdateAddressRequest.class)))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
 
@@ -505,8 +518,6 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void update_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(put("/user/address/update/5").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validUpdateRequest(false))))
@@ -525,6 +536,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 204 No Content on successful deletion")
         void delete_owned_returns204() throws Exception {
+            authenticateUser();
             doNothing().when(addressService).delete(any(User.class), eq(5L));
 
             mockMvc.perform(delete("/user/address/delete/5").with(csrf()))
@@ -536,6 +548,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 404 when address does not exist")
         void delete_notFound_returns404() throws Exception {
+            authenticateUser();
             doThrow(AddressNotFoundException.id(99L))
                     .when(addressService).delete(any(User.class), eq(99L));
 
@@ -547,6 +560,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 403 when address belongs to another user")
         void delete_wrongOwner_returns403() throws Exception {
+            authenticateUser();
             doThrow(AddressAccessDeniedException.forAddress(5L))
                     .when(addressService).delete(any(User.class), eq(5L));
 
@@ -558,8 +572,6 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void delete_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(delete("/user/address/delete/5").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }
@@ -576,6 +588,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 200 with default=true on success")
         void setDefault_valid_returns200() throws Exception {
+            authenticateUser();
             AddressResponse response = stubResponse(5L, true);
             when(addressService.setDefault(any(User.class), eq(5L))).thenReturn(response);
 
@@ -588,6 +601,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 404 when address does not exist")
         void setDefault_notFound_returns404() throws Exception {
+            authenticateUser();
             when(addressService.setDefault(any(User.class), eq(99L)))
                     .thenThrow(AddressNotFoundException.id(99L));
 
@@ -599,6 +613,7 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 403 when address belongs to another user")
         void setDefault_wrongOwner_returns403() throws Exception {
+            authenticateUser();
             when(addressService.setDefault(any(User.class), eq(5L)))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
 
@@ -610,8 +625,6 @@ class UserAddressControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void setDefault_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(put("/user/address/default/5").with(csrf()))
                     .andExpect(status().isUnauthorized());
         }

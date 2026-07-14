@@ -6,6 +6,7 @@ import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
@@ -53,7 +54,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         JwtCookieFactory.class,
         ShoppiqAuthenticationEntryPoint.class,
         ShoppiqAccessDeniedHandler.class,
-        ProblemDetailResponseWriter.class
+        ProblemDetailResponseWriter.class,
+        OAuthReturnUrlFilter.class
 })
 @DisplayName("NotificationController Tests")
 class NotificationControllerTest {
@@ -84,8 +86,7 @@ class NotificationControllerTest {
 
     private User authenticatedUser;
 
-    @BeforeEach
-    void setUp() {
+    private void authenticateUser() {
         authenticatedUser = User.builder()
                 .name("Test User")
                 .username("testuser")
@@ -104,11 +105,6 @@ class NotificationControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
-
     @Nested
     @DisplayName("GET /user/notifications")
     class GetPreferences {
@@ -116,6 +112,7 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Returns 200 with preferences when authenticated")
         void getPreferences_authenticated_returns200() throws Exception {
+            authenticateUser();
             NotificationPreferenceResponse response = new NotificationPreferenceResponse(1L, true, true, false, true);
 
             when(notificationService.getPreferences(any())).thenReturn(response);
@@ -132,8 +129,6 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void getPreferences_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             mockMvc.perform(get("/user/notifications"))
                     .andExpect(status().isUnauthorized());
         }
@@ -146,6 +141,7 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Returns 200 with updated preferences when authenticated")
         void updatePreferences_authenticated_returns200() throws Exception {
+            authenticateUser();
             UpdateNotificationPreferenceRequest request = new UpdateNotificationPreferenceRequest(false, true, null, true);
             NotificationPreferenceResponse response = new NotificationPreferenceResponse(1L, false, true, true, true);
 
@@ -163,8 +159,6 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Returns 401 when unauthenticated")
         void updatePreferences_unauthenticated_returns401() throws Exception {
-            SecurityContextHolder.clearContext();
-
             UpdateNotificationPreferenceRequest request = new UpdateNotificationPreferenceRequest(null, null, null, null);
 
             mockMvc.perform(put("/user/notifications").with(csrf())
