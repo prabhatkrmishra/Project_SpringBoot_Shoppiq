@@ -1,0 +1,24 @@
+server:
+  forward-headers-strategy: framework
+  tomcat:
+    remoteip:
+      remote-ip-header: x-forwarded-for
+      protocol-header: x-forwarded-proto
+      # Permissive: trust any proxy for Cloudflare compatibility
+      # See: https://www.cloudflare.com/ips/
+      internal-proxies: ".*"
+
+  servlet:
+    session:
+      cookie:
+        secure: true
+        same-site: none
+        http-only: true
+
+app:
+  security:
+    secure-cookie: true
+
+logging:
+  level:
+    com.pkmprojects.shoppiq: WARN
