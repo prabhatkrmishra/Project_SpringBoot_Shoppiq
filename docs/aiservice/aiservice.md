@@ -128,10 +128,10 @@ The system implements a **retrieval-augmented generation (RAG)** architecture wi
 | **Agentic workflow** | LLM autonomously selects and calls tools in a loop | Agent loop, function calling, tool use |
 | **Retrieval-Augmented Generation** | ContentRetriever injects top-k product chunks into LLM prompt | RAG, semantic retrieval, context injection |
 | **Sliding-window memory** | MessageWindowChatMemory with 20-message cap | Conversation memory, context window management |
-| **Event-driven sync** | JPA EntityListener ➡️ Spring ApplicationEvent ➡️ TransactionalEventListener | Domain events, event-driven architecture |
+| **Event-driven sync** | JPA EntityListener ► Spring ApplicationEvent ► TransactionalEventListener | Domain events, event-driven architecture |
 | **Dynamic proxy** | AiServices.builder().build() returns JDK proxy | Dynamic proxy pattern, reflection-based dispatch |
 | **Lazy initialization** | Model cache uses ConcurrentHashMap.computeIfAbsent | Lazy loading, caching strategy |
-| **Graceful degradation** | Null-check on chatService ➡️ 503 SERVICE_UNAVAILABLE | Fail-open, dependency check |
+| **Graceful degradation** | Null-check on chatService ► 503 SERVICE_UNAVAILABLE | Fail-open, dependency check |
 | **Idempotent operations** | Resolve is no-op if already resolved | Idempotency, safe retries |
 
 ---
@@ -162,7 +162,7 @@ All AI service code lives under `com.pkmprojects.shoppiq.aiservice`:
 ```
 com.pkmprojects.shoppiq.aiservice/
 ├── config/
-│   ├── ChatServiceConfig.java               @Configuration @Profile("ai-enabled")
+│   ├── ChatServiceConfig.java                 @Configuration @Profile("ai-enabled")
 │   │                                          Creates ChatModel, StreamingChatModel, ChatService beans
 │   ├── ChatMemoryConfig.java                  @Configuration (public)
 │   │                                          Provides ChatMemoryProvider with ConcurrentHashMap cache
@@ -200,8 +200,8 @@ com.pkmprojects.shoppiq.aiservice/
 │   ├── ChatConversationRepository.java        JpaRepository — conversation CRUD + search
 │   └── ChatMessageRepository.java             JpaRepository — message CRUD + batch counting
 ├── service/
-│   ├── ChatService.java                      Interface — all chat/resolve/history methods
-│   ├── ChatServiceImpl.java                  Implementation — LangChain4j proxy builder + persistence
+│   ├── ChatService.java                       Interface — all chat/resolve/history methods
+│   ├── ChatServiceImpl.java                   Implementation — LangChain4j proxy builder + persistence
 │   ├── ShoppiqAssistant.java                  LangChain4j service interface (sync, @MemoryId routing)
 │   └── ShoppiqStreamingAssistant.java         LangChain4j service interface (streaming, Flux<String>)
 └── tools/
@@ -268,12 +268,12 @@ com.pkmprojects.shoppiq.aiservice/
 **Relationships:**
 ```
 User (1) ──── (*) ChatConversation (*) ──── (*) ChatMessage
-                  │                              │
-                  ├─ id (PK)                     ├─ id (PK)
-                  ├─ chatId (unique)             ├─ role (enum)
-                  ├─ title                       ├─ content (TEXT)
-                  ├─ status (enum)               ├─ toolName (nullable)
-                  ├─ resolvedAt (nullable)       └─ tokensUsed (nullable)
+                  │                             │
+                  ├─ id (PK)                    ├─ id (PK)
+                  ├─ chatId (unique)            ├─ role (enum)
+                  ├─ title                      ├─ content (TEXT)
+                  ├─ status (enum)              ├─ toolName (nullable)
+                  ├─ resolvedAt (nullable)      └─ tokensUsed (nullable)
                   ├─ guestSession (nullable)
                   └─ guestIp (nullable)
 ```
@@ -340,47 +340,47 @@ When the `ai-enabled` profile is active, Spring Boot creates the following beans
 
 ```
 1. ChatMemoryConfig.chatMemoryProvider()
-   ➡️ Returns ChatMemoryProvider (lambda: computeIfAbsent on ConcurrentHashMap)
-   ➡️ Each chatId gets a MessageWindowChatMemory with maxMessages=20
+   ► Returns ChatMemoryProvider (lambda: computeIfAbsent on ConcurrentHashMap)
+   ► Each chatId gets a MessageWindowChatMemory with maxMessages=20
 
 2. RagConfig.qdrantClient()
-   ➡️ Creates QdrantClient connecting to Qdrant gRPC endpoint
+   ► Creates QdrantClient connecting to Qdrant gRPC endpoint
 
 3. RagConfig.embeddingModel()
-   ➡️ Creates BgeSmallEnV15EmbeddingModel (local ONNX, 384-dim)
+   ► Creates BgeSmallEnV15EmbeddingModel (local ONNX, 384-dim)
 
 4. RagConfig.embeddingStore()
-   ➡️ Calls ensureCollectionExists() to create Qdrant collection if missing
-   ➡️ Returns QdrantEmbeddingStore (collection=shoppiq_products)
+   ► Calls ensureCollectionExists() to create Qdrant collection if missing
+   ► Returns QdrantEmbeddingStore (collection=shoppiq_products)
 
 5. RagConfig.contentRetriever()
-   ➡️ Returns EmbeddingStoreContentRetriever
-   ➡️ Config: maxResults=5, minScore=0.75, filter=inStock:"true"
+   ► Returns EmbeddingStoreContentRetriever
+   ► Config: maxResults=5, minScore=0.75, filter=inStock:"true"
 
 6. ChatServiceConfig.chatModel()
-   ➡️ Creates OpenAiChatModel (NVIDIA NIM, nvidia/llama-3.3-nemotron-super-49b-v1.5)
+   ► Creates OpenAiChatModel (NVIDIA NIM, nvidia/llama-3.3-nemotron-super-49b-v1.5)
 
 7. ChatServiceConfig.streamingChatModel()
-   ➡️ Creates OpenAiStreamingChatModel (same model, streaming variant)
+   ► Creates OpenAiStreamingChatModel (same model, streaming variant)
 
 8. ShoppiqTools (auto-detected @Component)
-   ➡️ Injects: ItemRepository, ChatConversationRepository, ChatMessageRepository,
+   ► Injects: ItemRepository, ChatConversationRepository, ChatMessageRepository,
      ChatMemoryConfig, OrderRepository, CartService, ItemReviewRepository,
      EmbeddingStore, EmbeddingModel
 
 9. ChatServiceConfig.chatService()
-   ➡️ Creates ChatServiceImpl (manual constructor injection)
-   ➡️ Injects: chatModel, streamingChatModel, chatMemoryProvider, chatMemoryConfig,
+   ► Creates ChatServiceImpl (manual constructor injection)
+   ► Injects: chatModel, streamingChatModel, chatMemoryProvider, chatMemoryConfig,
      shoppiqTools, contentRetriever, conversationRepository, messageRepository,
      userRepository, nvidiaApiKey
 
 10. ProductCatalogIngester (auto-detected @Component)
-    ➡️ Implements CommandLineRunner: checks if Qdrant store is empty ➡️ reindexAll()
-    ➡️ @TransactionalEventListener: reacts to ProductEmbeddingEvent for incremental sync
+    ► Implements CommandLineRunner: checks if Qdrant store is empty ➡️ reindexAll()
+    ► @TransactionalEventListener: reacts to ProductEmbeddingEvent for incremental sync
 
 11. ItemEmbeddingEntityListener (registered on Item entity)
-    ➡️ @PostPersist/@PostUpdate: publishes ProductEmbeddingEvent
-    ➡️ @PreRemove: publishes deletion event
+    ► @PostPersist/@PostUpdate: publishes ProductEmbeddingEvent
+    ► @PreRemove: publishes deletion event
 ```
 
 ### `ChatServiceImpl` Constructor
@@ -518,10 +518,10 @@ Same as steps 2-5 above, except `createConversation()` is skipped — the `chatI
    └── Return: { "response": aiResponse, "sessionId": sessionId }
 
 2. Guest messages are stored IN-MEMORY ONLY (ConcurrentHashMap)
-   ➡️ Not persisted to MySQL
-   ➡️ Lost on JVM restart
-   ➡️ getGuestMessages() reads from memory
-   ➡️ resolveGuestConversation() clears the session from memory
+   ► Not persisted to MySQL
+   ► Lost on JVM restart
+   ► getGuestMessages() reads from memory
+   ► resolveGuestConversation() clears the session from memory
 ```
 
 **Key difference from authenticated chat:**
@@ -545,7 +545,7 @@ The current frontend uses **non-streaming** responses via `POST /api/ai/chat` an
 ### Streaming Architecture (Available but Not Active)
 
 ```
-User ➡️ POST /api/ai/chat ➡️ ChatServiceImpl.chatStream()
+User ► POST /api/ai/chat ► ChatServiceImpl.chatStream()
   │
   ▼
 ShoppiqStreamingAssistant.chat(userMessage, chatId)
@@ -553,17 +553,17 @@ ShoppiqStreamingAssistant.chat(userMessage, chatId)
   ▼
 Flux<String> (reactive stream of tokens)
   │
-  ├── .doOnNext(token ➡️ fullResponse.append(token))
-  │     ➡️ Token accumulation for DB persistence
+  ├── .doOnNext(token ► fullResponse.append(token))
+  │     ► Token accumulation for DB persistence
   │
-  ├── .doOnComplete(() ➡️ {
-  │     ➡️ saveMessage(conv, ASSISTANT, fullResponse.toString())
-  │     ➡️ shouldAutoResolve() check
+  ├── .doOnComplete(() ► {
+  │     ► saveMessage(conv, ASSISTANT, fullResponse.toString())
+  │     ► shouldAutoResolve() check
   │   })
   │
-  └── .doOnError(error ➡️ {
-        ➡️ log.error(...)
-        ➡️ saveMessage(conv, ASSISTANT, "I'm sorry, an error occurred...")
+  └── .doOnError(error ► {
+        ► log.error(...)
+        ► saveMessage(conv, ASSISTANT, "I'm sorry, an error occurred...")
       })
 ```
 
@@ -742,7 +742,7 @@ public String resolveCurrentConversation(@ToolMemoryId String chatId) {
 ### Pipeline Overview
 
 ```
-User Query ➡️ Embedding ➡️ Vector Similarity Search ➡️ Top-K Retrieval ➡️ Context Injection ➡️ LLM Response
+User Query ► Embedding ► Vector Similarity Search ► Top-K Retrieval ► Context Injection ► LLM Response
      │              │                │                      │                    │
      │         384-dim vector    Cosine similarity       maxResults=5        System prompt
      │         (local BGE)       + metadata filter     minScore=0.75       includes chunks
@@ -755,11 +755,11 @@ User Query ➡️ Embedding ➡️ Vector Similarity Search ➡️ Top-K Retriev
 ```
 1. User sends message: "I need comfortable running shoes under $100"
 2. ContentRetriever (EmbeddingStoreContentRetriever) activates:
-   a. EmbeddingModel.embed(query) ➡️ 384-dim query vector (local ONNX inference)
+   a. EmbeddingModel.embed(query)            ➡️ 384-dim query vector (local ONNX inference)
    b. EmbeddingStore.search(
         queryEmbedding,
-        maxResults=5,         ⬅️ top-k retrieval
-        minScore=0.75,        ⬅️ similarity threshold (cosine)
+        maxResults=5,                        ⬅️ top-k retrieval
+        minScore=0.75,                       ⬅️ similarity threshold (cosine)
         filter=IsEqualTo("inStock", "true")  ⬅️ metadata filtering
       )
    c. Returns top-5 matching product TextSegments with metadata
@@ -838,12 +838,12 @@ Each product is embedded as a **TextSegment** with structured text and metadata:
 Text: "Product: Wireless Headphones\nDescription: Premium noise-cancelling...\nPrice: $99.99\nCategory: Electronics\nBrand: AudioTech\nStock: 15 units"
 
 Metadata:
-  itemId: "42"           ⬅️ unique identifier
-  slug: "wireless-headphones"  ⬅️ URL-friendly slug
-  name: "Wireless Headphones"  ⬅️ product name
-  category: "electronics"      ⬅️ category slug
-  price: 99.99                 ⬅️ numeric price
-  inStock: "true"              ⬅️ availability flag (String for Qdrant)
+  itemId: "42"                   ⬅️ unique identifier
+  slug: "wireless-headphones"    ⬅️ URL-friendly slug
+  name: "Wireless Headphones"    ⬅️ product name
+  category: "electronics"        ⬅️ category slug
+  price: 99.99                   ⬅️ numeric price
+  inStock: "true"                ⬅️ availability flag (String for Qdrant)
 ```
 
 **Chunking approach:**
@@ -859,25 +859,25 @@ The vector store stays in sync with the product catalog via **domain events** an
 **Full Reindex (startup):**
 ```
 CommandLineRunner.run()
-  ➡️ EmbeddingSearchRequest (probe) ➡️ check if store is empty
-  ➡️ If empty or reindex-on-startup=true ➡️ reindexAll()
-  ➡️ Paginate all items (PageRequest, PAGE_SIZE=100)
-  ➡️ Embed each TextSegment ➡️ embeddingStore.addAll(ids, embeddings, segments)
+  ► EmbeddingSearchRequest (probe)                      ➡️ check if store is empty
+  ► If empty or reindex-on-startup=true                 ➡️ reindexAll()
+  ► Paginate all items (PageRequest, PAGE_SIZE=100)
+  ► Embed each TextSegment                              ➡️ embeddingStore.addAll(ids, embeddings, segments)
 ```
 
 **Incremental Sync (on product changes):**
 ```
 Item entity lifecycle:
-  @PostPersist / @PostUpdate ➡️ ItemEmbeddingEntityListener.onUpsert()
-  @PreRemove                  ➡️ ItemEmbeddingEntityListener.onRemove()
+  @PostPersist / @PostUpdate                            ➡️ ItemEmbeddingEntityListener.onUpsert()
+  @PreRemove                                            ➡️ ItemEmbeddingEntityListener.onRemove()
       │
       ▼
   ApplicationEventPublisherHolder.publish(ProductEmbeddingEvent)
       │
       ▼ (after transaction commit)
   ProductCatalogIngester.onProductEvent()
-      ├── isDeleted? ➡️ embeddingStore.remove(id)    ⬅️ vector deletion
-      └── upsert?    ➡️ embed ➡️ embeddingStore.addAll() ⬅️ vector upsert
+      ├── isDeleted? ► embeddingStore.remove(id)        ⬅️ vector deletion
+      └── upsert?    ► embed ► embeddingStore.addAll()  ⬅️ vector upsert
 ```
 
 **Key interview terms:**
@@ -986,10 +986,10 @@ ChatMemoryProvider (lambda)
   ▼
 ConcurrentHashMap<String, ChatMemory>
   │
-  ├── "CHAT-2026-07-A3F2" ➡️ MessageWindowChatMemory (max=20)
-  │     [msg1, msg2, ..., msg20]  ⬅️ sliding window
+  ├── "CHAT-2026-07-A3F2"                    ➡️ MessageWindowChatMemory (max=20)
+  │     [msg1, msg2, ..., msg20]             ⬅️ sliding window
   │
-  ├── "guest-550e8400-..." ➡️ MessageWindowChatMemory (max=20)
+  ├── "guest-550e8400-..."                   ➡️ MessageWindowChatMemory (max=20)
   │     [msg1, msg2, ..., msg15]
   │
   └── (empty slots until next conversation)
@@ -1020,11 +1020,11 @@ Memory is cleared when a conversation is resolved to:
 3. **Enforce lifecycle**: RESOLVED conversations cannot accept new messages
 
 **Clearing triggers:**
-- User manually resolves ➡️ `resolveConversation()` ➡️ `chatMemoryConfig.clearMemory(chatId)`
-- AI tool resolves ➡️ `ShoppiqTools.resolveCurrentConversation()` ➡️ `chatMemoryConfig.clearMemory(chatId)`
-- Auto-resolve (closing phrase) ➡️ `shouldAutoResolve()` ➡️ `chatMemoryConfig.clearMemory(chatId)`
-- Scheduled task (inactivity) ➡️ `autoResolveInactiveConversations()` ➡️ `chatMemoryConfig.clearMemory(chatId)`
-- Guest resolves ➡️ `resolveGuestConversation()` ➡️ `chatMemoryConfig.clearMemory("guest-" + sessionId)`
+- User manually resolves ► `resolveConversation()` ► `chatMemoryConfig.clearMemory(chatId)`
+- AI tool resolves ► `ShoppiqTools.resolveCurrentConversation()` ► `chatMemoryConfig.clearMemory(chatId)`
+- Auto-resolve (closing phrase) ► `shouldAutoResolve()` ► `chatMemoryConfig.clearMemory(chatId)`
+- Scheduled task (inactivity) ► `autoResolveInactiveConversations()` ► `chatMemoryConfig.clearMemory(chatId)`
+- Guest resolves ► `resolveGuestConversation()` ► `chatMemoryConfig.clearMemory("guest-" + sessionId)`
 
 ---
 
@@ -1160,11 +1160,11 @@ No re-opening. Once RESOLVED, the conversation stays RESOLVED permanently.
 
 ### Five ways to resolve:
 
-1. **User-initiated:** Click "Mark as Resolved" ➡️ `DELETE /api/ai/chat/{chatId}` ➡️ `ChatServiceImpl.resolveConversation()`
-2. **AI-initiated:** AI detects closing phrase via `resolveCurrentConversation()` tool ➡️ `ShoppiqTools.resolveCurrentConversation()`
-3. **Auto-resolve:** AI detects closing phrase after 3+ messages ➡️ `ChatServiceImpl.shouldAutoResolve()` ➡️ `ChatServiceImpl.resolveConversation()`
-4. **Scheduled task:** Background job detects 30+ min inactivity ➡️ `ChatServiceImpl.autoResolveInactiveConversations()`
-5. **Admin-initiated:** Click resolve in admin panel ➡️ `PATCH /api/admin/ai-chats/{chatId}/resolve` ➡️ `AdminAiChatController.resolveConversation()`
+1. **User-initiated:** Click "Mark as Resolved" ► `DELETE /api/ai/chat/{chatId}` ► `ChatServiceImpl.resolveConversation()`
+2. **AI-initiated:** AI detects closing phrase via `resolveCurrentConversation()` tool ► `ShoppiqTools.resolveCurrentConversation()`
+3. **Auto-resolve:** AI detects closing phrase after 3+ messages ► `ChatServiceImpl.shouldAutoResolve()` ► `ChatServiceImpl.resolveConversation()`
+4. **Scheduled task:** Background job detects 30+ min inactivity ► `ChatServiceImpl.autoResolveInactiveConversations()`
+5. **Admin-initiated:** Click resolve in admin panel ► `PATCH /api/admin/ai-chats/{chatId}/resolve` ► `AdminAiChatController.resolveConversation()`
 
 All paths:
 - Set status to `RESOLVED` and `resolvedAt` timestamp
@@ -1471,12 +1471,12 @@ Provides 5 HTTP methods + 1 blob downloader. All mutating requests auto-attach `
 
 | Function | Signature | Purpose |
 |----------|-----------|---------|
-| `formatCurrency(n)` | `number ➡️ string` | Formats as `$XX.XX` |
-| `formatDate(iso)` | `ISO string ➡️ string` | `MMM DD, YYYY` |
-| `formatDateTime(iso)` | `ISO string ➡️ string` | `MMM DD, YYYY HH:MM` |
-| `initIcons()` | `() ➡️ void` | Calls `lucide.createIcons()` |
-| `setButtonLoading(btn, loading)` | `(HTMLElement, bool) ➡️ void` | Shows spinner / restores |
-| `escapeHtml(str)` | `string ➡️ string` | Escapes `<>&"'` to HTML entities |
+| `formatCurrency(n)` | `number ► string` | Formats as `$XX.XX` |
+| `formatDate(iso)` | `ISO string ► string` | `MMM DD, YYYY` |
+| `formatDateTime(iso)` | `ISO string ► string` | `MMM DD, YYYY HH:MM` |
+| `initIcons()` | `() ► void` | Calls `lucide.createIcons()` |
+| `setButtonLoading(btn, loading)` | `(HTMLElement, bool) ► void` | Shows spinner / restores |
+| `escapeHtml(str)` | `string ► string` | Escapes `<>&"'` to HTML entities |
 
 #### `window.AIChat` (`chat.js`)
 
@@ -1508,9 +1508,9 @@ IIFE module exposing `init()` and `toggle()`. All other functions are private cl
 | `resolveChat()` | "Mark as Resolved" button | Calls `DELETE /api/ai/chat/{chatId}` or `DELETE /api/ai/guest/{chatId}` |
 | `markResolved()` | After resolve success | Sets `isResolved=true`, hides input, shows resolved banner |
 | `toggleSidebar()` | History button | Toggles sidebar visibility, calls `loadConversationList()` on open |
-| `loadConversationList()` | Sidebar open | `GET /api/ai/chat/conversations` ➡️ renders sidebar items |
-| `loadConversation(targetChatId)` | Sidebar item click | `GET /api/ai/chat/{chatId}/messages` ➡️ renders messages, switches chat |
-| `loadHistory()` | On init (if chatId exists) | `GET /api/ai/chat/{chatId}/messages` or `GET /api/ai/guest/{chatId}/messages` ➡️ renders messages |
+| `loadConversationList()` | Sidebar open | `GET /api/ai/chat/conversations` ► renders sidebar items |
+| `loadConversation(targetChatId)` | Sidebar item click | `GET /api/ai/chat/{chatId}/messages` ► renders messages, switches chat |
+| `loadHistory()` | On init (if chatId exists) | `GET /api/ai/chat/{chatId}/messages` or `GET /api/ai/guest/{chatId}/messages` ► renders messages |
 | `newConversation()` | New / New-after-resolve button | Clears chatId, resets state, shows welcome message |
 | `renderServerMessages(messages)` | After API load | Iterates messages, calls `appendMessage()` for USER/ASSISTANT, handles SYSTEM resolved |
 | `appendMessage(role, content)` | Message display | Creates `div.ai-chat-msg.{role}`, formats with `formatMessageContent()` |
@@ -1521,26 +1521,26 @@ IIFE module exposing `init()` and `toggle()`. All other functions are private cl
 | `updateSendButton()` | During/after streaming | Disables send button while `isStreaming` |
 | `updateChatIdDisplay()` | After chatId change | Updates `#ai-chat-id` text |
 | `formatMessageContent(content)` | Message rendering | HTML-escapes, converts `**bold**`, `/item/slug` links, `\n` to `<br>` |
-| `csrfHeaders()` | All fetch calls | Reads `XSRF-TOKEN` cookie ➡️ returns `{X-XSRF-TOKEN: token}` |
+| `csrfHeaders()` | All fetch calls | Reads `XSRF-TOKEN` cookie ► returns `{X-XSRF-TOKEN: token}` |
 | `initIcons()` | After DOM changes | Calls `lucide.createIcons()` for Lucide icons |
 
 **Message sending flow (`sendMessage()`):**
 
 ```
 1. Validate input not empty + not streaming
-2. appendMessage('user', text) ➡️ show user message
+2. appendMessage('user', text)                                  ➡️ show user message
 3. Clear input, set isStreaming=true, show typing indicator
 4. Route:
-   ├── isLoggedIn && chatId   ➡️ POST /api/ai/chat/{chatId}
-   ├── isLoggedIn && !chatId  ➡️ POST /api/ai/chat
-   └── !isLoggedIn            ➡️ POST /api/ai/guest
+   ├── isLoggedIn && chatId                                     ➡️ POST /api/ai/chat/{chatId}
+   ├── isLoggedIn && !chatId                                    ➡️ POST /api/ai/chat
+   └── !isLoggedIn                                              ➡️ POST /api/ai/guest
 5. Body: { message: text, model: selectedModel }
 6. Headers: Content-Type + X-XSRF-TOKEN (via csrfHeaders())
 7. On success:
    ├── Authenticated: extract last ASSISTANT from data.messages ➡️ appendMessage()
-   │   Store data.chatId ➡️ localStorage
-   └── Guest: append data.response ➡️ appendMessage()
-       Store data.sessionId ➡️ localStorage
+   │   Store data.chatId                                        ➡️ localStorage
+   └── Guest: append data.response                              ➡️ appendMessage()
+       Store data.sessionId                                     ➡️ localStorage
 8. On error: showToast(error, 'error')
 9. Finally: isStreaming=false, update send button
 ```
