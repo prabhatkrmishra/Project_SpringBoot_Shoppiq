@@ -22,6 +22,7 @@ import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
 import com.pkmprojects.shoppiq.service.seller.SellerProductService;
 import com.pkmprojects.shoppiq.util.SlugUtil;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -95,7 +96,24 @@ public class SellerProductServiceImpl implements SellerProductService {
 
         itemDetails.setItem(item);
 
-        return ItemResponse.fromEntity(itemRepository.save(item));
+        return ItemResponse.fromEntity(saveWithSlugRetry(item));
+    }
+
+    private Item saveWithSlugRetry(Item item) {
+        int attempts = 0;
+        while (attempts < 10) {
+            try {
+                return itemRepository.save(item);
+            } catch (DataIntegrityViolationException e) {
+                if (e.getMessage() != null && e.getMessage().contains("slug")) {
+                    item.setSlug(generateUniqueSlug(item.getName()));
+                    attempts++;
+                } else {
+                    throw e;
+                }
+            }
+        }
+        throw new RuntimeException("Failed to generate unique slug after 10 attempts");
     }
 
     @Override
@@ -147,7 +165,7 @@ public class SellerProductServiceImpl implements SellerProductService {
             item.setPublishingStatus(ProductPublishingStatus.DRAFT);
         }
 
-        return ItemResponse.fromEntity(itemRepository.save(item));
+        return ItemResponse.fromEntity(saveWithSlugRetry(item));
     }
 
     @Override

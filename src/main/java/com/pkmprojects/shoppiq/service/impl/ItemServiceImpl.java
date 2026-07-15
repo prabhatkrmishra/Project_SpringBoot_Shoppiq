@@ -15,6 +15,7 @@ import com.pkmprojects.shoppiq.repository.ItemRepository;
 import com.pkmprojects.shoppiq.service.ItemService;
 import com.pkmprojects.shoppiq.util.SlugUtil;
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -69,6 +70,24 @@ public class ItemServiceImpl implements ItemService {
         return item;
     }
 
+    private void saveWithSlugRetry(Item item) {
+        int attempts = 0;
+        while (attempts < 10) {
+            try {
+                itemRepository.save(item);
+                return;
+            } catch (DataIntegrityViolationException e) {
+                if (e.getMessage() != null && e.getMessage().contains("slug")) {
+                    item.setSlug(generateUniqueSlug(item.getName()));
+                    attempts++;
+                } else {
+                    throw e;
+                }
+            }
+        }
+        throw new RuntimeException("Failed to generate unique slug after 10 attempts");
+    }
+
     private Item findItem(Long id) {
         return itemRepository.findById(id)
                 .orElseThrow(() -> ItemNotFoundException.id(id));
@@ -109,8 +128,11 @@ public class ItemServiceImpl implements ItemService {
                 .map(request -> buildItem(request, categories.get(request.categoryId())))
                 .toList();
 
-        return itemRepository.saveAll(items)
-                .stream()
+        for (Item item : items) {
+            saveWithSlugRetry(item);
+        }
+
+        return items.stream()
                 .map(ItemResponse::fromEntity)
                 .toList();
     }
