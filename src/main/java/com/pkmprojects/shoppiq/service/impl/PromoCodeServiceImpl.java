@@ -114,12 +114,29 @@ public class PromoCodeServiceImpl implements PromoCodeService {
 
     @Override
     public void recordUsage(PromoCode promoCode, User user, Order order) {
+        PromoCode freshPromoCode = promoCodeRepository.findById(promoCode.getId())
+                .orElseThrow(() -> PromoCodeNotFoundException.forId(promoCode.getId()));
 
-        promoCode.incrementUsedCount();
-        promoCodeRepository.save(promoCode);
+        if (freshPromoCode.getUsageLimit() != null
+                && freshPromoCode.getUsedCount() >= freshPromoCode.getUsageLimit()) {
+            throw PromoCodeUsageLimitExceededException.forCode(
+                    promoCode.getCode(), freshPromoCode.getUsageLimit());
+        }
+
+        if (freshPromoCode.getUserUsageLimit() != null) {
+            long userUsed = promoCodeUsageRepository.countByPromoCodeIdAndUserId(
+                    freshPromoCode.getId(), user.getId());
+            if (userUsed >= freshPromoCode.getUserUsageLimit()) {
+                throw PromoCodeUserUsageLimitExceededException.forCode(
+                        promoCode.getCode(), freshPromoCode.getUserUsageLimit());
+            }
+        }
+
+        freshPromoCode.incrementUsedCount();
+        promoCodeRepository.save(freshPromoCode);
 
         PromoCodeUsage usage = PromoCodeUsage.builder()
-                .promoCode(promoCode)
+                .promoCode(freshPromoCode)
                 .user(user)
                 .order(order)
                 .usedAt(Instant.now())

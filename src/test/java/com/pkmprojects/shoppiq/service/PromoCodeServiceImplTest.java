@@ -352,7 +352,12 @@ class PromoCodeServiceImplTest {
             Order order = Order.builder().build();
             setId(order, 99L);
 
-            when(promoCodeRepository.save(any(PromoCode.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(promoCodeRepository.findById(10L)).thenReturn(Optional.of(pc));
+            when(promoCodeRepository.save(any(PromoCode.class))).thenAnswer(inv -> {
+                PromoCode saved = inv.getArgument(0);
+                setId(saved, 10L);
+                return saved;
+            });
             when(promoCodeUsageRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             promoCodeService.recordUsage(pc, user, order);
@@ -360,6 +365,43 @@ class PromoCodeServiceImplTest {
             assertThat(pc.getUsedCount()).isEqualTo(4);
             verify(promoCodeRepository).save(pc);
             verify(promoCodeUsageRepository).save(any());
+        }
+
+        @Test
+        @DisplayName("Fails — global usage limit exceeded")
+        void recordUsage_usageLimitExceeded() throws Exception {
+            User user = buildUser(1L);
+            Instant now = Instant.now();
+            PromoCode pc = buildPromoCode(10L, "LIMITED", DiscountType.PERCENTAGE,
+                    BigDecimal.valueOf(20), null, null, 5, null, 5,
+                    now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
+
+            Order order = Order.builder().build();
+            setId(order, 99L);
+
+            when(promoCodeRepository.findById(10L)).thenReturn(Optional.of(pc));
+
+            assertThatThrownBy(() -> promoCodeService.recordUsage(pc, user, order))
+                    .isInstanceOf(PromoCodeUsageLimitExceededException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — per-user usage limit exceeded")
+        void recordUsage_userUsageLimitExceeded() throws Exception {
+            User user = buildUser(1L);
+            Instant now = Instant.now();
+            PromoCode pc = buildPromoCode(10L, "ONCE", DiscountType.PERCENTAGE,
+                    BigDecimal.valueOf(20), null, null, null, 1, 0,
+                    now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
+
+            Order order = Order.builder().build();
+            setId(order, 99L);
+
+            when(promoCodeRepository.findById(10L)).thenReturn(Optional.of(pc));
+            when(promoCodeUsageRepository.countByPromoCodeIdAndUserId(10L, 1L)).thenReturn(1L);
+
+            assertThatThrownBy(() -> promoCodeService.recordUsage(pc, user, order))
+                    .isInstanceOf(PromoCodeUserUsageLimitExceededException.class);
         }
     }
 
