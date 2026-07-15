@@ -25,6 +25,13 @@ server:
       include-binding-errors: never
       include-stacktrace: never
 
+  port: 8443
+  ssl:
+    key-store: classpath:${TLS_SECURITY_KEYSTORE_NAME}
+    key-store-password: ${TLS_SECURITY_KEYSTORE_PASSWORD}
+    key-store-type: ${TLS_SECURITY_KEYSTORE_TYPE}
+    key-alias: ${TLS_SECURITY_KEYSTORE_ALIAS}
+
 # Logging configuration
 # Available levels (create most to least verbose):
 #   TRACE - Everything including framework internals
