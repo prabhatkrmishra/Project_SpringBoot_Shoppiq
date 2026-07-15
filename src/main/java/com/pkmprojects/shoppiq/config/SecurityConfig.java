@@ -202,7 +202,15 @@ public class SecurityConfig {
                                 "/api/newsletter/**",
                                 "/api/banners/active",
                                 "/api/ai/guest/**",
-                                "/api/ai/chat"
+                                "/api/ai/chat",
+                                "/api/admin/test/items/bulk",
+                                "/api/admin/test/categories/bulk",
+                                "/api/admin/test/users/bulk",
+                                "/api/admin/test/addresses/bulk",
+                                "/api/admin/test/reviews/bulk",
+                                "/api/admin/test/sellers/bulk",
+                                "/api/admin/test/carts/bulk",
+                                "/api/admin/test/orders/bulk"
                         )
                 )
 
