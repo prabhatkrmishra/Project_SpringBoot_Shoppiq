@@ -145,10 +145,11 @@ public class SellerProductServiceImpl implements SellerProductService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> CategoryNotFoundException.id(request.categoryId()));
 
+        String originalName = item.getName();
         item.setName(request.name());
         item.setDescription(request.description());
 
-        if (!item.getName().equalsIgnoreCase(request.name())) {
+        if (!originalName.equalsIgnoreCase(request.name())) {
             item.setSlug(generateUniqueSlug(request.name()));
         }
 
