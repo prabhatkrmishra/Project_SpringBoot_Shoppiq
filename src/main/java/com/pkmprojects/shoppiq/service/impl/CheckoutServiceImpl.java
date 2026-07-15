@@ -105,7 +105,7 @@ public class CheckoutServiceImpl {
         Address address = addressRepository.findById(request.addressId())
                 .orElseThrow(() -> AddressNotFoundException.id(request.addressId()));
 
-        if (!address.getUser().getId().equals(user.getId())) {
+        if (address.getUser() == null || !address.getUser().getId().equals(user.getId())) {
             throw AddressAccessDeniedException.forAddress(request.addressId());
         }
 
@@ -167,7 +167,7 @@ public class CheckoutServiceImpl {
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .itemDetails(details)
-                    .itemNameSnapshot(item.getName())
+                    .itemNameSnapshot(item != null ? item.getName() : details.getItem().getName())
                     .unitPriceSnapshot(details.getPrice())
                     .quantity(cartItem.getQuantity())
                     .subtotal(lineSubtotal)

@@ -243,7 +243,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private void assertOwnership(User user, Payment payment) {
-        if (!payment.getOrder().getUser().getId().equals(user.getId())) {
+        if (payment.getOrder() == null
+                || payment.getOrder().getUser() == null
+                || !payment.getOrder().getUser().getId().equals(user.getId())) {
             throw PaymentAccessDeniedException.forPayment(payment.getId());
         }
     }

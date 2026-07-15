@@ -8,6 +8,7 @@ import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.admin.AdminDashboardService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.hibernate.Hibernate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -255,38 +256,52 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         // Recent orders (last 10)
         List<Order> recentOrders = orderRepository.findTop10ByOrderByPlacedAtDesc();
         List<RecentActivityResponse.RecentOrderData> recentOrderData = recentOrders.stream()
-                .map(order -> new RecentActivityResponse.RecentOrderData(
-                        order.getId(),
-                        order.getUser().getUsername(),
-                        order.getStatus().name(),
-                        order.getGrandTotal(),
-                        order.getPlacedAt()
-                ))
+                .map(order -> {
+                    Hibernate.initialize(order.getUser());
+                    return new RecentActivityResponse.RecentOrderData(
+                            order.getId(),
+                            order.getUser().getUsername(),
+                            order.getStatus().name(),
+                            order.getGrandTotal(),
+                            order.getPlacedAt()
+                    );
+                })
                 .toList();
 
         // Recent payments (last 10)
         List<Payment> recentPayments = paymentRepository.findTop10ByOrderByCreatedAtDesc();
         List<RecentActivityResponse.RecentPaymentData> recentPaymentData = recentPayments.stream()
-                .map(payment -> new RecentActivityResponse.RecentPaymentData(
-                        payment.getId(),
-                        payment.getPaymentReference(),
-                        payment.getOrder().getUser().getUsername(),
-                        payment.getPaymentStatus().name(),
-                        payment.getAmount(),
-                        payment.getCreatedAt()
-                ))
+                .map(payment -> {
+                    Hibernate.initialize(payment.getOrder());
+                    if (payment.getOrder() != null) {
+                        Hibernate.initialize(payment.getOrder().getUser());
+                    }
+                    return new RecentActivityResponse.RecentPaymentData(
+                            payment.getId(),
+                            payment.getPaymentReference(),
+                            payment.getOrder() != null && payment.getOrder().getUser() != null
+                                    ? payment.getOrder().getUser().getUsername() : "Unknown",
+                            payment.getPaymentStatus().name(),
+                            payment.getAmount(),
+                            payment.getCreatedAt()
+                    );
+                })
                 .toList();
 
         // Recent reviews (last 10)
         List<ItemReview> recentReviews = itemReviewRepository.findTop10ByOrderByCreatedAtDesc();
         List<RecentActivityResponse.RecentReviewData> recentReviewData = recentReviews.stream()
-                .map(review -> new RecentActivityResponse.RecentReviewData(
-                        review.getId(),
-                        review.getItem().getName(),
-                        review.getUser().getUsername(),
-                        review.getRating(),
-                        review.getCreatedAt()
-                ))
+                .map(review -> {
+                    Hibernate.initialize(review.getItem());
+                    Hibernate.initialize(review.getUser());
+                    return new RecentActivityResponse.RecentReviewData(
+                            review.getId(),
+                            review.getItem() != null ? review.getItem().getName() : "Unknown",
+                            review.getUser().getUsername(),
+                            review.getRating(),
+                            review.getCreatedAt()
+                    );
+                })
                 .toList();
 
         // Recent users (last 10)

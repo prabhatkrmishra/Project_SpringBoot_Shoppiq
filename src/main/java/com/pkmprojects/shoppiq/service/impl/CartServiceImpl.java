@@ -159,7 +159,7 @@ public class CartServiceImpl implements CartService {
     /**
      * Finds a cart item by ID and verifies it belongs to the user's cart.
      *
-     * @throws CartItemNotFoundException    when the item ID does not exist
+     * @throws CartItemNotFoundException     when the item ID does not exist
      * @throws CartItemAccessDeniedException when the item belongs to another cart
      */
     private CartItem resolveOwnedCartItem(User user, Long cartItemId) {
@@ -169,7 +169,8 @@ public class CartServiceImpl implements CartService {
         Cart userCart = cartRepository.findByUser(user)
                 .orElseThrow(() -> CartItemNotFoundException.id(cartItemId));
 
-        if (!cartItem.getCart().getId().equals(userCart.getId())) {
+        if (cartItem.getCart() == null
+                || !cartItem.getCart().getId().equals(userCart.getId())) {
             throw CartItemAccessDeniedException.forItem(cartItemId);
         }
 
