@@ -10,6 +10,7 @@ import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
+import com.pkmprojects.shoppiq.service.OrderEmailService;
 import com.pkmprojects.shoppiq.service.PaymentService;
 import com.pkmprojects.shoppiq.service.impl.CheckoutServiceImpl;
 import org.junit.jupiter.api.*;
@@ -57,9 +58,13 @@ class CheckoutServiceImplTest {
     @Mock
     private OrderRepository orderRepository;
     @Mock
+    private ItemDetailsRepository itemDetailsRepository;
+    @Mock
     private PaymentService paymentService;
     @Mock
     private PromoCodeService promoCodeService;
+    @Mock
+    private OrderEmailService orderEmailService;
 
     @InjectMocks
     private CheckoutServiceImpl checkoutService;
@@ -177,6 +182,7 @@ class CheckoutServiceImplTest {
                 return o;
             });
             when(cartRepository.save(any(Cart.class))).thenReturn(cart);
+            when(itemDetailsRepository.save(any(ItemDetails.class))).thenAnswer(inv -> inv.getArgument(0));
 
             Payment payment = Payment.builder().build();
             setId(payment, 77L);
@@ -299,6 +305,7 @@ class CheckoutServiceImplTest {
                 return o;
             });
             when(cartRepository.save(any())).thenReturn(cart);
+            when(itemDetailsRepository.save(any(ItemDetails.class))).thenAnswer(inv -> inv.getArgument(0));
 
             Payment payment = Payment.builder().build();
             setId(payment, 42L);
@@ -308,6 +315,28 @@ class CheckoutServiceImplTest {
 
             assertThat(response.grandTotal()).isEqualByComparingTo("800.00");
             assertThat(response.paymentId()).isEqualTo(42L);
+        }
+
+        @Test
+        @DisplayName("Fails — concurrent stock modification (StockConflictException)")
+        void checkout_concurrentModification_throws() throws Exception {
+            User user = buildUser(1L);
+            Address address = buildAddress(5L, user);
+            ItemDetails details = buildItemDetails(10L, BigDecimal.valueOf(250), 5);
+
+            CartItem cartItem = buildCartItem(details, 2);
+            Cart cart = buildCart(user, List.of(cartItem));
+
+            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, null);
+
+            when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+            when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
+            when(itemDetailsRepository.save(any(ItemDetails.class)))
+                    .thenThrow(new org.springframework.dao.OptimisticLockingFailureException("version mismatch"));
+
+            assertThatThrownBy(() ->
+                    checkoutService.checkout(user, request)
+            ).isInstanceOf(StockConflictException.class);
         }
     }
 

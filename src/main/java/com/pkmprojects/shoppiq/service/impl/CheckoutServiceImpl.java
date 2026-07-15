@@ -7,11 +7,13 @@ import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
+import com.pkmprojects.shoppiq.exception.StockConflictException;
 import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.OrderEmailService;
 import com.pkmprojects.shoppiq.service.PaymentService;
 import com.pkmprojects.shoppiq.service.PromoCodeService;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -78,8 +80,18 @@ public class CheckoutServiceImpl {
      * @param user    authenticated customer
      * @param request checkout payload
      * @return lightweight checkout response containing orderId and grandTotal
+     * @throws StockConflictException if inventory was modified concurrently
      */
     public CheckoutResponse checkout(User user, CheckoutRequest request) {
+        try {
+            return doCheckout(user, request);
+        } catch (OptimisticLockingFailureException e) {
+            throw StockConflictException.forOptimisticLock(
+                    "Inventory was modified by another customer. Please refresh and try again.");
+        }
+    }
+
+    private CheckoutResponse doCheckout(User user, CheckoutRequest request) {
 
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(CartEmptyException::new);
@@ -163,7 +175,12 @@ public class CheckoutServiceImpl {
 
             order.addOrderItem(orderItem);
 
-            details.setStockQuantity(details.getStockQuantity() - cartItem.getQuantity());
+            int newQuantity = details.getStockQuantity() - cartItem.getQuantity();
+            if (newQuantity < 0) {
+                throw StockConflictException.forItem(details.getSku());
+            }
+            details.setStockQuantity(newQuantity);
+            itemDetailsRepository.save(details);
         }
 
         cart.getItems().clear();

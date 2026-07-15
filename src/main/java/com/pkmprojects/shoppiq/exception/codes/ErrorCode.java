@@ -159,6 +159,11 @@ public enum ErrorCode {
     ITEM_STOCK_NEGATIVE("ITEM-400-001", "Stock adjustment would result in negative inventory."),
 
     /**
+     * Stock was modified by another transaction during checkout.
+     */
+    ITEM_STOCK_CONFLICT("ITEM-409-002", "Stock was modified by another customer. Please refresh and try again."),
+
+    /**
      * Product is not yet published (DRAFT or REJECTED).
      */
     ITEM_NOT_PUBLISHED("ITEM-400-002", "Product is not yet published."),
