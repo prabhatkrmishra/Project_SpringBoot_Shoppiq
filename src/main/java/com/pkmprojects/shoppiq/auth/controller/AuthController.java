@@ -135,7 +135,7 @@ public class AuthController {
         authService.logout(response);
         registrationCookieService.clear(response);
         SecurityContextHolder.clearContext();
-        logger.info("User logged out successfully");
+        logger.debug("User logged out successfully");
         return ResponseEntity.ok("Logout successful");
     }
 
@@ -221,7 +221,7 @@ public class AuthController {
         response.addCookie(jwtCookieFactory.buildJwtCookie(token, (int) (expirationTime / 1000)));
 
         registrationCookieService.clear(response);
-logger.info("Google OAuth2 registration completed for user: {}", newRequest.username());
+        logger.debug("Google OAuth2 registration completed for user: {}", newRequest.username());
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 

@@ -15,6 +15,7 @@ import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 import com.pkmprojects.shoppiq.exception.DuplicateUserException;
 import com.pkmprojects.shoppiq.exception.business.CurrentPasswordIncorrectException;
+import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.business.PasswordChangeException;
 import com.pkmprojects.shoppiq.repository.AddressRepository;
 import com.pkmprojects.shoppiq.repository.SellerRepository;
@@ -87,8 +88,7 @@ public class UserService {
      * by default. Database constraints enforce email and username uniqueness.</p>
      *
      * @param newUserRequest contains name, email, username, and raw password
-     * @throws com.pkmprojects.shoppiq.exception.DuplicateUserException if the
-     *         email or username conflicts with an existing user
+     * @throws DuplicateUserException if the email or username conflicts with an existing user
      */
     @Transactional
     public void createUser(UserRequest newUserRequest) {
@@ -122,9 +122,9 @@ public class UserService {
                         .joinedAt(LocalDateTime.now())
                         .build();
                 sellerRepository.save(seller);
-                logger.info("Seller registration created for username: {}", newUserRequest.getUsername());
+                logger.debug("Seller registration created for username: {}", newUserRequest.getUsername());
             } else {
-                logger.info("User account created for username: {}", newUserRequest.getUsername());
+                logger.debug("User account created for username: {}", newUserRequest.getUsername());
             }
         } catch (DataIntegrityViolationException e) {
             logger.warn("User creation failed due to constraint violation for email: {} or username: {}", newUserRequest.getEmail(), newUserRequest.getUsername());
@@ -169,7 +169,7 @@ public class UserService {
 
             User savedUser = userRepository.save(user);
 
-            logger.info("Google OAuth2 user account created for username: {}", username);
+            logger.debug("Google OAuth2 user account created for username: {}", username);
             return savedUser;
         } catch (DataIntegrityViolationException e) {
             logger.warn("Google user creation failed due to constraint violation for username: {}", username);
@@ -194,14 +194,14 @@ public class UserService {
      *
      * <p>Only the display name may be changed; email and username are locked.</p>
      *
-     * @param user the requesting (authenticated) user
+     * @param user    the requesting (authenticated) user
      * @param request the profile update payload
      */
     @Transactional
     public void updateProfile(User user, UpdateProfileRequest request) {
         user.setName(request.getName());
         userRepository.save(user);
-        logger.info("Profile updated for username: {}", user.getUsername());
+        logger.debug("Profile updated for username: {}", user.getUsername());
     }
 
     /**
@@ -217,10 +217,10 @@ public class UserService {
      * <p>Changing a password invalidates all previously issued JWTs by
      * bumping the user's token version.</p>
      *
-     * @param user the requesting (authenticated) user
+     * @param user    the requesting (authenticated) user
      * @param request the password change payload
      * @throws CurrentPasswordIncorrectException if the current password does not match
-     * @throws InvalidOperationException if inputs are invalid
+     * @throws InvalidOperationException         if inputs are invalid
      */
     @Transactional
     public void changePassword(User user, ChangePasswordRequest request) {
@@ -241,7 +241,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
-        logger.info("Password changed for username: {}", user.getUsername());
+        logger.debug("Password changed for username: {}", user.getUsername());
 
         sendSecurityAlertEmail(user, "Password Changed", "Your password was recently changed. If you did not make this change, please contact support immediately.", "password_change");
     }

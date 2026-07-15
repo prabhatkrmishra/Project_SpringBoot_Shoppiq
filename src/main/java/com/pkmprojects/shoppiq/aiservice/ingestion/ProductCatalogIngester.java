@@ -71,7 +71,7 @@ public class ProductCatalogIngester implements CommandLineRunner {
                             .build()
             ).matches().isEmpty();
             if (empty) {
-                log.info("[RAG] Vector store '{}' appears empty — running initial reindex", collectionName);
+                log.debug("[RAG] Vector store '{}' appears empty — running initial reindex", collectionName);
                 reindexAll();
             } else {
                 log.debug("[RAG] Vector store '{}' already populated — skipping initial reindex", collectionName);
@@ -86,7 +86,7 @@ public class ProductCatalogIngester implements CommandLineRunner {
      * Rebuilds the entire product vector store from the current catalog.
      */
     public void reindexAll() {
-        log.info("[RAG] Starting full product catalog reindex → collection '{}'", collectionName);
+        log.debug("[RAG] Starting full product catalog reindex → collection '{}'", collectionName);
         embeddingStore.removeAll();
 
         int pageNumber = 0;
@@ -114,7 +114,7 @@ public class ProductCatalogIngester implements CommandLineRunner {
             pageNumber++;
         } while (page.hasNext());
 
-        log.info("[RAG] Reindex complete — {} products indexed into '{}'", total, collectionName);
+        log.debug("[RAG] Reindex complete — {} products indexed into '{}'", total, collectionName);
     }
 
     /**
