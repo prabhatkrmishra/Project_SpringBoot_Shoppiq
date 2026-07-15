@@ -2,7 +2,7 @@ spring:
   application:
     name: shoppiq
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:default}
+    active: dev
   datasource:
     url: ${DATASOURCE_URL}
     username: ${DATASOURCE_USERNAME}
@@ -27,11 +27,6 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
-  web:
-    error:
-      include-message: always    # Production recommendation: never
-      include-binding-errors: always    # Production recommendation: never
-      include-stacktrace: never    # Production recommendation: never
 jwt:
   secret: ${JWT_SECRET}
   expiration: 2592000000
@@ -39,8 +34,6 @@ jwt:
   refresh-max-age: 2592000000
 
 app:
-  security:
-    secure-cookie: false    # Production recommendation: true
   pagination:
     default-page-size: 20
     max-page-size: 100
@@ -48,8 +41,6 @@ app:
     seller-page-size: 15
     catalog-page-size: 12
   cors:
-    enabled: false                              # Recommendation: true for separate-frontend / microservice deployments
-    allowed-origins: http://localhost:3000       # Comma-separated; supports patterns like https://*.example.com
     allowed-methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
     allowed-headers: Authorization, Content-Type, X-Requested-With, Accept, Origin, Cache-Control, X-Request-Id
     exposed-headers: X-Request-Id
@@ -117,19 +108,6 @@ app:
         duration: 60
         key-type: USER_IP
 
-# Logging configuration
-# Available levels (create most to least verbose):
-#   TRACE - Everything including framework internals
-#   DEBUG - Debug messages, Info, Warn, Error
-#   INFO  - Informational messages, Warn, Error
-#   WARN  - Warnings and Errors only
-#   ERROR - Errors only
-#   OFF   - Disable all logging
-logging:
-  level:
-    com.pkmprojects.shoppiq: TRACE    # Production recommendation: WARN or ERROR
-    dev.langchain4j: DEBUG              # Reduce langchain4j HTTP client verbosity
-
 server:
   port: 8090
 
@@ -138,7 +116,6 @@ server:
 # ============================================================
 shoppiq:
   email:
-    provider: ${EMAIL_PROVIDER:console}    # Production recommendation: smtp
     from: ${EMAIL_FROM:noreply@shoppiq.com}
     enabled: ${EMAIL_ENABLED:true}
     smtp:
@@ -154,16 +131,16 @@ shoppiq:
     gateways:
       razorpay:
         base-url: https://api.razorpay.com/v1
-        api-key: ${RAZORPAY_KEY_ID:rzp_test_dummy}           # Production recommendation: use live key
-        api-secret: ${RAZORPAY_KEY_SECRET:rzp_test_secret}   # Production recommendation: use live secret
+        api-key: ${RAZORPAY_KEY_ID:rzp_test_dummy}               # Production recommendation: use live key
+        api-secret: ${RAZORPAY_KEY_SECRET:rzp_test_secret}       # Production recommendation: use live secret
         enabled: true
       stripe:
         base-url: https://api.stripe.com/v1
-        api-key: ${STRIPE_SECRET_KEY:sk_test_dummy}           # Production recommendation: use live key
+        api-key: ${STRIPE_SECRET_KEY:sk_test_dummy}              # Production recommendation: use live key
         enabled: true
       paypal:
-        base-url: https://api-m.sandbox.paypal.com            # Production recommendation: https://api-m.paypal.com
-        api-key: ${PAYPAL_CLIENT_ID:paypal_client_dummy}      # Production recommendation: use live client ID
+        base-url: https://api-m.sandbox.paypal.com               # Production recommendation: https://api-m.paypal.com
+        api-key: ${PAYPAL_CLIENT_ID:paypal_client_dummy}         # Production recommendation: use live client ID
         api-secret: ${PAYPAL_CLIENT_SECRET:paypal_secret_dummy}  # Production recommendation: use live secret
         enabled: true
       upi:
@@ -173,15 +150,15 @@ shoppiq:
         enabled: false
   ai:
     enabled: ${AI_SERVICE_ENABLED:false}
-    resolve-threshold: 3          # Messages of closing intent before auto-resolve
+    resolve-threshold: 3                 # Messages of closing intent before auto-resolve
     rag:
-      max-results: 5             # Top-k product chunks injected per query
-      min-score: 0.75            # Cosine similarity threshold for retrieval
-      reindex-on-startup: false  # Full catalog reindex on boot (events handle the rest)
+      max-results: 5                     # Top-k product chunks injected per query
+      min-score: 0.75                    # Cosine similarity threshold for retrieval
+      reindex-on-startup: false          # Full catalog reindex on boot (events handle the rest)
 
 # ============================================================
 # LangChain4j — AI model configuration (NVIDIA NIM / OpenAI-compatible)
-# Only loaded when the "ai-enabled" profile is active.
+# Only loaded when the AI_SERVICE_ENABLED is true.
 # ============================================================
 langchain4j:
   open-ai:
@@ -199,7 +176,7 @@ langchain4j:
       max-tokens: 4096
       log-requests: true
       log-responses: true
-  # Qdrant vector store (docker-compose service)
+  # Qdrant vector store - docker-compose service
   qdrant:
     host: ${QDRANT_HOST:localhost}
     port: ${QDRANT_PORT:6334}

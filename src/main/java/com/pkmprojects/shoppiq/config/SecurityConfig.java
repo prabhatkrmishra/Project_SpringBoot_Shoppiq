@@ -356,6 +356,16 @@ public class SecurityConfig {
                         .accessDeniedHandler(shoppiqAccessDeniedHandler)
                 )
 
+                .headers(headers -> headers
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000)  // 1 year
+                        )
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:")
+                        )
+                )
+
                 .addFilterBefore(oauthReturnUrlFilter, OAuth2AuthorizationRequestRedirectFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);

@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,9 @@ public class AiGuestChatController {
 
     @Autowired(required = false)
     private ChatService chatService;
+
+    @Value("${app.security.secure-cookie:true}")
+    private boolean secureCookie;
 
     @PostConstruct
     void logInit() {
@@ -85,6 +89,8 @@ public class AiGuestChatController {
             cookie.setPath("/");
             cookie.setMaxAge(24 * 60 * 60);
             cookie.setHttpOnly(true);
+            cookie.setSecure(secureCookie);
+            cookie.setAttribute("SameSite", "Lax");
             response.addCookie(cookie);
         }
 

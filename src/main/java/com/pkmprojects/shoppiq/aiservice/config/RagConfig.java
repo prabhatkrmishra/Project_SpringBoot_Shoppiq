@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.aiservice.config;
 
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.embedding.onnx.bgesmallenv15.BgeSmallEnV15EmbeddingModel;
+import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -59,7 +59,7 @@ public class RagConfig {
     @Bean
     public EmbeddingModel embeddingModel() {
         log.debug("[RAG] Creating local BGE-small-en embedding model (384-dim)");
-        return new BgeSmallEnV15EmbeddingModel();
+        return new BgeSmallEnV15QuantizedEmbeddingModel();
     }
 
     @Bean

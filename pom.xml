@@ -125,17 +125,19 @@
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-qdrant</artifactId>
             <version>1.17.2-beta27</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-embeddings-bge-small-en-v15</artifactId>
-            <version>1.12.0-beta20</version>
+            <artifactId>langchain4j-embeddings-bge-small-en-v15-q</artifactId>
+            <version>1.17.2-beta27</version>
+            <scope>compile</scope>
         </dependency>
-        <!-- Override transitive onnxruntime to fix JPMS native-access warning on JDK 25 -->
         <dependency>
             <groupId>com.microsoft.onnxruntime</groupId>
             <artifactId>onnxruntime</artifactId>
-            <version>1.26.0</version>
+            <version>1.27.0</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Utilities -->
@@ -293,7 +295,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <!--suppress UnresolvedMavenProperty -->
-                    <argLine>-javaagent:${org.mockito:mockito-core:jar} -XX:+EnableDynamicAgentLoading</argLine>
+                    <argLine>-javaagent:${org.mockito:mockito-core:jar} -XX:+EnableDynamicAgentLoading </argLine>
                 </configuration>
             </plugin>
         </plugins>

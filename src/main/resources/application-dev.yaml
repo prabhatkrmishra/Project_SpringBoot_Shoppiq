@@ -4,6 +4,32 @@ server:
       cookie:
         secure: false
 
+  web:
+    error:
+      include-message: always
+      include-binding-errors: always
+      include-stacktrace: always
+
+# Logging configuration
+# Available levels (create most to least verbose):
+#   TRACE - Everything including framework internals
+#   DEBUG - Debug messages, Info, Warn, Error
+#   INFO  - Informational messages, Warn, Error
+#   WARN  - Warnings and Errors only
+#   ERROR - Errors only
+#   OFF   - Disable all logging
+logging:
+  level:
+    com.pkmprojects.shoppiq: TRACE
+    dev.langchain4j: DEBUG
+
 app:
   security:
     secure-cookie: false
+  cors:
+    enabled: true
+    allowed-origins: http://localhost:3000
+
+shoppiq:
+  email:
+    provider: console
