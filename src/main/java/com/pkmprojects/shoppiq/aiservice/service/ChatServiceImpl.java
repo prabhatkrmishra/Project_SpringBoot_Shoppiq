@@ -149,9 +149,11 @@ public class ChatServiceImpl implements ChatService {
                     .baseUrl(NVIDIA_BASE_URL)
                     .modelName(name)
                     .maxTokens(4096)
+                    .temperature(0.6)
+                    .topP(0.95)
                     .logRequests(true)
                     .logResponses(true)
-                    .timeout(Duration.ofSeconds(60))
+                    .timeout(Duration.ofSeconds(120))
                     .build();
         });
     }
@@ -170,9 +172,11 @@ public class ChatServiceImpl implements ChatService {
                     .baseUrl(NVIDIA_BASE_URL)
                     .modelName(name)
                     .maxTokens(4096)
+                    .temperature(0.6)
+                    .topP(0.95)
                     .logRequests(true)
                     .logResponses(true)
-                    .timeout(Duration.ofSeconds(60))
+                    .timeout(Duration.ofSeconds(120))
                     .build();
         });
     }

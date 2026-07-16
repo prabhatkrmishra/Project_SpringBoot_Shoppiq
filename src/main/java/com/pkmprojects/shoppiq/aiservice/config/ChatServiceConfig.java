@@ -58,9 +58,11 @@ public class ChatServiceConfig {
                 .baseUrl("https://integrate.api.nvidia.com/v1")
                 .modelName("nvidia/llama-3.3-nemotron-super-49b-v1.5")
                 .maxTokens(4096)
+                .temperature(0.6)
+                .topP(0.95)
                 .logRequests(true)
                 .logResponses(true)
-                .timeout(Duration.ofSeconds(60))
+                .timeout(Duration.ofSeconds(120))
                 .build();
     }
 
@@ -72,9 +74,11 @@ public class ChatServiceConfig {
                 .baseUrl("https://integrate.api.nvidia.com/v1")
                 .modelName("nvidia/llama-3.3-nemotron-super-49b-v1.5")
                 .maxTokens(4096)
+                .temperature(0.6)
+                .topP(0.95)
                 .logRequests(true)
                 .logResponses(true)
-                .timeout(Duration.ofSeconds(60))
+                .timeout(Duration.ofSeconds(120))
                 .build();
     }
 

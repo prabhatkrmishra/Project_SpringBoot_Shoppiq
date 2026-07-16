@@ -110,8 +110,11 @@ window.AIChat = (function () {
         }).then(function (response) {
             if (!response.ok) {
                 return response.json().then(function (data) {
-                    var msg = (data && (data.error || data.message || data.detail)) || 'Request failed';
+                    var msg = (data && (data.detail || data.error || data.message)) || 'AI assistant is temporarily unavailable' || 'Request failed';
                     throw new Error(msg);
+                }).catch(function (parseErr) {
+                    if (parseErr.message && parseErr.message !== 'AI assistant is temporarily unavailable') throw parseErr;
+                    throw new Error('AI assistant is temporarily unavailable. Please try again.');
                 });
             }
             return response.json();
