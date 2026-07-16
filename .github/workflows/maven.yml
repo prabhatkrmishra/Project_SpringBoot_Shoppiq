@@ -19,19 +19,37 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 25
-      uses: actions/setup-java@v4
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        cache: maven
-    - name: Build with Maven
-      env:
-        MAVEN_OPTS: "-Xmx2048m -XX:+UseG1GC -XX:+UseStringDeduplication"
-      run: mvn -B clean package --file pom.xml
+    permissions:
+      contents: write
 
-    # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
-    - name: Update dependency graph
-      uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+      - name: Restore keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > src/main/resources/keystore.p12
+            echo "Keystore restored"
+          else
+            echo "No KEYSTORE_BASE64 secret — skipping"
+          fi
+
+      - name: Build with Maven
+        env:
+          MAVEN_OPTS: "-Xmx2048m -XX:+UseG1GC -XX:+UseStringDeduplication"
+        run: mvn -B clean package --file pom.xml
+
+      # Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
+      # Skipped on PRs — fork PRs cannot write to the dependency graph (403)
+      - name: Update dependency graph
+        if: github.event_name == 'push'
+        uses: advanced-security/maven-dependency-submission-action@v4
+        with:
+          ignore-maven-wrapper: true
