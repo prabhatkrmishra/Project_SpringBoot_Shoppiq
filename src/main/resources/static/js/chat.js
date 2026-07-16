@@ -280,6 +280,9 @@ window.AIChat = (function () {
         document.getElementById('ai-chat-input-area').setAttribute('aria-hidden', 'false');
         document.getElementById('ai-chat-input').value = '';
         document.getElementById('ai-chat-input').style.height = 'auto';
+
+        // Close sidebar and return to main chat panel
+        document.getElementById('ai-chat-sidebar').setAttribute('aria-hidden', 'true');
     }
 
     function renderServerMessages(messages) {

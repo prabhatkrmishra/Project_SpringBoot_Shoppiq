@@ -32,6 +32,7 @@
             <div class="modal" role="dialog" aria-labelledby="modal-title">
                 <div class="modal-header">
                     <h2 id="modal-title">Add Address</h2>
+                    <a id="back-to-checkout" class="btn-link" style="display:none; margin-left:auto;" href="/checkout">← Back to Checkout</a>
                     <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
                 </div>
                 <form id="address-form" class="modal-body">
@@ -227,6 +228,12 @@
             }
 
             document.addEventListener('DOMContentLoaded', function () {
+                var returnUrl = new URLSearchParams(window.location.search).get('return');
+                if (returnUrl) {
+                    document.getElementById('back-to-checkout').href = returnUrl;
+                    document.getElementById('back-to-checkout').style.display = 'inline';
+                }
+
                 var editMatch = window.location.pathname.match(/\/address\/edit\/(\d+)/);
                 if (editMatch) {
                     var addrId = editMatch[1];
@@ -268,8 +275,12 @@
                         : API.post('/user/address/create', data);
                     promise.then(function () {
                         showToast(editingId ? 'Address updated' : 'Address created', 'success');
-                        closeModal();
-                        loadAddresses();
+                        if (returnUrl) {
+                            window.location.href = returnUrl;
+                        } else {
+                            closeModal();
+                            loadAddresses();
+                        }
                     }).catch(function (err) {
                         showToast(err.message || 'Failed to save address', 'error');
                         setButtonLoading(btn, false);
