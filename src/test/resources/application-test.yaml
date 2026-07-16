@@ -47,5 +47,10 @@ shoppiq:
     provider: console
     from: test@shoppiq.com
     enabled: true
+    smtp:
+      host: localhost
+      port: 587
+      username: test-user
+      password: test-pass
 
 AI_NVIDIA_API_KEY: test-dummy-key-for-startup

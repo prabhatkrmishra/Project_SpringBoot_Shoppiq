@@ -33,6 +33,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -78,6 +79,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         ProblemDetailResponseWriter.class,
         OAuthReturnUrlFilter.class
 })
+@ActiveProfiles("test")
 @DisplayName("UserAddressController Tests")
 class UserAddressControllerTest {
 

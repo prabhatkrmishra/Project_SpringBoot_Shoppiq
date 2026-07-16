@@ -34,6 +34,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -75,6 +76,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         ShoppiqAccessDeniedHandler.class,
         ProblemDetailResponseWriter.class
 })
+@ActiveProfiles("test")
 @DisplayName("ItemReviewController Tests")
 class ItemReviewControllerTest {
 
