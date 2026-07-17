@@ -7,6 +7,16 @@ window.AIChat = (function () {
     var isLoggedIn = false;
     var selectedModel = localStorage.getItem('ai-chat-model') || 'nvidia/llama-3.3-nemotron-super-49b-v1.5';
 
+var ALLOWED_MODELS = [
+        'nvidia/llama-3.3-nemotron-super-49b-v1.5',
+        'nvidia/nemotron-3-nano-30b-a3b'
+    ];
+
+    if (ALLOWED_MODELS.indexOf(selectedModel) === -1) {
+        selectedModel = 'nvidia/llama-3.3-nemotron-super-49b-v1.5';
+        localStorage.setItem('ai-chat-model', selectedModel);
+    }
+
     return {
         init: init, toggle: toggle
     };

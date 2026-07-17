@@ -1,11 +1,11 @@
 package com.pkmprojects.shoppiq.aiservice.controller;
 
+import com.pkmprojects.shoppiq.aiservice.exception.AiServiceUnavailableException;
 import com.pkmprojects.shoppiq.aiservice.ingestion.ProductCatalogIngester;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +35,12 @@ public class AiAdminController {
         log.debug("[RAG] AiAdminController registered — ingesterAvailable={}", productCatalogIngester != null);
     }
 
+    private void checkServiceAvailable() {
+        if (productCatalogIngester == null) {
+            throw AiServiceUnavailableException.disabled();
+        }
+    }
+
     /**
      * Triggers a full reindex of the product catalog into the Qdrant vector store.
      *
@@ -46,10 +52,7 @@ public class AiAdminController {
      */
     @PostMapping("/reindex")
     public ResponseEntity<?> reindex() {
-        if (productCatalogIngester == null) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", "RAG ingester is not available. Check ai-enabled profile and Qdrant."));
-        }
+        checkServiceAvailable();
         productCatalogIngester.reindexAll();
         return ResponseEntity.ok(Map.of("status", "reindexed"));
     }

@@ -7,6 +7,7 @@ import com.pkmprojects.shoppiq.aiservice.entity.ChatConversation;
 import com.pkmprojects.shoppiq.aiservice.entity.ChatMessage;
 import com.pkmprojects.shoppiq.aiservice.enums.ChatMessageRole;
 import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
+import com.pkmprojects.shoppiq.aiservice.exception.AiAccessDeniedException;
 import com.pkmprojects.shoppiq.aiservice.exception.AiAssistantException;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatConversationRepository;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatMessageRepository;
@@ -17,8 +18,6 @@ import com.pkmprojects.shoppiq.repository.UserRepository;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import org.slf4j.Logger;
@@ -70,10 +69,6 @@ public class ChatServiceImpl implements ChatService {
 
     private static final Logger log = LoggerFactory.getLogger(ChatServiceImpl.class);
 
-    private static final String NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
-
-    private final ChatModel chatModel;
-    private final StreamingChatModel streamingChatModel;
     private final ChatMemoryProvider chatMemoryProvider;
     private final ChatMemoryConfig chatMemoryConfig;
     private final ShoppiqTools shoppiqTools;
@@ -81,10 +76,7 @@ public class ChatServiceImpl implements ChatService {
     private final ChatConversationRepository conversationRepository;
     private final ChatMessageRepository messageRepository;
     private final UserRepository userRepository;
-    private final String nvidiaApiKey;
-
-    private final Map<String, ChatModel> chatModelCache = new ConcurrentHashMap<>();
-    private final Map<String, StreamingChatModel> streamingChatModelCache = new ConcurrentHashMap<>();
+    private final ModelResolutionService modelResolutionService;
 
     /**
      * In-memory store for guest messages — not persisted to DB. Key = sessionId.
@@ -103,28 +95,23 @@ public class ChatServiceImpl implements ChatService {
     /**
      * Constructs a new {@code ChatServiceImpl} with all required dependencies.
      *
-     * @param chatModel              the synchronous chat model
-     * @param streamingChatModel     the streaming chat model
      * @param chatMemoryProvider     provides per-conversation memory windows
      * @param chatMemoryConfig       manages chat memory lifecycle (clear on resolve)
      * @param shoppiqTools           tool methods available to the AI (product search, orders, etc.)
+     * @param contentRetriever       RAG content retriever for product context
      * @param conversationRepository persistence for conversations
      * @param messageRepository      persistence for messages
      * @param userRepository         user lookups (unused directly but retained for future admin features)
-     * @param nvidiaApiKey           NVIDIA NIM API key for dynamic model creation
+     * @param modelResolutionService central service for resolving model names to model instances
      */
-    public ChatServiceImpl(ChatModel chatModel,
-                           StreamingChatModel streamingChatModel,
-                           ChatMemoryProvider chatMemoryProvider,
+    public ChatServiceImpl(ChatMemoryProvider chatMemoryProvider,
                            ChatMemoryConfig chatMemoryConfig,
                            ShoppiqTools shoppiqTools,
                            ContentRetriever contentRetriever,
                            ChatConversationRepository conversationRepository,
                            ChatMessageRepository messageRepository,
                            UserRepository userRepository,
-                           String nvidiaApiKey) {
-        this.chatModel = chatModel;
-        this.streamingChatModel = streamingChatModel;
+                           ModelResolutionService modelResolutionService) {
         this.chatMemoryProvider = chatMemoryProvider;
         this.chatMemoryConfig = chatMemoryConfig;
         this.shoppiqTools = shoppiqTools;
@@ -132,53 +119,7 @@ public class ChatServiceImpl implements ChatService {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
-        this.nvidiaApiKey = nvidiaApiKey;
-    }
-
-    /**
-     * Returns a ChatModel for the given model name, using the default model when name is null/blank.
-     */
-    private ChatModel resolveChatModel(String modelName) {
-        if (modelName == null || modelName.isBlank()) {
-            return chatModel;
-        }
-        return chatModelCache.computeIfAbsent(modelName, name -> {
-            log.debug("[AI-MODEL] Creating ChatModel for: {}", name);
-            return OpenAiChatModel.builder()
-                    .apiKey(nvidiaApiKey)
-                    .baseUrl(NVIDIA_BASE_URL)
-                    .modelName(name)
-                    .maxTokens(4096)
-                    .temperature(0.6)
-                    .topP(0.95)
-                    .logRequests(true)
-                    .logResponses(true)
-                    .timeout(Duration.ofSeconds(120))
-                    .build();
-        });
-    }
-
-    /**
-     * Returns a StreamingChatModel for the given model name, using the default model when name is null/blank.
-     */
-    private StreamingChatModel resolveStreamingChatModel(String modelName) {
-        if (modelName == null || modelName.isBlank()) {
-            return streamingChatModel;
-        }
-        return streamingChatModelCache.computeIfAbsent(modelName, name -> {
-            log.debug("[AI-MODEL] Creating StreamingChatModel for: {}", name);
-            return OpenAiStreamingChatModel.builder()
-                    .apiKey(nvidiaApiKey)
-                    .baseUrl(NVIDIA_BASE_URL)
-                    .modelName(name)
-                    .maxTokens(4096)
-                    .temperature(0.6)
-                    .topP(0.95)
-                    .logRequests(true)
-                    .logResponses(true)
-                    .timeout(Duration.ofSeconds(120))
-                    .build();
-        });
+        this.modelResolutionService = modelResolutionService;
     }
 
     // ========================= Authenticated Chat =========================
@@ -199,7 +140,7 @@ public class ChatServiceImpl implements ChatService {
         updateTitleFromFirstMessage(conv, userMessage);
 
         String systemPrompt = buildSystemPrompt(conv.getChatId(), user);
-        ChatModel resolvedModel = resolveChatModel(model);
+        ChatModel resolvedModel = modelResolutionService.resolveChatModel(model);
 
         ShoppiqAssistant proxy = AiServices.builder(ShoppiqAssistant.class)
                 .chatModel(resolvedModel)
@@ -214,6 +155,9 @@ public class ChatServiceImpl implements ChatService {
             response = proxy.chat(userMessage, chatId);
         } catch (Exception e) {
             log.error("AI model call failed for conversation {}: {}", chatId, e.getMessage(), e);
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("timeout")) {
+                throw AiAssistantException.timeout("AI assistant timed out. Please try again.");
+            }
             throw AiAssistantException.apiError("AI assistant is temporarily unavailable. Please try again.");
         }
 
@@ -243,7 +187,7 @@ public class ChatServiceImpl implements ChatService {
 
         String systemPrompt = buildSystemPrompt(conv.getChatId(), user);
         StringBuilder fullResponse = new StringBuilder();
-        StreamingChatModel resolvedStreamingModel = resolveStreamingChatModel(model);
+        StreamingChatModel resolvedStreamingModel = modelResolutionService.resolveStreamingChatModel(model);
 
         ShoppiqStreamingAssistant proxy = AiServices.builder(ShoppiqStreamingAssistant.class)
                 .streamingChatModel(resolvedStreamingModel)
@@ -382,7 +326,7 @@ public class ChatServiceImpl implements ChatService {
         saveGuestMessage(sessionId, "USER", userMessage);
 
         String systemPrompt = buildGuestSystemPrompt();
-        ChatModel resolvedModel = resolveChatModel(model);
+        ChatModel resolvedModel = modelResolutionService.resolveChatModel(model);
 
         ShoppiqAssistant proxy = AiServices.builder(ShoppiqAssistant.class)
                 .chatModel(resolvedModel)
@@ -392,7 +336,16 @@ public class ChatServiceImpl implements ChatService {
                 .build();
 
         String chatId = "guest-" + sessionId;
-        String response = proxy.chat(userMessage, chatId);
+        String response;
+        try {
+            response = proxy.chat(userMessage, chatId);
+        } catch (Exception e) {
+            log.error("AI model call failed for guest session {}: {}", sessionId, e.getMessage(), e);
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("timeout")) {
+                throw AiAssistantException.timeout("AI assistant timed out. Please try again.");
+            }
+            throw AiAssistantException.apiError("AI assistant is temporarily unavailable. Please try again.");
+        }
 
         saveGuestMessage(sessionId, "ASSISTANT", response);
 
@@ -412,7 +365,7 @@ public class ChatServiceImpl implements ChatService {
 
         String systemPrompt = buildGuestSystemPrompt();
         StringBuilder fullResponse = new StringBuilder();
-        StreamingChatModel resolvedStreamingModel = resolveStreamingChatModel(model);
+        StreamingChatModel resolvedStreamingModel = modelResolutionService.resolveStreamingChatModel(model);
 
         String chatId = "guest-" + sessionId;
         ShoppiqStreamingAssistant proxy = AiServices.builder(ShoppiqStreamingAssistant.class)
@@ -431,6 +384,7 @@ public class ChatServiceImpl implements ChatService {
                 })
                 .doOnError(error -> {
                     log.error("Guest streaming error for session {}: {}", sessionId, error.getMessage());
+                    saveGuestMessage(sessionId, "ASSISTANT", "I'm sorry, an error occurred. Please try again.");
                 });
     }
 
@@ -450,7 +404,7 @@ public class ChatServiceImpl implements ChatService {
                 .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
 
         if (conv.getUser() == null || !conv.getUser().getId().equals(user.getId())) {
-            throw AiAssistantException.apiError("You do not have access to this conversation.");
+            throw AiAccessDeniedException.forConversation(chatId);
         }
         return conv;
     }

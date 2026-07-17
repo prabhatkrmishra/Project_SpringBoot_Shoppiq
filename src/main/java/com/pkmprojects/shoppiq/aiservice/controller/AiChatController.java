@@ -4,6 +4,7 @@ import com.pkmprojects.shoppiq.aiservice.dto.ChatMessageDto;
 import com.pkmprojects.shoppiq.aiservice.dto.ChatRequest;
 import com.pkmprojects.shoppiq.aiservice.dto.ChatResponse;
 import com.pkmprojects.shoppiq.aiservice.entity.ChatConversation;
+import com.pkmprojects.shoppiq.aiservice.exception.AiServiceUnavailableException;
 import com.pkmprojects.shoppiq.aiservice.service.ChatService;
 import com.pkmprojects.shoppiq.entity.User;
 import jakarta.annotation.PostConstruct;
@@ -11,14 +12,12 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * REST controller for authenticated AI chat conversations.
@@ -55,9 +54,10 @@ public class AiChatController {
         log.debug("[AI-INIT] AiChatController registered — serviceAvailable={}", chatService != null);
     }
 
-    private ResponseEntity<?> serviceUnavailable() {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(Map.of("error", "AI service is not available. Check NVIDIA_API_KEY configuration."));
+    private void checkServiceAvailable() {
+        if (chatService == null) {
+            throw AiServiceUnavailableException.disabled();
+        }
     }
 
     /**
@@ -77,7 +77,7 @@ public class AiChatController {
     public ResponseEntity<?> createAndChat(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody ChatRequest request) {
-        if (chatService == null) return serviceUnavailable();
+        checkServiceAvailable();
 
         ChatConversation conv = chatService.createConversation(user);
         String response = chatService.chat(request.message(), conv.getChatId(), user, request.model());
@@ -104,7 +104,7 @@ public class AiChatController {
             @AuthenticationPrincipal User user,
             @PathVariable String chatId,
             @Valid @RequestBody ChatRequest request) {
-        if (chatService == null) return serviceUnavailable();
+        checkServiceAvailable();
 
         chatService.chat(request.message(), chatId, user, request.model());
         List<ChatMessageDto> messages = chatService.getMessages(chatId, user);
@@ -121,7 +121,7 @@ public class AiChatController {
     @GetMapping("/conversations")
     public ResponseEntity<?> getConversations(
             @AuthenticationPrincipal User user) {
-        if (chatService == null) return serviceUnavailable();
+        checkServiceAvailable();
 
         return ResponseEntity.ok(chatService.getConversations(user));
     }
@@ -137,7 +137,7 @@ public class AiChatController {
     public ResponseEntity<?> getMessages(
             @AuthenticationPrincipal User user,
             @PathVariable String chatId) {
-        if (chatService == null) return serviceUnavailable();
+        checkServiceAvailable();
 
         return ResponseEntity.ok(chatService.getMessages(chatId, user));
     }
@@ -153,7 +153,7 @@ public class AiChatController {
     public ResponseEntity<?> resolveConversation(
             @AuthenticationPrincipal User user,
             @PathVariable String chatId) {
-        if (chatService == null) return serviceUnavailable();
+        checkServiceAvailable();
 
         chatService.resolveConversation(chatId, user);
         return ResponseEntity.noContent().build();

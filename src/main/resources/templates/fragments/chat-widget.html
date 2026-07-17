@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
-<div id="ai-chat-widget" class="ai-chat-widget" aria-hidden="true" th:fragment="widget"
-          th:if="${@environment.getProperty('shoppiq.ai.enabled') == 'true'}">
+    <div id="ai-chat-widget" class="ai-chat-widget" aria-hidden="true" th:fragment="widget"
+         th:if="${@environment.getProperty('shoppiq.ai.enabled') == 'true'}">
 
         <button class="ai-chat-toggle" id="ai-chat-toggle" aria-label="AI Assistant">
             <i data-lucide="bot"></i>
@@ -22,8 +22,7 @@
                 <div class="ai-chat-header-actions">
                     <select id="ai-model-select" class="ai-model-select" aria-label="Select AI model">
                         <option value="nvidia/llama-3.3-nemotron-super-49b-v1.5">Nemotron 49B</option>
-                        <option value="meta/llama-3.1-8b-instruct">Llama 3.1 8B</option>
-                        <option value="meta/llama-4-maverick-17b-128e-instruct">Llama 4 Maverick</option>
+                        <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron Nano 30B</option>
                     </select>
                     <button class="ai-chat-btn-icon" id="ai-chat-history-btn" aria-label="Conversations">
                         <i data-lucide="history"></i>

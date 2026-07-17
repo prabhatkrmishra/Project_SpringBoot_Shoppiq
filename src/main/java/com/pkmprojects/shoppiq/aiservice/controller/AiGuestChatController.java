@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.aiservice.controller;
 
 import com.pkmprojects.shoppiq.aiservice.dto.ChatRequest;
+import com.pkmprojects.shoppiq.aiservice.exception.AiServiceUnavailableException;
 import com.pkmprojects.shoppiq.aiservice.service.ChatService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
@@ -10,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,6 +53,12 @@ public class AiGuestChatController {
         log.debug("[AI-INIT] AiGuestChatController registered — serviceAvailable={}", chatService != null);
     }
 
+    private void checkServiceAvailable() {
+        if (chatService == null) {
+            throw AiServiceUnavailableException.disabled();
+        }
+    }
+
     /**
      * Sends a message as a guest user and receives the AI response.
      *
@@ -72,10 +78,7 @@ public class AiGuestChatController {
             @CookieValue(value = "GUEST_SESSION", required = false) String sessionId,
             HttpServletResponse response) {
 
-        if (chatService == null) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", "AI service is not available. Check NVIDIA_API_KEY configuration."));
-        }
+        checkServiceAvailable();
 
         boolean isNewSession = sessionId == null || sessionId.isBlank();
         if (isNewSession) {
@@ -108,10 +111,7 @@ public class AiGuestChatController {
      */
     @GetMapping("/{sessionId}/messages")
     public ResponseEntity<?> getGuestMessages(@PathVariable String sessionId) {
-        if (chatService == null) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", "AI service is not available."));
-        }
+        checkServiceAvailable();
 
         return ResponseEntity.ok(chatService.getGuestMessages(sessionId));
     }
@@ -124,10 +124,7 @@ public class AiGuestChatController {
      */
     @DeleteMapping("/{sessionId}")
     public ResponseEntity<?> resolveGuestConversation(@PathVariable String sessionId) {
-        if (chatService == null) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", "AI service is not available."));
-        }
+        checkServiceAvailable();
 
         chatService.resolveGuestConversation(sessionId);
         return ResponseEntity.noContent().build();

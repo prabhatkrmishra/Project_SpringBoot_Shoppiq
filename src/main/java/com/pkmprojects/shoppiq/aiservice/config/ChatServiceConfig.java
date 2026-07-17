@@ -4,6 +4,7 @@ import com.pkmprojects.shoppiq.aiservice.repository.ChatConversationRepository;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatMessageRepository;
 import com.pkmprojects.shoppiq.aiservice.service.ChatService;
 import com.pkmprojects.shoppiq.aiservice.service.ChatServiceImpl;
+import com.pkmprojects.shoppiq.aiservice.service.ModelResolutionService;
 import com.pkmprojects.shoppiq.aiservice.tools.ShoppiqTools;
 import com.pkmprojects.shoppiq.repository.UserRepository;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import java.time.Duration;
 
@@ -28,17 +30,18 @@ import java.time.Duration;
  * <p>
  * Only active when the {@code shoppiq.ai.enabled=true} property is set. The default model
  * is {@code nvidia/llama-3.3-nemotron-super-49b-v1.5}. Additional models are
- * created dynamically by {@link ChatServiceImpl} on demand and cached per model name.
+ * resolved and cached by {@link ModelResolutionService} on demand.
  *
  * <h2>Beans Provided</h2>
  * <ul>
- *   <li>{@link ChatModel} — synchronous chat model</li>
- *   <li>{@link StreamingChatModel} — streaming (token-by-token) chat model</li>
+ *   <li>{@link ChatModel} — synchronous chat model (default)</li>
+ *   <li>{@link StreamingChatModel} — streaming (token-by-token) chat model (default)</li>
  *   <li>{@link ChatService} — the main AI service implementation</li>
  * </ul>
  *
  * @author PrabhatKrMishra
  * @see ChatServiceImpl
+ * @see ModelResolutionService
  * @since 1.0.0
  */
 @Configuration
@@ -51,6 +54,7 @@ public class ChatServiceConfig {
     private String nvidiaApiKey;
 
     @Bean
+    @Primary
     public ChatModel chatModel() {
         log.debug("[AI-INIT] Creating ChatModel bean — model={}", "nvidia/llama-3.3-nemotron-super-49b-v1.5");
         return OpenAiChatModel.builder()
@@ -67,6 +71,7 @@ public class ChatServiceConfig {
     }
 
     @Bean
+    @Primary
     public StreamingChatModel streamingChatModel() {
         log.debug("[AI-INIT] Creating StreamingChatModel bean — model={}", "nvidia/llama-3.3-nemotron-super-49b-v1.5");
         return OpenAiStreamingChatModel.builder()
@@ -84,24 +89,22 @@ public class ChatServiceConfig {
 
     @Bean
     public ChatService aiService(
-            ChatModel chatModel,
-            StreamingChatModel streamingChatModel,
             ChatMemoryProvider chatMemoryProvider,
             ChatMemoryConfig chatMemoryConfig,
             ShoppiqTools shoppiqTools,
             ContentRetriever contentRetriever,
             ChatConversationRepository conversationRepository,
             ChatMessageRepository messageRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ModelResolutionService modelResolutionService) {
 
-        log.info("[AI-INIT] ChatServiceImpl created — chatModel={}, streamingChatModel={}, contentRetriever={}",
-                chatModel.getClass().getSimpleName(),
-                streamingChatModel.getClass().getSimpleName(),
+        log.info("[AI-INIT] ChatServiceImpl created — modelResolutionService={}, contentRetriever={}",
+                modelResolutionService.getClass().getSimpleName(),
                 contentRetriever.getClass().getSimpleName());
 
         return new ChatServiceImpl(
-                chatModel, streamingChatModel, chatMemoryProvider, chatMemoryConfig,
+                chatMemoryProvider, chatMemoryConfig,
                 shoppiqTools, contentRetriever, conversationRepository, messageRepository, userRepository,
-                nvidiaApiKey);
+                modelResolutionService);
     }
 }

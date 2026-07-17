@@ -1,7 +1,8 @@
 # Shoppiq AI Chat Assistant — Complete Technical Documentation
 
 > **Framework:** LangChain4j 1.17.2-beta27 (Spring Boot 4.1 / Spring Security 7.1 / Java 25)
-> **LLM Provider:** NVIDIA NIM (`nvidia/llama-3.3-nemotron-super-49b-v1.5`)
+> **LLM Provider:** NVIDIA NIM (`https://integrate.api.nvidia.com/v1`) — OpenAI-compatible API
+> **Model Resolution:** `ModelResolutionService` — centralized validation, allowlist, and lazy caching
 > **Vector Store:** Qdrant (Docker, gRPC on port 6334)
 > **Embeddings:** BGE-small-en-v1.5 (384-dim, local ONNX)
 > **Profile:** `ai-enabled` (all AI beans gated by `@Profile("ai-enabled")`)
@@ -131,8 +132,10 @@ The system implements a **retrieval-augmented generation (RAG)** architecture wi
 | **Event-driven sync** | JPA EntityListener ► Spring ApplicationEvent ► TransactionalEventListener | Domain events, event-driven architecture |
 | **Dynamic proxy** | AiServices.builder().build() returns JDK proxy | Dynamic proxy pattern, reflection-based dispatch |
 | **Lazy initialization** | Model cache uses ConcurrentHashMap.computeIfAbsent | Lazy loading, caching strategy |
-| **Graceful degradation** | Null-check on chatService ► 503 SERVICE_UNAVAILABLE | Fail-open, dependency check |
+| **Graceful degradation** | Null-check on chatService ► 503 via AiServiceUnavailableException | Fail-open, dependency check |
 | **Idempotent operations** | Resolve is no-op if already resolved | Idempotency, safe retries |
+| **Allowlist validation** | Model names validated against ALLOWED_MODELS set | Input validation, security |
+| **Centralized model resolution** | ModelResolutionService handles all model creation + caching | Service layer, single responsibility |
 
 ---
 
@@ -162,9 +165,9 @@ All AI service code lives under `com.pkmprojects.shoppiq.aiservice`:
 ```
 com.pkmprojects.shoppiq.aiservice/
 ├── config/
-│   ├── ChatServiceConfig.java                 @Configuration @Profile("ai-enabled")
+│   ├── ChatServiceConfig.java                 @Configuration @ConditionalOnProperty(name = "shoppiq.ai.enabled", havingValue = "true")
 │   │                                          Creates ChatModel, StreamingChatModel, ChatService beans
-│   ├── ChatMemoryConfig.java                  @Configuration (public)
+│   ├── ChatMemoryConfig.java                  @Configuration @ConditionalOnProperty(name = "shoppiq.ai.enabled", havingValue = "true")
 │   │                                          Provides ChatMemoryProvider with ConcurrentHashMap cache
 │   │                                          clearMemory(chatId) removes cached memory on resolve
 │   └── RagConfig.java                         @Configuration @Profile("ai-enabled")
@@ -192,7 +195,10 @@ com.pkmprojects.shoppiq.aiservice/
 │   ├── ItemEmbeddingEntityListener.java       @PostPersist @PostUpdate @PreRemove on Item
 │   └── ProductEmbeddingEvent.java             DTO event carrying product data for vector sync
 ├── exception/
-│   └── AiAssistantException.java              Extends ShoppiqException — AI-specific errors
+│   ├── AiAssistantException.java              Extends ShoppiqException — AI-specific errors
+│   ├── AiAccessDeniedException.java           403 — user lacks access to conversation
+│   ├── AiModelNotSupportedException.java      400 — model not in allowlist
+│   └── AiServiceUnavailableException.java     503 — AI service not configured
 ├── ingestion/
 │   └── ProductCatalogIngester.java            @Component — CommandLineRunner + @TransactionalEventListener
 │                                              Maintains Qdrant vector store sync with product catalog
@@ -202,6 +208,7 @@ com.pkmprojects.shoppiq.aiservice/
 ├── service/
 │   ├── ChatService.java                       Interface — all chat/resolve/history methods
 │   ├── ChatServiceImpl.java                   Implementation — LangChain4j proxy builder + persistence
+│   ├── ModelResolutionService.java            Centralized model resolution with allowlist + caching
 │   ├── ShoppiqAssistant.java                  LangChain4j service interface (sync, @MemoryId routing)
 │   └── ShoppiqStreamingAssistant.java         LangChain4j service interface (streaming, Flux<String>)
 └── tools/
@@ -336,7 +343,7 @@ langchain4j:
 
 ### Startup Sequence
 
-When the `ai-enabled` profile is active, Spring Boot creates the following beans in order:
+When the `shoppiq.ai.enabled=true` property is set, Spring Boot creates the following beans in order:
 
 ```
 1. ChatMemoryConfig.chatMemoryProvider()
@@ -368,17 +375,24 @@ When the `ai-enabled` profile is active, Spring Boot creates the following beans
      ChatMemoryConfig, OrderRepository, CartService, ItemReviewRepository,
      EmbeddingStore, EmbeddingModel
 
-9. ChatServiceConfig.chatService()
-   ► Creates ChatServiceImpl (manual constructor injection)
-   ► Injects: chatModel, streamingChatModel, chatMemoryProvider, chatMemoryConfig,
-     shoppiqTools, contentRetriever, conversationRepository, messageRepository,
-     userRepository, nvidiaApiKey
+9. ModelResolutionService (auto-detected @Service)
+   ► Creates ModelResolutionService(defaultChatModel, defaultStreamingChatModel, nvidiaApiKey)
+   ► Centralized model resolution with allowlist validation + ConcurrentHashMap caching
+   ► Allowlisted models: nvidia/llama-3.3-nemotron-super-49b-v1.5,
+     nvidia/nemotron-3-nano-30b-a3b, meta/llama-4-maverick-17b-128e-instruct,
+     nvidia/llama-3.1-nemotron-nano-8b-v1
 
-10. ProductCatalogIngester (auto-detected @Component)
+10. ChatServiceConfig.aiService()
+    ► Creates ChatServiceImpl (manual constructor injection)
+    ► Injects: modelResolutionService, chatMemoryProvider, chatMemoryConfig,
+      shoppiqTools, contentRetriever, conversationRepository, messageRepository,
+      userRepository
+
+11. ProductCatalogIngester (auto-detected @Component)
     ► Implements CommandLineRunner: checks if Qdrant store is empty ➡️ reindexAll()
     ► @TransactionalEventListener: reacts to ProductEmbeddingEvent for incremental sync
 
-11. ItemEmbeddingEntityListener (registered on Item entity)
+12. ItemEmbeddingEntityListener (registered on Item entity)
     ► @PostPersist/@PostUpdate: publishes ProductEmbeddingEvent
     ► @PreRemove: publishes deletion event
 ```
@@ -387,8 +401,6 @@ When the `ai-enabled` profile is active, Spring Boot creates the following beans
 
 ```java
 public ChatServiceImpl(
-    ChatModel chatModel,                                // Default synchronous model (Nemotron 49B)
-    StreamingChatModel streamingChatModel,              // Default streaming model (Nemotron 49B)
     ChatMemoryProvider chatMemoryProvider,              // Per-conversation memory windows
     ChatMemoryConfig chatMemoryConfig,                  // Memory lifecycle (clear on resolve)
     ShoppiqTools shoppiqTools,                          // 6 @Tool methods
@@ -396,7 +408,7 @@ public ChatServiceImpl(
     ChatConversationRepository conversationRepository,
     ChatMessageRepository messageRepository,
     UserRepository userRepository,
-    String nvidiaApiKey                                 // For dynamic model creation
+    ModelResolutionService modelResolutionService       // Centralized model resolution + caching
 )
 ```
 
@@ -1032,34 +1044,146 @@ Memory is cleared when a conversation is resolved to:
 
 ### How Model Switching Works
 
-The frontend sends a `model` field in `ChatRequest`. `ChatServiceImpl` resolves the model dynamically:
+The frontend sends a `model` field in `ChatRequest`. `ChatServiceImpl` delegates to `ModelResolutionService` for centralized model resolution:
+
+### `ModelResolutionService` (`aiservice/service/ModelResolutionService.java`)
+
+Centralized service that resolves LLM model names to LangChain4j `ChatModel` / `StreamingChatModel` instances. Handles validation, allowlisting, lazy creation, and caching.
 
 ```java
-private ChatModel resolveChatModel(String modelName) {
-    if (modelName == null || modelName.isBlank()) {
-        return chatModel;  // Default bean: nvidia/llama-3.3-nemotron-super-49b-v1.5
+@Service
+public class ModelResolutionService {
+    // Allowlisted NVIDIA NIM models — Map of modelId -> displayName
+    private static final Map<String, String> MODEL_REGISTRY = Map.of(
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5", "Nemotron 49B",
+        "nvidia/nemotron-3-nano-30b-a3b", "Nemotron Nano 30B"
+    );
+
+    private static final String DEFAULT_MODEL_ID = "nvidia/llama-3.3-nemotron-super-49b-v1.5";
+
+    // Lazy caches — models created on first use, then reused
+    private final ConcurrentHashMap<String, ChatModel> chatModelCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, StreamingChatModel> streamingModelCache = new ConcurrentHashMap<>();
+
+    private final ChatModel defaultChatModel;
+    private final StreamingChatModel defaultStreamingChatModel;
+    private final String nvidiaApiKey;
+
+    public ModelResolutionService(
+            ChatModel defaultChatModel,
+            StreamingChatModel defaultStreamingChatModel,
+            @Value("${langchain4j.open-ai.chat-model.api-key}") String nvidiaApiKey) {
+        this.defaultChatModel = defaultChatModel;
+        this.defaultStreamingChatModel = defaultStreamingChatModel;
+        this.nvidiaApiKey = nvidiaApiKey;
     }
-    return chatModelCache.computeIfAbsent(modelName, name -> {
+
+    /**
+     * Resolve a ChatModel by name. Returns pre-built default if null/blank or default model ID.
+     * Throws AiModelNotSupportedException if model not in allowlist.
+     */
+    public ChatModel resolveChatModel(String modelName) {
+        String resolvedName = sanitizeModelName(modelName);
+        // Short-circuit: return the pre-built default bean directly (no cache lookup)
+        if (resolvedName.equals(DEFAULT_MODEL_ID)) {
+            return defaultChatModel;
+        }
+        return chatModelCache.computeIfAbsent(resolvedName, this::createChatModel);
+    }
+
+    /**
+     * Resolve a StreamingChatModel by name. Returns pre-built default if null/blank or default model ID.
+     * Throws AiModelNotSupportedException if model not in allowlist.
+     */
+    public StreamingChatModel resolveStreamingChatModel(String modelName) {
+        String resolvedName = sanitizeModelName(modelName);
+        if (resolvedName.equals(DEFAULT_MODEL_ID)) {
+            return defaultStreamingChatModel;
+        }
+        return streamingModelCache.computeIfAbsent(resolvedName, this::createStreamingChatModel);
+    }
+
+    private String sanitizeModelName(String modelName) {
+        if (modelName == null || modelName.isBlank()) {
+            return DEFAULT_MODEL_ID;
+        }
+        String trimmed = modelName.trim();
+        if (!MODEL_REGISTRY.containsKey(trimmed)) {
+            log.warn("[MODEL-RESOLUTION] Model '{}' not in allowlist. Allowed: {}", trimmed, MODEL_REGISTRY.keySet());
+            throw AiModelNotSupportedException.forModel(trimmed);
+        }
+        return trimmed;
+    }
+
+    private ChatModel createChatModel(String modelName) {
         return OpenAiChatModel.builder()
             .apiKey(nvidiaApiKey)
             .baseUrl("https://integrate.api.nvidia.com/v1")
-            .modelName(name)
+            .modelName(modelName)
             .maxTokens(4096)
+            .temperature(0.6)
+            .topP(0.95)
             .logRequests(true).logResponses(true)
-            .timeout(Duration.ofSeconds(60))
+            .timeout(Duration.ofSeconds(120))
             .build();
-    });
+    }
+
+    private StreamingChatModel createStreamingChatModel(String modelName) {
+        return OpenAiStreamingChatModel.builder()
+            .apiKey(nvidiaApiKey)
+            .baseUrl("https://integrate.api.nvidia.com/v1")
+            .modelName(modelName)
+            .maxTokens(4096)
+            .temperature(0.6)
+            .topP(0.95)
+            .logRequests(true).logResponses(true)
+            .timeout(Duration.ofSeconds(120))
+            .build();
+    }
 }
 ```
 
-**Cache:** Two `ConcurrentHashMap` caches — `chatModelCache` for sync `ChatModel` and `streamingChatModelCache` for `StreamingChatModel` — models are created lazily on first use, then cached.
+### How ChatServiceImpl Uses ModelResolutionService
 
-**Available models (frontend dropdown):**
-| Value | Label |
-|-------|-------|
-| `nvidia/llama-3.3-nemotron-super-49b-v1.5` | Nemotron 49B (default) |
-| `meta/llama-3.1-8b-instruct` | Llama 3.1 8B |
-| `meta/llama-4-maverick-17b-128e-instruct` | Llama 4 Maverick |
+```java
+// In chat() method:
+ChatModel resolvedModel = modelResolutionService.resolveChatModel(request.model());
+
+// In chatStream() method:
+StreamingChatModel resolvedStreamingModel = modelResolutionService.resolveStreamingChatModel(request.model());
+```
+
+### Model Resolution Flow
+
+```
+Frontend (ChatRequest.model)
+  │
+  ▼
+ChatServiceImpl.chat(message, chatId, user, model)
+  │
+  ▼
+ModelResolutionService.resolveChatModel(model)
+  ├── null/blank?  ──► return default (nvidia/llama-3.3-nemotron-super-49b-v1.5)
+  ├── in allowlist? ──► computeIfAbsent on chatModelCache
+  │                      ├── cached? ──► return cached instance
+  │                      └── new?    ──► createChatModel() ──► cache + return
+  └── not in allowlist? ──► throw AiModelNotSupportedException
+```
+
+### Allowlisted Models
+
+| Model ID | Label | Notes |
+|----------|-------|-------|
+| `nvidia/llama-3.3-nemotron-super-49b-v1.5` | Nemotron 49B (default) | Primary model, best quality |
+| `nvidia/nemotron-3-nano-30b-a3b` | Nemotron Nano 30B | Smaller, faster |
+
+### Validation Behavior
+
+- **null/blank model**: Returns pre-built default model bean (no error)
+- **Unknown model**: Throws `AiModelNotSupportedException.forModel()` (400 Bad Request) with list of allowed models
+- **Whitespace handling**: Model names are trimmed before validation
+- **Caching**: Each non-default model is created once and reused for all subsequent requests
+- **Default model**: The default model (`nvidia/llama-3.3-nemotron-super-49b-v1.5`) uses the pre-configured Spring bean directly (bypasses cache)
 
 ---
 
@@ -1427,6 +1551,30 @@ Extends `ShoppiqException`. Factory methods:
 | `rateLimited(detail)` | 429 | `AI_RATE_LIMITED` | Rate limit exceeded |
 | `conversationResolved()` | 410 | `AI_CONVERSATION_RESOLVED` | Message sent to resolved conversation |
 
+### `AiAccessDeniedException` (`aiservice/exception/AiAccessDeniedException.java`)
+
+Extends `ShoppiqException`. Returns **403 Forbidden**.
+
+| Method | ErrorCode | When |
+|--------|-----------|------|
+| `forConversation(String chatId)` | `AI_ACCESS_DENIED` | Authenticated user tries to access another user's conversation |
+
+### `AiModelNotSupportedException` (`aiservice/exception/AiModelNotSupportedException.java`)
+
+Extends `ShoppiqException`. Returns **400 Bad Request**.
+
+| Method | ErrorCode | When |
+|--------|-----------|------|
+| `forModel(String modelId)` | `AI_MODEL_NOT_SUPPORTED` | User sends a model not in the allowlist |
+
+### `AiServiceUnavailableException` (`aiservice/exception/AiServiceUnavailableException.java`)
+
+Extends `ShoppiqException`. Returns **503 Service Unavailable**.
+
+| Method | ErrorCode | When |
+|--------|-----------|------|
+| `disabled()` | `AI_SERVICE_UNAVAILABLE` | ChatService is null (AI not configured) or ProductCatalogIngester is null (RAG not configured) |
+
 ### `AiConversationNotFoundException` (`exception/AiConversationNotFoundException.java`)
 
 Extends `ResourceNotFoundException`. Factory methods:
@@ -1491,7 +1639,7 @@ IIFE module exposing `init()` and `toggle()`. All other functions are private cl
 | `isStreaming` | `boolean` | `false` | — | Prevents double-sends during API call |
 | `isResolved` | `boolean` | `false` | — | Resolved state flag |
 | `isLoggedIn` | `boolean` | `false` | — | Detected from meta tag |
-| `selectedModel` | `string` | `'nvidia/llama-3.3-nemotron-super-49b-v1.5'` | `localStorage('ai-chat-model')` | LLM model selection |
+| `selectedModel` | `string` | `'nvidia/llama-3.3-nemotron-super-49b-v1.5'` | `localStorage('ai-chat-model')` | LLM model selection (validated against `ALLOWED_MODELS`) |
 
 **Public methods:**
 
@@ -1556,9 +1704,9 @@ Included in `header.html` via:
 <th:block th:replace="~{fragments/chat-widget :: widget}"></th:block>
 ```
 
-Only rendered when `ai-enabled` profile is active:
+Only rendered when AI is enabled via property:
 ```html
-<th:block th:if="${#arrays.contains(@environment.getActiveProfiles(), 'ai-enabled')}">
+<div id="ai-chat-widget" ... th:if="${@environment.getProperty('shoppiq.ai.enabled') == 'true'}">
 ```
 
 **DOM structure:**
@@ -1581,11 +1729,10 @@ Only rendered when `ai-enabled` profile is active:
         <span class="ai-chat-user-id" id="ai-chat-user-id"></span>
       </div>
       <div class="ai-chat-header-actions">
-        <!-- Model dropdown: 3 options -->
+        <!-- Model dropdown: 2 allowlisted options -->
         <select id="ai-model-select" class="ai-model-select">
-          <option value="nvidia/llama-3.3-nemotron-super-49b-v1.5">Nemotron 49B</option>
-          <option value="meta/llama-3.1-8b-instruct">Llama 3.1 8B</option>
-          <option value="meta/llama-4-maverick-17b-128e-instruct">Llama 4 Maverick</option>
+          <option value="nvidia/llama-3.3-nemotron-super-49b-v1.5">Nemotron 49B (default)</option>
+          <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron Nano 30B</option>
         </select>
         <button id="ai-chat-history-btn"><i data-lucide="history"></i></button>
         <button id="ai-chat-close"><i data-lucide="x"></i></button>
@@ -1634,7 +1781,7 @@ Only rendered when `ai-enabled` profile is active:
 | `ai-chat-toggle` | Floating button | Opens/closes the panel |
 | `ai-chat-panel` | Main panel | Contains header, sidebar, messages, input |
 | `ai-chat-close` | Close button | Closes the panel |
-| `ai-model-select` | `<select>` | LLM model dropdown (3 options) |
+| `ai-model-select` | `<select>` | LLM model dropdown (2 options) |
 | `ai-chat-history-btn` | History button | Toggles conversation sidebar |
 | `ai-chat-sidebar` | Sidebar | Shows conversation list (authenticated only) |
 | `ai-chat-sidebar-list` | Sidebar list | Populated dynamically by `loadConversationList()` |
@@ -1648,13 +1795,14 @@ Only rendered when `ai-enabled` profile is active:
 | `ai-chat-id` | `<span>` | Displays current chatId |
 | `ai-chat-user-id` | `<span>` | Displays user ID (from meta tag) |
 
-**Model dropdown options:**
+**Model dropdown options (2 allowlisted NVIDIA NIM models):**
 
 | Value | Label |
 |-------|-------|
 | `nvidia/llama-3.3-nemotron-super-49b-v1.5` | Nemotron 49B (default) |
-| `meta/llama-3.1-8b-instruct` | Llama 3.1 8B |
-| `meta/llama-4-maverick-17b-128e-instruct` | Llama 4 Maverick |
+| `nvidia/nemotron-3-nano-30b-a3b` | Nemotron Nano 30B |
+
+**Frontend validation:** `chat.js` includes `ALLOWED_MODELS` array that mirrors the backend `MODEL_REGISTRY`. Invalid models are rejected client-side before the API call.
 
 ---
 
@@ -2065,6 +2213,21 @@ In `SecurityConfig.filterChain()`:
 | `AiAdminController` | `@PreAuthorize("hasRole('ADMIN')")` | Admin only |
 | `AdminAiChatController` | `@PreAuthorize("hasRole('ADMIN')")`, `@Profile("ai-enabled")` | Admin only, AI-gated |
 
+### Access Control — Conversation Ownership
+
+When an authenticated user tries to access a conversation they don't own:
+- **Before:** Returned 500 Internal Server Error
+- **Now:** Returns **403 Forbidden** via `AiAccessDeniedException.forConversation(chatId)`
+- **ErrorCode:** `AI_ACCESS_DENIED`
+- **Behavior:** `ChatServiceImpl.resolveConversationEntity()` validates `conv.getUser().getId().equals(user.getId())` and throws `AiAccessDeniedException` if mismatch
+
+### AI Service Availability
+
+When the AI service is not configured (property `shoppiq.ai.enabled=false`):
+- Controllers return **503 Service Unavailable** via `AiServiceUnavailableException.forChat()` or `.forIngestion()`
+- **ErrorCode:** `AI_SERVICE_UNAVAILABLE`
+- **Replaces:** Previous inline `Map.of("error", "AI service is not available...")` responses
+
 ---
 
 ## 25. File Reference
@@ -2092,7 +2255,11 @@ In `SecurityConfig.filterChain()`:
 | `ApplicationEventPublisherHolder.java` | `aiservice/events/` | Static event publisher holder |
 | `ItemEmbeddingEntityListener.java` | `aiservice/events/` | JPA lifecycle listener |
 | `ProductEmbeddingEvent.java` | `aiservice/events/` | Embedding sync event DTO |
-| `AiAssistantException.java` | `aiservice/exception/` | AI-specific exception |
+| `AiAssistantException.java` | `aiservice/exception/` | AI-specific exception (apiError, timeout, rateLimited, conversationResolved) |
+| `AiAccessDeniedException.java` | `aiservice/exception/` | 403 — user lacks access to conversation |
+| `AiModelNotSupportedException.java` | `aiservice/exception/` | 400 — model not in allowlist |
+| `AiServiceUnavailableException.java` | `aiservice/exception/` | 503 — AI service not configured |
+| `ModelResolutionService.java` | `aiservice/service/` | Centralized model resolution with allowlist + caching |
 | `ProductCatalogIngester.java` | `aiservice/ingestion/` | Qdrant vector store sync |
 | `ChatConversationRepository.java` | `aiservice/repository/` | Conversation repository |
 | `ChatMessageRepository.java` | `aiservice/repository/` | Message repository |
@@ -2111,7 +2278,7 @@ In `SecurityConfig.filterChain()`:
 | `pom.xml` | Added LangChain4j + Qdrant + BGE-small-en + onnxruntime dependencies |
 | `SecurityConfig.java` | Added CSRF exemptions + auth rules for `/api/ai/**` and `/api/admin/**` |
 | `application.yaml` | Added `shoppiq.ai.*` and `langchain4j.*` configuration |
-| `ErrorCode.java` | Added `AI_API_ERROR`, `AI_TIMEOUT`, `AI_RATE_LIMITED`, `AI_CONVERSATION_RESOLVED`, `AI_CONVERSATION_NOT_FOUND` |
+| `ErrorCode.java` | Added `AI_API_ERROR`, `AI_TIMEOUT`, `AI_RATE_LIMITED`, `AI_CONVERSATION_RESOLVED`, `AI_CONVERSATION_NOT_FOUND`, `AI_ACCESS_DENIED`, `AI_MODEL_NOT_SUPPORTED`, `AI_SERVICE_UNAVAILABLE` |
 | `Item.java` | Added `@EntityListeners(ItemEmbeddingEntityListener.class)` |
 | `ItemRepository.java` | Added `findAllWithItemDetails(Pageable)` for batch embedding |
 
@@ -2208,11 +2375,12 @@ This section catalogs every AI/ML and software engineering term found in the cod
 | **Dynamic system message** | `systemMessageProvider` per-request | `ChatServiceImpl.java:203, 247, 386` |
 | **Max tokens** | 4096 token limit | `ChatServiceConfig.java:60, 74` |
 | **OpenAI-compatible API** | NVIDIA NIM endpoint | `ChatServiceConfig.java:56-64` |
-| **Model switching** | Dynamic model per request | `ChatServiceImpl.java:141-177` |
-| **Model caching** | `ConcurrentHashMap` per model name | `ChatServiceImpl.java:86-87, 145, 166` |
-| **Lazy model creation** | `computeIfAbsent` on first use | `ChatServiceImpl.java:145, 166` |
+| **Model switching** | Dynamic model per request via `ModelResolutionService` | `ModelResolutionService.java`, `ChatServiceImpl.java:141-177` |
+| **Model caching** | `ConcurrentHashMap` per model name in `ModelResolutionService` | `ModelResolutionService.java:35-36` |
+| **Lazy model creation** | `computeIfAbsent` on first use | `ModelResolutionService.java:44, 52` |
+| **Model allowlist** | Only valid NVIDIA NIM models permitted | `ModelResolutionService.java:18-23` |
 | **Request/response logging** | `logRequests(true)` / `logResponses(true)` | `ChatServiceConfig.java:61-62, 75-76` |
-| **Timeout** | 60s for LLM calls | `ChatServiceConfig.java:63, 77` |
+| **Timeout** | 120s for LLM calls | `ChatServiceConfig.java:67, 83` |
 | **LLaMA-family model** | `nvidia/llama-3.3-nemotron-super-49b-v1.5` | `ChatServiceConfig.java:59, 73` |
 | **System prompt guidelines** | Behavioral rules in system prompt | `ChatServiceImpl.java:575-580` |
 
@@ -2281,9 +2449,11 @@ This section catalogs every AI/ML and software engineering term found in the cod
 | Term | Where | File:Line |
 |------|-------|-----------|
 | **Spring @Profile gating** | `ai-enabled` profile | `ChatServiceConfig.java:45`, `RagConfig.java:39` |
-| **Graceful degradation** | Null-check ➡️ 503 | `AiChatController.java:81` |
+| **Graceful degradation** | Null-check ➡️ 503 via `AiServiceUnavailableException` | `AiChatController.java`, `AiGuestChatController.java`, `AiAdminController.java` |
 | **Circuit breaker pattern** | Fail-open when AI disabled | `AiChatController.java:60-61` |
-| **Factory method exceptions** | `apiError()`, `timeout()`, `rateLimited()` | `AiAssistantException.java:45-81` |
+| **Factory method exceptions** | `apiError()`, `timeout()`, `rateLimited()`, `forConversation()`, `withModel()`, `forChat()` | Multiple exception classes |
+| **Allowlist validation** | Model names validated against `ALLOWED_MODELS` set | `ModelResolutionService.java:56-61` |
+| **Centralized model resolution** | `ModelResolutionService` handles all model creation + caching | `ModelResolutionService.java` |
 | **Separate DTOs** | Request/Response/Message DTOs | `dto/` package |
 | **Repository pattern** | Spring Data JPA | `repository/` package |
 | **Interface ➡️ Impl** | `ChatService` ➡️ `ChatServiceImpl` | `ChatService.java`, `ChatServiceImpl.java` |
@@ -2340,11 +2510,13 @@ This section catalogs every AI/ML and software engineering term found in the cod
 
 | Term | Where | File:Line |
 |------|-------|-----------|
-| **Custom exception hierarchy** | `ShoppiqException` ➡️ `AiAssistantException` | `AiAssistantException.java:26` |
-| **Typed error codes** | `AI_API_ERROR`, `AI_TIMEOUT`, etc. | `AiAssistantException.java:46-80` |
-| **HTTP status mapping** | 500, 504, 429, 410 | `AiAssistantException.java:47, 57, 68, 79` |
-| **Factory methods** | `apiError()`, `timeout()`, `rateLimited()` | `AiAssistantException.java:45-81` |
-| **Graceful fallback** | null service ➡️ 503 | `AiChatController.java:60-62` |
+| **Custom exception hierarchy** | `ShoppiqException` ➡️ `AiAssistantException`, `AiAccessDeniedException`, `AiModelNotSupportedException`, `AiServiceUnavailableException` | Multiple exception classes |
+| **Typed error codes** | `AI_API_ERROR`, `AI_TIMEOUT`, `AI_RATE_LIMITED`, `AI_ACCESS_DENIED`, `AI_MODEL_NOT_SUPPORTED`, `AI_SERVICE_UNAVAILABLE`, etc. | `ErrorCode.java` |
+| **HTTP status mapping** | 500, 504, 429, 410, 403, 400, 503 | Multiple exception classes |
+| **Factory methods** | `apiError()`, `timeout()`, `rateLimited()`, `forConversation()`, `withModel()`, `forChat()` | `AiAssistantException.java:45-81`, `AiAccessDeniedException.java`, `AiModelNotSupportedException.java`, `AiServiceUnavailableException.java` |
+| **Graceful fallback** | null service ➡️ 503 via `AiServiceUnavailableException` | `AiChatController.java`, `AiGuestChatController.java`, `AiAdminController.java` |
+| **Access control** | Conversation ownership validation ➡️ 403 via `AiAccessDeniedException` | `ChatServiceImpl.java:444-452` |
+| **Model validation** | Allowlist check ➡️ 400 via `AiModelNotSupportedException` | `ModelResolutionService.java:56-61` |
 | **Streaming error handling** | `doOnError` + fallback message | `ChatServiceImpl.java:263-266` |
 
 ### 26.14 Observability

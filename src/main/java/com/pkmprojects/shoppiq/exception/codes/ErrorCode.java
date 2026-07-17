@@ -483,7 +483,10 @@ public enum ErrorCode {
     AI_API_ERROR("AI_CHAT-500-001", "An error occurred with the AI assistant."),
     AI_RATE_LIMITED("AI_CHAT-429-001", "Too many AI requests. Please try again later."),
     AI_TIMEOUT("AI_CHAT-504-001", "AI assistant timed out. Please try again."),
-    AI_CONVERSATION_RESOLVED("AI_CHAT-410-001", "This conversation has been resolved.");
+    AI_CONVERSATION_RESOLVED("AI_CHAT-410-001", "This conversation has been resolved."),
+    AI_ACCESS_DENIED("AI_CHAT-403-001", "You do not have access to this conversation."),
+    AI_MODEL_NOT_SUPPORTED("AI_CHAT-400-001", "The requested AI model is not supported."),
+    AI_SERVICE_UNAVAILABLE("AI_CHAT-503-001", "AI service is not available. Please try again later.");
 
     /**
      * Stable machine-readable error identifier.
