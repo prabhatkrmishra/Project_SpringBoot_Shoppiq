@@ -139,6 +139,12 @@
             <version>1.27.0</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.qdrant</groupId>
+            <artifactId>client</artifactId>
+            <version>1.18.3</version>
+            <scope>compile</scope>
+        </dependency>
 
         <!-- Utilities -->
         <dependency>
@@ -300,7 +306,9 @@
                     <perCoreThreadCount>false</perCoreThreadCount>
                     <reuseForks>false</reuseForks>
                     <!--suppress UnresolvedMavenProperty -->
-                    <argLine>-javaagent:${org.mockito:mockito-core:jar} -XX:+EnableDynamicAgentLoading -Xmx1024m -XX:+UseG1GC -XX:MaxDirectMemorySize=512m</argLine>
+                    <argLine>-javaagent:${org.mockito:mockito-core:jar} -XX:+EnableDynamicAgentLoading -Xmx1024m
+                        -XX:+UseG1GC -XX:MaxDirectMemorySize=512m
+                    </argLine>
                 </configuration>
             </plugin>
         </plugins>

@@ -3,7 +3,7 @@
 # The RAG vector store is containerized.
 services:
   qdrant:
-    image: qdrant/qdrant:v1.13.0
+    image: qdrant/qdrant
     container_name: shoppiq-qdrant
     ports:
       - "6333:6333"   # REST API

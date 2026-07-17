@@ -24,13 +24,16 @@ window.debounce = function (fn, delay) {
 
 // ─── Mobile Menu ──────────────────────────────────────
 document.addEventListener('click', function (e) {
-    var toggle = e.target.closest('.menu-toggle');
-    var menu = document.querySelector('.mobile-menu');
-    if (toggle && menu) {
-        var expanded = toggle.getAttribute('aria-expanded') === 'true';
-        toggle.setAttribute('aria-expanded', !expanded);
-        menu.setAttribute('aria-hidden', expanded);
-    }
+    var toggle = e.target.closest('.menu-toggle, .admin-menu-toggle');
+    if (!toggle) return;
+
+    var isAdmin = toggle.classList.contains('admin-menu-toggle');
+    var menu = document.querySelector(isAdmin ? '.admin-mobile-menu' : '.mobile-menu');
+    if (!menu) return;
+
+    var expanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', !expanded);
+    menu.setAttribute('aria-hidden', expanded);
 });
 
 // ─── Toast Notifications ──────────────────────────────
