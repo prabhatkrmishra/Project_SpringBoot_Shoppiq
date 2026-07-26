@@ -18,7 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -46,9 +48,16 @@ class PromoCodeServiceImplTest {
     private PromoCodeRepository promoCodeRepository;
     @Mock
     private PromoCodeUsageRepository promoCodeUsageRepository;
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private PromoCodeServiceImpl promoCodeService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2026-07-26T10:30:00Z"));
+    }
 
     // ─── Helpers ──────────────────────────────────────────────────────────
 

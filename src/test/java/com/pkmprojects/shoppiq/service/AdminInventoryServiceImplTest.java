@@ -219,7 +219,9 @@ class AdminInventoryServiceImplTest {
         @Test
         @DisplayName("returns summary with correct counts")
         void returnsSummaryWithCorrectCounts() {
-            when(itemDetailsRepository.findAll()).thenReturn(List.of(testItemDetails));
+            when(itemDetailsRepository.count()).thenReturn(1L);
+            when(itemDetailsRepository.countOutOfStockProducts()).thenReturn(0L);
+            when(itemDetailsRepository.countLowStockProducts(5)).thenReturn(0L);
 
             AdminInventoryService.InventoryDashboardSummary result = inventoryService.getInventoryDashboardSummary();
 

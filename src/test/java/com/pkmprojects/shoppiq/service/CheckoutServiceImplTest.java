@@ -20,7 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -65,9 +67,16 @@ class CheckoutServiceImplTest {
     private PromoCodeService promoCodeService;
     @Mock
     private OrderEmailService orderEmailService;
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private CheckoutServiceImpl checkoutService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2026-01-15T10:30:00Z"));
+    }
 
     // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -174,7 +183,7 @@ class CheckoutServiceImplTest {
 
             CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, null);
 
-            when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+            when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
             when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
                 Order o = inv.getArgument(0);
@@ -211,7 +220,7 @@ class CheckoutServiceImplTest {
         @DisplayName("Fails — no cart exists (CartEmptyException)")
         void checkout_noCart_throws() throws Exception {
             User user = buildUser(1L);
-            when(cartRepository.findByUser(user)).thenReturn(Optional.empty());
+            when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
                     checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD, null))
@@ -223,7 +232,7 @@ class CheckoutServiceImplTest {
         void checkout_emptyCart_throws() throws Exception {
             User user = buildUser(1L);
             Cart cart = buildCart(user, new ArrayList<>());
-            when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+            when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
 
             assertThatThrownBy(() ->
                     checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD, null))
@@ -237,7 +246,7 @@ class CheckoutServiceImplTest {
             ItemDetails details = buildItemDetails(1L, BigDecimal.valueOf(100), 10);
             Cart cart = buildCart(user, List.of(buildCartItem(details, 1)));
 
-            when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+            when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
@@ -254,7 +263,7 @@ class CheckoutServiceImplTest {
             ItemDetails details = buildItemDetails(1L, BigDecimal.valueOf(100), 10);
             Cart cart = buildCart(alice, List.of(buildCartItem(details, 1)));
 
-            when(cartRepository.findByUser(alice)).thenReturn(Optional.of(cart));
+            when(cartRepository.findByUserWithItems(alice)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(5L)).thenReturn(Optional.of(bobsAddress));
 
             assertThatThrownBy(() ->
@@ -272,7 +281,7 @@ class CheckoutServiceImplTest {
             CartItem cartItem = buildCartItem(details, 3); // requesting 3
             Cart cart = buildCart(user, List.of(cartItem));
 
-            when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+            when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
 
             assertThatThrownBy(() ->
@@ -297,7 +306,7 @@ class CheckoutServiceImplTest {
                     buildCartItem(d2, 3)  // 600 → total 800
             ));
 
-            when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+            when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
             when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
                 Order o = inv.getArgument(0);
@@ -329,7 +338,7 @@ class CheckoutServiceImplTest {
 
             CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, null);
 
-            when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+            when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
             when(itemDetailsRepository.save(any(ItemDetails.class)))
                     .thenThrow(new org.springframework.dao.OptimisticLockingFailureException("version mismatch"));

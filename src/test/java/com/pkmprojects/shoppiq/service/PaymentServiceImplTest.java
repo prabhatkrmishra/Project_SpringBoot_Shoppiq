@@ -19,7 +19,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,7 +66,8 @@ class PaymentServiceImplTest {
     @BeforeEach
     void setUp() {
         gatewayRegistry = new PaymentGatewayRegistry(List.of(codGateway, onlineGateway));
-        paymentService = new PaymentServiceImpl(paymentRepository, gatewayRegistry);
+        Clock fixedClock = Clock.fixed(Instant.parse("2026-01-15T10:30:00Z"), ZoneOffset.UTC);
+        paymentService = new PaymentServiceImpl(paymentRepository, gatewayRegistry, fixedClock);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────
