@@ -139,13 +139,9 @@
         (function () {
             'use strict';
 
-            var COD_SURCHARGE = 5.00;
-            var EXPRESS_DELIVERY_FEE = 7.50;
-
-            var cartSubtotal = 0;
-            var discountAmount = 0;
             var addressId = null;
             var promoCode = null;
+            var currentCalc = null;
 
             function showPaymentError(msg) {
                 document.getElementById('payment-loading').style.display = 'none';
@@ -153,60 +149,68 @@
                 document.getElementById('payment-error-msg').textContent = msg || 'Unable to load payment details.';
             }
 
-            function updateSummary() {
-                var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
-                var deliveryType = document.querySelector('input[name="deliveryType"]:checked');
-                var method = paymentMethod ? paymentMethod.value : 'CREDIT_CARD';
-                var delivery = deliveryType ? deliveryType.value : 'NORMAL';
+            function setCalcLoading(loading) {
+                var el = document.getElementById('pay-subtotal');
+                if (!el) return;
+                if (loading) {
+                    el.textContent = 'Calculating...';
+                }
+            }
 
-                var deliveryFee = delivery === 'EXPRESS_1DAY' ? EXPRESS_DELIVERY_FEE : 0;
-                var codFee = method === 'COD' ? COD_SURCHARGE : 0;
+            function fetchSummary() {
+                var paymentRadio = document.querySelector('input[name="paymentMethod"]:checked');
+                var deliveryRadio = document.querySelector('input[name="deliveryType"]:checked');
 
-                document.getElementById('pay-delivery').textContent = deliveryFee > 0
-                    ? formatCurrency(deliveryFee)
-                    : 'Free';
+                var payload = {
+                    paymentMethod: paymentRadio ? paymentRadio.value : 'CREDIT_CARD',
+                    deliveryType: deliveryRadio ? deliveryRadio.value : 'NORMAL'
+                };
+                if (promoCode) {
+                    payload.promoCode = promoCode;
+                }
+
+                setCalcLoading(true);
+
+                API.post('/user/order/calculate', payload).then(function (res) {
+                    currentCalc = res;
+                    renderSummary(res);
+                    setCalcLoading(false);
+                }).catch(function () {
+                    setCalcLoading(false);
+                });
+            }
+
+            function renderSummary(res) {
+                document.getElementById('pay-subtotal').textContent = formatCurrency(res.subtotal);
+
+                var discountRow = document.getElementById('pay-discount-row');
+                if (res.discount && parseFloat(res.discount) > 0) {
+                    discountRow.style.display = '';
+                    document.getElementById('pay-discount').textContent = '-' + formatCurrency(res.discount);
+                } else {
+                    discountRow.style.display = 'none';
+                }
+
+                document.getElementById('pay-delivery').textContent =
+                    res.deliveryCharge && parseFloat(res.deliveryCharge) > 0
+                        ? formatCurrency(res.deliveryCharge)
+                        : 'Free';
 
                 var codRow = document.getElementById('pay-cod-row');
-                if (codFee > 0) {
+                if (res.codSurcharge && parseFloat(res.codSurcharge) > 0) {
                     codRow.style.display = '';
-                    document.getElementById('pay-cod-fee').textContent = formatCurrency(codFee);
+                    document.getElementById('pay-cod-fee').textContent = formatCurrency(res.codSurcharge);
                 } else {
                     codRow.style.display = 'none';
                 }
 
-                var total = cartSubtotal - discountAmount + deliveryFee + codFee;
-                document.getElementById('pay-total').textContent = formatCurrency(total);
-            }
-
-            function renderCart(cart) {
-                cartSubtotal = cart.subtotal || 0;
-                document.getElementById('pay-subtotal').textContent = formatCurrency(cartSubtotal);
-
-                var savedPromo = sessionStorage.getItem('promoCode');
-                if (savedPromo) {
-                    API.post('/api/promo-codes/validate', {
-                        code: savedPromo,
-                        subtotal: cartSubtotal
-                    }).then(function (res) {
-                        discountAmount = parseFloat(res.discount) || 0;
-                        document.getElementById('pay-discount-row').style.display = '';
-                        document.getElementById('pay-discount').textContent = '-' + formatCurrency(discountAmount);
-                        updateSummary();
-                    }).catch(function () {
-                        discountAmount = 0;
-                        sessionStorage.removeItem('promoCode');
-                        updateSummary();
-                    });
-                } else {
-                    updateSummary();
-                }
+                document.getElementById('pay-total').textContent = formatCurrency(res.grandTotal);
             }
 
             function bindRadioListeners() {
                 var radios = document.querySelectorAll('input[name="paymentMethod"], input[name="deliveryType"]');
                 radios.forEach(function (radio) {
                     radio.addEventListener('change', function () {
-                        // Update selected styling
                         var group = this.closest('.payment-methods');
                         if (group) {
                             group.querySelectorAll('.payment-method').forEach(function (el) {
@@ -214,7 +218,7 @@
                             });
                         }
                         this.closest('.payment-method').classList.add('selected');
-                        updateSummary();
+                        fetchSummary();
                     });
                 });
             }
@@ -228,16 +232,13 @@
                     return;
                 }
 
-                Promise.all([
-                    API.get('/user/cart/get')
-                ]).then(function (results) {
-                    var cart = results[0];
+                API.get('/user/cart/get').then(function (cart) {
                     if (!cart || !cart.items || cart.items.length === 0) {
                         showPaymentError('Your cart is empty. Please add items before checking out.');
                         return;
                     }
-                    renderCart(cart);
                     bindRadioListeners();
+                    fetchSummary();
 
                     document.getElementById('payment-loading').style.display = 'none';
                     document.getElementById('payment-form').style.display = '';

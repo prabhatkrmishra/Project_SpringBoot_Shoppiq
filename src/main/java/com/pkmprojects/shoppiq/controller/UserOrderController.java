@@ -4,6 +4,8 @@ import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
+import com.pkmprojects.shoppiq.dto.order.OrderCalculationRequest;
+import com.pkmprojects.shoppiq.dto.order.OrderCalculationResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.User;
 import com.pkmprojects.shoppiq.service.impl.CheckoutServiceImpl;
@@ -66,6 +68,27 @@ public class UserOrderController {
 
         CheckoutResponse response = checkoutService.checkout(user, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Calculates the full order cost breakdown from the user's cart
+     * without placing an order.
+     *
+     * <p>Call this from the payment page whenever the payment method or
+     * delivery type changes so the frontend always displays server-calculated
+     * values.</p>
+     *
+     * @param user    authenticated customer
+     * @param request payment and delivery selections
+     * @return 200 OK with cost breakdown
+     */
+    @PostMapping("/calculate")
+    public ResponseEntity<OrderCalculationResponse> calculateOrderSummary(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody OrderCalculationRequest request) {
+
+        OrderCalculationResponse response = checkoutService.calculateOrderSummary(user, request);
+        return ResponseEntity.ok(response);
     }
 
     // =========================================================

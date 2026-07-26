@@ -3,6 +3,8 @@ package com.pkmprojects.shoppiq.service.impl;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
+import com.pkmprojects.shoppiq.dto.order.OrderCalculationRequest;
+import com.pkmprojects.shoppiq.dto.order.OrderCalculationResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.enums.DeliveryType;
@@ -24,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.time.Instant;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -122,7 +124,7 @@ public class CheckoutServiceImpl {
             throw AddressAccessDeniedException.forAddress(request.addressId());
         }
 
-        for (CartItem cartItem : cartItems) {
+        cartItems.forEach(cartItem -> {
             ItemDetails details = cartItem.getItemDetails();
             int available = details.getStockQuantity();
             int requested = cartItem.getQuantity();
@@ -130,9 +132,10 @@ public class CheckoutServiceImpl {
                 throw InsufficientStockException.forItem(
                         details.getSku(), requested, available);
             }
-        }
+        });
 
-        BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal subtotal;
+        subtotal = BigDecimal.ZERO;
         for (CartItem cartItem : cartItems) {
             BigDecimal lineTotal = cartItem.getItemDetails().getPrice()
                     .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
@@ -225,6 +228,74 @@ public class CheckoutServiceImpl {
         }
 
         return CheckoutResponse.from(order, payment.getId());
+    }
+
+    // =========================================================
+    // Cost preview (no persistence)
+    // =========================================================
+
+    /**
+     * Calculates the full order cost breakdown from the user's current cart
+     * without placing an order.
+     *
+     * <p>Use this on the payment page so every cost component — delivery charge,
+     * COD surcharge, discount, grand total — is server-authoritative.</p>
+     *
+     * @param user    authenticated customer
+     * @param request payment and delivery selections
+     * @return full cost breakdown
+     * @throws CartEmptyException if the cart is missing or empty
+     */
+    @Transactional(readOnly = true)
+    public OrderCalculationResponse calculateOrderSummary(User user, OrderCalculationRequest request) {
+
+        Cart cart = cartRepository.findByUserWithItems(user)
+                .orElseThrow(CartEmptyException::new);
+
+        List<CartItem> cartItems = cart.getItems();
+        if (cartItems == null || cartItems.isEmpty()) {
+            throw new CartEmptyException();
+        }
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (CartItem cartItem : cartItems) {
+            BigDecimal lineTotal = cartItem.getItemDetails().getPrice()
+                    .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+            subtotal = subtotal.add(lineTotal);
+        }
+
+        DeliveryType deliveryType = request.deliveryType() != null
+                ? request.deliveryType() : DeliveryType.NORMAL;
+
+        BigDecimal deliveryCharge = BigDecimal.ZERO;
+        if (deliveryType == DeliveryType.EXPRESS_1DAY) {
+            deliveryCharge = new BigDecimal("7.50");
+        }
+
+        BigDecimal codSurcharge = BigDecimal.ZERO;
+        if (request.paymentMethod() == PaymentMethod.COD) {
+            codSurcharge = new BigDecimal("5.00");
+        }
+
+        BigDecimal shippingFee = deliveryCharge.add(codSurcharge);
+
+        BigDecimal discount = BigDecimal.ZERO;
+        if (request.promoCode() != null && !request.promoCode().isBlank()) {
+            PromoCode appliedPromoCode = promoCodeService.validateAndCalculate(
+                    request.promoCode(), user, subtotal);
+            discount = promoCodeService.calculateDiscount(appliedPromoCode, subtotal);
+        }
+
+        BigDecimal grandTotal = subtotal.add(shippingFee).subtract(discount);
+
+        return new OrderCalculationResponse(
+                subtotal,
+                deliveryCharge,
+                codSurcharge,
+                shippingFee,
+                discount,
+                grandTotal
+        );
     }
 
     // =========================================================
