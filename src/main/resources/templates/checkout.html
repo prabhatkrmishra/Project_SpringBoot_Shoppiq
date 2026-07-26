@@ -11,10 +11,10 @@
                 <h1>Checkout</h1>
             </div>
 
-            <div class="checkout-progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
-                <span class="step active"><span class="step-dot"></span> Cart</span>
+            <div class="checkout-progress" role="progressbar" aria-valuenow="2" aria-valuemin="1" aria-valuemax="3">
+                <span class="step completed"><a href="/cart" class="step-link"><span class="step-dot"></span> Cart</a></span>
                 <span class="step-line"></span>
-                <span class="step"><span class="step-dot"></span> Details</span>
+                <span class="step active"><span class="step-dot"></span> Details</span>
                 <span class="step-line"></span>
                 <span class="step"><span class="step-dot"></span> Pay</span>
             </div>
@@ -41,38 +41,9 @@
                         </div>
                     </section>
 
-                    <section class="checkout-section" aria-labelledby="payment-heading">
-                        <div class="checkout-section-header">
-                            <h2 id="payment-heading"><span class="checkout-step-number">2</span> Payment Method</h2>
-                        </div>
-                        <div class="payment-methods">
-                            <label class="payment-method selected">
-                                <input type="radio" name="paymentMethod" value="CREDIT_CARD" checked>
-                                <div>
-                                    <div class="method-label">Credit Card</div>
-                                    <div class="method-desc">Visa, Mastercard, Amex</div>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="PAYPAL">
-                                <div>
-                                    <div class="method-label">PayPal</div>
-                                    <div class="method-desc">Pay with your PayPal account</div>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="STRIPE">
-                                <div>
-                                    <div class="method-label">Stripe</div>
-                                    <div class="method-desc">Secure card payments via Stripe</div>
-                                </div>
-                            </label>
-                        </div>
-                    </section>
-
                     <section class="checkout-section" aria-labelledby="review-heading">
                         <div class="checkout-section-header">
-                            <h2 id="review-heading"><span class="checkout-step-number">3</span> Review Items</h2>
+                            <h2 id="review-heading"><span class="checkout-step-number">2</span> Review Items</h2>
                         </div>
                         <div id="review-items"></div>
                     </section>
@@ -96,9 +67,7 @@
                         </div>
                         <div id="checkout-promo-msg" style="display:none;" class="text-sm mt-sm"></div>
                         <div class="cart-actions">
-                            <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg btn-block">Place
-                                Order
-                            </button>
+                            <button type="submit" id="pay-btn" class="btn btn-primary btn-lg btn-block">Pay</button>
                         </div>
                     </div>
                 </aside>
@@ -244,38 +213,12 @@
                         showToast('Please select a shipping address', 'error');
                         return;
                     }
-                    var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
-                    if (!paymentMethod) {
-                        showToast('Please select a payment method', 'error');
-                        return;
+                    // Store checkout data in sessionStorage and redirect to payment page
+                    sessionStorage.setItem('checkoutAddressId', selectedAddressId);
+                    if (appliedPromoCode) {
+                        sessionStorage.setItem('promoCode', appliedPromoCode);
                     }
-                    var btn = document.getElementById('place-order-btn');
-                    setButtonLoading(btn, true);
-                    API.post('/user/order/checkout', {
-                        addressId: selectedAddressId,
-                        paymentMethod: paymentMethod.value,
-                        promoCode: appliedPromoCode
-                    }).then(function (res) {
-                        showToast('Order placed successfully!', 'success');
-                        sessionStorage.removeItem('promoCode');
-                        if (paymentMethod.value !== 'COD' && res.paymentId) {
-                            var simulatedTxn = 'TEST-' + res.paymentId + '-' + Date.now();
-                            return API.post('/user/payment/verify', {
-                                paymentId: res.paymentId,
-                                transactionId: simulatedTxn
-                            }).catch(function (e) {
-                                console.warn('Payment verification skipped:', e.message);
-                            }).then(function () {
-                                return res;
-                            });
-                        }
-                        return res;
-                    }).then(function (res) {
-                        window.location.href = '/order-detail?id=' + res.orderId;
-                    }).catch(function (err) {
-                        showToast(err.message || 'Failed to place order', 'error');
-                        setButtonLoading(btn, false);
-                    });
+                    window.location.href = '/payment';
                 });
             });
         })();

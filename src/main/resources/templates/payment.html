@@ -6,91 +6,146 @@
     <th:block th:replace="~{fragments/alerts :: toast-container}"></th:block>
 
     <main class="page">
-        <div class="container container-narrow">
+        <div class="container">
+            <div class="page-header">
+                <h1>Payment</h1>
+            </div>
+
+            <div class="checkout-progress" role="progressbar" aria-valuenow="3" aria-valuemin="1" aria-valuemax="3">
+                <span class="step completed"><a href="/cart" class="step-link"><span class="step-dot"></span> Cart</a></span>
+                <span class="step-line"></span>
+                <span class="step completed"><a href="/checkout" class="step-link"><span class="step-dot"></span> Details</a></span>
+                <span class="step-line"></span>
+                <span class="step active"><span class="step-dot"></span> Pay</span>
+            </div>
+
             <div id="payment-loading" class="flex-center" style="padding:3rem;">
                 <span class="spinner"></span>
             </div>
 
             <div id="payment-error" style="display:none;">
-                <div class="page-header">
-                    <h1>Payment</h1>
-                </div>
                 <div class="panel text-center">
                     <p id="payment-error-msg">Unable to load payment details.</p>
-                    <a href="/orders" class="btn btn-secondary mt-md">View Orders</a>
+                    <a href="/cart" class="btn btn-secondary mt-md">Back to Cart</a>
                 </div>
             </div>
 
-            <div id="payment-content" style="display:none;">
-                <div class="page-header">
-                    <h1>Payment</h1>
-                    <p>Complete your payment to place the order</p>
+            <form id="payment-form" class="checkout-page" style="display:none;">
+                <div class="checkout-main">
+                    <section class="checkout-section" aria-labelledby="payment-type-heading">
+                        <div class="checkout-section-header">
+                            <h2 id="payment-type-heading"><span class="checkout-step-number">1</span> Payment Type</h2>
+                        </div>
+                        <div class="payment-methods">
+                            <label class="payment-method selected">
+                                <input type="radio" name="paymentMethod" value="CREDIT_CARD" checked>
+                                <div>
+                                    <div class="method-label">Credit Card</div>
+                                    <div class="method-desc">Visa, Mastercard, Amex</div>
+                                </div>
+                            </label>
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="PAYPAL">
+                                <div>
+                                    <div class="method-label">PayPal</div>
+                                    <div class="method-desc">Pay with your PayPal account</div>
+                                </div>
+                            </label>
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="STRIPE">
+                                <div>
+                                    <div class="method-label">Stripe</div>
+                                    <div class="method-desc">Secure card payments via Stripe</div>
+                                </div>
+                            </label>
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="UPI">
+                                <div>
+                                    <div class="method-label">UPI</div>
+                                    <div class="method-desc">Google Pay, PhonePe, Paytm, BHIM</div>
+                                </div>
+                            </label>
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="COD">
+                                <div>
+                                    <div class="method-label">Cash on Delivery</div>
+                                    <div class="method-desc">Pay when you receive your order (+ $5.00 COD charge)</div>
+                                </div>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="checkout-section" aria-labelledby="delivery-type-heading">
+                        <div class="checkout-section-header">
+                            <h2 id="delivery-type-heading"><span class="checkout-step-number">2</span> Delivery Type
+                            </h2>
+                        </div>
+                        <div class="payment-methods">
+                            <label class="payment-method selected">
+                                <input type="radio" name="deliveryType" value="NORMAL" checked>
+                                <div>
+                                    <div class="method-label">Normal Delivery</div>
+                                    <div class="method-desc">Free shipping — delivered in 5-7 business days</div>
+                                </div>
+                            </label>
+                            <label class="payment-method">
+                                <input type="radio" name="deliveryType" value="EXPRESS_1DAY">
+                                <div>
+                                    <div class="method-label">1-Day Express Delivery</div>
+                                    <div class="method-desc">Get it tomorrow — $7.50 delivery charge</div>
+                                </div>
+                            </label>
+                        </div>
+                    </section>
                 </div>
 
-                <div class="panel">
-                    <div class="panel-title">Payment Details</div>
-
-                    <div class="form-section">
-                        <div class="form-group">
-                            <label for="cardNumber" class="form-label">Card Number</label>
-                            <input type="text" id="cardNumber" class="form-input" placeholder="1234 5678 9012 3456"
-                                   inputmode="numeric" autocomplete="cc-number">
+                <aside class="checkout-sidebar">
+                    <div class="checkout-section">
+                        <div class="cart-summary-title">Payment Summary</div>
+                        <div class="cart-summary-row">
+                            <span>Product Cost</span>
+                            <span id="pay-subtotal">$0.00</span>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="expiry" class="form-label">Expiry Date</label>
-                                <input type="text" id="expiry" class="form-input" placeholder="MM/YY"
-                                       autocomplete="cc-exp">
-                            </div>
-                            <div class="form-group">
-                                <label for="cvv" class="form-label">CVV</label>
-                                <input type="text" id="cvv" class="form-input" placeholder="123" inputmode="numeric"
-                                       autocomplete="cc-csc">
-                            </div>
+                        <div id="pay-discount-row" class="cart-summary-row" style="display:none;">
+                            <span>Discount</span>
+                            <span id="pay-discount" class="text-success">-$0.00</span>
                         </div>
-                        <div class="form-group">
-                            <label for="cardName" class="form-label">Name on Card</label>
-                            <input type="text" id="cardName" class="form-input" placeholder="John Doe"
-                                   autocomplete="cc-name">
+                        <div class="cart-summary-row">
+                            <span>Delivery Charge</span>
+                            <span id="pay-delivery">Free</span>
+                        </div>
+                        <div id="pay-cod-row" class="cart-summary-row" style="display:none;">
+                            <span>COD Surcharge</span>
+                            <span id="pay-cod-fee">$5.00</span>
+                        </div>
+                        <div class="cart-summary-row total">
+                            <span>Total</span>
+                            <span id="pay-total">$0.00</span>
+                        </div>
+                        <div class="cart-actions">
+                            <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg btn-block">Place
+                                Order
+                            </button>
                         </div>
                     </div>
-
-                    <div class="cart-summary-row total mb-lg">
-                        <span>Total to Pay</span>
-                        <span id="payment-amount">$0.00</span>
-                    </div>
-
-                    <button id="pay-now-btn" class="btn btn-primary btn-lg btn-block" data-payment-id="">Pay Now
-                    </button>
-                    <button id="cancel-payment-btn" class="btn btn-danger btn-lg btn-block mt-md" style="display:none;"
-                            data-payment-id="">Cancel Payment
-                    </button>
-
-                    <div id="verify-section" style="display:none;" class="mt-lg"
-                         style="border-top:1px solid var(--color-border);padding-top:1rem;">
-                        <div class="panel-title">Verify Payment</div>
-                        <p class="text-sm text-muted mb-md">Enter the transaction ID from your payment gateway to
-                            verify.</p>
-                        <div class="form-group">
-                            <label for="transaction-id" class="form-label">Transaction ID</label>
-                            <input type="text" id="transaction-id" class="form-input"
-                                   placeholder="Enter transaction ID">
-                        </div>
-                        <button id="verify-btn" class="btn btn-primary">Verify Payment</button>
-                    </div>
-
-                    <div class="text-center mt-md">
-                        <a href="/orders" class="btn-link">Back to Orders</a>
-                    </div>
-                </div>
-            </div>
+                </aside>
+            </form>
         </div>
     </main>
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script src="/js/sanitize.js"></script>
     <script>
         (function () {
             'use strict';
+
+            var COD_SURCHARGE = 5.00;
+            var EXPRESS_DELIVERY_FEE = 7.50;
+
+            var cartSubtotal = 0;
+            var discountAmount = 0;
+            var addressId = null;
+            var promoCode = null;
 
             function showPaymentError(msg) {
                 document.getElementById('payment-loading').style.display = 'none';
@@ -98,93 +153,142 @@
                 document.getElementById('payment-error-msg').textContent = msg || 'Unable to load payment details.';
             }
 
-            function renderPayment(payment) {
-                document.getElementById('payment-loading').style.display = 'none';
-                document.getElementById('payment-content').style.display = '';
-                document.getElementById('payment-amount').textContent = formatCurrency(payment.amount);
-                document.getElementById('pay-now-btn').dataset.paymentId = payment.id;
-                if (payment.status === 'PAID') {
-                    document.getElementById('pay-now-btn').textContent = 'Paid';
-                    document.getElementById('pay-now-btn').disabled = true;
-                    document.getElementById('pay-now-btn').className = 'btn btn-success btn-lg btn-block';
-                } else if (payment.status !== 'PENDING' && payment.status !== 'FAILED') {
-                    document.getElementById('pay-now-btn').textContent = payment.status;
-                    document.getElementById('pay-now-btn').disabled = true;
-                    document.getElementById('pay-now-btn').className = 'btn btn-secondary btn-lg btn-block';
+            function updateSummary() {
+                var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+                var deliveryType = document.querySelector('input[name="deliveryType"]:checked');
+                var method = paymentMethod ? paymentMethod.value : 'CREDIT_CARD';
+                var delivery = deliveryType ? deliveryType.value : 'NORMAL';
+
+                var deliveryFee = delivery === 'EXPRESS_1DAY' ? EXPRESS_DELIVERY_FEE : 0;
+                var codFee = method === 'COD' ? COD_SURCHARGE : 0;
+
+                document.getElementById('pay-delivery').textContent = deliveryFee > 0
+                    ? formatCurrency(deliveryFee)
+                    : 'Free';
+
+                var codRow = document.getElementById('pay-cod-row');
+                if (codFee > 0) {
+                    codRow.style.display = '';
+                    document.getElementById('pay-cod-fee').textContent = formatCurrency(codFee);
+                } else {
+                    codRow.style.display = 'none';
                 }
-                if (payment.status === 'PENDING' || payment.status === 'FAILED') {
-                    var cancelBtn = document.getElementById('cancel-payment-btn');
-                    cancelBtn.style.display = '';
-                    cancelBtn.dataset.paymentId = payment.id;
-                }
-                if (payment.status === 'PROCESSING') {
-                    document.getElementById('verify-section').style.display = '';
+
+                var total = cartSubtotal - discountAmount + deliveryFee + codFee;
+                document.getElementById('pay-total').textContent = formatCurrency(total);
+            }
+
+            function renderCart(cart) {
+                cartSubtotal = cart.subtotal || 0;
+                document.getElementById('pay-subtotal').textContent = formatCurrency(cartSubtotal);
+
+                var savedPromo = sessionStorage.getItem('promoCode');
+                if (savedPromo) {
+                    API.post('/api/promo-codes/validate', {
+                        code: savedPromo,
+                        subtotal: cartSubtotal
+                    }).then(function (res) {
+                        discountAmount = parseFloat(res.discount) || 0;
+                        document.getElementById('pay-discount-row').style.display = '';
+                        document.getElementById('pay-discount').textContent = '-' + formatCurrency(discountAmount);
+                        updateSummary();
+                    }).catch(function () {
+                        discountAmount = 0;
+                        sessionStorage.removeItem('promoCode');
+                        updateSummary();
+                    });
+                } else {
+                    updateSummary();
                 }
             }
 
+            function bindRadioListeners() {
+                var radios = document.querySelectorAll('input[name="paymentMethod"], input[name="deliveryType"]');
+                radios.forEach(function (radio) {
+                    radio.addEventListener('change', function () {
+                        // Update selected styling
+                        var group = this.closest('.payment-methods');
+                        if (group) {
+                            group.querySelectorAll('.payment-method').forEach(function (el) {
+                                el.classList.remove('selected');
+                            });
+                        }
+                        this.closest('.payment-method').classList.add('selected');
+                        updateSummary();
+                    });
+                });
+            }
+
             document.addEventListener('DOMContentLoaded', function () {
-                var paymentId = new URLSearchParams(window.location.search).get('paymentId');
-                if (!paymentId) {
-                    showPaymentError('No payment ID specified.');
+                addressId = sessionStorage.getItem('checkoutAddressId');
+                promoCode = sessionStorage.getItem('promoCode');
+
+                if (!addressId) {
+                    showPaymentError('No shipping address selected. Please go back to checkout.');
                     return;
                 }
-                API.get('/user/payment/get/' + paymentId).then(renderPayment).catch(function (err) {
-                    showPaymentError(err.message || 'Failed to load payment details.');
-                });
-                document.getElementById('pay-now-btn').addEventListener('click', function () {
-                    var btn = this;
-                    var id = btn.dataset.paymentId;
-                    if (!id) return;
-                    setButtonLoading(btn, true);
-                    API.post('/user/payment/pay/' + id, {}).then(function () {
-                        showToast('Payment successful!', 'success');
-                        btn.textContent = 'Paid';
-                        btn.disabled = true;
-                        btn.className = 'btn btn-success btn-lg btn-block';
-                        document.getElementById('cancel-payment-btn').style.display = 'none';
-                    }).catch(function (err) {
-                        showToast(err.message || 'Payment failed', 'error');
-                        setButtonLoading(btn, false);
-                    });
-                });
-                document.getElementById('cancel-payment-btn').addEventListener('click', function () {
-                    var btn = this;
-                    var id = btn.dataset.paymentId;
-                    if (!id) return;
-                    showConfirmModal({
-                        title: 'Cancel Payment',
-                        message: 'Cancel this payment?',
-                        confirmText: 'Cancel Payment',
-                        danger: true
-                    }).then(function (confirmed) {
-                        if (!confirmed) return;
-                        setButtonLoading(btn, true);
-                        API.put('/user/payment/cancel/' + id, {}).then(function () {
-                            showToast('Payment cancelled', 'success');
-                            window.location.href = '/orders';
-                        }).catch(function (err) {
-                            showToast(err.message || 'Failed to cancel', 'error');
-                            setButtonLoading(btn, false);
-                        });
-                    });
-                });
-                document.getElementById('verify-btn').addEventListener('click', function () {
-                    var btn = this;
-                    var txId = document.getElementById('transaction-id').value.trim();
-                    if (!txId) {
-                        showToast('Enter transaction ID', 'error');
+
+                Promise.all([
+                    API.get('/user/cart/get')
+                ]).then(function (results) {
+                    var cart = results[0];
+                    if (!cart || !cart.items || cart.items.length === 0) {
+                        showPaymentError('Your cart is empty. Please add items before checking out.');
                         return;
                     }
+                    renderCart(cart);
+                    bindRadioListeners();
+
+                    document.getElementById('payment-loading').style.display = 'none';
+                    document.getElementById('payment-form').style.display = '';
+                }).catch(function (err) {
+                    showPaymentError(err.message || 'Failed to load payment data.');
+                });
+
+                document.getElementById('payment-form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+                    var deliveryType = document.querySelector('input[name="deliveryType"]:checked');
+
+                    if (!paymentMethod) {
+                        showToast('Please select a payment method', 'error');
+                        return;
+                    }
+                    if (!deliveryType) {
+                        showToast('Please select a delivery type', 'error');
+                        return;
+                    }
+
+                    var btn = document.getElementById('place-order-btn');
                     setButtonLoading(btn, true);
-                    API.post('/user/payment/verify', {transactionId: txId}).then(function () {
-                        showToast('Payment verified!', 'success');
-                        document.getElementById('verify-section').style.display = 'none';
-                        document.getElementById('pay-now-btn').textContent = 'Paid';
-                        document.getElementById('pay-now-btn').disabled = true;
-                        document.getElementById('pay-now-btn').className = 'btn btn-success btn-lg btn-block';
-                        document.getElementById('cancel-payment-btn').style.display = 'none';
+
+                    API.post('/user/order/checkout', {
+                        addressId: parseInt(addressId),
+                        paymentMethod: paymentMethod.value,
+                        deliveryType: deliveryType.value,
+                        promoCode: promoCode
+                    }).then(function (res) {
+                        showToast('Order placed successfully!', 'success');
+                        sessionStorage.removeItem('promoCode');
+                        sessionStorage.removeItem('checkoutAddressId');
+
+                        if (paymentMethod.value !== 'COD' && res.paymentId) {
+                            var simulatedTxn = 'TEST-' + res.paymentId + '-' + Date.now();
+                            return API.post('/user/payment/verify', {
+                                paymentId: res.paymentId,
+                                transactionId: simulatedTxn
+                            }).catch(function (e) {
+                                console.warn('Payment verification skipped:', e.message);
+                            }).then(function () {
+                                return res;
+                            });
+                        }
+                        return res;
+                    }).then(function (res) {
+                        window.location.href = '/order-detail?id=' + res.orderId;
                     }).catch(function (err) {
-                        showToast(err.message || 'Verification failed', 'error');
+                        showToast(err.message || 'Failed to place order', 'error');
                         setButtonLoading(btn, false);
                     });
                 });

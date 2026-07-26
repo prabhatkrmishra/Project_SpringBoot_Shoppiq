@@ -18,6 +18,7 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -115,7 +116,7 @@ class UserOrderControllerTest {
     }
 
     private CheckoutResponse checkoutResponse(Long orderId) {
-        return new CheckoutResponse(orderId, OrderStatus.PLACED, BigDecimal.valueOf(500), BigDecimal.ZERO, BigDecimal.valueOf(500), 99L, null);
+        return new CheckoutResponse(orderId, OrderStatus.PLACED, BigDecimal.valueOf(500), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(500), DeliveryType.NORMAL, 99L, null);
     }
 
     private OrderResponse orderResponse(Long orderId) {
@@ -145,7 +146,7 @@ class UserOrderControllerTest {
         @DisplayName("201 Created — successful checkout")
         void checkout_success() throws Exception {
             authenticateCustomer();
-            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
+            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, DeliveryType.NORMAL, null);
             when(checkoutService.checkout(eq(customer), any(CheckoutRequest.class)))
                     .thenReturn(checkoutResponse(25L));
 
@@ -162,7 +163,7 @@ class UserOrderControllerTest {
         @DisplayName("400 Bad Request — empty cart")
         void checkout_emptyCart() throws Exception {
             authenticateCustomer();
-            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
+            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, DeliveryType.NORMAL, null);
             when(checkoutService.checkout(any(), any())).thenThrow(new CartEmptyException());
 
             mockMvc.perform(post("/user/order/checkout").with(csrf())
@@ -175,7 +176,7 @@ class UserOrderControllerTest {
         @DisplayName("404 Not Found — invalid address")
         void checkout_invalidAddress() throws Exception {
             authenticateCustomer();
-            CheckoutRequest request = new CheckoutRequest(99L, PaymentMethod.COD, null);
+            CheckoutRequest request = new CheckoutRequest(99L, PaymentMethod.COD, DeliveryType.NORMAL, null);
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(AddressNotFoundException.id(99L));
 
@@ -189,7 +190,7 @@ class UserOrderControllerTest {
         @DisplayName("403 Forbidden — address belongs to different user")
         void checkout_addressWrongOwner() throws Exception {
             authenticateCustomer();
-            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, null);
+            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, DeliveryType.NORMAL, null);
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
 
@@ -203,7 +204,7 @@ class UserOrderControllerTest {
         @DisplayName("400 Bad Request — insufficient stock")
         void checkout_insufficientStock() throws Exception {
             authenticateCustomer();
-            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, null);
+            CheckoutRequest request = new CheckoutRequest(1L, PaymentMethod.COD, DeliveryType.NORMAL, null);
             when(checkoutService.checkout(any(), any()))
                     .thenThrow(InsufficientStockException.forItem("SKU-1", 3, 1));
 

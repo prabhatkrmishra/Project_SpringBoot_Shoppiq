@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.entity;
 
 import com.pkmprojects.shoppiq.audit.AuditableEntity;
+import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -87,6 +88,14 @@ public class Order extends AuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 20)
     private PaymentMethod paymentMethod;
+
+    /**
+     * Delivery speed selected at checkout.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_type", nullable = false, length = 20)
+    @Builder.Default
+    private DeliveryType deliveryType = DeliveryType.NORMAL;
 
     /**
      * Current payment status.

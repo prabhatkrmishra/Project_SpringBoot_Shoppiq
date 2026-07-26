@@ -5,6 +5,7 @@ import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.entity.Order;
+import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -181,7 +182,7 @@ class CheckoutServiceImplTest {
             CartItem cartItem = buildCartItem(details, 2);
             Cart cart = buildCart(user, List.of(cartItem));
 
-            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, null);
+            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, DeliveryType.NORMAL, null);
 
             when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
@@ -204,7 +205,7 @@ class CheckoutServiceImplTest {
             assertThat(response.orderId()).isEqualTo(99L);
             assertThat(response.status()).isEqualTo(OrderStatus.PLACED);
             assertThat(response.paymentId()).isEqualTo(77L);
-            assertThat(response.grandTotal()).isEqualByComparingTo("500.00");
+            assertThat(response.grandTotal()).isEqualByComparingTo("505.00");
 
             // assert — inventory reduced
             assertThat(details.getStockQuantity()).isEqualTo(3); // 5 - 2
@@ -223,7 +224,7 @@ class CheckoutServiceImplTest {
             when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD, null))
+                    checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD, DeliveryType.NORMAL, null))
             ).isInstanceOf(CartEmptyException.class);
         }
 
@@ -235,7 +236,7 @@ class CheckoutServiceImplTest {
             when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD, null))
+                    checkoutService.checkout(user, new CheckoutRequest(1L, PaymentMethod.COD, DeliveryType.NORMAL, null))
             ).isInstanceOf(CartEmptyException.class);
         }
 
@@ -250,7 +251,7 @@ class CheckoutServiceImplTest {
             when(addressRepository.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(user, new CheckoutRequest(99L, PaymentMethod.COD, null))
+                    checkoutService.checkout(user, new CheckoutRequest(99L, PaymentMethod.COD, DeliveryType.NORMAL, null))
             ).isInstanceOf(AddressNotFoundException.class);
         }
 
@@ -267,7 +268,7 @@ class CheckoutServiceImplTest {
             when(addressRepository.findById(5L)).thenReturn(Optional.of(bobsAddress));
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(alice, new CheckoutRequest(5L, PaymentMethod.COD, null))
+                    checkoutService.checkout(alice, new CheckoutRequest(5L, PaymentMethod.COD, DeliveryType.NORMAL, null))
             ).isInstanceOf(AddressAccessDeniedException.class);
         }
 
@@ -285,7 +286,7 @@ class CheckoutServiceImplTest {
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
 
             assertThatThrownBy(() ->
-                    checkoutService.checkout(user, new CheckoutRequest(5L, PaymentMethod.COD, null))
+                    checkoutService.checkout(user, new CheckoutRequest(5L, PaymentMethod.COD, DeliveryType.NORMAL, null))
             ).isInstanceOf(InsufficientStockException.class);
 
             // Inventory must NOT have been modified
@@ -320,9 +321,9 @@ class CheckoutServiceImplTest {
             setId(payment, 42L);
             when(paymentService.createPayment(any(Order.class))).thenReturn(payment);
 
-            CheckoutResponse response = checkoutService.checkout(user, new CheckoutRequest(5L, PaymentMethod.COD, null));
+            CheckoutResponse response = checkoutService.checkout(user, new CheckoutRequest(5L, PaymentMethod.COD, DeliveryType.NORMAL, null));
 
-            assertThat(response.grandTotal()).isEqualByComparingTo("800.00");
+            assertThat(response.grandTotal()).isEqualByComparingTo("805.00");
             assertThat(response.paymentId()).isEqualTo(42L);
         }
 
@@ -336,7 +337,7 @@ class CheckoutServiceImplTest {
             CartItem cartItem = buildCartItem(details, 2);
             Cart cart = buildCart(user, List.of(cartItem));
 
-            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, null);
+            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, DeliveryType.NORMAL, null);
 
             when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));

@@ -5,7 +5,9 @@ import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.*;
+import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
+import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.exception.StockConflictException;
 import com.pkmprojects.shoppiq.exception.*;
@@ -39,6 +41,13 @@ import java.util.List;
  *   <li>Reduce inventory.</li>
  *   <li>Clear the cart.</li>
  * </ol>
+ *
+ * <p>Shipping charges:</p>
+ * <ul>
+ *   <li>{@link DeliveryType#NORMAL} — free shipping</li>
+ *   <li>{@link DeliveryType#EXPRESS_1DAY} — $7.50 express delivery charge</li>
+ *   <li>{@link PaymentMethod#COD} — $5.00 cash-on-delivery surcharge</li>
+ * </ul>
  *
  * @author PrabhatKrMishra
  * @since 1.0.0
@@ -135,6 +144,18 @@ public class CheckoutServiceImpl {
         BigDecimal discount = BigDecimal.ZERO;
         PromoCode appliedPromoCode = null;
 
+        // Delivery charges based on delivery type
+        DeliveryType deliveryType = request.deliveryType() != null
+                ? request.deliveryType() : DeliveryType.NORMAL;
+        if (deliveryType == DeliveryType.EXPRESS_1DAY) {
+            shippingFee = shippingFee.add(new BigDecimal("7.50"));
+        }
+
+        // COD surcharge
+        if (request.paymentMethod() == PaymentMethod.COD) {
+            shippingFee = shippingFee.add(new BigDecimal("5.00"));
+        }
+
         if (request.promoCode() != null && !request.promoCode().isBlank()) {
             appliedPromoCode = promoCodeService.validateAndCalculate(
                     request.promoCode(), user, subtotal);
@@ -149,6 +170,7 @@ public class CheckoutServiceImpl {
                 .shippingAddress(OrderAddressSnapshot.from(address))
                 .status(OrderStatus.PLACED)
                 .paymentMethod(request.paymentMethod())
+                .deliveryType(deliveryType)
                 .paymentStatus(PaymentStatus.PENDING)
                 .subtotal(subtotal)
                 .shippingFee(shippingFee)

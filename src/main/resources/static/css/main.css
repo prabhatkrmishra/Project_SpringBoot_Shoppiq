@@ -2837,6 +2837,26 @@ small {
     background: var(--color-border);
 }
 
+.checkout-progress .step.completed {
+    cursor: pointer;
+}
+
+.checkout-progress .step.completed:hover {
+    opacity: 0.75;
+}
+
+.checkout-progress .step .step-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: inherit;
+    text-decoration: none;
+}
+
+.checkout-progress .step .step-link:hover {
+    text-decoration: underline;
+}
+
 /* ─── Admin Styles ───────────────────────────────────────── */
 .admin-main {
     max-width: 1280px;

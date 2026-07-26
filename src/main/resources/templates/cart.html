@@ -9,7 +9,14 @@
         <div class="container">
             <div class="page-header">
                 <h1>Shopping Cart</h1>
-                <p id="cart-count-text"></p>
+            </div>
+
+            <div class="checkout-progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
+                <span class="step active"><span class="step-dot"></span> Cart</span>
+                <span class="step-line"></span>
+                <span class="step"><span class="step-dot"></span> Details</span>
+                <span class="step-line"></span>
+                <span class="step"><span class="step-dot"></span> Pay</span>
             </div>
 
             <div id="cart-empty" class="cart-empty" style="display:none;">
@@ -70,13 +77,11 @@
                     document.getElementById('cart-empty').style.display = '';
                     document.getElementById('cart-content').style.display = 'none';
                     document.getElementById('cart-mobile-cta').style.display = 'none';
-                    document.getElementById('cart-count-text').textContent = '';
                     return;
                 }
                 document.getElementById('cart-empty').style.display = 'none';
                 document.getElementById('cart-content').style.display = '';
                 document.getElementById('cart-mobile-cta').style.display = '';
-                document.getElementById('cart-count-text').textContent = items.length + ' item(s) in your cart';
 
                 var container = document.getElementById('cart-items');
                 container.innerHTML = '';

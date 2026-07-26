@@ -5,6 +5,7 @@ import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.entity.Order;
+import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -152,7 +153,7 @@ class CheckoutIntegrationTest {
             cartItemRepository.save(cartItem);
 
             CheckoutRequest request = new CheckoutRequest(
-                    address.getId(), PaymentMethod.COD, null);
+                    address.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null);
 
             // Act
             CheckoutResponse response = checkoutService.checkout(user, request);
@@ -160,7 +161,7 @@ class CheckoutIntegrationTest {
             // Assert — response
             assertThat(response.orderId()).isNotNull();
             assertThat(response.status()).isEqualTo(OrderStatus.PLACED);
-            assertThat(response.grandTotal()).isEqualByComparingTo("500.00");
+            assertThat(response.grandTotal()).isEqualByComparingTo("505.00");
             assertThat(response.paymentId()).isNotNull();
 
             // Assert — order persisted
@@ -170,7 +171,7 @@ class CheckoutIntegrationTest {
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PLACED);
             assertThat(order.getPaymentMethod()).isEqualTo(PaymentMethod.COD);
             assertThat(order.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
-            assertThat(order.getGrandTotal()).isEqualByComparingTo("500.00");
+            assertThat(order.getGrandTotal()).isEqualByComparingTo("505.00");
             assertThat(order.getPlacedAt()).isNotNull();
 
             // Assert — order items (via DTO to avoid LazyInitializationException)
@@ -188,11 +189,11 @@ class CheckoutIntegrationTest {
             assertThat(cartItemRepository.findAllByCart(
                     cartRepository.findById(cart.getId()).orElseThrow())).isEmpty();
 
-            // Assert — payment created
+            // Assert — payment created (includes COD surcharge)
             Payment payment = paymentRepository.findById(response.paymentId()).orElseThrow();
             assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
             assertThat(payment.getPaymentMethod()).isEqualTo(PaymentMethod.COD);
-            assertThat(payment.getAmount()).isEqualByComparingTo("500.00");
+            assertThat(payment.getAmount()).isEqualByComparingTo("505.00");
             assertThat(payment.getPaymentReference()).startsWith("PAY-");
         }
 
@@ -234,13 +235,13 @@ class CheckoutIntegrationTest {
                     .cart(cart).itemDetails(details2).quantity(3).build()); // 3 × 100 = 300
 
             CheckoutRequest request = new CheckoutRequest(
-                    address.getId(), PaymentMethod.COD, null);
+                    address.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null);
 
             // Act
             CheckoutResponse response = checkoutService.checkout(user, request);
 
-            // Assert — grand total = 500 + 300 = 800
-            assertThat(response.grandTotal()).isEqualByComparingTo("800.00");
+            // Assert — grand total = 500 + 300 + 5 COD = 805
+            assertThat(response.grandTotal()).isEqualByComparingTo("805.00");
 
             // Assert — 2 order items (via DTO to avoid LazyInitializationException)
             OrderResponse orderDetail = checkoutService.getMyOrder(user, response.orderId());
@@ -269,7 +270,7 @@ class CheckoutIntegrationTest {
             cart = cartRepository.save(cart);
 
             CheckoutRequest request = new CheckoutRequest(
-                    address.getId(), PaymentMethod.COD, null);
+                    address.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null);
 
             assertThatThrownBy(() -> checkoutService.checkout(user, request))
                     .isInstanceOf(CartEmptyException.class);
@@ -284,7 +285,7 @@ class CheckoutIntegrationTest {
                     .cart(cart).itemDetails(itemDetails).quantity(1).build());
 
             CheckoutRequest request = new CheckoutRequest(
-                    999999L, PaymentMethod.COD, null);
+                    999999L, PaymentMethod.COD, DeliveryType.NORMAL, null);
 
             assertThatThrownBy(() -> checkoutService.checkout(user, request))
                     .isInstanceOf(AddressNotFoundException.class);
@@ -327,7 +328,7 @@ class CheckoutIntegrationTest {
                     .cart(cart).itemDetails(itemDetails).quantity(1).build());
 
             CheckoutRequest request = new CheckoutRequest(
-                    otherAddress.getId(), PaymentMethod.COD, null);
+                    otherAddress.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null);
 
             assertThatThrownBy(() -> checkoutService.checkout(user, request))
                     .isInstanceOf(AddressAccessDeniedException.class);
@@ -342,7 +343,7 @@ class CheckoutIntegrationTest {
                     .cart(cart).itemDetails(itemDetails).quantity(15).build()); // only 10 in stock
 
             CheckoutRequest request = new CheckoutRequest(
-                    address.getId(), PaymentMethod.COD, null);
+                    address.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null);
 
             assertThatThrownBy(() -> checkoutService.checkout(user, request))
                     .isInstanceOf(InsufficientStockException.class);
@@ -374,7 +375,7 @@ class CheckoutIntegrationTest {
                     .cart(cart).itemDetails(itemDetails).quantity(1).build());
 
             checkoutService.checkout(user,
-                    new CheckoutRequest(address.getId(), PaymentMethod.COD, null));
+                    new CheckoutRequest(address.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null));
 
             var orders = checkoutService.getMyOrders(user);
             assertThat(orders).hasSize(1);
@@ -390,11 +391,11 @@ class CheckoutIntegrationTest {
                     .cart(cart).itemDetails(itemDetails).quantity(1).build());
 
             CheckoutResponse response = checkoutService.checkout(user,
-                    new CheckoutRequest(address.getId(), PaymentMethod.COD, null));
+                    new CheckoutRequest(address.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null));
 
             var order = checkoutService.getMyOrder(user, response.orderId());
             assertThat(order.id()).isEqualTo(response.orderId());
-            assertThat(order.grandTotal()).isEqualByComparingTo("250.00");
+            assertThat(order.grandTotal()).isEqualByComparingTo("255.00");
         }
     }
 
@@ -415,7 +416,7 @@ class CheckoutIntegrationTest {
                     .cart(cart).itemDetails(itemDetails).quantity(1).build());
 
             CheckoutResponse response = checkoutService.checkout(user,
-                    new CheckoutRequest(address.getId(), PaymentMethod.COD, null));
+                    new CheckoutRequest(address.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null));
 
             checkoutService.cancelOrder(user, response.orderId());
 
@@ -432,7 +433,7 @@ class CheckoutIntegrationTest {
                     .cart(cart).itemDetails(itemDetails).quantity(1).build());
 
             CheckoutResponse checkoutResponse = checkoutService.checkout(user,
-                    new CheckoutRequest(address.getId(), PaymentMethod.COD, null));
+                    new CheckoutRequest(address.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null));
             Long orderId = checkoutResponse.orderId();
             String uuid2 = UUID.randomUUID().toString().substring(0, 8);
             Role role = rolesRepository.findByRoleName("ROLE_CUSTOMER").orElseThrow();
