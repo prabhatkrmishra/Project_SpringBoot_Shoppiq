@@ -116,7 +116,7 @@ User (1) ──── (*) Order ──── (*) OrderItem ──── (*) Item
   │    │            │                                 │   └── Category
   │    │            └── Payment                       │
   │    │                                              └── ItemReview (*) ──── User
-  │    └── CartItem (*) ──── Item
+  │    └── CartItem (*) ──── ItemDetails
   │
   ├── (*) Address
   ├── (*) ItemReview

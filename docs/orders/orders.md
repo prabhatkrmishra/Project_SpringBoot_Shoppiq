@@ -122,7 +122,7 @@
 | Field | Type | Constraints | Notes |
 |-------|------|-------------|-------|
 | `cart` | Cart | `NOT NULL`, FK | Parent cart |
-| `item` | Item | `NOT NULL`, FK | Product reference |
+| `itemDetails` | ItemDetails | `NOT NULL`, FK | Product pricing and stock info |
 | `quantity` | int | `NOT NULL`, min 1 | Units ordered |
 
 ### Cart Behaviors
@@ -247,7 +247,7 @@ User (1) ──── (*) Order ──── (*) OrderItem
   │               │
   │               └── PromoCode (nullable FK)
   │
-  └── Cart (1:1) ──── (*) CartItem ──── (*) Item
+  └── Cart (1:1) ──── (*) CartItem ──── (*) ItemDetails ──── (1) Item
 ```
 
 ---
