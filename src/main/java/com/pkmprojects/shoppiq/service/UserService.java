@@ -28,6 +28,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -107,8 +109,6 @@ public class UserService {
 
             User savedUser = userRepository.save(newUser);
 
-            sendVerificationEmail(savedUser);
-
             if (newUserRequest.isSellerRegistration()) {
                 Seller seller = Seller.builder()
                         .user(savedUser)
@@ -126,6 +126,16 @@ public class UserService {
             } else {
                 logger.debug("User account created for username: {}", newUserRequest.getUsername());
             }
+
+            // Defer email sending until after the transaction commits successfully.
+            // This prevents slow/failed email delivery from holding the DB transaction open.
+            User emailTarget = savedUser;
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendVerificationEmail(emailTarget);
+                }
+            });
         } catch (DataIntegrityViolationException e) {
             logger.warn("User creation failed due to constraint violation for email: {} or username: {}", newUserRequest.getEmail(), newUserRequest.getUsername());
             throw DuplicateUserException.unknown();
@@ -243,7 +253,16 @@ public class UserService {
         userRepository.save(user);
         logger.debug("Password changed for username: {}", user.getUsername());
 
-        sendSecurityAlertEmail(user, "Password Changed", "Your password was recently changed. If you did not make this change, please contact support immediately.", "password_change");
+        // Defer security alert email until after the transaction commits
+        User emailTarget = user;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                sendSecurityAlertEmail(emailTarget, "Password Changed",
+                        "Your password was recently changed. If you did not make this change, please contact support immediately.",
+                        "password_change");
+            }
+        });
     }
 
     private void sendVerificationEmail(User user) {
