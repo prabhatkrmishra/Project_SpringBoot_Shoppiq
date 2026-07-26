@@ -93,7 +93,7 @@ public class CheckoutServiceImpl {
 
     private CheckoutResponse doCheckout(User user, CheckoutRequest request) {
 
-        Cart cart = cartRepository.findByUser(user)
+        Cart cart = cartRepository.findByUserWithItems(user)
                 .orElseThrow(CartEmptyException::new);
 
         List<CartItem> cartItems = cart.getItems();
