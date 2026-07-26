@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Spring Data repository for {@link ChatMessage} persistence.
@@ -70,4 +71,16 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
      * @param conversationId the parent conversation's ID
      */
     void deleteByConversationId(Long conversationId);
+
+    /**
+     * Finds the most recently created message with the given role for a
+     * conversation. Used to check whether the assistant's last message was
+     * a closing prompt before treating a short user reply as a confirmation
+     * to auto-resolve.
+     *
+     * @param conversationId the conversation's internal ID
+     * @param role           the message role to filter by (typically ASSISTANT)
+     * @return the most recent matching message, if any
+     */
+    Optional<ChatMessage> findTopByConversationIdAndRoleOrderByCreatedAtDesc(Long conversationId, ChatMessageRole role);
 }

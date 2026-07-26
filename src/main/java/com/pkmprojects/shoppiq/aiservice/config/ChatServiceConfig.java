@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.aiservice.config;
 
+import com.pkmprojects.shoppiq.aiservice.instructions.SystemPromptProvider;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatConversationRepository;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatMessageRepository;
 import com.pkmprojects.shoppiq.aiservice.service.ChatService;
@@ -15,6 +16,7 @@ import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -96,7 +98,9 @@ public class ChatServiceConfig {
             ChatConversationRepository conversationRepository,
             ChatMessageRepository messageRepository,
             UserRepository userRepository,
-            ModelResolutionService modelResolutionService) {
+            ModelResolutionService modelResolutionService,
+            @Qualifier("authenticatedSystemPrompt") SystemPromptProvider authenticatedPrompt,
+            @Qualifier("guestSystemPrompt") SystemPromptProvider guestPrompt) {
 
         log.info("[AI-INIT] ChatServiceImpl created — modelResolutionService={}, contentRetriever={}",
                 modelResolutionService.getClass().getSimpleName(),
@@ -105,6 +109,6 @@ public class ChatServiceConfig {
         return new ChatServiceImpl(
                 chatMemoryProvider, chatMemoryConfig,
                 shoppiqTools, contentRetriever, conversationRepository, messageRepository, userRepository,
-                modelResolutionService);
+                modelResolutionService, authenticatedPrompt, guestPrompt);
     }
 }

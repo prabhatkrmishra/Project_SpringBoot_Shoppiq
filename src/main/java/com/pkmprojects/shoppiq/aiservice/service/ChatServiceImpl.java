@@ -9,6 +9,7 @@ import com.pkmprojects.shoppiq.aiservice.enums.ChatMessageRole;
 import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
 import com.pkmprojects.shoppiq.aiservice.exception.AiAccessDeniedException;
 import com.pkmprojects.shoppiq.aiservice.exception.AiAssistantException;
+import com.pkmprojects.shoppiq.aiservice.instructions.SystemPromptProvider;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatConversationRepository;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatMessageRepository;
 import com.pkmprojects.shoppiq.aiservice.tools.ShoppiqTools;
@@ -22,6 +23,7 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Flux;
@@ -77,6 +79,8 @@ public class ChatServiceImpl implements ChatService {
     private final ChatMessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ModelResolutionService modelResolutionService;
+    private final SystemPromptProvider authenticatedPrompt;
+    private final SystemPromptProvider guestPrompt;
 
     /**
      * In-memory store for guest messages — not persisted to DB. Key = sessionId.
@@ -103,6 +107,8 @@ public class ChatServiceImpl implements ChatService {
      * @param messageRepository      persistence for messages
      * @param userRepository         user lookups (unused directly but retained for future admin features)
      * @param modelResolutionService central service for resolving model names to model instances
+     * @param authenticatedPrompt    system prompt for logged-in users
+     * @param guestPrompt            system prompt for guest sessions
      */
     public ChatServiceImpl(ChatMemoryProvider chatMemoryProvider,
                            ChatMemoryConfig chatMemoryConfig,
@@ -111,7 +117,9 @@ public class ChatServiceImpl implements ChatService {
                            ChatConversationRepository conversationRepository,
                            ChatMessageRepository messageRepository,
                            UserRepository userRepository,
-                           ModelResolutionService modelResolutionService) {
+                           ModelResolutionService modelResolutionService,
+                           @Qualifier("authenticatedSystemPrompt") SystemPromptProvider authenticatedPrompt,
+                           @Qualifier("guestSystemPrompt") SystemPromptProvider guestPrompt) {
         this.chatMemoryProvider = chatMemoryProvider;
         this.chatMemoryConfig = chatMemoryConfig;
         this.shoppiqTools = shoppiqTools;
@@ -120,6 +128,8 @@ public class ChatServiceImpl implements ChatService {
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
         this.modelResolutionService = modelResolutionService;
+        this.authenticatedPrompt = authenticatedPrompt;
+        this.guestPrompt = guestPrompt;
     }
 
     // ========================= Authenticated Chat =========================
@@ -139,7 +149,7 @@ public class ChatServiceImpl implements ChatService {
         saveMessage(conv, ChatMessageRole.USER, userMessage);
         updateTitleFromFirstMessage(conv, userMessage);
 
-        String systemPrompt = buildSystemPrompt(conv.getChatId(), user);
+        String systemPrompt = authenticatedPrompt.buildPrompt(conv.getChatId(), user);
         ChatModel resolvedModel = modelResolutionService.resolveChatModel(model);
 
         ShoppiqAssistant proxy = AiServices.builder(ShoppiqAssistant.class)
@@ -185,7 +195,7 @@ public class ChatServiceImpl implements ChatService {
         saveMessage(conv, ChatMessageRole.USER, userMessage);
         updateTitleFromFirstMessage(conv, userMessage);
 
-        String systemPrompt = buildSystemPrompt(conv.getChatId(), user);
+        String systemPrompt = authenticatedPrompt.buildPrompt(conv.getChatId(), user);
         StringBuilder fullResponse = new StringBuilder();
         StreamingChatModel resolvedStreamingModel = modelResolutionService.resolveStreamingChatModel(model);
 
@@ -212,6 +222,15 @@ public class ChatServiceImpl implements ChatService {
                     log.error("Streaming error for conversation {}: {}", chatId, error.getMessage());
                     saveMessage(conv, ChatMessageRole.ASSISTANT, "I'm sorry, an error occurred. Please try again.");
                 });
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ConversationStatus getConversationStatus(String chatId, User user) {
+        ChatConversation conv = resolveConversationEntity(chatId, user);
+        return conv.getStatus();
     }
 
     // ========================= Conversation Management =========================
@@ -325,7 +344,7 @@ public class ChatServiceImpl implements ChatService {
     public String guestChat(String userMessage, String sessionId, String model) {
         saveGuestMessage(sessionId, "USER", userMessage);
 
-        String systemPrompt = buildGuestSystemPrompt();
+        String systemPrompt = guestPrompt.buildPrompt(null, null);
         ChatModel resolvedModel = modelResolutionService.resolveChatModel(model);
 
         ShoppiqAssistant proxy = AiServices.builder(ShoppiqAssistant.class)
@@ -363,7 +382,7 @@ public class ChatServiceImpl implements ChatService {
     public Flux<String> guestChatStream(String userMessage, String sessionId, String model) {
         saveGuestMessage(sessionId, "USER", userMessage);
 
-        String systemPrompt = buildGuestSystemPrompt();
+        String systemPrompt = guestPrompt.buildPrompt(null, null);
         StringBuilder fullResponse = new StringBuilder();
         StreamingChatModel resolvedStreamingModel = modelResolutionService.resolveStreamingChatModel(model);
 
@@ -462,11 +481,20 @@ public class ChatServiceImpl implements ChatService {
      * the user's message content.
      *
      * <p>
-     * Auto-resolution is triggered when:
+     * Auto-resolution is triggered ONLY when ALL the following hold:
      * <ul>
-     *   <li>The conversation has at least 2 user messages</li>
-     *   <li>The user's message matches common closing phrases
-     *       (e.g., "thanks", "bye", "that's all")</li>
+     *   <li>The conversation has at least {@code resolveThreshold} user messages</li>
+     *   <li>The immediately preceding ASSISTANT message was itself a closing
+     *       prompt (e.g. ended by asking "Is there anything else I can help
+     *       you with?") — this ensures a short reply like "no"/"done"/"thanks"
+     *       is only interpreted as a closing signal when it's actually answering
+     *       that question, and not when it's answering some unrelated question
+     *       the assistant asked (e.g. "Do you want me to filter by size too?"
+     *       → "no")</li>
+     *   <li>The user's ENTIRE message (after trimming, lowercasing, and
+     *       stripping trailing punctuation) exactly matches one of the known
+     *       closing phrases — not just contains one, to avoid false positives
+     *       like "no, show me something else" or "nah I meant the blue one"</li>
      * </ul>
      *
      * @param userMessage  the user's latest message
@@ -478,99 +506,48 @@ public class ChatServiceImpl implements ChatService {
                 .countByConversationIdAndRole(conversation.getId(), ChatMessageRole.USER);
         if (userMessageCount < resolveThreshold) return false;
 
-        String normalized = userMessage.trim().toLowerCase();
+        if (!lastAssistantMessageWasClosingPrompt(conversation)) {
+            return false;
+        }
+
+        String normalized = userMessage.trim().toLowerCase()
+                .replaceAll("[!.?]+$", "")
+                .trim();
 
         List<String> closingPhrases = List.of(
                 "no", "nope", "nothing else", "that's all", "that is all",
-                "thanks", "thank you", "thank", "done", "bye", "goodbye",
-                "we are good", "i'm good", "i am good", "not anymore", "nah"
+                "thanks", "thank you", "thanks a lot", "thank you so much", "tata",
+                "done", "bye", "goodbye", "we are good", "we're good",
+                "i'm good", "i am good", "not anymore", "nah", "all good",
+                "no thanks", "no thank you", "nothing more", "that will be all"
         );
 
-        return closingPhrases.stream()
-                .anyMatch(phrase -> normalized.equals(phrase)
-                        || normalized.startsWith(phrase + " ")
-                        || normalized.endsWith(" " + phrase)
-                        || normalized.contains(" " + phrase + " "));
+        return closingPhrases.contains(normalized);
     }
 
     /**
-     * Builds the system prompt for authenticated user conversations.
+     * Checks whether the most recent ASSISTANT message in the conversation
+     * ended with the standard closing prompt, e.g.
+     * "Is there anything else I can help you with?"
      *
      * <p>
-     * The prompt includes the user's identity, chat ID, and behavioral
-     * guidelines for product recommendations, order lookups, and conversation
-     * closure detection.
+     * This is the guard that prevents false auto-resolves when the user's
+     * short reply ("no", "done", "thanks") was actually answering some other
+     * assistant question rather than confirming they're finished.
      *
-     * @param chatId the conversation's public identifier
-     * @param user   the authenticated user
-     * @return the system prompt text
+     * @param conversation the conversation to check
+     * @return {@code true} if the last assistant message was a closing prompt
      */
-    private String buildSystemPrompt(String chatId, User user) {
-        return """
-                You are Shoppiq's AI shopping assistant. The user you are talking to is
-                LOGGED IN as "%s" (account ID %d). They have full access to their orders,
-                cart, and reviews.
-                
-                You have access to the Shoppiq database through function-calling tools.
-                You MUST use these tools — never guess or fabricate:
-                - When the user asks about their orders → call the order status tool
-                - When the user asks about their cart → call the cart contents tool
-                - When the user asks about their reviews → call the reviews tool
-                - When the user asks for product recommendations or searches → call the
-                  semantic product search tool, or rely on retrieved context
-                - When the user asks about a specific product by name → call the product
-                  detail tool
-                
-                Relevant product information may be retrieved automatically and provided
-                to you as context before each message. Prefer that retrieved context when
-                recommending or describing products, and always include the product link
-                (/item/{slug}) and current price when you mention a product.
-                
-                Chat ID: %s
-                
-                Guidelines:
-                - Be helpful, concise, and friendly
-                - When recommending products, include prices and direct links (/item/{slug})
-                - For order issues, provide order number and status
-                - Never fabricate product information — rely on retrieved context and tools
-                - If a tool returns no results, say so honestly
-                - After answering the user's question, ask "Is there anything else I can help you with?"
-                - If the user indicates they are done (e.g., "no", "thanks", "that's all"), respond with a closing message
-                """.formatted(user.getUsername(), user.getId(), chatId);
-    }
-
-    /**
-     * Builds the system prompt for guest (unauthenticated) conversations.
-     *
-     * <p>
-     * The guest prompt is more limited — it does not include order, cart, or
-     * review tools, only product catalog search via the retrieval pipeline.
-     *
-     * @return the guest system prompt text
-     */
-    private String buildGuestSystemPrompt() {
-        return """
-                You are Shoppiq's AI shopping assistant. The user you are talking to is a
-                GUEST — they are NOT logged in and have NO account.
-                
-                You can ONLY help with product discovery and general shopping questions.
-                Relevant product information may be retrieved automatically and provided to
-                you as context before each message. Use that context to recommend and
-                describe products, and always include the product link (/item/{slug})
-                and current price.
-                
-                You do NOT have access to orders, carts, or reviews for guest users.
-                If the user asks about their orders, cart, or reviews, respond with a
-                clear message like:
-                  "As a guest, I can't check your orders, cart, or reviews. Please
-                   sign in to access those features."
-                If they ask to buy or check out, say:
-                  "To purchase items, you'll need to create an account and sign in.
-                   Would you like me to help you find products in the meantime?"
-                
-                After answering the user's question, ask "Is there anything else I can help you with?"
-                If the user indicates they are done, provide a friendly closing.
-                """;
+    private boolean lastAssistantMessageWasClosingPrompt(ChatConversation conversation) {
+        return messageRepository
+                .findTopByConversationIdAndRoleOrderByCreatedAtDesc(conversation.getId(), ChatMessageRole.ASSISTANT)
+                .map(msg -> {
+                    String normalized = msg.getContent().trim().toLowerCase();
+                    return normalized.endsWith("is there anything else i can help you with?")
+                            || normalized.endsWith("anything else i can help you with?")
+                            || normalized.endsWith("anything else you need help with?");
+                })
+                .orElse(false);
     }
 
     /**

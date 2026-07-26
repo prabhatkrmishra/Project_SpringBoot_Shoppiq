@@ -155,6 +155,10 @@ var ALLOWED_MODELS = [
             }
 
             updateChatIdDisplay();
+
+            if (isLoggedIn && data.status === 'RESOLVED' && !isResolved) {
+                markResolved();
+            }
         }).catch(function (err) {
             removeTypingIndicator();
             showToast(err.message || 'Unable to connect to AI assistant', 'error');
@@ -364,7 +368,9 @@ var ALLOWED_MODELS = [
     function formatMessageContent(content) {
         if (!content) return '';
         var safe = escapeHtml(content);
+        safe = safe.replace(/==([\s\S]*?)==/g, '<mark>$1</mark>');
         safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        safe = safe.replace(/\*(.*?)\*/g, '<em>$1</em>');
         safe = safe.replace(/(\/item\/[\w-]+)/g, '<a href="$1" target="_blank">$1</a>');
         safe = safe.replace(/\n/g, '<br>');
         return safe;

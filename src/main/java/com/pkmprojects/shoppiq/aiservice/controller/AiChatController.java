@@ -4,6 +4,7 @@ import com.pkmprojects.shoppiq.aiservice.dto.ChatMessageDto;
 import com.pkmprojects.shoppiq.aiservice.dto.ChatRequest;
 import com.pkmprojects.shoppiq.aiservice.dto.ChatResponse;
 import com.pkmprojects.shoppiq.aiservice.entity.ChatConversation;
+import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
 import com.pkmprojects.shoppiq.aiservice.exception.AiServiceUnavailableException;
 import com.pkmprojects.shoppiq.aiservice.service.ChatService;
 import com.pkmprojects.shoppiq.entity.User;
@@ -82,8 +83,9 @@ public class AiChatController {
         ChatConversation conv = chatService.createConversation(user);
         String response = chatService.chat(request.message(), conv.getChatId(), user, request.model());
         List<ChatMessageDto> messages = chatService.getMessages(conv.getChatId(), user);
+        ConversationStatus status = chatService.getConversationStatus(conv.getChatId(), user);
 
-        return ResponseEntity.ok(new ChatResponse(conv.getChatId(), messages));
+        return ResponseEntity.ok(new ChatResponse(conv.getChatId(), messages, status));
     }
 
     /**
@@ -108,8 +110,9 @@ public class AiChatController {
 
         chatService.chat(request.message(), chatId, user, request.model());
         List<ChatMessageDto> messages = chatService.getMessages(chatId, user);
+        ConversationStatus status = chatService.getConversationStatus(chatId, user);
 
-        return ResponseEntity.ok(new ChatResponse(chatId, messages));
+        return ResponseEntity.ok(new ChatResponse(chatId, messages, status));
     }
 
     /**

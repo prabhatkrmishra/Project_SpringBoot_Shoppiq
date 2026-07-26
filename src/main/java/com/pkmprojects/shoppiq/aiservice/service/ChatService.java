@@ -3,6 +3,7 @@ package com.pkmprojects.shoppiq.aiservice.service;
 import com.pkmprojects.shoppiq.aiservice.dto.ChatMessageDto;
 import com.pkmprojects.shoppiq.aiservice.dto.ConversationSummary;
 import com.pkmprojects.shoppiq.aiservice.entity.ChatConversation;
+import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
 import com.pkmprojects.shoppiq.entity.User;
 import reactor.core.publisher.Flux;
 
@@ -91,6 +92,19 @@ public interface ChatService {
      * @return list of messages in chronological order
      */
     List<ChatMessageDto> getMessages(String chatId, User user);
+
+    /**
+     * Returns the current status of a conversation.
+     *
+     * <p>
+     * Validates that the conversation belongs to the given user before
+     * returning its status.
+     *
+     * @param chatId the public conversation identifier
+     * @param user   the authenticated user (used for ownership validation)
+     * @return the current conversation status
+     */
+    ConversationStatus getConversationStatus(String chatId, User user);
 
     /**
      * Marks a conversation as resolved and prevents further messages.
