@@ -193,6 +193,7 @@ public class UserService {
      * @param user the requesting (authenticated) user
      * @return profile response DTO
      */
+    @Transactional(readOnly = true)
     public UserResponse getProfile(User user) {
         Address defaultAddress = addressRepository.findByUserAndIsDefaultTrue(user).orElse(null);
         boolean hasPassword = user.getPassword() != null;
