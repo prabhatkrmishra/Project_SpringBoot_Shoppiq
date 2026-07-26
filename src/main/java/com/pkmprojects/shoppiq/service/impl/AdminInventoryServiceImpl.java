@@ -129,14 +129,9 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
     @Override
     @Transactional(readOnly = true)
     public InventoryDashboardSummary getInventoryDashboardSummary() {
-        List<ItemDetails> allDetails = itemDetailsRepository.findAll();
-        long totalItems = allDetails.size();
-        long outOfStockItems = allDetails.stream()
-                .filter(d -> d.getStockQuantity() == 0)
-                .count();
-        long lowStockItems = allDetails.stream()
-                .filter(d -> d.getStockQuantity() > 0 && d.getStockQuantity() <= LOW_STOCK_THRESHOLD)
-                .count();
+        long totalItems = itemDetailsRepository.count();
+        long outOfStockItems = itemDetailsRepository.countOutOfStockProducts();
+        long lowStockItems = itemDetailsRepository.countLowStockProducts(LOW_STOCK_THRESHOLD);
         long inStockItems = totalItems - outOfStockItems - lowStockItems;
 
         return new InventoryDashboardSummary(

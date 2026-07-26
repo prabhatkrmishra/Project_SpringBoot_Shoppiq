@@ -52,6 +52,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class AdminReportServiceImpl implements AdminReportService {
 
+    private static final int LOW_STOCK_THRESHOLD = 5;
+
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final ItemRepository itemRepository;
@@ -391,14 +393,14 @@ public class AdminReportServiceImpl implements AdminReportService {
     public InventoryReport generateInventoryReport() {
         List<ItemDetails> allDetails = itemDetailsRepository.findAll();
 
-        int totalProducts = allDetails.size();
+        long totalProducts = itemDetailsRepository.count();
         int totalStockUnits = allDetails.stream().mapToInt(ItemDetails::getStockQuantity).sum();
         BigDecimal totalInventoryValue = allDetails.stream()
                 .map(d -> d.getPrice().multiply(BigDecimal.valueOf(d.getStockQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        long outOfStockCount = allDetails.stream().filter(d -> d.getStockQuantity() == 0).count();
-        long lowStockCount = allDetails.stream().filter(d -> d.getStockQuantity() > 0 && d.getStockQuantity() <= 5).count();
+        long outOfStockCount = itemDetailsRepository.countOutOfStockProducts();
+        long lowStockCount = itemDetailsRepository.countLowStockProducts(LOW_STOCK_THRESHOLD);
 
         List<InventoryReport.ProductInventoryStatus> productStatuses = allDetails.stream()
                 .map(d -> {

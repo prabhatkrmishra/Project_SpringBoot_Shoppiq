@@ -3,6 +3,7 @@ package com.pkmprojects.shoppiq.repository;
 import com.pkmprojects.shoppiq.entity.ItemDetails;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,6 +33,23 @@ public interface ItemDetailsRepository extends JpaRepository<ItemDetails, Long> 
      */
     @Query("SELECT d FROM ItemDetails d WHERE d.stockQuantity = 0")
     List<ItemDetails> findOutOfStockProducts();
+
+    /**
+     * Counts products with stock quantity at or below the given threshold (but > 0).
+     *
+     * @param threshold low stock threshold
+     * @return count of low stock products
+     */
+    @Query("SELECT COUNT(d) FROM ItemDetails d WHERE d.stockQuantity > 0 AND d.stockQuantity <= :threshold")
+    long countLowStockProducts(@Param("threshold") int threshold);
+
+    /**
+     * Counts products that are out of stock (quantity = 0).
+     *
+     * @return count of out of stock products
+     */
+    @Query("SELECT COUNT(d) FROM ItemDetails d WHERE d.stockQuantity = 0")
+    long countOutOfStockProducts();
 
     /**
      * Finds low stock products belonging to a specific seller.

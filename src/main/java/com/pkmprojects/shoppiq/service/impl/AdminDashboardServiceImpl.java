@@ -94,13 +94,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         long pendingOrders = orderRepository.countByStatus(OrderStatus.PLACED);
         long cancelledOrders = orderRepository.countByStatus(OrderStatus.CANCELLED);
 
-        List<ItemDetails> allItemDetails = itemDetailsRepository.findAll();
-        long outOfStockProducts = allItemDetails.stream()
-                .filter(d -> d.getStockQuantity() == 0)
-                .count();
-        long lowStockProducts = allItemDetails.stream()
-                .filter(d -> d.getStockQuantity() > 0 && d.getStockQuantity() <= LOW_STOCK_THRESHOLD)
-                .count();
+        long outOfStockProducts = itemDetailsRepository.countOutOfStockProducts();
+        long lowStockProducts = itemDetailsRepository.countLowStockProducts(LOW_STOCK_THRESHOLD);
 
         return DashboardSummaryResponse.from(
                 totalUsers,

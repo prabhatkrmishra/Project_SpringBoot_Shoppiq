@@ -11,6 +11,8 @@ import com.pkmprojects.shoppiq.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -67,43 +69,49 @@ public class AdminMailService {
         }
     }
 
+    private static final int PAGE_SIZE = 200;
+
     @Async
     public void sendToAllUsersAsync(AdminMailRequest request, EmailType emailType, String templateName, String adminEmail) {
         log.info("Starting async bulk mail: type={}, subject='{}'", emailType, request.subject());
 
         String adminEmailLower = adminEmail != null ? adminEmail.toLowerCase() : null;
 
-        List<User> allUsers = userRepository.findAll();
-        if (adminEmailLower != null) {
-            allUsers = allUsers.stream()
-                    .filter(u -> !adminEmailLower.equals(u.getEmail().toLowerCase()))
-                    .toList();
-        }
+        // Collect all registered user emails for deduplication against newsletter subscribers
+        Set<String> registeredEmails = new HashSet<>();
+        List<User> batch = new ArrayList<>(BATCH_SIZE);
         int sent = 0;
         int failed = 0;
 
-        List<User> batch = new ArrayList<>(BATCH_SIZE);
-        for (User user : allUsers) {
-            batch.add(user);
-            if (batch.size() >= BATCH_SIZE) {
-                int[] result = processUserBatch(batch, request, emailType, templateName);
-                sent += result[0];
-                failed += result[1];
-                batch.clear();
-                delay();
+        int pageNumber = 0;
+        Page<User> userPage;
+        do {
+            userPage = userRepository.findAll(PageRequest.of(pageNumber, PAGE_SIZE));
+            for (User user : userPage.getContent()) {
+                registeredEmails.add(user.getEmail().toLowerCase());
+
+                if (adminEmailLower != null && adminEmailLower.equals(user.getEmail().toLowerCase())) {
+                    continue;
+                }
+
+                batch.add(user);
+                if (batch.size() >= BATCH_SIZE) {
+                    int[] result = processUserBatch(batch, request, emailType, templateName);
+                    sent += result[0];
+                    failed += result[1];
+                    batch.clear();
+                    delay();
+                }
             }
-        }
+            pageNumber++;
+        } while (userPage.hasNext());
+
         if (!batch.isEmpty()) {
             int[] result = processUserBatch(batch, request, emailType, templateName);
             sent += result[0];
             failed += result[1];
             batch.clear();
         }
-
-        Set<String> registeredEmails = allUsers.stream()
-                .map(User::getEmail)
-                .map(String::toLowerCase)
-                .collect(Collectors.toSet());
 
         List<NewsletterSubscriber> activeSubscribers = subscriberRepository.findAllByActiveTrue();
         List<NewsletterSubscriber> nonRegisteredSubscribers = activeSubscribers.stream()
