@@ -83,7 +83,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final long EVICT_INTERVAL_SECONDS = 300;
     private static final int MAX_BUCKETS = 10_000;
 
-    private final Map<String, Rule> ruleIndex = new ConcurrentHashMap<>();
+    private final Map<PathPattern, Rule> ruleIndex = new ConcurrentHashMap<>();
     private final Map<String, BucketEntry> buckets = new ConcurrentHashMap<>();
     private final ScheduledExecutorService evictor = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "rate-limit-evictor");
@@ -101,7 +101,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         PathPatternParser parser = new PathPatternParser();
         for (Rule rule : properties.getRules()) {
             PathPattern pattern = parser.parse(rule.getPath());
-            ruleIndex.put(rule.getPath(), rule);
+            ruleIndex.put(pattern, rule);
             logger.debug("Registered rate limit rule: {} ({} per {}s, key={})",
                     rule.getPath(), rule.getLimit(), rule.getDuration(), rule.getKeyType());
         }
@@ -155,9 +155,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String requestUri = request.getRequestURI();
         PathContainer pathContainer = PathContainer.parsePath(requestUri);
 
-        for (Map.Entry<String, Rule> entry : ruleIndex.entrySet()) {
-            PathPattern pattern = new PathPatternParser().parse(entry.getKey());
-            if (pattern.matches(pathContainer)) {
+        for (Map.Entry<PathPattern, Rule> entry : ruleIndex.entrySet()) {
+            if (entry.getKey().matches(pathContainer)) {
                 Rule rule = entry.getValue();
                 String bucketKey = resolveBucketKey(request, rule);
 
