@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
@@ -53,6 +54,7 @@ public class CheckoutServiceImpl {
     private final PaymentService paymentService;
     private final PromoCodeService promoCodeService;
     private final OrderEmailService orderEmailService;
+    private final Clock clock;
 
     public CheckoutServiceImpl(CartRepository cartRepository,
                                AddressRepository addressRepository,
@@ -60,7 +62,8 @@ public class CheckoutServiceImpl {
                                ItemDetailsRepository itemDetailsRepository,
                                PaymentService paymentService,
                                PromoCodeService promoCodeService,
-                               OrderEmailService orderEmailService) {
+                               OrderEmailService orderEmailService,
+                               Clock clock) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
         this.orderRepository = orderRepository;
@@ -68,6 +71,7 @@ public class CheckoutServiceImpl {
         this.paymentService = paymentService;
         this.promoCodeService = promoCodeService;
         this.orderEmailService = orderEmailService;
+        this.clock = clock;
     }
 
     // =========================================================
@@ -152,7 +156,7 @@ public class CheckoutServiceImpl {
                 .discount(discount)
                 .grandTotal(grandTotal)
                 .promoCode(appliedPromoCode)
-                .placedAt(Instant.now())
+                .placedAt(clock.instant())
                 .build();
 
         orderRepository.save(order);

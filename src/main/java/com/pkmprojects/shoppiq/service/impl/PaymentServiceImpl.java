@@ -16,6 +16,7 @@ import com.pkmprojects.shoppiq.service.PaymentService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -49,11 +50,14 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentGatewayRegistry gatewayRegistry;
+    private final Clock clock;
 
     public PaymentServiceImpl(PaymentRepository paymentRepository,
-                              PaymentGatewayRegistry gatewayRegistry) {
+                              PaymentGatewayRegistry gatewayRegistry,
+                              Clock clock) {
         this.paymentRepository = paymentRepository;
         this.gatewayRegistry = gatewayRegistry;
+        this.clock = clock;
     }
 
     // =========================================================
@@ -182,7 +186,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
-        payment.setRefundedAt(Instant.now());
+        payment.setRefundedAt(clock.instant());
 
         paymentRepository.save(payment);
         return PaymentStatusResponse.from(payment);

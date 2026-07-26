@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class NewsletterSubscriberServiceImpl implements NewsletterSubscriberService {
 
     private final NewsletterSubscriberRepository subscriberRepository;
+    private final Clock clock;
 
     @Override
     @Transactional
@@ -40,7 +42,7 @@ public class NewsletterSubscriberServiceImpl implements NewsletterSubscriberServ
                 return;
             }
             subscriber.setActive(true);
-            subscriber.setSubscribedAt(Instant.now());
+            subscriber.setSubscribedAt(clock.instant());
             subscriber.setUnsubscribedAt(null);
             subscriberRepository.save(subscriber);
             log.debug("Newsletter subscription reactivated for {}", email);
@@ -51,7 +53,7 @@ public class NewsletterSubscriberServiceImpl implements NewsletterSubscriberServ
                 .email(email)
                 .token(UUID.randomUUID().toString())
                 .active(true)
-                .subscribedAt(Instant.now())
+                .subscribedAt(clock.instant())
                 .build();
         subscriberRepository.save(subscriber);
         log.debug("New newsletter subscription for {}", email);
@@ -69,7 +71,7 @@ public class NewsletterSubscriberServiceImpl implements NewsletterSubscriberServ
         }
 
         subscriber.setActive(false);
-        subscriber.setUnsubscribedAt(Instant.now());
+        subscriber.setUnsubscribedAt(clock.instant());
         subscriberRepository.save(subscriber);
         log.debug("Newsletter subscription removed for {}", subscriber.getEmail());
     }

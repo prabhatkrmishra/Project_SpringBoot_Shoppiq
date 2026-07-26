@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.Instant;
 
 /**
@@ -34,11 +35,14 @@ public class PromoCodeServiceImpl implements PromoCodeService {
 
     private final PromoCodeRepository promoCodeRepository;
     private final PromoCodeUsageRepository promoCodeUsageRepository;
+    private final Clock clock;
 
     public PromoCodeServiceImpl(PromoCodeRepository promoCodeRepository,
-                                PromoCodeUsageRepository promoCodeUsageRepository) {
+                                PromoCodeUsageRepository promoCodeUsageRepository,
+                                Clock clock) {
         this.promoCodeRepository = promoCodeRepository;
         this.promoCodeUsageRepository = promoCodeUsageRepository;
+        this.clock = clock;
     }
 
     // =========================================================
@@ -52,7 +56,7 @@ public class PromoCodeServiceImpl implements PromoCodeService {
         PromoCode promoCode = promoCodeRepository.findByCode(code.toUpperCase().trim())
                 .orElseThrow(() -> PromoCodeNotFoundException.forCode(code));
 
-        Instant now = Instant.now();
+        Instant now = clock.instant();
 
         if (!Boolean.TRUE.equals(promoCode.getActive())) {
             throw PromoCodeInactiveException.forCode(code);
@@ -139,7 +143,7 @@ public class PromoCodeServiceImpl implements PromoCodeService {
                 .promoCode(freshPromoCode)
                 .user(user)
                 .order(order)
-                .usedAt(Instant.now())
+                .usedAt(clock.instant())
                 .build();
 
         promoCodeUsageRepository.save(usage);
@@ -220,7 +224,7 @@ public class PromoCodeServiceImpl implements PromoCodeService {
             throw PromoCodeInactiveException.forCode(normalizedCode);
         }
 
-        Instant now = Instant.now();
+        Instant now = clock.instant();
         if (promoCode.getValidFrom() != null && now.isBefore(promoCode.getValidFrom())) {
             throw PromoCodeNotYetValidException.forCode(normalizedCode, promoCode.getValidFrom());
         }

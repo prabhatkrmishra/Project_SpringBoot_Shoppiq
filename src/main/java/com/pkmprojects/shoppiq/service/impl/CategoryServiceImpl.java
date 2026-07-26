@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -58,14 +59,17 @@ public class CategoryServiceImpl implements CategoryService {
      * Repository used for category persistence.
      */
     private final CategoryRepository categoryRepository;
+    private final Clock clock;
 
     /**
      * Creates a new service instance.
      *
      * @param categoryRepository category repository
+     * @param clock              clock for deterministic time in business logic
      */
-    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, Clock clock) {
         this.categoryRepository = categoryRepository;
+        this.clock = clock;
     }
 
     /**
@@ -197,7 +201,7 @@ public class CategoryServiceImpl implements CategoryService {
      */
     @Override
     public List<CategoryResponse> getTopSelling(int size) {
-        Instant since = Instant.now().minus(30, ChronoUnit.DAYS);
+        Instant since = clock.instant().minus(30, ChronoUnit.DAYS);
         List<Object[]> rows = categoryRepository.findTopSellingCategoryIds(since, size);
         return rows.stream().map(row -> new CategoryResponse(((Number) row[0]).longValue(), (String) row[1], (String) row[2], (String) row[3])).toList();
     }

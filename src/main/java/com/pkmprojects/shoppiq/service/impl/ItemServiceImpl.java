@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -39,13 +40,16 @@ public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
+    private final Clock clock;
 
     public ItemServiceImpl(
             ItemRepository itemRepository,
-            CategoryRepository categoryRepository
+            CategoryRepository categoryRepository,
+            Clock clock
     ) {
         this.itemRepository = itemRepository;
         this.categoryRepository = categoryRepository;
+        this.clock = clock;
     }
 
     private Item buildItem(ItemRequest request, Category category) {
@@ -180,7 +184,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemResponse> getTopSelling(int size) {
-        Instant since = Instant.now().minus(30, ChronoUnit.DAYS);
+        Instant since = clock.instant().minus(30, ChronoUnit.DAYS);
         List<Object[]> rows = itemRepository.findTopSellingItemIds(since, size);
         if (rows.isEmpty()) {
             return List.of();
