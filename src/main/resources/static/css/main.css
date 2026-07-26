@@ -657,6 +657,10 @@ small {
     gap: 6px;
 }
 
+.header-nav a span {
+    padding-top: 4px;
+}
+
 .header-nav a:hover, .header-nav a.active {
     color: #fff;
 }
