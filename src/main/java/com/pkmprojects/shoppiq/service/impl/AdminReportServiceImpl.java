@@ -218,7 +218,9 @@ public class AdminReportServiceImpl implements AdminReportService {
         List<Order> orders = orderRepository.findByPlacedAtBetween(startInstant, endInstant);
         BigDecimal discounts = orders.stream().map(Order::getDiscount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal taxes = orders.stream().map(Order::getTax).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal shipping = orders.stream().map(Order::getShippingFee).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal shipping = orders.stream()
+                .map(o -> o.getDeliveryCharge().add(o.getCodSurcharge()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new RevenueReport(
                 startDate, endDate, totalRevenue, grossRevenue, discounts, taxes, shipping,

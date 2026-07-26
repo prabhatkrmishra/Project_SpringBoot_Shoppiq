@@ -3,6 +3,7 @@ package com.pkmprojects.shoppiq.dto.order;
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.entity.Order;
 import com.pkmprojects.shoppiq.entity.OrderAddressSnapshot;
+import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -27,9 +28,11 @@ public record OrderResponse(
         OrderStatus status,
         PaymentMethod paymentMethod,
         PaymentStatus paymentStatus,
+        DeliveryType deliveryType,
         AddressResponse address,
         BigDecimal subtotal,
-        BigDecimal shippingFee,
+        BigDecimal deliveryCharge,
+        BigDecimal codSurcharge,
         BigDecimal tax,
         BigDecimal discount,
         BigDecimal grandTotal,
@@ -58,9 +61,11 @@ public record OrderResponse(
                 order.getStatus(),
                 order.getPaymentMethod(),
                 order.getPaymentStatus(),
+                order.getDeliveryType(),
                 address,
                 order.getSubtotal(),
-                order.getShippingFee(),
+                order.getDeliveryCharge(),
+                order.getCodSurcharge(),
                 order.getTax(),
                 order.getDiscount(),
                 order.getGrandTotal(),

@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.dto.seller.response;
 
 import com.pkmprojects.shoppiq.entity.Order;
+import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -22,7 +23,8 @@ import java.util.List;
  * @param paymentMethod payment method used
  * @param paymentStatus payment status
  * @param subtotal      full order subtotal
- * @param shippingFee   shipping fee
+ * @param deliveryCharge delivery charge based on delivery type
+ * @param codSurcharge   cash-on-delivery surcharge
  * @param tax           tax amount
  * @param discount      discount applied
  * @param grandTotal    full order grand total
@@ -38,8 +40,10 @@ public record SellerOrderResponse(
         OrderStatus status,
         PaymentMethod paymentMethod,
         PaymentStatus paymentStatus,
+        DeliveryType deliveryType,
         BigDecimal subtotal,
-        BigDecimal shippingFee,
+        BigDecimal deliveryCharge,
+        BigDecimal codSurcharge,
         BigDecimal tax,
         BigDecimal discount,
         BigDecimal grandTotal,
@@ -63,8 +67,10 @@ public record SellerOrderResponse(
                 order.getStatus(),
                 order.getPaymentMethod(),
                 order.getPaymentStatus(),
+                order.getDeliveryType(),
                 order.getSubtotal(),
-                order.getShippingFee(),
+                order.getDeliveryCharge(),
+                order.getCodSurcharge(),
                 order.getTax(),
                 order.getDiscount(),
                 order.getGrandTotal(),

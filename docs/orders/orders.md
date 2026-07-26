@@ -26,7 +26,7 @@
 | Controller | Path | Endpoints | Description |
 |------------|------|-----------|-------------|
 | `UserCartController` | `controller/UserCartController.java` | 4 | Cart CRUD operations |
-| `UserOrderController` | `controller/UserOrderController.java` | 7 | Checkout, order listing, actions |
+| `UserOrderController` | `controller/UserOrderController.java` | 8 | Checkout, cost preview, order listing, actions |
 | `UserPaymentController` | `controller/UserPaymentController.java` | 4 | Payment initiation, verification |
 | `SellerOrderController` | `controller/seller/SellerOrderController.java` | 3 | Seller order view, status update |
 | `AdminOrderController` | `controller/admin/AdminOrderController.java` | 3 | Admin order management |
@@ -60,6 +60,7 @@
 | Method | Endpoint | Service Method | Description |
 |--------|----------|---------------|-------------|
 | `POST` | `/user/order/checkout` | `checkoutService.checkout()` | Create order from cart |
+| `POST` | `/user/order/calculate` | `checkoutService.calculateOrderSummary()` | Server-calculated cost preview |
 | `GET` | `/user/order/get/all` | `orderService.getUserOrders()` | Paginated user orders |
 | `GET` | `/user/order/get/{id}` | `orderService.getUserOrderById()` | Single order |
 | `PUT` | `/user/order/cancel/{id}` | `orderService.cancelOrder()` | Cancel PLACED order |
@@ -196,11 +197,13 @@
 | `status` | OrderStatus | `NOT NULL`, STRING | Lifecycle status |
 | `paymentMethod` | PaymentMethod | `NOT NULL`, STRING | COD, RAZORPAY, etc. |
 | `paymentStatus` | PaymentStatus | `NOT NULL`, STRING | PENDING, PAID, etc. |
+| `deliveryType` | DeliveryType | `NOT NULL`, STRING | NORMAL or EXPRESS_1DAY |
 | `subtotal` | BigDecimal | precision 12, scale 2 | Sum of line items |
-| `shippingFee` | BigDecimal | precision 10, scale 2 | Shipping cost |
+| `deliveryCharge` | BigDecimal | precision 10, scale 2 | $7.50 for EXPRESS_1DAY, $0 for NORMAL |
+| `codSurcharge` | BigDecimal | precision 10, scale 2 | $5.00 for COD, $0 otherwise |
 | `tax` | BigDecimal | precision 10, scale 2 | Tax amount |
 | `discount` | BigDecimal | precision 10, scale 2 | Promo discount |
-| `grandTotal` | BigDecimal | precision 12, scale 2 | Final total |
+| `grandTotal` | BigDecimal | precision 12, scale 2 | subtotal + deliveryCharge + codSurcharge + tax − discount |
 | `promoCode` | PromoCode | lazy, nullable FK | Historical reference |
 | `placedAt` | Instant | `NOT NULL` | Order timestamp |
 | `orderItems` | List\<OrderItem\> | cascade ALL | Line items |
@@ -268,6 +271,7 @@ User (1) ──── (*) Order ──── (*) OrderItem
 | Method | Endpoint | Controller Method | Service Method |
 |--------|----------|-------------------|--------------|
 | `POST` | `/user/order/checkout` | `checkout()` | `checkoutService.checkout()` |
+| `POST` | `/user/order/calculate` | `calculateOrderSummary()` | `checkoutService.calculateOrderSummary()` |
 | `GET` | `/user/order/get/all` | `getUserOrders()` | `orderService.getUserOrders()` |
 | `GET` | `/user/order/get/{id}` | `getUserOrderById()` | `orderService.getUserOrderById()` |
 | `PUT` | `/user/order/cancel/{id}` | `cancelOrder()` | `orderService.cancelOrder()` |
@@ -326,15 +330,37 @@ int safeSize = Math.min(size, pagination.maxPageSize());
 ### Checkout Flow
 
 ```
+Cart → Checkout (address) → Payment (payment type + delivery type) → Order confirmed
+
 1. Validate cart not empty
 2. For each cart item:
    a. Load item with stock info
    b. Validate stock >= quantity
    c. Deduct stock (optimistic locking)
    d. Create OrderItem snapshot
-3. Calculate totals: subtotal, shipping, tax, discount
-4. Create Order with PENDING payment status
-5. Create Payment record
-6. Clear cart
-7. Return CheckoutResponse (orderId, grandTotal, paymentId)
+3. Calculate totals:
+   - subtotal: sum of (unitPrice × quantity)
+   - deliveryCharge: $7.50 if EXPRESS_1DAY, $0 if NORMAL
+   - codSurcharge: $5.00 if COD payment, $0 otherwise
+   - tax, discount
+   - grandTotal = subtotal + deliveryCharge + codSurcharge + tax − discount
+4. Snapshot shipping address (immutable OrderAddressSnapshot)
+5. Create Order with PENDING payment status
+6. Create Payment record
+7. Clear cart
+8. Return CheckoutResponse (orderId, grandTotal, paymentId)
 ```
+
+### Cost Preview (`/user/order/calculate`)
+
+The payment page calls this endpoint to get a server-authoritative cost breakdown before the order is placed. Accepts `OrderCalculationRequest` (paymentMethod, deliveryType, promoCode) and returns `OrderCalculationResponse` (subtotal, deliveryCharge, codSurcharge, discount, grandTotal).
+
+### Pricing Rules
+
+| Component | Value | Condition |
+|-----------|-------|-----------|
+| Delivery charge | $7.50 | `deliveryType == EXPRESS_1DAY` |
+| Delivery charge | $0.00 | `deliveryType == NORMAL` |
+| COD surcharge | $5.00 | `paymentMethod == COD` |
+| COD surcharge | $0.00 | `paymentMethod != COD` |
+| Tax | $0.00 | Reserved for future use |

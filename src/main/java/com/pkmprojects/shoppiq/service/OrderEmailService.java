@@ -45,6 +45,10 @@ public class OrderEmailService {
         vars.put("orderMessage", statusMessage);
         vars.put("orderStatus", newStatus.name().replace("_", " "));
         vars.put("orderTotal", "$" + order.getGrandTotal());
+        vars.put("paymentMethod", order.getPaymentMethod() != null
+                ? order.getPaymentMethod().name().replace("_", " ") : "N/A");
+        vars.put("deliveryType", order.getDeliveryType() != null
+                ? order.getDeliveryType().name().replace("_", " ") : "N/A");
         vars.put("isDelivered", newStatus == OrderStatus.DELIVERED);
 
         if (newStatus == OrderStatus.DELIVERED && order.getShippingAddress() != null) {

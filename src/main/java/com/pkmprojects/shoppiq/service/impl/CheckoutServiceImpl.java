@@ -142,21 +142,22 @@ public class CheckoutServiceImpl {
             subtotal = subtotal.add(lineTotal);
         }
 
-        BigDecimal shippingFee = BigDecimal.ZERO;
         BigDecimal tax = BigDecimal.ZERO;
         BigDecimal discount = BigDecimal.ZERO;
         PromoCode appliedPromoCode = null;
 
-        // Delivery charges based on delivery type
+        // Delivery charge based on delivery type
         DeliveryType deliveryType = request.deliveryType() != null
                 ? request.deliveryType() : DeliveryType.NORMAL;
+        BigDecimal deliveryCharge = BigDecimal.ZERO;
         if (deliveryType == DeliveryType.EXPRESS_1DAY) {
-            shippingFee = shippingFee.add(new BigDecimal("7.50"));
+            deliveryCharge = new BigDecimal("7.50");
         }
 
         // COD surcharge
+        BigDecimal codSurcharge = BigDecimal.ZERO;
         if (request.paymentMethod() == PaymentMethod.COD) {
-            shippingFee = shippingFee.add(new BigDecimal("5.00"));
+            codSurcharge = new BigDecimal("5.00");
         }
 
         if (request.promoCode() != null && !request.promoCode().isBlank()) {
@@ -165,7 +166,7 @@ public class CheckoutServiceImpl {
             discount = promoCodeService.calculateDiscount(appliedPromoCode, subtotal);
         }
 
-        BigDecimal grandTotal = subtotal.add(shippingFee).add(tax).subtract(discount);
+        BigDecimal grandTotal = subtotal.add(deliveryCharge).add(codSurcharge).add(tax).subtract(discount);
 
         Order order = Order.builder()
                 .user(user)
@@ -176,7 +177,8 @@ public class CheckoutServiceImpl {
                 .deliveryType(deliveryType)
                 .paymentStatus(PaymentStatus.PENDING)
                 .subtotal(subtotal)
-                .shippingFee(shippingFee)
+                .deliveryCharge(deliveryCharge)
+                .codSurcharge(codSurcharge)
                 .tax(tax)
                 .discount(discount)
                 .grandTotal(grandTotal)
@@ -277,7 +279,7 @@ public class CheckoutServiceImpl {
             codSurcharge = new BigDecimal("5.00");
         }
 
-        BigDecimal shippingFee = deliveryCharge.add(codSurcharge);
+        BigDecimal tax = BigDecimal.ZERO;
 
         BigDecimal discount = BigDecimal.ZERO;
         if (request.promoCode() != null && !request.promoCode().isBlank()) {
@@ -286,13 +288,13 @@ public class CheckoutServiceImpl {
             discount = promoCodeService.calculateDiscount(appliedPromoCode, subtotal);
         }
 
-        BigDecimal grandTotal = subtotal.add(shippingFee).subtract(discount);
+        BigDecimal grandTotal = subtotal.add(deliveryCharge).add(codSurcharge)
+                .add(tax).subtract(discount);
 
         return new OrderCalculationResponse(
                 subtotal,
                 deliveryCharge,
                 codSurcharge,
-                shippingFee,
                 discount,
                 grandTotal
         );

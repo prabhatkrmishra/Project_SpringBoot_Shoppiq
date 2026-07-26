@@ -370,6 +370,8 @@ Example: V30__create_ai_chat_tables.sql
 | V1 | Initial schema |
 | V2-V29 | Core e-commerce tables |
 | V30 | AI chat tables (chat_conversations, chat_messages) |
+| V31 | Add delivery_type column to orders (NORMAL / EXPRESS_1DAY) |
+| V32 | Split shipping_fee into delivery_charge + cod_surcharge |
 
 ### Database Tables
 

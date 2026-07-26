@@ -22,13 +22,10 @@ public record OrderCalculationResponse(
         /** COD surcharge: {@code 5.00} when COD, {@code 0} otherwise. */
         BigDecimal codSurcharge,
 
-        /** Total shipping fee (deliveryCharge + codSurcharge). */
-        BigDecimal shippingFee,
-
         /** Promo code discount amount. */
         BigDecimal discount,
 
-        /** Final total the customer pays (subtotal + shippingFee - discount). */
+        /** Final total the customer pays (subtotal + deliveryCharge + codSurcharge - discount). */
         BigDecimal grandTotal
 ) {
 }

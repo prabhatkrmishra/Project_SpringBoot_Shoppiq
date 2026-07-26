@@ -27,11 +27,26 @@
 
                 <div class="panel">
                     <div class="panel-title">Order Summary</div>
-                    <div class="cart-summary-row"><span>Subtotal</span><span id="order-subtotal">$0.00</span></div>
-                    <div class="cart-summary-row"><span>Shipping</span><span id="order-shipping">$0.00</span></div>
+                    <div class="cart-summary-row"><span>Product Subtotal</span><span id="order-subtotal">$0.00</span></div>
+                    <div class="cart-summary-row" id="order-delivery-row" style="display:none;">
+                        <span>Delivery Charge</span><span id="order-delivery">$0.00</span>
+                    </div>
+                    <div class="cart-summary-row" id="order-cod-row" style="display:none;">
+                        <span>COD Surcharge</span><span id="order-cod-fee">$0.00</span>
+                    </div>
                     <div class="cart-summary-row" id="order-discount-row" style="display:none;">
                         <span>Discount</span><span class="discount" id="order-discount">-$0.00</span></div>
                     <div class="cart-summary-row total"><span>Total</span><span id="order-total">$0.00</span></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Payment Details</div>
+                    <div class="cart-summary-row">
+                        <span>Payment Method</span><span id="order-payment-method">-</span>
+                    </div>
+                    <div class="cart-summary-row">
+                        <span>Delivery Type</span><span id="order-delivery-type">-</span>
+                    </div>
                 </div>
 
                 <div class="mt-lg flex gap-sm">
@@ -91,12 +106,29 @@
                 statusEl.className = 'badge ' + badgeClass(order.status);
                 document.getElementById('order-date').textContent = formatDate(order.placedAt);
                 document.getElementById('order-subtotal').textContent = formatCurrency(order.subtotal);
-                document.getElementById('order-shipping').textContent = formatCurrency(order.shippingFee);
+                var deliveryRow = document.getElementById('order-delivery-row');
+                if (order.deliveryCharge && parseFloat(order.deliveryCharge) > 0) {
+                    deliveryRow.style.display = '';
+                    document.getElementById('order-delivery').textContent = formatCurrency(order.deliveryCharge);
+                } else {
+                    deliveryRow.style.display = 'none';
+                }
+                var codRow = document.getElementById('order-cod-row');
+                if (order.codSurcharge && parseFloat(order.codSurcharge) > 0) {
+                    codRow.style.display = '';
+                    document.getElementById('order-cod-fee').textContent = formatCurrency(order.codSurcharge);
+                } else {
+                    codRow.style.display = 'none';
+                }
                 document.getElementById('order-total').textContent = formatCurrency(order.grandTotal);
                 if (order.discount && parseFloat(order.discount) > 0) {
                     document.getElementById('order-discount-row').style.display = '';
                     document.getElementById('order-discount').textContent = '-' + formatCurrency(order.discount);
                 }
+                document.getElementById('order-payment-method').textContent =
+                    (order.paymentMethod || '-').replace(/_/g, ' ');
+                document.getElementById('order-delivery-type').textContent =
+                    (order.deliveryType || '-').replace(/_/g, ' ');
                 var itemsContainer = document.getElementById('order-items');
                 itemsContainer.innerHTML = '';
                 (order.items || []).forEach(function (item) {

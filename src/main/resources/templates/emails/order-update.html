@@ -48,6 +48,12 @@
                                            th:if="${orderTotal}">
                                             <strong>Total:</strong> <span th:text="${orderTotal}">N/A</span>
                                         </p>
+                                        <p style="color: #166534; font-size: 14px; margin: 0 0 10px 0;">
+                                            <strong>Payment Method:</strong> <span th:text="${paymentMethod} ?: 'N/A'">N/A</span>
+                                        </p>
+                                        <p style="color: #166534; font-size: 14px; margin: 0 0 10px 0;">
+                                            <strong>Delivery Type:</strong> <span th:text="${deliveryType} ?: 'N/A'">N/A</span>
+                                        </p>
                                         <p style="color: #166534; font-size: 14px; margin: 0;"
                                            th:if="${isDelivered} and ${deliveryAddress}">
                                             <strong>Delivered to:</strong><br>

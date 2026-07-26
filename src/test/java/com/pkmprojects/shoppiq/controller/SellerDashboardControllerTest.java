@@ -14,6 +14,7 @@ import com.pkmprojects.shoppiq.dto.seller.response.SellerDashboardResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderItemResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -167,13 +168,15 @@ class SellerDashboardControllerTest {
             when(sellerDashboardService.getRecentOrders(any(User.class)))
                     .thenReturn(List.of(
                             new SellerOrderResponse(1L, OrderStatus.PLACED, PaymentMethod.ONLINE,
-                                    PaymentStatus.PAID, BigDecimal.valueOf(100), BigDecimal.ZERO,
+                                    PaymentStatus.PAID, DeliveryType.NORMAL, BigDecimal.valueOf(100),
+                                    BigDecimal.ZERO, BigDecimal.ZERO,
                                     BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(100),
                                     Instant.now(), Instant.now(), Instant.now(),
                                     List.of(new SellerOrderItemResponse(1L, "Product",
                                             BigDecimal.TEN, 2, BigDecimal.valueOf(20)))),
                             new SellerOrderResponse(2L, OrderStatus.SHIPPED, PaymentMethod.ONLINE,
-                                    PaymentStatus.PAID, BigDecimal.valueOf(50), BigDecimal.ZERO,
+                                    PaymentStatus.PAID, DeliveryType.NORMAL, BigDecimal.valueOf(50),
+                                    BigDecimal.ZERO, BigDecimal.ZERO,
                                     BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(50),
                                     Instant.now(), Instant.now(), Instant.now(),
                                     List.of(new SellerOrderItemResponse(2L, "Product 2",

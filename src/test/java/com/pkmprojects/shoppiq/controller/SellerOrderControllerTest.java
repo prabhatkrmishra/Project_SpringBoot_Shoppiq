@@ -15,6 +15,7 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderItemResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
 import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -92,8 +93,10 @@ class SellerOrderControllerTest {
     private static SellerOrderResponse stubResponse(Long id, OrderStatus status) {
         return new SellerOrderResponse(
                 id, status, PaymentMethod.ONLINE, PaymentStatus.PAID,
-                BigDecimal.valueOf(100), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                BigDecimal.valueOf(100), Instant.now(), Instant.now(), Instant.now(),
+                DeliveryType.NORMAL,
+                BigDecimal.valueOf(100), BigDecimal.ZERO, BigDecimal.ZERO,
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(100),
+                Instant.now(), Instant.now(), Instant.now(),
                 List.of(new SellerOrderItemResponse(1L, "Product", BigDecimal.TEN, 2, BigDecimal.valueOf(20)))
         );
     }

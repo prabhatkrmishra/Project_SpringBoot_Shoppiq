@@ -338,19 +338,22 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
                 subtotal = subtotal.add(lineTotal);
             }
 
-            BigDecimal shippingFee = BigDecimal.ZERO;
+            BigDecimal deliveryCharge = BigDecimal.ZERO;
+            BigDecimal codSurcharge = BigDecimal.ZERO;
             BigDecimal tax = BigDecimal.ZERO;
             BigDecimal discount = BigDecimal.ZERO;
-            BigDecimal grandTotal = subtotal.add(shippingFee).add(tax).subtract(discount);
+            BigDecimal grandTotal = subtotal.add(deliveryCharge).add(codSurcharge).add(tax).subtract(discount);
 
             Order order = Order.builder()
                     .user(user)
                     .address(address)
+                    .shippingAddress(OrderAddressSnapshot.from(address))
                     .status(OrderStatus.PLACED)
                     .paymentMethod(item.paymentMethod())
                     .paymentStatus(PaymentStatus.PENDING)
                     .subtotal(subtotal)
-                    .shippingFee(shippingFee)
+                    .deliveryCharge(deliveryCharge)
+                    .codSurcharge(codSurcharge)
                     .tax(tax)
                     .discount(discount)
                     .grandTotal(grandTotal)
@@ -385,7 +388,8 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
 
             responses.add(new CheckoutResponse(
                     order.getId(), order.getStatus(), order.getSubtotal(),
-                    order.getDiscount(), order.getShippingFee(), order.getGrandTotal(),
+                    order.getDiscount(), order.getDeliveryCharge(), order.getCodSurcharge(),
+                    order.getGrandTotal(),
                     order.getDeliveryType(), null, null));
         }
 

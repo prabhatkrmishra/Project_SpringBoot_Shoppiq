@@ -76,9 +76,14 @@ public record AdminOrderResponse(
         BigDecimal subtotal,
 
         /**
-         * Shipping fee.
+         * Delivery charge based on delivery type.
          */
-        BigDecimal shippingFee,
+        BigDecimal deliveryCharge,
+
+        /**
+         * Cash-on-delivery surcharge.
+         */
+        BigDecimal codSurcharge,
 
         /**
          * Tax amount.
@@ -197,18 +202,8 @@ public record AdminOrderResponse(
      * @return mapped response DTO
      */
     public static AdminOrderResponse fromEntity(Order order) {
-        Address address = order.getAddress();
-        AddressResponse addressResponse = new AddressResponse(
-                address.getLabel(),
-                address.getFullName(),
-                address.getPhone(),
-                address.getLine1(),
-                address.getLine2(),
-                address.getCity(),
-                address.getState(),
-                address.getPostalCode(),
-                address.getCountry()
-        );
+        AddressResponse addressResponse = toAddressResponse(
+                order.getShippingAddress(), order.getAddress());
 
         List<OrderItemResponse> itemResponses = order.getOrderItems().stream()
                 .map(item -> new OrderItemResponse(
@@ -229,12 +224,40 @@ public record AdminOrderResponse(
                 order.getPaymentMethod(),
                 order.getPaymentStatus(),
                 order.getSubtotal(),
-                order.getShippingFee(),
+                order.getDeliveryCharge(),
+                order.getCodSurcharge(),
                 order.getTax(),
                 order.getDiscount(),
                 order.getGrandTotal(),
                 order.getPlacedAt(),
                 itemResponses
         );
+    }
+
+    /**
+     * Builds an {@link AddressResponse} from the snapshot, falling back to
+     * the live address entity for legacy orders that predate the snapshot.
+     */
+    private static AddressResponse toAddressResponse(OrderAddressSnapshot snapshot,
+                                                     Address liveAddress) {
+        if (snapshot != null) {
+            return new AddressResponse(
+                    null,
+                    snapshot.getFullName(), snapshot.getPhone(),
+                    snapshot.getLine1(), snapshot.getLine2(),
+                    snapshot.getCity(), snapshot.getState(),
+                    snapshot.getPostalCode(), snapshot.getCountry()
+            );
+        }
+        if (liveAddress != null) {
+            return new AddressResponse(
+                    liveAddress.getLabel(),
+                    liveAddress.getFullName(), liveAddress.getPhone(),
+                    liveAddress.getLine1(), liveAddress.getLine2(),
+                    liveAddress.getCity(), liveAddress.getState(),
+                    liveAddress.getPostalCode(), liveAddress.getCountry()
+            );
+        }
+        return null;
     }
 }

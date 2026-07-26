@@ -111,10 +111,18 @@ public class Order extends AuditableEntity {
     private BigDecimal subtotal;
 
     /**
-     * Shipping fee applied at checkout.
+     * Delivery charge based on delivery type.
+     * {@code 7.50} for EXPRESS_1DAY, {@code 0} for NORMAL.
      */
-    @Column(name = "shipping_fee", nullable = false, precision = 10, scale = 2)
-    private BigDecimal shippingFee;
+    @Column(name = "delivery_charge", nullable = false, precision = 10, scale = 2)
+    private BigDecimal deliveryCharge;
+
+    /**
+     * Cash-on-delivery surcharge.
+     * {@code 5.00} when payment method is COD, {@code 0} otherwise.
+     */
+    @Column(name = "cod_surcharge", nullable = false, precision = 10, scale = 2)
+    private BigDecimal codSurcharge;
 
     /**
      * Tax applied at checkout.
@@ -129,7 +137,7 @@ public class Order extends AuditableEntity {
     private BigDecimal discount;
 
     /**
-     * Final amount payable: subtotal + shippingFee + tax - discount.
+     * Final amount payable: subtotal + deliveryCharge + codSurcharge + tax - discount.
      */
     @Column(name = "grand_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal grandTotal;

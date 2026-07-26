@@ -116,7 +116,10 @@ class UserOrderControllerTest {
     }
 
     private CheckoutResponse checkoutResponse(Long orderId) {
-        return new CheckoutResponse(orderId, OrderStatus.PLACED, BigDecimal.valueOf(500), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(500), DeliveryType.NORMAL, 99L, null);
+        return new CheckoutResponse(orderId, OrderStatus.PLACED,
+                BigDecimal.valueOf(500), BigDecimal.ZERO,
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(500),
+                DeliveryType.NORMAL, 99L, null);
     }
 
     private OrderResponse orderResponse(Long orderId) {
@@ -127,8 +130,10 @@ class UserOrderControllerTest {
         );
         return new OrderResponse(
                 orderId, OrderStatus.PLACED, PaymentMethod.COD, PaymentStatus.PENDING,
+                DeliveryType.NORMAL,
                 addr,
-                BigDecimal.valueOf(500), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+                BigDecimal.valueOf(500), BigDecimal.ZERO, BigDecimal.ZERO,
+                BigDecimal.ZERO, BigDecimal.ZERO,
                 BigDecimal.valueOf(500), Instant.now(), Instant.now(), Instant.now(),
                 List.of()
         );
