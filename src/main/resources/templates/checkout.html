@@ -64,6 +64,7 @@
                                    aria-label="Promo code">
                             <button type="button" id="checkout-promo-apply" class="btn btn-sm btn-secondary">Apply
                             </button>
+                            <button type="button" id="checkout-promo-remove" class="btn btn-sm btn-danger" style="display:none;">Remove</button>
                         </div>
                         <div id="checkout-promo-msg" style="display:none;" class="text-sm mt-sm"></div>
                         <div class="cart-actions">
@@ -143,11 +144,50 @@
                 document.getElementById('checkout-subtotal').textContent = formatCurrency(cart.subtotal);
                 document.getElementById('checkout-total').textContent = formatCurrency(cart.subtotal);
                 cartSubtotal = cart.subtotal;
+
+                /* Pre-fill saved promo input but do NOT auto-apply.
+                   User must click Apply to re-validate. */
                 var savedPromo = sessionStorage.getItem('promoCode');
                 if (savedPromo) {
                     document.getElementById('checkout-promo-input').value = savedPromo;
-                    applyPromoCode();
                 }
+            }
+
+            function showPromoApplied(discount) {
+                var msgEl = document.getElementById('checkout-promo-msg');
+                msgEl.style.display = 'block';
+                msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(discount) + '</span>';
+                document.getElementById('checkout-discount-row').style.display = '';
+                document.getElementById('checkout-discount').textContent = '-' + formatCurrency(discount);
+                document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal - discount);
+
+                document.getElementById('checkout-promo-apply').style.display = 'none';
+                document.getElementById('checkout-promo-remove').style.display = '';
+                document.getElementById('checkout-promo-input').disabled = true;
+            }
+
+            function clearPromoState(message) {
+                appliedPromoCode = null;
+                discountAmount = 0;
+                sessionStorage.removeItem('promoCode');
+
+                var msgEl = document.getElementById('checkout-promo-msg');
+                if (message) {
+                    msgEl.style.display = 'block';
+                    msgEl.innerHTML = '<span class="text-danger">' + escapeHtml(message) + '</span>';
+                } else {
+                    msgEl.style.display = 'none';
+                }
+
+                document.getElementById('checkout-discount-row').style.display = 'none';
+                document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal);
+
+                var applyBtn = document.getElementById('checkout-promo-apply');
+                applyBtn.style.display = '';
+                applyBtn.textContent = 'Apply';
+                applyBtn.disabled = false;
+                document.getElementById('checkout-promo-remove').style.display = 'none';
+                document.getElementById('checkout-promo-input').disabled = false;
             }
 
             function applyPromoCode() {
@@ -163,26 +203,20 @@
                 setButtonLoading(btn, true);
                 API.post('/api/promo-codes/validate', {code: code, subtotal: cartSubtotal}).then(function (res) {
                     appliedPromoCode = code;
-                    sessionStorage.setItem('promoCode', code);
                     discountAmount = parseFloat(res.discount);
-                    msgEl.style.display = 'block';
-                    msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(res.discount) + '</span>';
-                    document.getElementById('checkout-discount-row').style.display = '';
-                    document.getElementById('checkout-discount').textContent = '-' + formatCurrency(res.discount);
-                    document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal - discountAmount);
+                    sessionStorage.setItem('promoCode', code);
+                    showPromoApplied(discountAmount);
                     setButtonLoading(btn, false);
-                    btn.textContent = 'Applied';
-                    btn.disabled = true;
                 }).catch(function (err) {
-                    appliedPromoCode = null;
-                    sessionStorage.removeItem('promoCode');
-                    discountAmount = 0;
-                    msgEl.style.display = 'block';
-                    msgEl.innerHTML = '<span class="text-danger">' + escapeHtml(err.message || 'Invalid promo code') + '</span>';
-                    document.getElementById('checkout-discount-row').style.display = 'none';
-                    document.getElementById('checkout-total').textContent = formatCurrency(cartSubtotal);
+                    clearPromoState(err.message || 'Invalid promo code');
                     setButtonLoading(btn, false);
                 });
+            }
+
+            function removePromo() {
+                clearPromoState(null);
+                document.getElementById('checkout-promo-input').value = '';
+                document.getElementById('checkout-promo-msg').style.display = 'none';
             }
 
             function init() {
@@ -206,6 +240,7 @@
                 });
 
                 document.getElementById('checkout-promo-apply').addEventListener('click', applyPromoCode);
+                document.getElementById('checkout-promo-remove').addEventListener('click', removePromo);
 
                 document.getElementById('checkout-form').addEventListener('submit', function (e) {
                     e.preventDefault();
@@ -213,10 +248,11 @@
                         showToast('Please select a shipping address', 'error');
                         return;
                     }
-                    // Store checkout data in sessionStorage and redirect to payment page
                     sessionStorage.setItem('checkoutAddressId', selectedAddressId);
                     if (appliedPromoCode) {
                         sessionStorage.setItem('promoCode', appliedPromoCode);
+                    } else {
+                        sessionStorage.removeItem('promoCode');
                     }
                     window.location.href = '/payment';
                 });

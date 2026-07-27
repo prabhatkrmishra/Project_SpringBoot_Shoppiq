@@ -122,6 +122,11 @@
                             <span>Total</span>
                             <span id="pay-total">$0.00</span>
                         </div>
+                        <div id="pay-promo-row" class="cart-promo" style="display:none;">
+                            <input type="text" id="pay-promo-input" class="form-input" value="" readonly
+                                   aria-label="Applied promo code" style="flex:1;">
+                            <button type="button" id="pay-promo-remove" class="btn btn-sm btn-danger">Remove</button>
+                        </div>
                         <div class="cart-actions">
                             <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg btn-block">Place
                                 Order
@@ -157,6 +162,25 @@
                 }
             }
 
+            function showPromoRow(code) {
+                var row = document.getElementById('pay-promo-row');
+                row.style.display = '';
+                document.getElementById('pay-promo-input').value = code;
+            }
+
+            function hidePromoRow() {
+                document.getElementById('pay-promo-row').style.display = 'none';
+            }
+
+            function clearPromoFromState(reason) {
+                promoCode = null;
+                sessionStorage.removeItem('promoCode');
+                hidePromoRow();
+                if (reason) {
+                    showToast(reason, 'error');
+                }
+            }
+
             function fetchSummary() {
                 var paymentRadio = document.querySelector('input[name="paymentMethod"]:checked');
                 var deliveryRadio = document.querySelector('input[name="deliveryType"]:checked');
@@ -175,8 +199,24 @@
                     currentCalc = res;
                     renderSummary(res);
                     setCalcLoading(false);
-                }).catch(function () {
+                }).catch(function (err) {
                     setCalcLoading(false);
+                    if (promoCode) {
+                        showToast(err.message || 'Promo code is invalid. Removing it.', 'error');
+                        clearPromoFromState(null);
+                        /* Re-fetch summary without the invalid promo (one-shot, no recursion) */
+                        API.post('/user/order/calculate', {
+                            paymentMethod: payload.paymentMethod,
+                            deliveryType: payload.deliveryType
+                        }).then(function (res) {
+                            currentCalc = res;
+                            renderSummary(res);
+                        }).catch(function (innerErr) {
+                            showPaymentError(innerErr.message || 'Unable to calculate order summary.');
+                        });
+                    } else {
+                        showPaymentError(err.message || 'Unable to calculate order summary.');
+                    }
                 });
             }
 
@@ -232,6 +272,10 @@
                     return;
                 }
 
+                if (promoCode) {
+                    showPromoRow(promoCode);
+                }
+
                 API.get('/user/cart/get').then(function (cart) {
                     if (!cart || !cart.items || cart.items.length === 0) {
                         showPaymentError('Your cart is empty. Please add items before checking out.');
@@ -244,6 +288,11 @@
                     document.getElementById('payment-form').style.display = '';
                 }).catch(function (err) {
                     showPaymentError(err.message || 'Failed to load payment data.');
+                });
+
+                document.getElementById('pay-promo-remove').addEventListener('click', function () {
+                    clearPromoFromState(null);
+                    fetchSummary();
                 });
 
                 document.getElementById('payment-form').addEventListener('submit', function (e) {
@@ -291,6 +340,12 @@
                     }).catch(function (err) {
                         showToast(err.message || 'Failed to place order', 'error');
                         setButtonLoading(btn, false);
+                        /* Clear promo on order failure so retries don't keep
+                           hitting the same promo error (already used, limit
+                           exceeded, etc.) */
+                        if (promoCode) {
+                            clearPromoFromState(null);
+                        }
                     });
                 });
             });

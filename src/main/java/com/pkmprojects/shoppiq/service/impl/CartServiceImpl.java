@@ -16,11 +16,11 @@ import com.pkmprojects.shoppiq.repository.CartItemRepository;
 import com.pkmprojects.shoppiq.repository.CartRepository;
 import com.pkmprojects.shoppiq.repository.ItemDetailsRepository;
 import com.pkmprojects.shoppiq.service.CartService;
+import com.pkmprojects.shoppiq.util.PriceUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 
 /**
@@ -198,20 +198,9 @@ public class CartServiceImpl implements CartService {
      */
     private BigDecimal calculateSubtotal(List<CartItem> items) {
         return items.stream()
-                .map(item -> effectivePrice(item.getItemDetails())
+                .map(item -> PriceUtil.effectivePrice(item.getItemDetails())
                         .multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    /**
-     * Computes the effective (post-discount) price for an item.
-     */
-    private BigDecimal effectivePrice(ItemDetails itemDetails) {
-        BigDecimal discount = itemDetails.getDiscountPercentage()
-                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-        return itemDetails.getPrice()
-                .multiply(BigDecimal.ONE.subtract(discount))
-                .setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
@@ -222,7 +211,7 @@ public class CartServiceImpl implements CartService {
      */
     private CartItemResponse toCartItemResponse(CartItem cartItem) {
         ItemDetails details = cartItem.getItemDetails();
-        BigDecimal unitPrice = effectivePrice(details);
+        BigDecimal unitPrice = PriceUtil.effectivePrice(details);
         BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
         String itemName = details.getItem() != null ? details.getItem().getName() : "";

@@ -539,4 +539,130 @@ class PromoCodeServiceImplTest {
                     .isInstanceOf(PromoCodeNotFoundException.class);
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // validateForPreview()
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("validateForPreview()")
+    class ValidateForPreviewTests {
+
+        @Test
+        @DisplayName("Success — valid promo code")
+        void validateForPreview_success() throws Exception {
+            Instant now = Instant.now();
+            PromoCode pc = buildPromoCode(10L, "SAVE20", DiscountType.PERCENTAGE,
+                    BigDecimal.valueOf(20), null, null, null, null, 0,
+                    now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
+
+            when(promoCodeRepository.findByCode("SAVE20")).thenReturn(Optional.of(pc));
+
+            PromoCode result = promoCodeService.validateForPreview("SAVE20", BigDecimal.valueOf(500));
+
+            assertThat(result).isNotNull();
+            assertThat(result.getCode()).isEqualTo("SAVE20");
+        }
+
+        @Test
+        @DisplayName("Fails — promo code not found")
+        void validateForPreview_notFound() {
+            when(promoCodeRepository.findByCode("NOPE")).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() ->
+                    promoCodeService.validateForPreview("NOPE", BigDecimal.valueOf(500))
+            ).isInstanceOf(PromoCodeNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — promo code inactive")
+        void validateForPreview_inactive() throws Exception {
+            Instant now = Instant.now();
+            PromoCode pc = buildPromoCode(10L, "INACTIVE", DiscountType.PERCENTAGE,
+                    BigDecimal.valueOf(10), null, null, null, null, 0,
+                    now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), false);
+
+            when(promoCodeRepository.findByCode("INACTIVE")).thenReturn(Optional.of(pc));
+
+            assertThatThrownBy(() ->
+                    promoCodeService.validateForPreview("INACTIVE", BigDecimal.valueOf(500))
+            ).isInstanceOf(PromoCodeInactiveException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — promo code not yet valid")
+        void validateForPreview_notYetValid() throws Exception {
+            Instant now = Instant.now();
+            PromoCode pc = buildPromoCode(10L, "FUTURE", DiscountType.PERCENTAGE,
+                    BigDecimal.valueOf(10), null, null, null, null, 0,
+                    now.plus(7, ChronoUnit.DAYS), now.plus(37, ChronoUnit.DAYS), true);
+
+            when(promoCodeRepository.findByCode("FUTURE")).thenReturn(Optional.of(pc));
+
+            assertThatThrownBy(() ->
+                    promoCodeService.validateForPreview("FUTURE", BigDecimal.valueOf(500))
+            ).isInstanceOf(PromoCodeNotYetValidException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — promo code expired")
+        void validateForPreview_expired() throws Exception {
+            Instant now = Instant.now();
+            PromoCode pc = buildPromoCode(10L, "EXPIRED", DiscountType.PERCENTAGE,
+                    BigDecimal.valueOf(10), null, null, null, null, 0,
+                    now.minus(30, ChronoUnit.DAYS), now.minus(1, ChronoUnit.DAYS), true);
+
+            when(promoCodeRepository.findByCode("EXPIRED")).thenReturn(Optional.of(pc));
+
+            assertThatThrownBy(() ->
+                    promoCodeService.validateForPreview("EXPIRED", BigDecimal.valueOf(500))
+            ).isInstanceOf(PromoCodeExpiredException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — global usage limit exceeded")
+        void validateForPreview_usageLimitExceeded() throws Exception {
+            Instant now = Instant.now();
+            PromoCode pc = buildPromoCode(10L, "LIMITED", DiscountType.PERCENTAGE,
+                    BigDecimal.valueOf(10), null, null, 5, null, 5,
+                    now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
+
+            when(promoCodeRepository.findByCode("LIMITED")).thenReturn(Optional.of(pc));
+
+            assertThatThrownBy(() ->
+                    promoCodeService.validateForPreview("LIMITED", BigDecimal.valueOf(500))
+            ).isInstanceOf(PromoCodeUsageLimitExceededException.class);
+        }
+
+        @Test
+        @DisplayName("Fails — minimum order amount not met")
+        void validateForPreview_minAmountNotMet() throws Exception {
+            Instant now = Instant.now();
+            PromoCode pc = buildPromoCode(10L, "MIN100", DiscountType.PERCENTAGE,
+                    BigDecimal.valueOf(10), BigDecimal.valueOf(100), null, null, null, 0,
+                    now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
+
+            when(promoCodeRepository.findByCode("MIN100")).thenReturn(Optional.of(pc));
+
+            assertThatThrownBy(() ->
+                    promoCodeService.validateForPreview("MIN100", BigDecimal.valueOf(50))
+            ).isInstanceOf(PromoCodeMinOrderAmountException.class);
+        }
+
+        @Test
+        @DisplayName("Success — minimum order amount met")
+        void validateForPreview_minAmountMet() throws Exception {
+            Instant now = Instant.now();
+            PromoCode pc = buildPromoCode(10L, "MIN100", DiscountType.PERCENTAGE,
+                    BigDecimal.valueOf(10), BigDecimal.valueOf(100), null, null, null, 0,
+                    now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
+
+            when(promoCodeRepository.findByCode("MIN100")).thenReturn(Optional.of(pc));
+
+            PromoCode result = promoCodeService.validateForPreview("MIN100", BigDecimal.valueOf(100));
+
+            assertThat(result).isNotNull();
+            assertThat(result.getCode()).isEqualTo("MIN100");
+        }
+    }
 }

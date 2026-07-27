@@ -17,6 +17,7 @@ import com.pkmprojects.shoppiq.repository.*;
 import com.pkmprojects.shoppiq.service.OrderEmailService;
 import com.pkmprojects.shoppiq.service.PaymentService;
 import com.pkmprojects.shoppiq.service.PromoCodeService;
+import com.pkmprojects.shoppiq.util.PriceUtil;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -134,10 +135,9 @@ public class CheckoutServiceImpl {
             }
         });
 
-        BigDecimal subtotal;
-        subtotal = BigDecimal.ZERO;
+        BigDecimal subtotal = BigDecimal.ZERO;
         for (CartItem cartItem : cartItems) {
-            BigDecimal lineTotal = cartItem.getItemDetails().getPrice()
+            BigDecimal lineTotal = PriceUtil.effectivePrice(cartItem.getItemDetails())
                     .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
             subtotal = subtotal.add(lineTotal);
         }
@@ -192,7 +192,7 @@ public class CheckoutServiceImpl {
             ItemDetails details = cartItem.getItemDetails();
             Item item = details.getItem();
 
-            BigDecimal lineSubtotal = details.getPrice()
+            BigDecimal lineSubtotal = PriceUtil.effectivePrice(details)
                     .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
             OrderItem orderItem = OrderItem.builder()
@@ -261,7 +261,7 @@ public class CheckoutServiceImpl {
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (CartItem cartItem : cartItems) {
-            BigDecimal lineTotal = cartItem.getItemDetails().getPrice()
+            BigDecimal lineTotal = PriceUtil.effectivePrice(cartItem.getItemDetails())
                     .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
             subtotal = subtotal.add(lineTotal);
         }

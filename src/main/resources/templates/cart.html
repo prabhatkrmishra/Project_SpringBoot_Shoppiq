@@ -34,6 +34,10 @@
                         <span>Subtotal</span>
                         <span id="cart-subtotal">$0.00</span>
                     </div>
+                    <div id="cart-discount-row" class="cart-summary-row" style="display:none;">
+                        <span>Discount</span>
+                        <span id="cart-discount" class="text-success">-$0.00</span>
+                    </div>
                     <div class="cart-summary-row">
                         <span>Shipping</span>
                         <span id="cart-shipping">Calculated at checkout</span>
@@ -42,10 +46,11 @@
                         <span>Total</span>
                         <span id="cart-total">$0.00</span>
                     </div>
-                    <div class="cart-promo">
+                    <div class="cart-promo" id="cart-promo-apply-section">
                         <input type="text" id="cart-promo-input" class="form-input" placeholder="Promo code"
                                aria-label="Promo code">
                         <button type="button" id="cart-promo-apply" class="btn btn-sm btn-secondary">Apply</button>
+                        <button type="button" id="cart-promo-remove" class="btn btn-sm btn-danger" style="display:none;">Remove</button>
                     </div>
                     <div id="cart-promo-msg" style="display:none;" class="text-sm mt-sm"></div>
                     <div class="cart-actions">
@@ -69,6 +74,7 @@
             'use strict';
             var cartData = null;
             var appliedPromoCode = null;
+            var appliedDiscount = 0;
 
             function renderCart(cart) {
                 cartData = cart;
@@ -109,8 +115,17 @@
                 });
 
                 document.getElementById('cart-subtotal').textContent = formatCurrency(cart.subtotal);
-                document.getElementById('cart-total').textContent = formatCurrency(cart.subtotal);
-                document.getElementById('cart-total-mobile').textContent = formatCurrency(cart.subtotal);
+
+                if (appliedPromoCode && appliedDiscount > 0) {
+                    document.getElementById('cart-discount-row').style.display = '';
+                    document.getElementById('cart-discount').textContent = '-' + formatCurrency(appliedDiscount);
+                    document.getElementById('cart-total').textContent = formatCurrency(cart.subtotal - appliedDiscount);
+                    document.getElementById('cart-total-mobile').textContent = formatCurrency(cart.subtotal - appliedDiscount);
+                } else {
+                    document.getElementById('cart-discount-row').style.display = 'none';
+                    document.getElementById('cart-total').textContent = formatCurrency(cart.subtotal);
+                    document.getElementById('cart-total-mobile').textContent = formatCurrency(cart.subtotal);
+                }
 
                 bindEvents();
             }
@@ -155,10 +170,66 @@
             }
 
             function loadCart() {
-                API.get('/user/cart/get').then(renderCart).catch(function () {
+                API.get('/user/cart/get').then(function (cart) {
+                    renderCart(cart);
+                    if (appliedPromoCode) {
+                        /* Reset promo display — the discount amount may be stale
+                           after a qty change.  Show raw totals and let the user
+                           re-apply, or the code will be re-validated at checkout.
+                           This avoids an extra API call on every cart change. */
+                        appliedDiscount = 0;
+                        document.getElementById('cart-discount-row').style.display = 'none';
+                        document.getElementById('cart-total').textContent = formatCurrency(cart.subtotal);
+                        document.getElementById('cart-total-mobile').textContent = formatCurrency(cart.subtotal);
+                        var msgEl = document.getElementById('cart-promo-msg');
+                        msgEl.style.display = 'block';
+                        msgEl.innerHTML = '<span class="text-muted">Your cart changed — promo will be re-applied at checkout.</span>';
+                        /* Keep appliedPromoCode + sessionStorage intact for checkout */
+                    }
+                }).catch(function () {
                     document.getElementById('cart-empty').style.display = '';
                     document.getElementById('cart-content').style.display = 'none';
                 });
+            }
+
+            function showPromoApplied(discountAmount) {
+                var msgEl = document.getElementById('cart-promo-msg');
+                msgEl.style.display = 'block';
+                msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(discountAmount) + '</span>';
+                document.getElementById('cart-discount-row').style.display = '';
+                document.getElementById('cart-discount').textContent = '-' + formatCurrency(discountAmount);
+                document.getElementById('cart-total').textContent = formatCurrency(cartData.subtotal - discountAmount);
+                document.getElementById('cart-total-mobile').textContent = formatCurrency(cartData.subtotal - discountAmount);
+
+                document.getElementById('cart-promo-apply').style.display = 'none';
+                document.getElementById('cart-promo-remove').style.display = '';
+                document.getElementById('cart-promo-input').value = appliedPromoCode;
+                document.getElementById('cart-promo-input').disabled = true;
+            }
+
+            function clearPromoState(message) {
+                appliedPromoCode = null;
+                appliedDiscount = 0;
+                sessionStorage.removeItem('promoCode');
+
+                var msgEl = document.getElementById('cart-promo-msg');
+                if (message) {
+                    msgEl.style.display = 'block';
+                    msgEl.innerHTML = '<span class="text-danger">' + escapeHtml(message) + '</span>';
+                } else {
+                    msgEl.style.display = 'none';
+                }
+
+                document.getElementById('cart-discount-row').style.display = 'none';
+                document.getElementById('cart-total').textContent = formatCurrency(cartData.subtotal);
+                document.getElementById('cart-total-mobile').textContent = formatCurrency(cartData.subtotal);
+
+                var applyBtn = document.getElementById('cart-promo-apply');
+                applyBtn.style.display = '';
+                applyBtn.textContent = 'Apply';
+                applyBtn.disabled = false;
+                document.getElementById('cart-promo-remove').style.display = 'none';
+                document.getElementById('cart-promo-input').disabled = false;
             }
 
             function applyPromoCode() {
@@ -174,32 +245,26 @@
                 setButtonLoading(btn, true);
                 API.post('/api/promo-codes/validate', {code: code, subtotal: cartData.subtotal}).then(function (res) {
                     appliedPromoCode = code;
+                    appliedDiscount = parseFloat(res.discount);
                     sessionStorage.setItem('promoCode', code);
-                    msgEl.style.display = 'block';
-                    msgEl.innerHTML = '<span class="text-success">Promo applied! You save ' + formatCurrency(res.discount) + '</span>';
-                    if (cartData) {
-                        document.getElementById('cart-subtotal').textContent = formatCurrency(cartData.subtotal - res.discount);
-                        document.getElementById('cart-total').textContent = formatCurrency(cartData.subtotal - res.discount);
-                    }
+                    showPromoApplied(appliedDiscount);
                     setButtonLoading(btn, false);
-                    btn.textContent = 'Applied';
-                    btn.disabled = true;
                 }).catch(function (err) {
-                    appliedPromoCode = null;
-                    sessionStorage.removeItem('promoCode');
-                    msgEl.style.display = 'block';
-                    msgEl.innerHTML = '<span class="text-danger">' + escapeHtml(err.message || 'Invalid promo code') + '</span>';
+                    clearPromoState(err.message || 'Invalid promo code');
                     setButtonLoading(btn, false);
                 });
             }
 
+            function removePromo() {
+                clearPromoState(null);
+                document.getElementById('cart-promo-input').value = '';
+                document.getElementById('cart-promo-msg').style.display = 'none';
+            }
+
             document.addEventListener('DOMContentLoaded', function () {
                 loadCart();
-                var savedPromo = sessionStorage.getItem('promoCode');
-                if (savedPromo) {
-                    document.getElementById('cart-promo-input').value = savedPromo;
-                }
                 document.getElementById('cart-promo-apply').addEventListener('click', applyPromoCode);
+                document.getElementById('cart-promo-remove').addEventListener('click', removePromo);
             });
         })();
     </script>

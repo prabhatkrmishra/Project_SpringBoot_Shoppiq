@@ -98,8 +98,9 @@ public interface PromoCodeService {
     /**
      * Validates a promo code and returns the discount amount (for preview purposes).
      *
-     * <p>Checks existence, active status, and validity window. Does not check
-     * per-user usage limits (use {@link #validateAndCalculate} at checkout).</p>
+     * <p>Checks existence, active status, validity window, global usage limit,
+     * and minimum order amount. Does not check per-user usage limits
+     * (use {@link #validateAndCalculate} at checkout).</p>
      *
      * @param code     the promo code string
      * @param subtotal the order subtotal

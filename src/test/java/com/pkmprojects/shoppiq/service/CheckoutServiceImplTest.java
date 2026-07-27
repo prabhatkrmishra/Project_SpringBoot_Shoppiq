@@ -6,6 +6,7 @@ import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.entity.Order;
 import com.pkmprojects.shoppiq.enums.DeliveryType;
+import com.pkmprojects.shoppiq.enums.DiscountType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -123,6 +124,22 @@ class CheckoutServiceImplTest {
                 .brand("Brand").sku("SKU-" + id)
                 .price(price).stockQuantity(stock)
                 .discountPercentage(BigDecimal.ZERO)
+                .item(item)
+                .build();
+        setId(details, id);
+        item.setItemDetails(details);
+        return details;
+    }
+
+    private ItemDetails buildItemDetails(long id, BigDecimal price, int stock, BigDecimal discountPct) throws Exception {
+        Item item = Item.builder()
+                .name("Widget").description("A widget").build();
+        setId(item, id * 10);
+
+        ItemDetails details = ItemDetails.builder()
+                .brand("Brand").sku("SKU-" + id)
+                .price(price).stockQuantity(stock)
+                .discountPercentage(discountPct)
                 .item(item)
                 .build();
         setId(details, id);
@@ -348,6 +365,89 @@ class CheckoutServiceImplTest {
             assertThatThrownBy(() ->
                     checkoutService.checkout(user, request)
             ).isInstanceOf(StockConflictException.class);
+        }
+
+        @Test
+        @DisplayName("Success — subtotal uses effective price after item discount")
+        void checkout_appliesItemDiscountToSubtotal() throws Exception {
+            User user = buildUser(1L);
+            Address address = buildAddress(5L, user);
+            // price=200, discount=25% → effective=150.00; qty=2 → lineTotal=300
+            ItemDetails details = buildItemDetails(10L, BigDecimal.valueOf(200), 5, BigDecimal.valueOf(25));
+
+            CartItem cartItem = buildCartItem(details, 2);
+            Cart cart = buildCart(user, List.of(cartItem));
+
+            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, DeliveryType.NORMAL, null);
+
+            when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
+            when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
+            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+                Order o = inv.getArgument(0);
+                setId(o, 99L);
+                return o;
+            });
+            when(cartRepository.save(any(Cart.class))).thenReturn(cart);
+            when(itemDetailsRepository.save(any(ItemDetails.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Payment payment = Payment.builder().build();
+            setId(payment, 77L);
+            when(paymentService.createPayment(any(Order.class))).thenReturn(payment);
+
+            CheckoutResponse response = checkoutService.checkout(user, request);
+
+            // 200 * 0.75 = 150 effective price; 150 * 2 = 300 subtotal + 5 COD = 305
+            assertThat(response.subtotal()).isEqualByComparingTo("300.00");
+            assertThat(response.grandTotal()).isEqualByComparingTo("305.00");
+        }
+
+        @Test
+        @DisplayName("Success — promo discount calculated on effective (post-item-discount) subtotal")
+        void checkout_promoOnEffectiveSubtotal() throws Exception {
+            User user = buildUser(1L);
+            Address address = buildAddress(5L, user);
+            // price=200, discount=25% → effective=150.00; qty=2 → subtotal=300
+            ItemDetails details = buildItemDetails(10L, BigDecimal.valueOf(200), 5, BigDecimal.valueOf(25));
+
+            CartItem cartItem = buildCartItem(details, 2);
+            Cart cart = buildCart(user, List.of(cartItem));
+
+            // Promo: 10% off → discount = 30.00 (10% of 300)
+            PromoCode promoCode = PromoCode.builder()
+                    .code("SAVE10").discountType(DiscountType.PERCENTAGE)
+                    .discountValue(BigDecimal.valueOf(10))
+                    .active(true)
+                    .build();
+            setId(promoCode, 50L);
+
+            when(promoCodeService.validateAndCalculate(eq("SAVE10"), eq(user), any(BigDecimal.class)))
+                    .thenReturn(promoCode);
+            when(promoCodeService.calculateDiscount(eq(promoCode), any(BigDecimal.class)))
+                    .thenReturn(BigDecimal.valueOf(30));
+
+            CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, DeliveryType.NORMAL, "SAVE10");
+
+            when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
+            when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
+            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+                Order o = inv.getArgument(0);
+                setId(o, 99L);
+                return o;
+            });
+            when(cartRepository.save(any(Cart.class))).thenReturn(cart);
+            when(itemDetailsRepository.save(any(ItemDetails.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Payment payment = Payment.builder().build();
+            setId(payment, 77L);
+            when(paymentService.createPayment(any(Order.class))).thenReturn(payment);
+
+            CheckoutResponse response = checkoutService.checkout(user, request);
+
+            // subtotal=300, discount=30, COD=5 → grandTotal=275
+            assertThat(response.subtotal()).isEqualByComparingTo("300.00");
+            assertThat(response.discount()).isEqualByComparingTo("30.00");
+            assertThat(response.grandTotal()).isEqualByComparingTo("275.00");
+            verify(promoCodeService).recordUsage(eq(promoCode), eq(user), any(Order.class));
         }
     }
 

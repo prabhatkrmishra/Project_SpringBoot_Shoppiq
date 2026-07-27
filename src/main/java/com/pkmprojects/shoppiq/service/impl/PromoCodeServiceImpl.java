@@ -236,6 +236,12 @@ public class PromoCodeServiceImpl implements PromoCodeService {
             throw PromoCodeUsageLimitExceededException.forCode(normalizedCode, promoCode.getUsageLimit());
         }
 
+        if (promoCode.getMinOrderAmount() != null
+                && subtotal.compareTo(promoCode.getMinOrderAmount()) < 0) {
+            throw PromoCodeMinOrderAmountException.forCode(
+                    normalizedCode, promoCode.getMinOrderAmount(), subtotal);
+        }
+
         return promoCode;
     }
 }
