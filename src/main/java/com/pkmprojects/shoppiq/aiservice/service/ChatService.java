@@ -4,7 +4,7 @@ import com.pkmprojects.shoppiq.aiservice.dto.ChatMessageDto;
 import com.pkmprojects.shoppiq.aiservice.dto.ConversationSummary;
 import com.pkmprojects.shoppiq.aiservice.entity.ChatConversation;
 import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import reactor.core.publisher.Flux;
 
 import java.util.List;

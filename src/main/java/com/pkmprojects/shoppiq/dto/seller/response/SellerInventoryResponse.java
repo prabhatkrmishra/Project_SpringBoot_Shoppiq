@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.dto.seller.response;
 
-import com.pkmprojects.shoppiq.entity.Item;
-import com.pkmprojects.shoppiq.entity.ItemDetails;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.entity.item.ItemDetails;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 
 import java.math.BigDecimal;

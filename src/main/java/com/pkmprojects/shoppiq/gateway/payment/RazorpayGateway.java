@@ -2,11 +2,10 @@ package com.pkmprojects.shoppiq.gateway.payment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkmprojects.shoppiq.config.PaymentGatewayProperties;
-import com.pkmprojects.shoppiq.entity.Payment;
+import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
-import com.pkmprojects.shoppiq.exception.PaymentGatewayException;
-import com.pkmprojects.shoppiq.exception.PaymentInvalidStateException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayException;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;

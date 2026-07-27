@@ -1,9 +1,9 @@
 package com.pkmprojects.shoppiq.service.seller;
 
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.dto.request.ItemRequest;
-import com.pkmprojects.shoppiq.dto.response.ItemResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.dto.item.ItemRequest;
+import com.pkmprojects.shoppiq.dto.item.ItemResponse;
+import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
  * Business contract for seller product management.

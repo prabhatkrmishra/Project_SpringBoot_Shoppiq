@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.util;
 
-import com.pkmprojects.shoppiq.entity.ItemDetails;
+import com.pkmprojects.shoppiq.entity.item.ItemDetails;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

@@ -16,13 +16,13 @@
                 <!-- Profile Header with Avatar -->
                 <header class="profile-header-card">
                     <div class="profile-header-inner">
-                        <div class="profile-avatar-large"
-                             th:text="${#strings.substring(#authentication.principal.name, 0, 2).toUpperCase()}">US
+                         <div class="profile-avatar-large"
+                             th:text="${#strings.substring(#authentication.principal.user.name, 0, 2).toUpperCase()}">US
                         </div>
                         <div class="profile-header-info">
-                            <h2 th:text="${#authentication.principal.name}">User Name</h2>
+                            <h2 th:text="${#authentication.principal.user.name}">User Name</h2>
                             <p class="profile-meta">
-                                <span th:text="${#authentication.principal.email}">email@example.com</span>
+                                <span th:text="${#authentication.principal.user.email}">email@example.com</span>
                             </p>
                         </div>
                     </div>
@@ -57,12 +57,12 @@
                             <div class="profile-detail-row">
                                 <span class="profile-detail-label">Name</span>
                                 <span class="profile-detail-value" id="display-name"
-                                      sec:authentication="principal.name">User Name</span>
+                                      sec:authentication="principal.user.name">User Name</span>
                             </div>
                             <div class="profile-detail-row">
                                 <span class="profile-detail-label">Email</span>
                                 <span class="profile-detail-value" id="display-email"
-                                      th:text="${#authentication.principal.email}">-</span>
+                                      th:text="${#authentication.principal.user.email}">-</span>
                             </div>
                             <div class="profile-detail-row">
                                 <span class="profile-detail-label">Username</span>
@@ -71,7 +71,7 @@
                             <div class="profile-detail-row">
                                 <span class="profile-detail-label">Member Since</span>
                                 <span class="profile-detail-value"
-                                      th:text="${#temporals.format(#authentication.principal.createdAt, 'MMMM yyyy')}">January 2024</span>
+                                      th:text="${#temporals.format(#authentication.principal.user.createdAt, 'MMMM yyyy')}">January 2024</span>
                             </div>
                         </div>
                     </div>

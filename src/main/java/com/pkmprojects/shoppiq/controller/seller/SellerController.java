@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.controller.seller;
 import com.pkmprojects.shoppiq.dto.seller.request.SellerProfileUpdateRequest;
 import com.pkmprojects.shoppiq.dto.seller.request.SellerRegistrationRequest;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.service.seller.SellerService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -52,14 +52,14 @@ public class SellerController {
     @PostMapping("/register")
     public ResponseEntity<SellerResponse> register(
             @Valid @RequestBody SellerRegistrationRequest request,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         SellerResponse response = sellerService.register(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/profile")
     public ResponseEntity<SellerResponse> getProfile(
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         SellerResponse response = sellerService.getProfile(currentUser);
         return ResponseEntity.ok(response);
     }
@@ -67,21 +67,21 @@ public class SellerController {
     @PutMapping("/update")
     public ResponseEntity<SellerResponse> updateProfile(
             @Valid @RequestBody SellerProfileUpdateRequest request,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         SellerResponse response = sellerService.updateProfile(request, currentUser);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteProfile(
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         sellerService.deleteProfile(currentUser);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/store/publish")
     public ResponseEntity<Void> publishStore(
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         sellerService.publishStore(currentUser);
         return ResponseEntity.ok().build();
     }

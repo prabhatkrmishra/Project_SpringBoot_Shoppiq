@@ -6,10 +6,10 @@ import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.filter.RateLimitFilter;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -90,7 +90,7 @@ public class SecurityConfig {
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private final UserRepository userRepository;
-    private final RolesService rolesService;
+    private final RoleService rolesService;
     private final ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint;
     private final ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler;
     private final OAuthReturnUrlFilter oauthReturnUrlFilter;
@@ -101,7 +101,7 @@ public class SecurityConfig {
                           OAuth2SuccessHandler oAuth2SuccessHandler,
                           HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository,
                           UserRepository userRepository,
-                          RolesService rolesService,
+                          RoleService rolesService,
                           ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint,
                           ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler,
                           OAuthReturnUrlFilter oauthReturnUrlFilter,

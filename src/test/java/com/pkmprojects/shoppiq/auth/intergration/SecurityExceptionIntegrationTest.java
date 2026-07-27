@@ -9,11 +9,11 @@ import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
-import com.pkmprojects.shoppiq.controller.RolesController;
-import com.pkmprojects.shoppiq.entity.Role;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.controller.role.RoleController;
+import com.pkmprojects.shoppiq.entity.role.Role;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
@@ -53,7 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * </p>
  *
  * <p>
- * No database is required: {@link UserRepository} and {@link RolesService}
+ * No database is required: {@link UserRepository} and {@link RoleService}
  * are mocked, and {@link OAuth2SuccessHandler} is mocked since the OAuth2
  * login flow itself is out of scope here.
  * </p>
@@ -63,7 +63,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * {@code @WebMvcTest} slices do not reliably activate the method-security AOP
  * post-processor for inner {@code @RestController} classes, even when
  * {@code @EnableMethodSecurity} is present. The 403 access-denied path is
- * therefore exercised via {@link RolesController#getAllRole()}, a real
+ * therefore exercised via {@link RoleController#getAllRole()}, a real
  * production endpoint that {@link SecurityConfig} already restricts to
  * {@code ROLE_ADMIN} at the URL level — no AOP proxy required.
  * </p>
@@ -71,7 +71,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
-@WebMvcTest(controllers = {SecurityExceptionIntegrationTest.SecuredTestController.class, RolesController.class})
+@WebMvcTest(controllers = {SecurityExceptionIntegrationTest.SecuredTestController.class, RoleController.class})
 @Import({
         SecurityConfig.class,
         JacksonConfig.class,
@@ -96,7 +96,7 @@ class SecurityExceptionIntegrationTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;

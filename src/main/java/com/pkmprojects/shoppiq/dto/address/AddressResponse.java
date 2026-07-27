@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.dto.address;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.pkmprojects.shoppiq.entity.Address;
+import com.pkmprojects.shoppiq.entity.address.Address;
 
 import java.time.Instant;
 

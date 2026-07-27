@@ -1,7 +1,5 @@
 package com.pkmprojects.shoppiq.dto.admin.response;
 
-import com.pkmprojects.shoppiq.entity.Category;
-
 import java.math.BigDecimal;
 
 /**

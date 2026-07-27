@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.service.seller;
 import com.pkmprojects.shoppiq.dto.seller.request.SellerProfileUpdateRequest;
 import com.pkmprojects.shoppiq.dto.seller.request.SellerRegistrationRequest;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
  * Business contract for seller profile management.

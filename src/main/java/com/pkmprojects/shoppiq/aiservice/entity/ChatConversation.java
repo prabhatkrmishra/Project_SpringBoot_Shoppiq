@@ -2,7 +2,7 @@ package com.pkmprojects.shoppiq.aiservice.entity;
 
 import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
 import com.pkmprojects.shoppiq.audit.AuditableEntity;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 

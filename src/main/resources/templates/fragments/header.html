@@ -8,7 +8,7 @@
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <meta name="shoppiq-authenticated" content="true" sec:authorize="isAuthenticated()">
-    <meta name="shoppiq-user-id" th:content="${#authentication?.principal?.id}" sec:authorize="isAuthenticated()">
+    <meta name="shoppiq-user-id" th:content="${#authentication?.principal?.user?.id}" sec:authorize="isAuthenticated()">
     <link rel="icon" th:href="@{/images/favicon.svg}" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

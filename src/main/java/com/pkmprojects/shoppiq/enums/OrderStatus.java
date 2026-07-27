@@ -1,7 +1,9 @@
 package com.pkmprojects.shoppiq.enums;
 
+import com.pkmprojects.shoppiq.entity.order.Order;
+
 /**
- * Lifecycle states of an {@link com.pkmprojects.shoppiq.entity.Order}.
+ * Lifecycle states of an {@link Order}.
  *
  * @author PrabhatKrMishra
  * @since 1.0.0

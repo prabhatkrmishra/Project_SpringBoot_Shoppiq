@@ -3,11 +3,16 @@ package com.pkmprojects.shoppiq.service;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.entity.*;
-import com.pkmprojects.shoppiq.exception.*;
-import com.pkmprojects.shoppiq.repository.*;
+import com.pkmprojects.shoppiq.entity.category.Category;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.entity.item.ItemDetails;
+import com.pkmprojects.shoppiq.exception.general.inventory.ItemStockNegativeException;
+import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
 import com.pkmprojects.shoppiq.service.admin.AdminInventoryService;
-import com.pkmprojects.shoppiq.service.impl.AdminInventoryServiceImpl;
+import com.pkmprojects.shoppiq.service.admin.AdminInventoryServiceImpl;
+import com.pkmprojects.shoppiq.service.item.ItemLookupService;
+import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
+import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsWriteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,10 +41,13 @@ import static org.mockito.Mockito.*;
 class AdminInventoryServiceImplTest {
 
     @Mock
-    private ItemRepository itemRepository;
+    private ItemLookupService itemLookupService;
 
     @Mock
-    private ItemDetailsRepository itemDetailsRepository;
+    private ItemDetailsLookupService itemDetailsLookupService;
+
+    @Mock
+    private ItemDetailsWriteService itemDetailsWriteService;
 
     @InjectMocks
     private AdminInventoryServiceImpl inventoryService;
@@ -81,7 +89,7 @@ class AdminInventoryServiceImplTest {
         void returnsListOfItems() {
             Pageable pageable = PageRequest.of(0, 20);
             Page<Item> page = new PageImpl<>(List.of(testItem), pageable, 1);
-            when(itemRepository.findAll(any(Pageable.class))).thenReturn(page);
+            when(itemLookupService.findAll(0, 20)).thenReturn(page);
 
             PageResponse<AdminProductInventoryResponse> result = inventoryService.getAllProductInventory(0, 20);
 
@@ -96,7 +104,7 @@ class AdminInventoryServiceImplTest {
         void returnsEmptyList() {
             Pageable pageable = PageRequest.of(0, 20);
             Page<Item> page = new PageImpl<>(List.of(), pageable, 0);
-            when(itemRepository.findAll(any(Pageable.class))).thenReturn(page);
+            when(itemLookupService.findAll(0, 20)).thenReturn(page);
 
             PageResponse<AdminProductInventoryResponse> result = inventoryService.getAllProductInventory(0, 20);
 
@@ -112,7 +120,7 @@ class AdminInventoryServiceImplTest {
         @DisplayName("returns low stock products")
         void returnsLowStockProducts() {
             testItemDetails.setStockQuantity(3);
-            when(itemDetailsRepository.findLowStockProducts(5)).thenReturn(List.of(testItemDetails));
+            when(itemDetailsLookupService.findLowStockProducts(5)).thenReturn(List.of(testItemDetails));
 
             List<AdminProductInventoryResponse> result = inventoryService.getLowStockProducts();
 
@@ -129,7 +137,7 @@ class AdminInventoryServiceImplTest {
         @DisplayName("returns out of stock products")
         void returnsOutOfStockProducts() {
             testItemDetails.setStockQuantity(0);
-            when(itemDetailsRepository.findOutOfStockProducts()).thenReturn(List.of(testItemDetails));
+            when(itemDetailsLookupService.findOutOfStockProducts()).thenReturn(List.of(testItemDetails));
 
             List<AdminProductInventoryResponse> result = inventoryService.getOutOfStockProducts();
 
@@ -146,21 +154,21 @@ class AdminInventoryServiceImplTest {
         @DisplayName("increases stock successfully")
         void increasesStockSuccessfully() {
             StockAdjustmentRequest request = new StockAdjustmentRequest(10, "New shipment");
-            when(itemRepository.findById(1L)).thenReturn(Optional.of(testItem));
-            when(itemDetailsRepository.save(any())).thenReturn(testItemDetails);
+            when(itemLookupService.findById(1L)).thenReturn(Optional.of(testItem));
+            when(itemDetailsWriteService.save(any())).thenReturn(testItemDetails);
 
             AdminProductInventoryResponse result = inventoryService.adjustStock(1L, request);
 
             assertThat(result.stockQuantity()).isEqualTo(10);
-            verify(itemDetailsRepository).save(testItemDetails);
+            verify(itemDetailsWriteService).save(testItemDetails);
         }
 
         @Test
         @DisplayName("decreases stock successfully")
         void decreasesStockSuccessfully() {
             StockAdjustmentRequest request = new StockAdjustmentRequest(30, "Lower stock");
-            when(itemRepository.findById(1L)).thenReturn(Optional.of(testItem));
-            when(itemDetailsRepository.save(any())).thenReturn(testItemDetails);
+            when(itemLookupService.findById(1L)).thenReturn(Optional.of(testItem));
+            when(itemDetailsWriteService.save(any())).thenReturn(testItemDetails);
 
             AdminProductInventoryResponse result = inventoryService.adjustStock(1L, request);
 
@@ -171,7 +179,7 @@ class AdminInventoryServiceImplTest {
         @DisplayName("throws exception when item not found")
         void throwsExceptionWhenItemNotFound() {
             StockAdjustmentRequest request = new StockAdjustmentRequest(10, "New shipment");
-            when(itemRepository.findById(999L)).thenReturn(Optional.empty());
+            when(itemLookupService.findById(999L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> inventoryService.adjustStock(999L, request))
                     .isInstanceOf(ItemNotFoundException.class);
@@ -181,7 +189,7 @@ class AdminInventoryServiceImplTest {
         @DisplayName("throws exception when stock would go negative")
         void throwsExceptionWhenStockNegative() {
             StockAdjustmentRequest request = new StockAdjustmentRequest(-100, "Too much");
-            when(itemRepository.findById(1L)).thenReturn(Optional.of(testItem));
+            when(itemLookupService.findById(1L)).thenReturn(Optional.of(testItem));
 
             assertThatThrownBy(() -> inventoryService.adjustStock(1L, request))
                     .isInstanceOf(ItemStockNegativeException.class);
@@ -197,9 +205,9 @@ class AdminInventoryServiceImplTest {
         void updatesMultipleItems() {
             StockAdjustmentRequest req1 = new StockAdjustmentRequest(10, "Shipment 1");
             StockAdjustmentRequest req2 = new StockAdjustmentRequest(5, "Shipment 2");
-            when(itemRepository.findById(1L)).thenReturn(Optional.of(testItem));
-            when(itemRepository.findById(2L)).thenReturn(Optional.of(testItem));
-            when(itemDetailsRepository.save(any())).thenReturn(testItemDetails);
+            when(itemLookupService.findById(1L)).thenReturn(Optional.of(testItem));
+            when(itemLookupService.findById(2L)).thenReturn(Optional.of(testItem));
+            when(itemDetailsWriteService.save(any())).thenReturn(testItemDetails);
 
             java.util.Map<Long, StockAdjustmentRequest> adjustments = new java.util.HashMap<>();
             adjustments.put(1L, req1);
@@ -208,7 +216,7 @@ class AdminInventoryServiceImplTest {
             List<AdminProductInventoryResponse> result = inventoryService.bulkUpdateStock(adjustments);
 
             assertThat(result).hasSize(2);
-            verify(itemDetailsRepository, times(2)).save(testItemDetails);
+            verify(itemDetailsWriteService, times(2)).save(testItemDetails);
         }
     }
 
@@ -219,9 +227,9 @@ class AdminInventoryServiceImplTest {
         @Test
         @DisplayName("returns summary with correct counts")
         void returnsSummaryWithCorrectCounts() {
-            when(itemDetailsRepository.count()).thenReturn(1L);
-            when(itemDetailsRepository.countOutOfStockProducts()).thenReturn(0L);
-            when(itemDetailsRepository.countLowStockProducts(5)).thenReturn(0L);
+            when(itemDetailsLookupService.count()).thenReturn(1L);
+            when(itemDetailsLookupService.countOutOfStockProducts()).thenReturn(0L);
+            when(itemDetailsLookupService.countLowStockProducts(5)).thenReturn(0L);
 
             AdminInventoryService.InventoryDashboardSummary result = inventoryService.getInventoryDashboardSummary();
 

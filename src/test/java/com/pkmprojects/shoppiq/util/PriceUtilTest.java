@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.util;
 
-import com.pkmprojects.shoppiq.entity.Item;
-import com.pkmprojects.shoppiq.entity.ItemDetails;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.entity.item.ItemDetails;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

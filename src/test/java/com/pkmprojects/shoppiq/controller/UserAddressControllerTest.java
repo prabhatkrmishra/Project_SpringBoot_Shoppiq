@@ -1,4 +1,5 @@
 package com.pkmprojects.shoppiq.controller;
+import com.pkmprojects.shoppiq.controller.address.AddressController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
@@ -14,15 +15,15 @@ import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.address.CreateAddressRequest;
 import com.pkmprojects.shoppiq.dto.address.UpdateAddressRequest;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.exception.AddressAccessDeniedException;
-import com.pkmprojects.shoppiq.exception.AddressNotFoundException;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.address.AddressNotFoundException;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.AddressService;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.address.AddressService;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
- * Controller-slice tests for {@link UserAddressController}.
+ * Controller-slice tests for {@link AddressController}.
  *
  * <p>
  * Uses {@code @WebMvcTest} to load only the web layer; {@link AddressService}
@@ -66,7 +67,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
-@WebMvcTest(UserAddressController.class)
+@WebMvcTest(AddressController.class)
 @Import({
         SecurityConfig.class,
         JacksonConfig.class,
@@ -80,8 +81,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         OAuthReturnUrlFilter.class
 })
 @ActiveProfiles("test")
-@DisplayName("UserAddressController Tests")
-class UserAddressControllerTest {
+@DisplayName("AddressController Tests")
+class AddressControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -96,7 +97,7 @@ class UserAddressControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -148,7 +149,7 @@ class UserAddressControllerTest {
 
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(
-                        authenticatedUser,
+                        new SecurityUser(authenticatedUser),
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
                 );

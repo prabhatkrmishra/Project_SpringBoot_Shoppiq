@@ -2,7 +2,7 @@ package com.pkmprojects.shoppiq.gateway.payment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pkmprojects.shoppiq.exception.PaymentGatewayException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestClient;

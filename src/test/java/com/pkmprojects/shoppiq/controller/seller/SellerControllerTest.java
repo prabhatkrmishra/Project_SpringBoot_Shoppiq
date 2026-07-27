@@ -13,12 +13,13 @@ import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.seller.request.SellerProfileUpdateRequest;
 import com.pkmprojects.shoppiq.dto.seller.request.SellerRegistrationRequest;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.service.seller.SellerService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import org.junit.jupiter.api.AfterEach;
@@ -76,7 +77,7 @@ class SellerControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -124,7 +125,7 @@ class SellerControllerTest {
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        authenticatedUser,
+                        new SecurityUser(authenticatedUser),
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_SELLER"))
                 );

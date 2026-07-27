@@ -1,12 +1,13 @@
 package com.pkmprojects.shoppiq.auth.jwt;
 
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.auth.JwtAuthenticationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory;
-import com.pkmprojects.shoppiq.repository.UserRepository;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.RequestDispatcher;
@@ -247,10 +248,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
+                SecurityUser securityUser = new SecurityUser(user);
+
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        user,
+                        securityUser,
                         null,
-                        user.getAuthorities()
+                        securityUser.getAuthorities()
                 );
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

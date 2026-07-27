@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.dto.admin.response;
 
-import com.pkmprojects.shoppiq.entity.*;
+import com.pkmprojects.shoppiq.entity.role.Role;
+import com.pkmprojects.shoppiq.entity.user.User;
 
 import java.math.BigDecimal;
 import java.time.Instant;

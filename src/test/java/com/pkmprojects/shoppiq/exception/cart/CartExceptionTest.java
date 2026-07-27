@@ -1,8 +1,8 @@
 package com.pkmprojects.shoppiq.exception.cart;
 
-import com.pkmprojects.shoppiq.exception.CartItemAccessDeniedException;
-import com.pkmprojects.shoppiq.exception.CartItemNotFoundException;
-import com.pkmprojects.shoppiq.exception.InsufficientStockException;
+import com.pkmprojects.shoppiq.exception.general.cart.CartItemAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.cart.CartItemNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.inventory.InsufficientStockException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

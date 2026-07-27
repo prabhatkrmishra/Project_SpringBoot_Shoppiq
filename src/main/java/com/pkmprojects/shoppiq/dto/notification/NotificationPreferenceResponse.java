@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.dto.notification;
 
-import com.pkmprojects.shoppiq.entity.NotificationPreference;
+import com.pkmprojects.shoppiq.entity.notification.NotificationPreference;
 
 /**
  * Response payload describing a user's email notification preferences.

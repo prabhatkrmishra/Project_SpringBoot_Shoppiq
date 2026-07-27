@@ -1,7 +1,9 @@
 package com.pkmprojects.shoppiq.enums;
 
+import com.pkmprojects.shoppiq.entity.review.ItemReview;
+
 /**
- * Moderation status of an {@link com.pkmprojects.shoppiq.entity.ItemReview}.
+ * Moderation status of an {@link ItemReview}.
  *
  * @author PrabhatKrMishra
  * @since 1.0.0

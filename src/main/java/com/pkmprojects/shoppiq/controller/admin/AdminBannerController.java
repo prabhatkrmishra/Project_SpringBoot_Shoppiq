@@ -4,7 +4,7 @@ import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.dto.banner.BannerRequest;
 import com.pkmprojects.shoppiq.dto.banner.BannerResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.service.BannerService;
+import com.pkmprojects.shoppiq.service.banner.BannerService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;

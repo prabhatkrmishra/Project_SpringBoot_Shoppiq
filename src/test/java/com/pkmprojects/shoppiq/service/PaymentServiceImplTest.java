@@ -2,16 +2,20 @@ package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.payment.PaymentResponse;
 import com.pkmprojects.shoppiq.dto.payment.PaymentStatusResponse;
-import com.pkmprojects.shoppiq.entity.Order;
-import com.pkmprojects.shoppiq.entity.Payment;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.order.Order;
+import com.pkmprojects.shoppiq.entity.payment.Payment;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.*;
-import com.pkmprojects.shoppiq.exception.*;
+import com.pkmprojects.shoppiq.exception.general.payment.DuplicatePaymentException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentInvalidStateException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentNotFoundException;
 import com.pkmprojects.shoppiq.gateway.payment.CodPaymentGateway;
 import com.pkmprojects.shoppiq.gateway.payment.OnlinePaymentGateway;
 import com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayRegistry;
-import com.pkmprojects.shoppiq.repository.PaymentRepository;
-import com.pkmprojects.shoppiq.service.impl.PaymentServiceImpl;
+import com.pkmprojects.shoppiq.service.payment.PaymentServiceImpl;
+import com.pkmprojects.shoppiq.service.payment.PaymentLookupService;
+import com.pkmprojects.shoppiq.service.payment.PaymentWriteService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -52,7 +56,10 @@ import static org.mockito.Mockito.*;
 class PaymentServiceImplTest {
 
     @Mock
-    private PaymentRepository paymentRepository;
+    private PaymentLookupService paymentLookupService;
+
+    @Mock
+    private PaymentWriteService paymentWriteService;
 
     // Use real gateway implementations — they are stateless and safe to use directly
     private final CodPaymentGateway codGateway = new CodPaymentGateway();
@@ -67,7 +74,7 @@ class PaymentServiceImplTest {
     void setUp() {
         gatewayRegistry = new PaymentGatewayRegistry(List.of(codGateway, onlineGateway));
         Clock fixedClock = Clock.fixed(Instant.parse("2026-01-15T10:30:00Z"), ZoneOffset.UTC);
-        paymentService = new PaymentServiceImpl(paymentRepository, gatewayRegistry, fixedClock);
+        paymentService = new PaymentServiceImpl(paymentLookupService, paymentWriteService, gatewayRegistry, fixedClock);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────
@@ -139,8 +146,8 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Order order = buildOrder(1L, user, PaymentMethod.COD);
 
-            when(paymentRepository.existsByOrder(order)).thenReturn(false);
-            when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> {
+            when(paymentLookupService.existsByOrder(order)).thenReturn(false);
+            when(paymentWriteService.save(any(Payment.class))).thenAnswer(inv -> {
                 Payment p = inv.getArgument(0);
                 setPaymentId(p, 99L);
                 return p;
@@ -152,7 +159,7 @@ class PaymentServiceImplTest {
             assertThat(result.getPaymentMethod()).isEqualTo(PaymentMethod.COD);
             assertThat(result.getPaymentReference()).contains("PAY-");
             assertThat(result.getAmount()).isEqualByComparingTo("500.00");
-            verify(paymentRepository).save(any(Payment.class));
+            verify(paymentWriteService).save(any(Payment.class));
         }
 
         @Test
@@ -161,8 +168,8 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Order order = buildOrder(2L, user, PaymentMethod.ONLINE);
 
-            when(paymentRepository.existsByOrder(order)).thenReturn(false);
-            when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> {
+            when(paymentLookupService.existsByOrder(order)).thenReturn(false);
+            when(paymentWriteService.save(any(Payment.class))).thenAnswer(inv -> {
                 Payment p = inv.getArgument(0);
                 setPaymentId(p, 100L);
                 return p;
@@ -179,12 +186,12 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Order order = buildOrder(1L, user, PaymentMethod.COD);
 
-            when(paymentRepository.existsByOrder(order)).thenReturn(true);
+            when(paymentLookupService.existsByOrder(order)).thenReturn(true);
 
             assertThatThrownBy(() -> paymentService.createPayment(order))
                     .isInstanceOf(DuplicatePaymentException.class);
 
-            verify(paymentRepository, never()).save(any());
+            verify(paymentWriteService, never()).save(any());
         }
     }
 
@@ -202,8 +209,8 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PENDING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
-            when(paymentRepository.save(any())).thenReturn(payment);
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentWriteService.save(any())).thenReturn(payment);
 
             PaymentStatusResponse result = paymentService.pay(user, 1L);
 
@@ -216,8 +223,8 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.FAILED);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
-            when(paymentRepository.save(any())).thenReturn(payment);
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentWriteService.save(any())).thenReturn(payment);
 
             PaymentStatusResponse result = paymentService.pay(user, 1L);
 
@@ -230,7 +237,7 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PAID);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.pay(user, 1L))
                     .isInstanceOf(PaymentInvalidStateException.class);
@@ -242,7 +249,7 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.CANCELLED);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.pay(user, 1L))
                     .isInstanceOf(PaymentInvalidStateException.class);
@@ -255,7 +262,7 @@ class PaymentServiceImplTest {
             User bob = buildUser(2L);
             Payment payment = buildPayment(1L, bob, PaymentMethod.ONLINE, PaymentStatus.PENDING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.pay(alice, 1L))
                     .isInstanceOf(PaymentAccessDeniedException.class);
@@ -265,7 +272,7 @@ class PaymentServiceImplTest {
         @DisplayName("Throws PaymentNotFoundException when payment does not exist")
         void pay_notFound_throws() throws Exception {
             User user = buildUser(1L);
-            when(paymentRepository.findById(99L)).thenReturn(Optional.empty());
+            when(paymentLookupService.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> paymentService.pay(user, 99L))
                     .isInstanceOf(PaymentNotFoundException.class);
@@ -286,8 +293,8 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PROCESSING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
-            when(paymentRepository.save(any())).thenReturn(payment);
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentWriteService.save(any())).thenReturn(payment);
 
             PaymentStatusResponse result = paymentService.verifyPayment(user, 1L, "TXN-001");
 
@@ -300,7 +307,7 @@ class PaymentServiceImplTest {
         @DisplayName("Throws PaymentNotFoundException for unknown paymentId")
         void verifyPayment_notFound_throws() throws Exception {
             User user = buildUser(1L);
-            when(paymentRepository.findById(99L)).thenReturn(Optional.empty());
+            when(paymentLookupService.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> paymentService.verifyPayment(user, 99L, "BAD-ID"))
                     .isInstanceOf(PaymentNotFoundException.class);
@@ -313,7 +320,7 @@ class PaymentServiceImplTest {
             User bob = buildUser(2L);
             Payment payment = buildPayment(1L, bob, PaymentMethod.ONLINE, PaymentStatus.PROCESSING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.verifyPayment(alice, 1L, "TXN-002"))
                     .isInstanceOf(PaymentAccessDeniedException.class);
@@ -325,7 +332,7 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PENDING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.verifyPayment(user, 1L, "TXN-X"))
                     .isInstanceOf(PaymentInvalidStateException.class);
@@ -337,12 +344,12 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PAID);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             PaymentStatusResponse result = paymentService.verifyPayment(user, 1L, "TXN-Y");
 
             assertThat(result.status()).isEqualTo(PaymentStatus.PAID);
-            verify(paymentRepository, never()).save(any());
+            verify(paymentWriteService, never()).save(any());
         }
     }
 
@@ -360,8 +367,8 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PAID);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
-            when(paymentRepository.save(any())).thenReturn(payment);
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentWriteService.save(any())).thenReturn(payment);
 
             PaymentStatusResponse result = paymentService.refund(user, 1L);
 
@@ -375,7 +382,7 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PENDING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.refund(user, 1L))
                     .isInstanceOf(PaymentInvalidStateException.class);
@@ -385,7 +392,7 @@ class PaymentServiceImplTest {
         @DisplayName("Throws PaymentNotFoundException when payment does not exist")
         void refund_notFound_throws() throws Exception {
             User user = buildUser(1L);
-            when(paymentRepository.findById(99L)).thenReturn(Optional.empty());
+            when(paymentLookupService.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> paymentService.refund(user, 99L))
                     .isInstanceOf(PaymentNotFoundException.class);
@@ -406,8 +413,8 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PENDING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
-            when(paymentRepository.save(any())).thenReturn(payment);
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentWriteService.save(any())).thenReturn(payment);
 
             PaymentStatusResponse result = paymentService.cancelPayment(user, 1L);
 
@@ -420,8 +427,8 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.FAILED);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
-            when(paymentRepository.save(any())).thenReturn(payment);
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentWriteService.save(any())).thenReturn(payment);
 
             PaymentStatusResponse result = paymentService.cancelPayment(user, 1L);
 
@@ -434,7 +441,7 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PAID);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.cancelPayment(user, 1L))
                     .isInstanceOf(PaymentInvalidStateException.class);
@@ -446,7 +453,7 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.ONLINE, PaymentStatus.PROCESSING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.cancelPayment(user, 1L))
                     .isInstanceOf(PaymentInvalidStateException.class);
@@ -459,7 +466,7 @@ class PaymentServiceImplTest {
             User bob = buildUser(2L);
             Payment payment = buildPayment(1L, bob, PaymentMethod.ONLINE, PaymentStatus.PENDING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.cancelPayment(alice, 1L))
                     .isInstanceOf(PaymentAccessDeniedException.class);
@@ -480,7 +487,7 @@ class PaymentServiceImplTest {
             User user = buildUser(1L);
             Payment payment = buildPayment(1L, user, PaymentMethod.COD, PaymentStatus.PENDING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             PaymentResponse result = paymentService.getPayment(user, 1L);
 
@@ -493,7 +500,7 @@ class PaymentServiceImplTest {
         @DisplayName("Throws PaymentNotFoundException when not found")
         void getPayment_notFound_throws() throws Exception {
             User user = buildUser(1L);
-            when(paymentRepository.findById(99L)).thenReturn(Optional.empty());
+            when(paymentLookupService.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> paymentService.getPayment(user, 99L))
                     .isInstanceOf(PaymentNotFoundException.class);
@@ -506,7 +513,7 @@ class PaymentServiceImplTest {
             User bob = buildUser(2L);
             Payment payment = buildPayment(1L, bob, PaymentMethod.COD, PaymentStatus.PENDING);
 
-            when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+            when(paymentLookupService.findById(1L)).thenReturn(Optional.of(payment));
 
             assertThatThrownBy(() -> paymentService.getPayment(alice, 1L))
                     .isInstanceOf(PaymentAccessDeniedException.class);

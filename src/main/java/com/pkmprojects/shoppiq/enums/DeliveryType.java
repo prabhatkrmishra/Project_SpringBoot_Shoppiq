@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.enums;
 
-import com.pkmprojects.shoppiq.service.impl.CheckoutServiceImpl;
+import com.pkmprojects.shoppiq.service.checkout.CheckoutServiceImpl;
 
 /**
  * Delivery speed options available at checkout.

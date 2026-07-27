@@ -1,8 +1,11 @@
 package com.pkmprojects.shoppiq.exception.payment;
 
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
-import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
+import com.pkmprojects.shoppiq.exception.general.payment.DuplicatePaymentException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentInvalidStateException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;

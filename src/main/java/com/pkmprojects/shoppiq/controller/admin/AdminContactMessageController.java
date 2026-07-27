@@ -2,8 +2,8 @@ package com.pkmprojects.shoppiq.controller.admin;
 
 import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.dto.response.ContactMessageResponse;
-import com.pkmprojects.shoppiq.service.ContactMessageService;
+import com.pkmprojects.shoppiq.dto.contact.ContactMessageResponse;
+import com.pkmprojects.shoppiq.service.contact.ContactMessageService;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

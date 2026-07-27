@@ -11,7 +11,7 @@ import com.pkmprojects.shoppiq.aiservice.repository.ChatConversationRepository;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatMessageRepository;
 import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.exception.AiConversationNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.aiservice.AiConversationNotFoundException;
 import jakarta.validation.constraints.Min;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;

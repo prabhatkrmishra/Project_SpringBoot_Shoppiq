@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.aiservice.events;
 
-import com.pkmprojects.shoppiq.entity.Item;
+import com.pkmprojects.shoppiq.entity.item.Item;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostUpdate;
 import jakarta.persistence.PreRemove;

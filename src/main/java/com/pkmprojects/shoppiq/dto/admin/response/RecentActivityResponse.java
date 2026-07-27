@@ -1,7 +1,5 @@
 package com.pkmprojects.shoppiq.dto.admin.response;
 
-import com.pkmprojects.shoppiq.entity.*;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;

@@ -466,6 +466,7 @@
                                 quantity: qty
                             }).then(function () {
                                 showToast('Added to cart', 'success');
+                                if (typeof window.updateCartBadge === 'function') window.updateCartBadge();
                             }).catch(function (err) {
                                 showToast(err.message || 'Could not add to cart', 'error');
                             });

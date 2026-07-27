@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.email.entity;
 
 import com.pkmprojects.shoppiq.audit.AuditableEntity;
 import com.pkmprojects.shoppiq.email.EmailType;
+import com.pkmprojects.shoppiq.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,7 +35,7 @@ public class EmailLog extends AuditableEntity {
             name = "user_id",
             foreignKey = @ForeignKey(name = "fk_email_logs_user")
     )
-    private com.pkmprojects.shoppiq.entity.User user;
+    private User user;
 
     /**
      * Type of email sent.

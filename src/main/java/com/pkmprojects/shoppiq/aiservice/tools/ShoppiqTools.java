@@ -8,16 +8,16 @@ import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
 import com.pkmprojects.shoppiq.aiservice.exception.AiAssistantException;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatConversationRepository;
 import com.pkmprojects.shoppiq.aiservice.repository.ChatMessageRepository;
-import com.pkmprojects.shoppiq.entity.Item;
-import com.pkmprojects.shoppiq.entity.Order;
-import com.pkmprojects.shoppiq.entity.ItemReview;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.exception.AiConversationNotFoundException;
-import com.pkmprojects.shoppiq.repository.ItemRepository;
-import com.pkmprojects.shoppiq.repository.OrderRepository;
-import com.pkmprojects.shoppiq.repository.ItemReviewRepository;
-import com.pkmprojects.shoppiq.service.CartService;
-import com.pkmprojects.shoppiq.dto.response.CartResponse;
+import com.pkmprojects.shoppiq.aiservice.service.ChatOrderService;
+import com.pkmprojects.shoppiq.aiservice.service.ChatProductService;
+import com.pkmprojects.shoppiq.aiservice.service.ChatReviewService;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.entity.order.Order;
+import com.pkmprojects.shoppiq.entity.review.ItemReview;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.exception.general.aiservice.AiConversationNotFoundException;
+import com.pkmprojects.shoppiq.service.cart.CartService;
+import com.pkmprojects.shoppiq.dto.cart.CartResponse;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
@@ -34,7 +34,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -77,23 +76,23 @@ public class ShoppiqTools {
 
     private static final Logger log = LoggerFactory.getLogger(ShoppiqTools.class);
 
-    private final ItemRepository itemRepository;
+    private final ChatProductService chatProductService;
     private final ChatConversationRepository conversationRepository;
     private final ChatMessageRepository messageRepository;
     private final ChatMemoryConfig chatMemoryConfig;
-    private final OrderRepository orderRepository;
+    private final ChatOrderService chatOrderService;
     private final CartService cartService;
-    private final ItemReviewRepository reviewRepository;
+    private final ChatReviewService chatReviewService;
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final EmbeddingModel embeddingModel;
 
     @PostConstruct
     void logInit() {
-        log.debug("[AI-INIT] ShoppiqTools initialised — itemRepo={}, orderRepo={}, cartService={}, reviewRepo={}",
-                itemRepository != null ? "OK" : "NULL",
-                orderRepository != null ? "OK" : "NULL",
+        log.debug("[AI-INIT] ShoppiqTools initialised — chatProductService={}, chatOrderService={}, cartService={}, chatReviewService={}",
+                chatProductService != null ? "OK" : "NULL",
+                chatOrderService != null ? "OK" : "NULL",
                 cartService != null ? "OK" : "NULL",
-                reviewRepository != null ? "OK" : "NULL");
+                chatReviewService != null ? "OK" : "NULL");
     }
 
     /**
@@ -111,10 +110,10 @@ public class ShoppiqTools {
     public String getProductDetail(
             @P("Product name or slug") String identifier) {
 
-        Item item = itemRepository.findBySlug(identifier).orElse(null);
+        Item item = chatProductService.findBySlug(identifier).orElse(null);
 
         if (item == null) {
-            List<Item> candidates = itemRepository.findByNameContainingIgnoreCase(identifier, PageRequest.of(0, 1));
+            List<Item> candidates = chatProductService.findByNameContaining(identifier, 1);
             if (candidates.isEmpty()) {
                 return "No product found with identifier '" + identifier + "'.";
             }
@@ -165,7 +164,7 @@ public class ShoppiqTools {
         if (orderNumber != null && !orderNumber.isBlank() && !"None".equals(orderNumber)) {
             try {
                 Long orderId = Long.parseLong(orderNumber.trim());
-                return orderRepository.findById(orderId)
+                return chatOrderService.findById(orderId)
                         .filter(order -> order.getUser().getId().equals(user.getId()))
                         .map(order -> {
                             StringBuilder sb = new StringBuilder();
@@ -181,7 +180,7 @@ public class ShoppiqTools {
             }
         }
 
-        List<Order> orders = orderRepository.findAllByUserOrderByPlacedAtDesc(user);
+        List<Order> orders = chatOrderService.findByUserNewestFirst(user);
 
         if (orders.isEmpty()) {
             return "You have no orders yet.";
@@ -248,7 +247,7 @@ public class ShoppiqTools {
             @ToolMemoryId String chatId) {
 
         User user = resolveUser(chatId);
-        List<ItemReview> reviews = reviewRepository.findAllByUserIdOrderByCreatedAtDesc(user.getId());
+        List<ItemReview> reviews = chatReviewService.findByUserNewestFirst(user.getId());
 
         if (reviews.isEmpty()) {
             return "You haven't written any reviews yet.";

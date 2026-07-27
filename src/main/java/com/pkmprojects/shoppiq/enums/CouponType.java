@@ -14,7 +14,7 @@ package com.pkmprojects.shoppiq.enums;
  * not enforced and the code may be applied regardless of cart composition.</p>
  *
  * @author PrabhatKrMishra
- * @since 1.5.0
+ * @since 1.4.0
  */
 public enum CouponType {
 

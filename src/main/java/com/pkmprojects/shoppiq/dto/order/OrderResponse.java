@@ -1,8 +1,9 @@
 package com.pkmprojects.shoppiq.dto.order;
 
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
-import com.pkmprojects.shoppiq.entity.Order;
-import com.pkmprojects.shoppiq.entity.OrderAddressSnapshot;
+import com.pkmprojects.shoppiq.entity.order.Order;
+import com.pkmprojects.shoppiq.entity.order.OrderAddressSnapshot;
+import com.pkmprojects.shoppiq.entity.address.Address;
 import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
@@ -81,7 +82,7 @@ public record OrderResponse(
      * the live address entity for legacy orders that predate the snapshot.
      */
     private static AddressResponse toAddressResponse(OrderAddressSnapshot snapshot,
-                                                     com.pkmprojects.shoppiq.entity.Address liveAddress) {
+                                                     Address liveAddress) {
         if (snapshot != null) {
             return new AddressResponse(
                     null, null,

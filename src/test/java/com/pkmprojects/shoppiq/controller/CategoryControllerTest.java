@@ -1,4 +1,5 @@
 package com.pkmprojects.shoppiq.controller;
+import com.pkmprojects.shoppiq.controller.category.CategoryController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
@@ -12,14 +13,14 @@ import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.dto.request.CategoryRequest;
-import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
-import com.pkmprojects.shoppiq.exception.CategoryNotFoundException;
-import com.pkmprojects.shoppiq.exception.DuplicateCategoryException;
+import com.pkmprojects.shoppiq.dto.category.CategoryRequest;
+import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
+import com.pkmprojects.shoppiq.exception.general.category.CategoryNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.category.DuplicateCategoryException;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.CategoryService;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.category.CategoryService;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -76,7 +77,7 @@ class CategoryControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;

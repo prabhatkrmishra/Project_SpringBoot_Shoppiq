@@ -2,9 +2,9 @@ package com.pkmprojects.shoppiq.controller.seller;
 
 import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.dto.request.ItemRequest;
-import com.pkmprojects.shoppiq.dto.response.ItemResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.dto.item.ItemRequest;
+import com.pkmprojects.shoppiq.dto.item.ItemResponse;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.service.seller.SellerProductService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -61,14 +61,14 @@ public class SellerProductController {
     @PostMapping("/create")
     public ResponseEntity<ItemResponse> createProduct(
             @Valid @RequestBody ItemRequest request,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         ItemResponse response = sellerProductService.createProduct(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     public ResponseEntity<PageResponse<ItemResponse>> getMyProducts(
-            @AuthenticationPrincipal User currentUser,
+            @AuthenticationPrincipal(expression = "user") User currentUser,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "15") @Min(1) int size) {
         size = Math.min(size, pagination.maxPageSize());
@@ -79,7 +79,7 @@ public class SellerProductController {
     @GetMapping("/{id}")
     public ResponseEntity<ItemResponse> getMyProductById(
             @PathVariable @Positive(message = "Product id must be a positive number") Long id,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         ItemResponse response = sellerProductService.getMyProductById(id, currentUser);
         return ResponseEntity.ok(response);
     }
@@ -88,7 +88,7 @@ public class SellerProductController {
     public ResponseEntity<ItemResponse> updateProduct(
             @PathVariable @Positive(message = "Product id must be a positive number") Long id,
             @Valid @RequestBody ItemRequest request,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         ItemResponse response = sellerProductService.updateProduct(id, request, currentUser);
         return ResponseEntity.ok(response);
     }
@@ -96,7 +96,7 @@ public class SellerProductController {
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable @Positive(message = "Product id must be a positive number") Long id,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         sellerProductService.deleteProduct(id, currentUser);
         return ResponseEntity.ok().build();
     }

@@ -1,9 +1,11 @@
 package com.pkmprojects.shoppiq.verification;
 
 import com.pkmprojects.shoppiq.email.EmailType;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.exception.VerificationCodeException;
-import com.pkmprojects.shoppiq.verification.impl.VerificationCodeServiceImpl;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.verification.entity.VerificationCode;
+import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
+import com.pkmprojects.shoppiq.verification.service.impl.VerificationCodeServiceImpl;
+import com.pkmprojects.shoppiq.verification.repository.VerificationCodeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

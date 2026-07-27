@@ -1,6 +1,8 @@
 package com.pkmprojects.shoppiq.dto.admin.response;
 
-import com.pkmprojects.shoppiq.entity.*;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.entity.review.ItemReview;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.ReviewStatus;
 
 import java.time.Instant;

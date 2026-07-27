@@ -1,19 +1,20 @@
 package com.pkmprojects.shoppiq.service;
 
-import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
-import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
-import com.pkmprojects.shoppiq.entity.Item;
-import com.pkmprojects.shoppiq.entity.ItemReview;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.exception.DuplicateItemReviewException;
-import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
-import com.pkmprojects.shoppiq.exception.ItemReviewAccessDeniedException;
-import com.pkmprojects.shoppiq.exception.ItemReviewNotFoundException;
-import com.pkmprojects.shoppiq.exception.UserNotFoundException;
-import com.pkmprojects.shoppiq.repository.ItemRepository;
-import com.pkmprojects.shoppiq.repository.ItemReviewRepository;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.impl.ItemReviewServiceImpl;
+import com.pkmprojects.shoppiq.dto.review.ItemReviewRequest;
+import com.pkmprojects.shoppiq.dto.review.ItemReviewResponse;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.entity.review.ItemReview;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.entity.role.Role;
+import com.pkmprojects.shoppiq.exception.general.item.DuplicateItemReviewException;
+import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.review.ItemReviewAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.review.ItemReviewNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.user.UserNotFoundException;
+import com.pkmprojects.shoppiq.service.item.ItemLookupService;
+import com.pkmprojects.shoppiq.repository.item.ItemReviewRepository;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.item.ItemReviewServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -51,7 +52,7 @@ class ItemReviewServiceImplTest {
     private ItemReviewRepository itemReviewRepository;
 
     @Mock
-    private ItemRepository itemRepository;
+    private ItemLookupService itemLookupService;
 
     @Mock
     private UserRepository userRepository;
@@ -118,7 +119,7 @@ class ItemReviewServiceImplTest {
             ItemReviewRequest request = new ItemReviewRequest(5, "Excellent!");
 
             when(itemReviewRepository.existsByUserIdAndItemId(1L, 10L)).thenReturn(false);
-            when(itemRepository.findById(10L)).thenReturn(Optional.of(stubItem));
+            when(itemLookupService.findById(10L)).thenReturn(Optional.of(stubItem));
             when(itemReviewRepository.save(any(ItemReview.class))).thenReturn(stubReview);
 
             ItemReviewResponse response = reviewService.create(10L, stubUser, request);
@@ -143,7 +144,7 @@ class ItemReviewServiceImplTest {
             assertThatThrownBy(() -> reviewService.create(10L, stubUser, request))
                     .isInstanceOf(DuplicateItemReviewException.class);
 
-            verify(itemRepository, never()).findById(any());
+            verify(itemLookupService, never()).findById(any());
             verify(itemReviewRepository, never()).save(any());
         }
 
@@ -151,7 +152,7 @@ class ItemReviewServiceImplTest {
         @DisplayName("Throws ItemNotFoundException when item does not exist")
         void create_itemNotFound_throwsItemNotFoundException() {
             when(itemReviewRepository.existsByUserIdAndItemId(1L, 99L)).thenReturn(false);
-            when(itemRepository.findById(99L)).thenReturn(Optional.empty());
+            when(itemLookupService.findById(99L)).thenReturn(Optional.empty());
 
             ItemReviewRequest request = new ItemReviewRequest(3, "Good");
 
@@ -169,7 +170,7 @@ class ItemReviewServiceImplTest {
             assertThatThrownBy(() -> reviewService.create(10L, null, request))
                     .isInstanceOf(UserNotFoundException.class);
 
-            verifyNoInteractions(itemReviewRepository, itemRepository, userRepository);
+            verifyNoInteractions(itemReviewRepository, itemLookupService, userRepository);
         }
     }
 
@@ -214,7 +215,7 @@ class ItemReviewServiceImplTest {
         @Test
         @DisplayName("Returns APPROVED reviews for anonymous user")
         void getByItemForUser_anonymousUser_returnsApprovedReviews() {
-            when(itemRepository.findById(10L)).thenReturn(Optional.of(stubItem));
+            when(itemLookupService.findById(10L)).thenReturn(Optional.of(stubItem));
             when(itemReviewRepository.findAllByItemIdAndStatusOrderByCreatedAtDesc(10L, ReviewStatus.APPROVED))
                     .thenReturn(List.of(stubReview));
 
@@ -227,7 +228,7 @@ class ItemReviewServiceImplTest {
         @Test
         @DisplayName("Returns APPROVED + user's own PENDING reviews")
         void getByItemForUser_authenticatedUser_returnsApprovedAndOwnPending() {
-            when(itemRepository.findById(10L)).thenReturn(Optional.of(stubItem));
+            when(itemLookupService.findById(10L)).thenReturn(Optional.of(stubItem));
             when(itemReviewRepository.findVisibleReviewsForUser(10L, 1L))
                     .thenReturn(List.of(stubReview));
 
@@ -239,7 +240,7 @@ class ItemReviewServiceImplTest {
         @Test
         @DisplayName("Throws ItemNotFoundException when item does not exist")
         void getByItemForUser_itemNotFound_throwsException() {
-            when(itemRepository.findById(999L)).thenReturn(Optional.empty());
+            when(itemLookupService.findById(999L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> reviewService.getByItemForUser(999L, null))
                     .isInstanceOf(ItemNotFoundException.class);
@@ -248,7 +249,7 @@ class ItemReviewServiceImplTest {
         @Test
         @DisplayName("Returns an empty list when an item has no visible reviews")
         void getByItemForUser_noReviews_returnsEmptyList() {
-            when(itemRepository.findById(10L)).thenReturn(Optional.of(stubItem));
+            when(itemLookupService.findById(10L)).thenReturn(Optional.of(stubItem));
             when(itemReviewRepository.findAllByItemIdAndStatusOrderByCreatedAtDesc(10L, ReviewStatus.APPROVED))
                     .thenReturn(List.of());
 
@@ -375,7 +376,7 @@ class ItemReviewServiceImplTest {
         @Test
         @DisplayName("Allows deletion by an admin who is not the review's author")
         void delete_admin_deletesSuccessfully() throws Exception {
-            com.pkmprojects.shoppiq.entity.Role adminRole = new com.pkmprojects.shoppiq.entity.Role();
+            Role adminRole = new Role();
             adminRole.setRoleName("ROLE_ADMIN");
 
             User adminUser = User.builder()

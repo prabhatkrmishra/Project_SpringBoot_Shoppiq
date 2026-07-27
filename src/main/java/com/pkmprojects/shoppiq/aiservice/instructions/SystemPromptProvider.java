@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.aiservice.instructions;
 
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
  * Provides a system prompt for an AI chat conversation.

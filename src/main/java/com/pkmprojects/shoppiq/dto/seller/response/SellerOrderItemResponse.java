@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.dto.seller.response;
 
-import com.pkmprojects.shoppiq.entity.OrderItem;
+import com.pkmprojects.shoppiq.entity.order.OrderItem;
 
 import java.math.BigDecimal;
 

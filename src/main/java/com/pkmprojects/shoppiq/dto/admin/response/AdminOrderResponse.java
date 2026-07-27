@@ -1,6 +1,8 @@
 package com.pkmprojects.shoppiq.dto.admin.response;
 
-import com.pkmprojects.shoppiq.entity.*;
+import com.pkmprojects.shoppiq.entity.address.Address;
+import com.pkmprojects.shoppiq.entity.order.Order;
+import com.pkmprojects.shoppiq.entity.order.OrderAddressSnapshot;
 import com.pkmprojects.shoppiq.enums.*;
 
 import java.math.BigDecimal;

@@ -1,0 +1,242 @@
+package com.pkmprojects.shoppiq.service.seller;
+
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
+import com.pkmprojects.shoppiq.dto.item.ItemRequest;
+import com.pkmprojects.shoppiq.dto.item.ItemResponse;
+import com.pkmprojects.shoppiq.entity.category.Category;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.entity.item.ItemDetails;
+import com.pkmprojects.shoppiq.entity.seller.Seller;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
+import com.pkmprojects.shoppiq.enums.SellerStatus;
+import com.pkmprojects.shoppiq.enums.VerificationStatus;
+import com.pkmprojects.shoppiq.exception.general.category.CategoryNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.item.DuplicateItemException;
+import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerNotVerifiedException;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException;
+import com.pkmprojects.shoppiq.service.category.CategoryLookupService;
+import com.pkmprojects.shoppiq.service.item.ItemLookupService;
+import com.pkmprojects.shoppiq.service.item.ItemWriteService;
+import com.pkmprojects.shoppiq.util.SlugUtil;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Default implementation of {@link SellerProductService}.
+ *
+ * <p>
+ * Handles the lifecycle of products owned by a seller. Enforces seller
+ * preconditions (ACTIVE, APPROVED, not SUSPENDED) before allowing
+ * product operations. All products are created as DRAFT.
+ * </p>
+ *
+ * <h2>Design Notes</h2>
+ * <ul>
+ *     <li>Ownership is verified at the service layer via
+ *     {@link ItemLookupService#findByIdAndSellerId}.</li>
+ *     <li>SKU uniqueness is enforced across the entire catalog,
+ *     not per seller.</li>
+ *     <li>All write operations are transactional.</li>
+ * </ul>
+ *
+ * @author PrabhatKrMishra
+ * @since 1.0.0
+ */
+@Service
+@Transactional
+public class SellerProductServiceImpl implements SellerProductService {
+
+    private final SellerLookupService sellerLookupService;
+    private final ItemLookupService itemLookupService;
+    private final ItemWriteService itemWriteService;
+    private final CategoryLookupService categoryLookupService;
+
+    public SellerProductServiceImpl(SellerLookupService sellerLookupService,
+                                    ItemLookupService itemLookupService,
+                                    ItemWriteService itemWriteService,
+                                    CategoryLookupService categoryLookupService) {
+        this.sellerLookupService = sellerLookupService;
+        this.itemLookupService = itemLookupService;
+        this.itemWriteService = itemWriteService;
+        this.categoryLookupService = categoryLookupService;
+    }
+
+    @Override
+    public ItemResponse createProduct(ItemRequest request, User user) {
+        Seller seller = findActiveSeller(user);
+
+        validateSku(request.sku());
+
+        Category category = categoryLookupService.findById(request.categoryId())
+                .orElseThrow(() -> CategoryNotFoundException.id(request.categoryId()));
+
+        ItemDetails itemDetails = ItemDetails.builder()
+                .brand(request.brand())
+                .sku(request.sku())
+                .price(request.price())
+                .stockQuantity(request.stockQuantity())
+                .discountPercentage(request.discountPercentage())
+                .imageUrl(request.imageUrl())
+                .category(category)
+                .build();
+
+        Item item = Item.builder()
+                .name(request.name())
+                .slug(generateUniqueSlug(request.name()))
+                .description(request.description())
+                .seller(seller)
+                .publishingStatus(ProductPublishingStatus.DRAFT)
+                .itemDetails(itemDetails)
+                .build();
+
+        itemDetails.setItem(item);
+
+        return ItemResponse.fromEntity(saveWithSlugRetry(item));
+    }
+
+    private Item saveWithSlugRetry(Item item) {
+        int attempts = 0;
+        while (attempts < 10) {
+            try {
+                return itemWriteService.save(item);
+            } catch (DataIntegrityViolationException e) {
+                if (e.getMessage() != null && e.getMessage().contains("slug")) {
+                    item.setSlug(generateUniqueSlug(item.getName()));
+                    attempts++;
+                } else {
+                    throw e;
+                }
+            }
+        }
+        throw new RuntimeException("Failed to generate unique slug after 10 attempts");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ItemResponse> getMyProducts(User user, int page, int size) {
+        Seller seller = findActiveSeller(user);
+        var itemPage = itemLookupService.findBySellerId(seller.getId(), page, size);
+        return PageResponse.of(itemPage, ItemResponse::fromEntity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ItemResponse getMyProductById(Long id, User user) {
+        Seller seller = findActiveSeller(user);
+        Item item = itemLookupService.findByIdAndSellerId(id, seller.getId())
+                .orElseThrow(() -> ItemNotFoundException.id(id));
+        return ItemResponse.fromEntity(item);
+    }
+
+    @Override
+    public ItemResponse updateProduct(Long id, ItemRequest request, User user) {
+        Seller seller = findActiveSeller(user);
+        Item item = itemLookupService.findByIdAndSellerId(id, seller.getId())
+                .orElseThrow(() -> ItemNotFoundException.id(id));
+
+        validateSku(request.sku(), id);
+
+        Category category = categoryLookupService.findById(request.categoryId())
+                .orElseThrow(() -> CategoryNotFoundException.id(request.categoryId()));
+
+        String originalName = item.getName();
+        item.setName(request.name());
+        item.setDescription(request.description());
+
+        if (!originalName.equalsIgnoreCase(request.name())) {
+            item.setSlug(generateUniqueSlug(request.name()));
+        }
+
+        ItemDetails details = item.getItemDetails();
+        details.setBrand(request.brand());
+        details.setSku(request.sku());
+        details.setPrice(request.price());
+        details.setStockQuantity(request.stockQuantity());
+        details.setDiscountPercentage(request.discountPercentage());
+        details.setImageUrl(request.imageUrl());
+        details.setCategory(category);
+
+        if (item.getPublishingStatus() == ProductPublishingStatus.PUBLISHED) {
+            item.setPublishingStatus(ProductPublishingStatus.DRAFT);
+        }
+
+        return ItemResponse.fromEntity(saveWithSlugRetry(item));
+    }
+
+    @Override
+    public void deleteProduct(Long id, User user) {
+        Seller seller = findActiveSeller(user);
+        Item item = itemLookupService.findByIdAndSellerId(id, seller.getId())
+                .orElseThrow(() -> ItemNotFoundException.id(id));
+        itemWriteService.delete(item);
+    }
+
+    /**
+     * Finds the seller associated with the given user and validates
+     * that the seller is in a state that allows product operations.
+     *
+     * @param user the authenticated user
+     * @return the active seller
+     */
+    private Seller findActiveSeller(User user) {
+        Seller seller = sellerLookupService.findByUserId(user.getId())
+                .orElseThrow(() -> SellerNotFoundException.userId(user.getId()));
+
+        if (seller.getSellerStatus() == SellerStatus.SUSPENDED) {
+            throw SellerSuspendedException.forAction(seller.getId(), "manage products");
+        }
+
+        if (seller.getSellerStatus() != SellerStatus.ACTIVE
+                || seller.getVerificationStatus() != VerificationStatus.APPROVED) {
+            throw SellerNotVerifiedException.forAction(seller.getId(), "manage products");
+        }
+
+        return seller;
+    }
+
+    /**
+     * Validates SKU uniqueness during creation.
+     *
+     * @param sku SKU to validate
+     */
+    private void validateSku(String sku) {
+        if (itemLookupService.existsByItemDetailsSku(sku)) {
+            throw DuplicateItemException.sku(sku);
+        }
+    }
+
+    /**
+     * Validates SKU uniqueness during updates.
+     *
+     * @param sku SKU to validate
+     * @param id  current item id to exclude
+     */
+    private void validateSku(String sku, Long id) {
+        if (itemLookupService.existsByItemDetailsSkuAndIdNot(sku, id)) {
+            throw DuplicateItemException.sku(sku);
+        }
+    }
+
+    /**
+     * Generates a unique URL-friendly slug.
+     *
+     * @param itemName item name
+     * @return unique slug
+     */
+    private String generateUniqueSlug(String itemName) {
+        String baseSlug = SlugUtil.toSlug(itemName);
+        String slug = baseSlug;
+        int counter = 2;
+
+        while (itemLookupService.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter;
+            counter++;
+        }
+
+        return slug;
+    }
+}

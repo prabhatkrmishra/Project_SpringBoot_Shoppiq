@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.controller.seller;
 import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.service.seller.SellerInventoryService;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -56,7 +56,7 @@ public class SellerInventoryController {
 
     @GetMapping
     public ResponseEntity<PageResponse<SellerInventoryResponse>> getInventory(
-            @AuthenticationPrincipal User currentUser,
+            @AuthenticationPrincipal(expression = "user") User currentUser,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "15") @Min(1) int size) {
         size = Math.min(size, pagination.maxPageSize());
@@ -65,7 +65,7 @@ public class SellerInventoryController {
 
     @GetMapping("/low-stock")
     public ResponseEntity<PageResponse<SellerInventoryResponse>> getLowStock(
-            @AuthenticationPrincipal User currentUser,
+            @AuthenticationPrincipal(expression = "user") User currentUser,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "15") @Min(1) int size) {
         size = Math.min(size, pagination.maxPageSize());
@@ -74,7 +74,7 @@ public class SellerInventoryController {
 
     @GetMapping("/out-of-stock")
     public ResponseEntity<PageResponse<SellerInventoryResponse>> getOutOfStock(
-            @AuthenticationPrincipal User currentUser,
+            @AuthenticationPrincipal(expression = "user") User currentUser,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "15") @Min(1) int size) {
         size = Math.min(size, pagination.maxPageSize());
@@ -87,7 +87,7 @@ public class SellerInventoryController {
             @RequestParam @NotNull(message = "Quantity is required.") int quantity,
             @RequestParam @NotBlank(message = "Reason is required.")
             @Size(max = 255, message = "Reason cannot exceed 255 characters.") String reason,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         SellerInventoryResponse response = sellerInventoryService.adjustStock(id, quantity, reason, currentUser);
         return ResponseEntity.ok(response);
     }

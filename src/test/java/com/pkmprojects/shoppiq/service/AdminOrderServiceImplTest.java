@@ -2,12 +2,15 @@ package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.admin.response.*;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.entity.*;
+import com.pkmprojects.shoppiq.entity.address.Address;
+import com.pkmprojects.shoppiq.entity.order.Order;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.*;
-import com.pkmprojects.shoppiq.exception.*;
-import com.pkmprojects.shoppiq.repository.*;
-import com.pkmprojects.shoppiq.service.admin.AdminOrderService;
-import com.pkmprojects.shoppiq.service.impl.AdminOrderServiceImpl;
+import com.pkmprojects.shoppiq.events.OrderStatusChangedEvent;
+import com.pkmprojects.shoppiq.exception.general.order.OrderInvalidStatusTransitionException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderNotFoundException;
+import com.pkmprojects.shoppiq.repository.order.OrderRepository;
+import com.pkmprojects.shoppiq.service.admin.AdminOrderServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +41,9 @@ class AdminOrderServiceImplTest {
 
     @Mock
     private OrderRepository orderRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private AdminOrderServiceImpl orderService;
@@ -195,6 +202,7 @@ class AdminOrderServiceImplTest {
             AdminOrderResponse result = orderService.updateOrderStatus(1L, OrderStatus.CANCELLED);
 
             verify(orderRepository).save(testOrder);
+            verify(eventPublisher).publishEvent(any(OrderStatusChangedEvent.class));
         }
 
         @Test
@@ -334,6 +342,7 @@ class AdminOrderServiceImplTest {
             orderService.updateOrderStatus(1L, OrderStatus.REFUNDED);
 
             verify(orderRepository).save(testOrder);
+            verify(eventPublisher).publishEvent(any(OrderStatusChangedEvent.class));
         }
 
         @Test
@@ -631,6 +640,7 @@ class AdminOrderServiceImplTest {
 
             verify(orderRepository, times(flow.length)).save(testOrder);
             assertThat(testOrder.getStatus()).isEqualTo(OrderStatus.RETURNED);
+            verify(eventPublisher, times(flow.length)).publishEvent(any(OrderStatusChangedEvent.class));
         }
 
         @Test
@@ -656,6 +666,7 @@ class AdminOrderServiceImplTest {
 
             verify(orderRepository, times(flow.length)).save(testOrder);
             assertThat(testOrder.getStatus()).isEqualTo(OrderStatus.REFUNDED);
+            verify(eventPublisher, times(flow.length)).publishEvent(any(OrderStatusChangedEvent.class));
         }
 
         @Test

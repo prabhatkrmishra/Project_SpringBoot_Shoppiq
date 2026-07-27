@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.email.provider;
 
 import com.pkmprojects.shoppiq.email.dto.EmailMessage;
-import com.pkmprojects.shoppiq.exception.EmailSendException;
+import com.pkmprojects.shoppiq.exception.general.email.EmailSendException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;

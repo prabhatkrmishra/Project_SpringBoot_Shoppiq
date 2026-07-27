@@ -1,7 +1,9 @@
 package com.pkmprojects.shoppiq.enums;
 
+import com.pkmprojects.shoppiq.entity.payment.Payment;
+
 /**
- * Payment lifecycle states for a {@link com.pkmprojects.shoppiq.entity.Payment}.
+ * Payment lifecycle states for a {@link Payment}.
  *
  * @author PrabhatKrMishra
  * @since 1.0.0

@@ -1,9 +1,9 @@
 package com.pkmprojects.shoppiq.controller.admin;
 
 import com.pkmprojects.shoppiq.dto.admin.request.AdminMailRequest;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.AdminMailService;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.admin.AdminMailService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -66,7 +66,7 @@ public class AdminMailController {
     @PostMapping("/send")
     public ResponseEntity<Map<String, String>> sendMail(
             @Valid @RequestBody AdminMailRequest request,
-            @AuthenticationPrincipal User admin) {
+            @AuthenticationPrincipal(expression = "user") User admin) {
         adminMailService.sendMail(request, admin.getEmail());
         if (Boolean.TRUE.equals(request.sendToAll())) {
             return ResponseEntity.ok(Map.of("message", "Email is being sent in the background. You can continue working."));

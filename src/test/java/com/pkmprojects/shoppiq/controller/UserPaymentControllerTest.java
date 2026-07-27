@@ -1,4 +1,5 @@
 package com.pkmprojects.shoppiq.controller;
+import com.pkmprojects.shoppiq.controller.payment.PaymentController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
@@ -13,14 +14,16 @@ import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.payment.PaymentResponse;
 import com.pkmprojects.shoppiq.dto.payment.PaymentStatusResponse;
-import com.pkmprojects.shoppiq.dto.payment.VerifyPaymentRequest;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.*;
-import com.pkmprojects.shoppiq.exception.*;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.PaymentService;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentInvalidStateException;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentNotFoundException;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.payment.PaymentService;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +37,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -46,12 +48,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
- * Controller slice integration tests for {@link UserPaymentController}.
+ * Controller slice integration tests for {@link PaymentController}.
  *
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
-@WebMvcTest(UserPaymentController.class)
+@WebMvcTest(PaymentController.class)
 @Import({
         SecurityConfig.class,
         JacksonConfig.class,
@@ -65,29 +67,33 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         OAuthReturnUrlFilter.class
 })
 @ActiveProfiles("test")
-@DisplayName("UserPaymentController Tests")
-class UserPaymentControllerTest {
+@DisplayName("PaymentController Tests")
+class PaymentControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
     @MockitoBean PaymentService paymentService;
     @MockitoBean UserRepository userRepository;
-    @MockitoBean RolesService rolesService;
+    @MockitoBean RoleService rolesService;
     @MockitoBean HttpCookieOAuth2AuthorizationRequestRepository cookieRepo;
     @MockitoBean OAuth2SuccessHandler oAuth2SuccessHandler;
 
     private User customer;
 
     private void authenticateCustomer() {
+        customer = User.builder()
+                .name("Alice").username("alice")
+                .email("alice@test.com").password("hashed")
+                .enabled(true).build();
         var auth = new UsernamePasswordAuthenticationToken(
-                customer, null, List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER")));
+                new SecurityUser(customer), null, List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER")));
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     private void setSecurityContext(User user, String role) {
         var auth = new UsernamePasswordAuthenticationToken(
-                user, null, List.of(new SimpleGrantedAuthority(role)));
+                new SecurityUser(user), null, List.of(new SimpleGrantedAuthority(role)));
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 

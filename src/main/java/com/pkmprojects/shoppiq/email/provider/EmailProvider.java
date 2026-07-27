@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.email.provider;
 
 import com.pkmprojects.shoppiq.email.dto.EmailMessage;
+import com.pkmprojects.shoppiq.exception.general.email.EmailSendException;
 
 /**
  * Strategy interface for email provider integrations.
@@ -27,7 +28,7 @@ public interface EmailProvider {
      * Sends an email message using this provider.
      *
      * @param message the email message to send
-     * @throws com.pkmprojects.shoppiq.exception.EmailSendException if sending fails
+     * @throws EmailSendException if sending fails
      */
     void send(EmailMessage message);
 

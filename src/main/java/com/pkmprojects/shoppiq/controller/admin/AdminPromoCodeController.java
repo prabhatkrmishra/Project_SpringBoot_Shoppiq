@@ -4,7 +4,7 @@ import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeRequest;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeResponse;
-import com.pkmprojects.shoppiq.service.PromoCodeService;
+import com.pkmprojects.shoppiq.service.promo.PromoCodeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;

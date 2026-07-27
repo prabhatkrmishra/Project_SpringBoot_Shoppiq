@@ -7,7 +7,7 @@ import com.pkmprojects.shoppiq.aiservice.service.ChatService;
 import com.pkmprojects.shoppiq.aiservice.service.ChatServiceImpl;
 import com.pkmprojects.shoppiq.aiservice.service.ModelResolutionService;
 import com.pkmprojects.shoppiq.aiservice.tools.ShoppiqTools;
-import com.pkmprojects.shoppiq.repository.UserRepository;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;

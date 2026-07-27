@@ -1,7 +1,8 @@
 package com.pkmprojects.shoppiq.auth.utils;
 
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.auth.JwtAuthenticationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import io.jsonwebtoken.Claims;
@@ -250,7 +251,7 @@ public class JwtAuthenticationUtils {
             return Jwts.builder()
                     .subject(user.getUsername())
                     .claim("userId", user.getId())
-                    .claim("roles", user.getAuthorities()
+                    .claim("roles", new SecurityUser(user).getAuthorities()
                             .stream()
                             .map(GrantedAuthority::getAuthority)
                             .toList())

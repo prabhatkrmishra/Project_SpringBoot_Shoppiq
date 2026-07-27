@@ -1,4 +1,5 @@
 package com.pkmprojects.shoppiq.controller;
+import com.pkmprojects.shoppiq.controller.order.OrderController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
@@ -14,19 +15,26 @@ import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
-import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
-import com.pkmprojects.shoppiq.exception.*;
+import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.address.AddressNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.cart.CartEmptyException;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.RolesService;
-import com.pkmprojects.shoppiq.service.impl.CheckoutServiceImpl;
+import com.pkmprojects.shoppiq.exception.general.inventory.InsufficientStockException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderCannotBeCancelledException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderInvalidStatusTransitionException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderNotFoundException;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.role.RoleService;
+import com.pkmprojects.shoppiq.service.checkout.CheckoutServiceImpl;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +60,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
- * Controller-slice integration tests for {@link UserOrderController}.
+ * Controller-slice integration tests for {@link OrderController}.
  *
  * <p>
  * Uses {@code @WebMvcTest} with the real security filter chain imported.
@@ -64,7 +72,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
-@WebMvcTest(UserOrderController.class)
+@WebMvcTest(OrderController.class)
 @Import({
         SecurityConfig.class,
         JacksonConfig.class,
@@ -78,15 +86,15 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         OAuthReturnUrlFilter.class
 })
 @ActiveProfiles("test")
-@DisplayName("UserOrderController Tests")
-class UserOrderControllerTest {
+@DisplayName("OrderController Tests")
+class OrderControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
     @MockitoBean CheckoutServiceImpl checkoutService;
     @MockitoBean UserRepository userRepository;
-    @MockitoBean RolesService rolesService;
+    @MockitoBean RoleService rolesService;
     @MockitoBean HttpCookieOAuth2AuthorizationRequestRepository cookieRepo;
     @MockitoBean OAuth2SuccessHandler oAuth2SuccessHandler;
 
@@ -109,7 +117,7 @@ class UserOrderControllerTest {
         setId(customer, 1L);
 
         var auth = new UsernamePasswordAuthenticationToken(
-                customer, null,
+                new SecurityUser(customer), null,
                 List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
         );
         SecurityContextHolder.getContext().setAuthentication(auth);

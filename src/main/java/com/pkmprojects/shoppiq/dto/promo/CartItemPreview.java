@@ -11,7 +11,7 @@ import java.math.BigDecimal;
  * @param quantity      units of this item in the cart
  * @param unitPrice     effective unit price (post-item-discount)
  * @author PrabhatKrMishra
- * @since 1.5.0
+ * @since 1.4.0
  */
 public record CartItemPreview(
         @NotNull(message = "Item details ID is required.")

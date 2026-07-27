@@ -1,5 +1,7 @@
 package com.pkmprojects.shoppiq.util;
 
+import com.pkmprojects.shoppiq.service.category.CategoryService;
+
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -47,7 +49,7 @@ import java.util.regex.Pattern;
  * </p>
  *
  * @author PrabhatKrMishra
- * @see com.pkmprojects.shoppiq.service.CategoryService
+ * @see CategoryService
  * @since 1.0.0
  */
 public final class SlugUtil {

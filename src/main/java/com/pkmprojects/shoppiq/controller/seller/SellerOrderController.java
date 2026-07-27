@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.controller.seller;
 import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.service.seller.SellerOrderService;
 import jakarta.validation.constraints.Min;
@@ -54,7 +54,7 @@ public class SellerOrderController {
 
     @GetMapping
     public ResponseEntity<PageResponse<SellerOrderResponse>> getOrders(
-            @AuthenticationPrincipal User currentUser,
+            @AuthenticationPrincipal(expression = "user") User currentUser,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "15") @Min(1) int size) {
         size = Math.min(size, pagination.maxPageSize());
@@ -65,7 +65,7 @@ public class SellerOrderController {
     @GetMapping("/{id}")
     public ResponseEntity<SellerOrderResponse> getOrder(
             @PathVariable @Positive(message = "Order id must be a positive number") Long id,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         SellerOrderResponse response = sellerOrderService.getOrder(currentUser, id);
         return ResponseEntity.ok(response);
     }
@@ -74,7 +74,7 @@ public class SellerOrderController {
     public ResponseEntity<SellerOrderResponse> updateOrderStatus(
             @PathVariable @Positive(message = "Order id must be a positive number") Long id,
             @RequestParam @NotNull(message = "Status is required.") OrderStatus status,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         SellerOrderResponse response = sellerOrderService.updateOrderStatus(currentUser, id, status);
         return ResponseEntity.ok(response);
     }

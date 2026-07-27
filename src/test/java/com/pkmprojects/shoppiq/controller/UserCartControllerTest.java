@@ -1,4 +1,5 @@
 package com.pkmprojects.shoppiq.controller;
+import com.pkmprojects.shoppiq.controller.cart.CartController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
@@ -11,21 +12,21 @@ import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
-import com.pkmprojects.shoppiq.dto.request.AddCartItemRequest;
-import com.pkmprojects.shoppiq.dto.response.CartItemResponse;
-import com.pkmprojects.shoppiq.dto.response.CartResponse;
-import com.pkmprojects.shoppiq.dto.request.UpdateCartItemRequest;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.exception.CartItemAccessDeniedException;
-import com.pkmprojects.shoppiq.exception.CartItemNotFoundException;
-import com.pkmprojects.shoppiq.exception.InsufficientStockException;
-import com.pkmprojects.shoppiq.exception.ItemDetailsNotFoundException;
+import com.pkmprojects.shoppiq.dto.cart.AddCartItemRequest;
+import com.pkmprojects.shoppiq.dto.cart.CartItemResponse;
+import com.pkmprojects.shoppiq.dto.cart.CartResponse;
+import com.pkmprojects.shoppiq.dto.cart.UpdateCartItemRequest;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.exception.general.cart.CartItemAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.cart.CartItemNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.inventory.InsufficientStockException;
+import com.pkmprojects.shoppiq.exception.general.item.ItemDetailsNotFoundException;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.RolesService;
-import com.pkmprojects.shoppiq.service.CartService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.role.RoleService;
+import com.pkmprojects.shoppiq.service.cart.CartService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
- * Controller-slice tests for {@link UserCartController}.
+ * Controller-slice tests for {@link CartController}.
  *
  * <p>
  * Uses {@code @WebMvcTest} to load only the web layer; {@link CartService}
@@ -69,7 +70,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
-@WebMvcTest(UserCartController.class)
+@WebMvcTest(CartController.class)
 @Import({
         SecurityConfig.class,
         JacksonConfig.class,
@@ -83,8 +84,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         OAuthReturnUrlFilter.class
 })
 @ActiveProfiles("test")
-@DisplayName("UserCartController Tests")
-class UserCartControllerTest {
+@DisplayName("CartController Tests")
+class CartControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -99,7 +100,7 @@ class UserCartControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -142,7 +143,7 @@ class UserCartControllerTest {
 
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(
-                        authenticatedUser,
+                        new SecurityUser(authenticatedUser),
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
                 );

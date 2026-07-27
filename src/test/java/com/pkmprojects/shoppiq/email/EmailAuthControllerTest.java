@@ -1,15 +1,15 @@
 package com.pkmprojects.shoppiq.email;
 
-import com.pkmprojects.shoppiq.controller.EmailAuthController;
+import com.pkmprojects.shoppiq.auth.controller.EmailAuthController;
 import com.pkmprojects.shoppiq.dto.auth.ConfirmEmailRequest;
 import com.pkmprojects.shoppiq.dto.auth.ForgotPasswordRequest;
 import com.pkmprojects.shoppiq.dto.auth.ResetPasswordRequest;
 import com.pkmprojects.shoppiq.dto.auth.VerifyEmailRequest;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.exception.VerificationCodeException;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.verification.VerificationCodeService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.verification.service.VerificationCodeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

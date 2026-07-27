@@ -1,8 +1,8 @@
 package com.pkmprojects.shoppiq.exception.address;
 
-import com.pkmprojects.shoppiq.exception.AddressAccessDeniedException;
-import com.pkmprojects.shoppiq.exception.AddressNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
+import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.address.AddressNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

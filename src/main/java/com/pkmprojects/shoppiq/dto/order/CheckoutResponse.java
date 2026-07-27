@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.dto.order;
 
-import com.pkmprojects.shoppiq.entity.Order;
+import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 
@@ -44,7 +44,7 @@ public record CheckoutResponse(
                 order.getGrandTotal(),
                 order.getDeliveryType(),
                 paymentId,
-                order.getPromoCode() != null ? order.getPromoCode().getCode() : null
+                order.getPromoCodeSnapshot()
         );
     }
 }

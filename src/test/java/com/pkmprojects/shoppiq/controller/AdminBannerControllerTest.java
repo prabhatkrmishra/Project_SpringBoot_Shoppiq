@@ -14,11 +14,11 @@ import com.pkmprojects.shoppiq.dto.banner.BannerRequest;
 import com.pkmprojects.shoppiq.dto.banner.BannerResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.enums.BannerType;
-import com.pkmprojects.shoppiq.exception.BannerNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.banner.BannerNotFoundException;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.BannerService;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.banner.BannerService;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -70,7 +70,7 @@ class AdminBannerControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;

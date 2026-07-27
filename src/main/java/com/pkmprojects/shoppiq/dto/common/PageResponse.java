@@ -58,4 +58,27 @@ public record PageResponse<T>(
                 page.isLast()
         );
     }
+
+    /**
+     * Creates a {@code PageResponse} from raw pagination data,
+     * mapping each entity to a DTO via the supplied function.
+     *
+     * @param content       the page items
+     * @param page          zero-based page index
+     * @param size          requested page size
+     * @param totalElements total element count across all pages
+     * @param mapper        entity-to-DTO mapping function
+     * @param <E>           entity type
+     * @param <T>           DTO type
+     * @return a new PageResponse
+     */
+    public static <E, T> PageResponse<T> of(List<E> content, int page, int size,
+                                             long totalElements, Function<E, T> mapper) {
+        List<T> mapped = content.stream().map(mapper).toList();
+        int totalPages = size > 0 ? (int) Math.ceil((double) totalElements / size) : 0;
+        return new PageResponse<>(
+                mapped, page, size, totalElements, totalPages,
+                page == 0, page >= totalPages - 1
+        );
+    }
 }

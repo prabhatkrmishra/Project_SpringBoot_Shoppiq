@@ -136,7 +136,7 @@
                         var id = parseInt(this.dataset.cartItemId);
                         var qty = parseInt(this.dataset.qty) - 1;
                         if (qty < 1) return;
-                        API.put('/user/cart/update/' + id, {quantity: qty}).then(loadCart).catch(function (e) {
+                        API.put('/user/cart/update/' + id, {quantity: qty}).then(function () { loadCart(); window.updateCartBadge(); }).catch(function (e) {
                             showToast(e.message, 'error');
                         });
                     };
@@ -146,7 +146,7 @@
                         var id = parseInt(this.dataset.cartItemId);
                         var qty = parseInt(this.dataset.qty) + 1;
                         if (qty > 99) return;
-                        API.put('/user/cart/update/' + id, {quantity: qty}).then(loadCart).catch(function (e) {
+                        API.put('/user/cart/update/' + id, {quantity: qty}).then(function () { loadCart(); window.updateCartBadge(); }).catch(function (e) {
                             showToast(e.message, 'error');
                         });
                     };
@@ -161,7 +161,7 @@
                             danger: true
                         }).then(function (confirmed) {
                             if (!confirmed) return;
-                            API.del('/user/cart/delete/' + id).then(loadCart).catch(function (e) {
+                            API.del('/user/cart/delete/' + id).then(function () { loadCart(); window.updateCartBadge(); }).catch(function (e) {
                                 showToast(e.message, 'error');
                             });
                         });

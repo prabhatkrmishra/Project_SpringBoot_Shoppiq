@@ -1,12 +1,13 @@
 package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
+import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
-import com.pkmprojects.shoppiq.dto.response.ItemResponse;
-import com.pkmprojects.shoppiq.dto.request.*;
-import com.pkmprojects.shoppiq.dto.response.CartItemResponse;
-import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
-import com.pkmprojects.shoppiq.dto.response.UserResponse;
+import com.pkmprojects.shoppiq.dto.item.ItemResponse;
+
+import com.pkmprojects.shoppiq.dto.cart.CartItemResponse;
+import com.pkmprojects.shoppiq.dto.review.ItemReviewResponse;
+import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
 
 import java.util.List;

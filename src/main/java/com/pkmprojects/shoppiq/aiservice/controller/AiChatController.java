@@ -7,7 +7,7 @@ import com.pkmprojects.shoppiq.aiservice.entity.ChatConversation;
 import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
 import com.pkmprojects.shoppiq.aiservice.exception.AiServiceUnavailableException;
 import com.pkmprojects.shoppiq.aiservice.service.ChatService;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +76,7 @@ public class AiChatController {
      */
     @PostMapping
     public ResponseEntity<?> createAndChat(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @Valid @RequestBody ChatRequest request) {
         checkServiceAvailable();
 
@@ -103,7 +103,7 @@ public class AiChatController {
      */
     @PostMapping("/{chatId}")
     public ResponseEntity<?> chat(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable String chatId,
             @Valid @RequestBody ChatRequest request) {
         checkServiceAvailable();
@@ -123,7 +123,7 @@ public class AiChatController {
      */
     @GetMapping("/conversations")
     public ResponseEntity<?> getConversations(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal(expression = "user") User user) {
         checkServiceAvailable();
 
         return ResponseEntity.ok(chatService.getConversations(user));
@@ -138,7 +138,7 @@ public class AiChatController {
      */
     @GetMapping("/{chatId}/messages")
     public ResponseEntity<?> getMessages(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable String chatId) {
         checkServiceAvailable();
 
@@ -154,7 +154,7 @@ public class AiChatController {
      */
     @DeleteMapping("/{chatId}")
     public ResponseEntity<?> resolveConversation(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable String chatId) {
         checkServiceAvailable();
 

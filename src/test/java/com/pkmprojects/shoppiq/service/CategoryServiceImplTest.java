@@ -1,13 +1,14 @@
 package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.dto.request.CategoryRequest;
-import com.pkmprojects.shoppiq.dto.response.CategoryResponse;
-import com.pkmprojects.shoppiq.entity.Category;
-import com.pkmprojects.shoppiq.exception.CategoryNotFoundException;
-import com.pkmprojects.shoppiq.exception.DuplicateCategoryException;
-import com.pkmprojects.shoppiq.repository.CategoryRepository;
-import com.pkmprojects.shoppiq.service.impl.CategoryServiceImpl;
+import com.pkmprojects.shoppiq.dto.category.CategoryRequest;
+import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
+import com.pkmprojects.shoppiq.entity.category.Category;
+import com.pkmprojects.shoppiq.exception.general.category.CategoryNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.category.DuplicateCategoryException;
+import com.pkmprojects.shoppiq.service.category.CategoryLookupService;
+import com.pkmprojects.shoppiq.service.category.CategoryWriteService;
+import com.pkmprojects.shoppiq.service.category.CategoryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,7 +46,10 @@ import static org.mockito.Mockito.*;
 class CategoryServiceImplTest {
 
     @Mock
-    private CategoryRepository categoryRepository;
+    private CategoryLookupService categoryLookupService;
+
+    @Mock
+    private CategoryWriteService categoryWriteService;
 
     @InjectMocks
     private CategoryServiceImpl categoryService;
@@ -82,15 +86,15 @@ class CategoryServiceImplTest {
         void create_validRequest_savesWithSlug() {
             CategoryRequest request = new CategoryRequest("Home Appliances", "For the home");
 
-            when(categoryRepository.existsByNameIgnoreCase("Home Appliances")).thenReturn(false);
-            when(categoryRepository.existsBySlug("home-appliances")).thenReturn(false);
+            when(categoryLookupService.existsByName("Home Appliances")).thenReturn(false);
+            when(categoryLookupService.existsBySlug("home-appliances")).thenReturn(false);
 
             Category saved = Category.builder()
                     .name("Home Appliances")
                     .slug("home-appliances")
                     .description("For the home")
                     .build();
-            when(categoryRepository.save(any(Category.class))).thenReturn(saved);
+            when(categoryWriteService.save(any(Category.class))).thenReturn(saved);
 
             CategoryResponse response = categoryService.create(request);
 
@@ -98,7 +102,7 @@ class CategoryServiceImplTest {
             assertThat(response.slug()).isEqualTo("home-appliances");
 
             ArgumentCaptor<Category> captor = ArgumentCaptor.forClass(Category.class);
-            verify(categoryRepository).save(captor.capture());
+            verify(categoryWriteService).save(captor.capture());
             assertThat(captor.getValue().getSlug()).isEqualTo("home-appliances");
         }
 
@@ -107,17 +111,17 @@ class CategoryServiceImplTest {
         void create_slugCollision_appendsSuffix() {
             CategoryRequest request = new CategoryRequest("Electronics", "Gadgets");
 
-            when(categoryRepository.existsByNameIgnoreCase("Electronics")).thenReturn(false);
+            when(categoryLookupService.existsByName("Electronics")).thenReturn(false);
             // First slug "electronics" is taken; "electronics-2" is free
-            when(categoryRepository.existsBySlug("electronics")).thenReturn(true);
-            when(categoryRepository.existsBySlug("electronics-2")).thenReturn(false);
+            when(categoryLookupService.existsBySlug("electronics")).thenReturn(true);
+            when(categoryLookupService.existsBySlug("electronics-2")).thenReturn(false);
 
             Category saved = Category.builder()
                     .name("Electronics")
                     .slug("electronics-2")
                     .description("Gadgets")
                     .build();
-            when(categoryRepository.save(any(Category.class))).thenReturn(saved);
+            when(categoryWriteService.save(any(Category.class))).thenReturn(saved);
 
             CategoryResponse response = categoryService.create(request);
 
@@ -128,12 +132,12 @@ class CategoryServiceImplTest {
         @DisplayName("Throws DuplicateCategoryException when name already exists")
         void create_duplicateName_throwsException() {
             CategoryRequest request = new CategoryRequest("Electronics", "Gadgets");
-            when(categoryRepository.existsByNameIgnoreCase("Electronics")).thenReturn(true);
+            when(categoryLookupService.existsByName("Electronics")).thenReturn(true);
 
             assertThatThrownBy(() -> categoryService.create(request))
                     .isInstanceOf(DuplicateCategoryException.class);
 
-            verify(categoryRepository, never()).save(any());
+            verify(categoryWriteService, never()).save(any());
         }
 
         @Test
@@ -157,8 +161,8 @@ class CategoryServiceImplTest {
         void update_sameNameDifferentDescription_updatesDescription() {
             CategoryRequest request = new CategoryRequest("Electronics", "Updated description");
 
-            when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory));
-            when(categoryRepository.save(stubCategory)).thenReturn(stubCategory);
+            when(categoryLookupService.findById(1L)).thenReturn(Optional.of(stubCategory));
+            when(categoryWriteService.save(stubCategory)).thenReturn(stubCategory);
 
             CategoryResponse response = categoryService.update(1L, request);
 
@@ -171,20 +175,20 @@ class CategoryServiceImplTest {
         void update_duplicateName_throwsException() {
             CategoryRequest request = new CategoryRequest("Fashion", "Clothing");
 
-            when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory));
-            when(categoryRepository.existsByNameIgnoreCaseAndIdNot("Fashion", 1L))
+            when(categoryLookupService.findById(1L)).thenReturn(Optional.of(stubCategory));
+            when(categoryLookupService.existsByNameAndIdNot("Fashion", 1L))
                     .thenReturn(true);
 
             assertThatThrownBy(() -> categoryService.update(1L, request))
                     .isInstanceOf(DuplicateCategoryException.class);
 
-            verify(categoryRepository, never()).save(any());
+            verify(categoryWriteService, never()).save(any());
         }
 
         @Test
         @DisplayName("Throws CategoryNotFoundException when category does not exist")
         void update_categoryNotFound_throwsException() {
-            when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+            when(categoryLookupService.findById(999L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> categoryService.update(999L, new CategoryRequest("X", "Y")))
                     .isInstanceOf(CategoryNotFoundException.class);
@@ -209,22 +213,22 @@ class CategoryServiceImplTest {
         @Test
         @DisplayName("Deletes an existing category")
         void delete_existingCategory_deletesSuccessfully() {
-            when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory));
+            when(categoryLookupService.findById(1L)).thenReturn(Optional.of(stubCategory));
 
             categoryService.delete(1L);
 
-            verify(categoryRepository).delete(stubCategory);
+            verify(categoryWriteService).delete(stubCategory);
         }
 
         @Test
         @DisplayName("Throws CategoryNotFoundException when category does not exist")
         void delete_categoryNotFound_throwsException() {
-            when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+            when(categoryLookupService.findById(999L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> categoryService.delete(999L))
                     .isInstanceOf(CategoryNotFoundException.class);
 
-            verify(categoryRepository, never()).delete(any());
+            verify(categoryWriteService, never()).delete(any());
         }
     }
 
@@ -239,7 +243,7 @@ class CategoryServiceImplTest {
         @Test
         @DisplayName("Returns a category response when category exists")
         void getById_found_returnsResponse() {
-            when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory));
+            when(categoryLookupService.findById(1L)).thenReturn(Optional.of(stubCategory));
 
             CategoryResponse response = categoryService.getById(1L);
 
@@ -251,7 +255,7 @@ class CategoryServiceImplTest {
         @Test
         @DisplayName("Throws CategoryNotFoundException when category does not exist")
         void getById_notFound_throwsException() {
-            when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+            when(categoryLookupService.findById(999L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> categoryService.getById(999L))
                     .isInstanceOf(CategoryNotFoundException.class);
@@ -269,7 +273,7 @@ class CategoryServiceImplTest {
         @Test
         @DisplayName("Returns a category response when slug matches")
         void getBySlug_found_returnsResponse() {
-            when(categoryRepository.findBySlug("electronics"))
+            when(categoryLookupService.findBySlug("electronics"))
                     .thenReturn(Optional.of(stubCategory));
 
             CategoryResponse response = categoryService.getBySlug("electronics");
@@ -281,7 +285,7 @@ class CategoryServiceImplTest {
         @Test
         @DisplayName("Throws CategoryNotFoundException when slug does not match any category")
         void getBySlug_notFound_throwsException() {
-            when(categoryRepository.findBySlug("unknown-slug")).thenReturn(Optional.empty());
+            when(categoryLookupService.findBySlug("unknown-slug")).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> categoryService.getBySlug("unknown-slug"))
                     .isInstanceOf(CategoryNotFoundException.class);
@@ -306,7 +310,7 @@ class CategoryServiceImplTest {
                     .build();
             setId(fashion, 2L);
 
-            when(categoryRepository.findAllByOrderByNameAsc())
+            when(categoryLookupService.findAll())
                     .thenReturn(List.of(stubCategory, fashion));
 
             List<CategoryResponse> result = categoryService.getAll();
@@ -319,7 +323,7 @@ class CategoryServiceImplTest {
         @Test
         @DisplayName("Returns an empty list when no categories exist")
         void getAll_noCategories_returnsEmptyList() {
-            when(categoryRepository.findAllByOrderByNameAsc()).thenReturn(List.of());
+            when(categoryLookupService.findAll()).thenReturn(List.of());
 
             List<CategoryResponse> result = categoryService.getAll();
 
@@ -348,7 +352,7 @@ class CategoryServiceImplTest {
             Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "name"));
             var page = new PageImpl<>(List.of(stubCategory, fashion), pageable, 2);
 
-            when(categoryRepository.findAllByOrderByNameAsc(pageable)).thenReturn(page);
+            when(categoryLookupService.findAll(0, 20)).thenReturn(page);
 
             PageResponse<CategoryResponse> result = categoryService.getAll(0, 20);
 
@@ -369,7 +373,7 @@ class CategoryServiceImplTest {
             Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "name"));
             var page = new PageImpl<Category>(List.of(), pageable, 0);
 
-            when(categoryRepository.findAllByOrderByNameAsc(pageable)).thenReturn(page);
+            when(categoryLookupService.findAll(0, 20)).thenReturn(page);
 
             PageResponse<CategoryResponse> result = categoryService.getAll(0, 20);
 

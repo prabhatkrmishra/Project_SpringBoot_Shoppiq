@@ -1,4 +1,5 @@
 package com.pkmprojects.shoppiq.controller;
+import com.pkmprojects.shoppiq.controller.review.ReviewController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
@@ -11,16 +12,17 @@ import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.dto.request.ItemReviewRequest;
-import com.pkmprojects.shoppiq.dto.response.ItemReviewResponse;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.exception.DuplicateItemReviewException;
-import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
-import com.pkmprojects.shoppiq.exception.ItemReviewNotFoundException;
+import com.pkmprojects.shoppiq.dto.review.ItemReviewRequest;
+import com.pkmprojects.shoppiq.dto.review.ItemReviewResponse;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.exception.general.item.DuplicateItemReviewException;
+import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.review.ItemReviewNotFoundException;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.ItemReviewService;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.item.ItemReviewService;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +35,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -50,7 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
- * Controller-slice tests for {@link ItemReviewController}.
+ * Controller-slice tests for {@link ReviewController}.
  *
  * <p>Uses {@code @WebMvcTest} to load only the web layer; the service is mocked.
  * The real {@link SecurityConfig} and JWT infrastructure are imported so the
@@ -64,7 +65,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
-@WebMvcTest(ItemReviewController.class)
+@WebMvcTest(ReviewController.class)
 @Import({
         SecurityConfig.class,
         JacksonConfig.class,
@@ -77,8 +78,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
         ProblemDetailResponseWriter.class
 })
 @ActiveProfiles("test")
-@DisplayName("ItemReviewController Tests")
-class ItemReviewControllerTest {
+@DisplayName("ReviewController Tests")
+class ReviewControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -93,7 +94,7 @@ class ItemReviewControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -128,7 +129,7 @@ class ItemReviewControllerTest {
         // Set the User entity as principal, matching JwtAuthenticationFilter behavior
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        authenticatedUser,
+                        new SecurityUser(authenticatedUser),
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
                 );

@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.dto.admin.response;
 
-import com.pkmprojects.shoppiq.entity.Seller;
+import com.pkmprojects.shoppiq.entity.seller.Seller;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 

@@ -2,7 +2,7 @@ package com.pkmprojects.shoppiq.service.seller;
 
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
  * Business contract for seller inventory management.

@@ -12,16 +12,17 @@ import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.controller.seller.SellerInventoryController;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
-import com.pkmprojects.shoppiq.exception.ItemNotFoundException;
-import com.pkmprojects.shoppiq.exception.ItemStockNegativeException;
-import com.pkmprojects.shoppiq.exception.SellerNotFoundException;
-import com.pkmprojects.shoppiq.exception.SellerNotVerifiedException;
-import com.pkmprojects.shoppiq.exception.SellerSuspendedException;
+import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.inventory.ItemStockNegativeException;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerNotVerifiedException;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.service.seller.SellerInventoryService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,7 +78,7 @@ class SellerInventoryControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -114,7 +115,7 @@ class SellerInventoryControllerTest {
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        authenticatedUser,
+                        new SecurityUser(authenticatedUser),
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_SELLER"))
                 );

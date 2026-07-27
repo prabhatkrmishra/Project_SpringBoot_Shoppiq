@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.controller;
 
-import com.pkmprojects.shoppiq.service.BannerService;
+import com.pkmprojects.shoppiq.service.banner.BannerService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

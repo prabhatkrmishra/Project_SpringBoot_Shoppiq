@@ -1,0 +1,320 @@
+package com.pkmprojects.shoppiq.service.user;
+
+import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
+import com.pkmprojects.shoppiq.dto.user.UserResponse;
+import com.pkmprojects.shoppiq.dto.user.ChangePasswordRequest;
+import com.pkmprojects.shoppiq.dto.user.UpdateProfileRequest;
+import com.pkmprojects.shoppiq.dto.user.UserRequest;
+import com.pkmprojects.shoppiq.email.EmailService;
+import com.pkmprojects.shoppiq.email.EmailType;
+import com.pkmprojects.shoppiq.email.dto.EmailMessage;
+import com.pkmprojects.shoppiq.entity.address.Address;
+import com.pkmprojects.shoppiq.entity.seller.Seller;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.enums.SellerStatus;
+import com.pkmprojects.shoppiq.enums.VerificationStatus;
+import com.pkmprojects.shoppiq.exception.general.user.DuplicateUserException;
+import com.pkmprojects.shoppiq.exception.business.CurrentPasswordIncorrectException;
+import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
+import com.pkmprojects.shoppiq.exception.business.PasswordChangeException;
+import com.pkmprojects.shoppiq.repository.address.AddressRepository;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.role.RoleService;
+import com.pkmprojects.shoppiq.service.seller.SellerWriteService;
+import com.pkmprojects.shoppiq.verification.service.VerificationCodeService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Service for user account management.
+ *
+ * <p>Handles user creation create both username/password registration and
+ * Google OAuth2 registration. All creation methods are transactional and
+ * rely on database-level unique constraints for definitive uniqueness
+ * enforcement under concurrent access.</p>
+ *
+ * <p>Google OAuth2 users are created without a password — they authenticate
+ * exclusively via Google OAuth2. This eliminates password storage liability
+ * and credential-related attack vectors for OAuth2-only accounts.</p>
+ *
+ * <p>Database unique constraints on {@code email} and {@code username}
+ * provide the authoritative uniqueness enforcement. Application-level
+ * existence checks in controller are not performed here; conflicts are
+ * caught via {@link DataIntegrityViolationException}.</p>
+ *
+ * @see OAuthRegistrationSession
+ * @see DuplicateUserException
+ */
+@Service
+public class UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleService rolesService;
+    private final SellerWriteService sellerWriteService;
+    private final AddressRepository addressRepository;
+    private final EmailService emailService;
+    private final VerificationCodeService verificationCodeService;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleService rolesService,
+                       SellerWriteService sellerWriteService, AddressRepository addressRepository,
+                       EmailService emailService, VerificationCodeService verificationCodeService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.rolesService = rolesService;
+        this.sellerWriteService = sellerWriteService;
+        this.addressRepository = addressRepository;
+        this.emailService = emailService;
+        this.verificationCodeService = verificationCodeService;
+    }
+
+    /**
+     * Creates a new user create username/password registration.
+     *
+     * <p>Password is hashed before storage. The CUSTOMER role is assigned
+     * by default. Database constraints enforce email and username uniqueness.</p>
+     *
+     * @param newUserRequest contains name, email, username, and raw password
+     * @throws DuplicateUserException if the email or username conflicts with an existing user
+     */
+    @Transactional
+    public void createUser(UserRequest newUserRequest) {
+        try {
+            User newUser = new User();
+            newUser.setName(newUserRequest.getName());
+            newUser.setEmail(newUserRequest.getEmail());
+            newUser.setUsername(newUserRequest.getUsername());
+            newUser.setPassword(passwordEncoder.encode(newUserRequest.getPassword()));
+
+            if (newUserRequest.isSellerRegistration()) {
+                newUser.setRoles(Set.of(rolesService.getSellerRole()));
+            } else {
+                newUser.setRoles(Set.of(rolesService.getCustomerRole()));
+            }
+
+            User savedUser = userRepository.save(newUser);
+
+            if (newUserRequest.isSellerRegistration()) {
+                Seller seller = Seller.builder()
+                        .user(savedUser)
+                        .businessName(newUserRequest.getBusinessName())
+                        .businessEmail(newUserRequest.getBusinessEmail())
+                        .phone(newUserRequest.getPhone())
+                        .gstNumber(newUserRequest.getGstNumber())
+                        .panNumber(newUserRequest.getPanNumber())
+                        .verificationStatus(VerificationStatus.PENDING)
+                        .sellerStatus(SellerStatus.INACTIVE)
+                        .joinedAt(LocalDateTime.now())
+                        .build();
+                sellerWriteService.save(seller);
+                logger.debug("Seller registration created for username: {}", newUserRequest.getUsername());
+            } else {
+                logger.debug("User account created for username: {}", newUserRequest.getUsername());
+            }
+
+            // Defer email sending until after the transaction commits successfully.
+            // This prevents slow/failed email delivery from holding the DB transaction open.
+            User emailTarget = savedUser;
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendVerificationEmail(emailTarget);
+                }
+            });
+        } catch (DataIntegrityViolationException e) {
+            logger.warn("User creation failed due to constraint violation for email: {} or username: {}", newUserRequest.getEmail(), newUserRequest.getUsername());
+            throw DuplicateUserException.unknown();
+        }
+    }
+
+    /**
+     * Creates a new user create Google OAuth2 registration.
+     *
+     * <p>The email and name come create the verified {@link OAuthRegistrationSession}
+     * stored in the HTTP session. The username and password are chosen by the user
+     * during the registration completion step. The password is BCrypt-hashed before
+     * storage.</p>
+     *
+     * <p>This allows the user to authenticate via either Google OAuth2 or
+     * username/password login in the future, providing flexibility without
+     * forcing a single authentication method.</p>
+     *
+     * <p>The CUSTOMER role is assigned by default. Database unique constraints
+     * on email and username provide the definitive duplicate protection.</p>
+     *
+     * @param oauthSession the verified Google profile create the session,
+     *                     containing email, name, and authentication timestamp
+     * @param username     the username chosen by the user
+     * @param password     the raw password chosen by the user
+     * @return the newly created User entity with CUSTOMER role assigned
+     * @throws DuplicateUserException if the username or email conflicts with
+     *                                an existing user (including concurrent insert)
+     */
+    @Transactional
+    public User createGoogleUser(OAuthRegistrationSession oauthSession, String username, String password) {
+        try {
+            User user = new User();
+            user.setName(oauthSession.name());
+            user.setEmail(oauthSession.email());
+            user.setUsername(username);
+            user.setPassword(passwordEncoder.encode(password));
+            user.setRoles(Set.of(rolesService.getCustomerRole()));
+            user.setEmailVerified(true);
+            user.setEmailVerifiedAt(java.time.LocalDateTime.now());
+
+            User savedUser = userRepository.save(user);
+
+            logger.debug("Google OAuth2 user account created for username: {}", username);
+            return savedUser;
+        } catch (DataIntegrityViolationException e) {
+            logger.warn("Google user creation failed due to constraint violation for username: {}", username);
+            throw DuplicateUserException.unknown();
+        }
+    }
+
+    /**
+     * Returns the profile for the given user, including default address and password-presence flag.
+     *
+     * @param user the requesting (authenticated) user
+     * @return profile response DTO
+     */
+    @Transactional(readOnly = true)
+    public UserResponse getProfile(User user) {
+        Address defaultAddress = addressRepository.findByUserAndIsDefaultTrue(user).orElse(null);
+        boolean hasPassword = user.getPassword() != null;
+        return UserResponse.of(user, defaultAddress, hasPassword);
+    }
+
+    /**
+     * Updates the current user's editable profile fields.
+     *
+     * <p>Only the display name may be changed; email and username are locked.</p>
+     *
+     * @param user    the requesting (authenticated) user
+     * @param request the profile update payload
+     */
+    @Transactional
+    public void updateProfile(User user, UpdateProfileRequest request) {
+        user.setName(request.getName());
+        userRepository.save(user);
+        logger.debug("Profile updated for username: {}", user.getUsername());
+    }
+
+    /**
+     * Changes the current user's password.
+     *
+     * <p>
+     * For credential-based accounts the supplied current password must match
+     * the stored value. For OAuth-only accounts (no stored password) the
+     * current-password check is skipped and the new password is simply set,
+     * enabling password login for that account.
+     * </p>
+     *
+     * <p>Changing a password invalidates all previously issued JWTs by
+     * bumping the user's token version.</p>
+     *
+     * @param user    the requesting (authenticated) user
+     * @param request the password change payload
+     * @throws CurrentPasswordIncorrectException if the current password does not match
+     * @throws InvalidOperationException         if inputs are invalid
+     */
+    @Transactional
+    public void changePassword(User user, ChangePasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new PasswordChangeException("New password and confirmation do not match.");
+        }
+
+        String currentEncoded = user.getPassword();
+        if (currentEncoded != null) {
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                throw new PasswordChangeException("Current password is required.");
+            }
+            if (!passwordEncoder.matches(request.getCurrentPassword(), currentEncoded)) {
+                throw new CurrentPasswordIncorrectException();
+            }
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
+        logger.debug("Password changed for username: {}", user.getUsername());
+
+        // Defer security alert email until after the transaction commits
+        User emailTarget = user;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                sendSecurityAlertEmail(emailTarget, "Password Changed",
+                        "Your password was recently changed. If you did not make this change, please contact support immediately.",
+                        "password_change");
+            }
+        });
+    }
+
+    private void sendVerificationEmail(User user) {
+        try {
+            String code = verificationCodeService.generateCode(user, EmailType.VERIFICATION);
+            emailService.sendEmail(EmailMessage.builder()
+                    .to(user.getEmail())
+                    .subject("Verify Your Email Address")
+                    .templateName(EmailType.VERIFICATION.getTemplateName())
+                    .emailType(EmailType.VERIFICATION)
+                    .userId(user.getId())
+                    .variables(Map.of(
+                            "userName", user.getName(),
+                            "verificationCode", code
+                    ))
+                    .build());
+        } catch (Exception e) {
+            logger.warn("Failed to send verification email to {}: {}", user.getEmail(), e.getMessage());
+        }
+    }
+
+    private void sendSecurityAlertEmail(User user, String alertTitle, String alertMessage, String alertType) {
+        try {
+            String ipAddress = "Unknown";
+            String userAgent = "Unknown";
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                HttpServletRequest request = attrs.getRequest();
+                ipAddress = request.getRemoteAddr();
+                userAgent = request.getHeader("User-Agent") != null ? request.getHeader("User-Agent") : "Unknown";
+            }
+
+            emailService.sendEmail(EmailMessage.builder()
+                    .to(user.getEmail())
+                    .subject("Security Alert: " + alertTitle)
+                    .templateName(EmailType.SECURITY_ALERT.getTemplateName())
+                    .emailType(EmailType.SECURITY_ALERT)
+                    .userId(user.getId())
+                    .variables(Map.of(
+                            "userName", user.getName(),
+                            "alertTitle", alertTitle,
+                            "alertMessage", alertMessage,
+                            "alertType", alertType,
+                            "alertTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' hh:mm a")),
+                            "ipAddress", ipAddress
+                    ))
+                    .build());
+        } catch (Exception e) {
+            logger.warn("Failed to send security alert email to {}: {}", user.getEmail(), e.getMessage());
+        }
+    }
+
+}

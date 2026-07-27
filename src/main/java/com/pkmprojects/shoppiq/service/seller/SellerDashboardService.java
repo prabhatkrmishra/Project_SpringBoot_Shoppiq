@@ -2,7 +2,7 @@ package com.pkmprojects.shoppiq.service.seller;
 
 import com.pkmprojects.shoppiq.dto.seller.response.SellerDashboardResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 
 import java.util.List;
 

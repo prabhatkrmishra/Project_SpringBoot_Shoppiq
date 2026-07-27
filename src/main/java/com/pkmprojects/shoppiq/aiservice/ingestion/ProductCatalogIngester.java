@@ -1,8 +1,8 @@
 package com.pkmprojects.shoppiq.aiservice.ingestion;
 
 import com.pkmprojects.shoppiq.aiservice.events.ProductEmbeddingEvent;
-import com.pkmprojects.shoppiq.entity.Item;
-import com.pkmprojects.shoppiq.repository.ItemRepository;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -15,8 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -45,7 +43,7 @@ public class ProductCatalogIngester implements CommandLineRunner {
 
     private static final int PAGE_SIZE = 100;
 
-    private final ItemRepository itemRepository;
+    private final ItemLookupService itemLookupService;
     private final EmbeddingModel embeddingModel;
     private final EmbeddingStore<TextSegment> embeddingStore;
 
@@ -93,8 +91,7 @@ public class ProductCatalogIngester implements CommandLineRunner {
         long total = 0;
         Page<Item> page;
         do {
-            Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE);
-            page = itemRepository.findAllWithItemDetails(pageable);
+            page = itemLookupService.findAllWithItemDetails(pageNumber, PAGE_SIZE);
 
             if (page.hasContent()) {
                 List<Item> items = page.getContent();

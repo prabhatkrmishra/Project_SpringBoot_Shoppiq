@@ -1,22 +1,22 @@
 package com.pkmprojects.shoppiq.service;
 
-import com.pkmprojects.shoppiq.dto.request.AddCartItemRequest;
-import com.pkmprojects.shoppiq.dto.response.CartItemResponse;
-import com.pkmprojects.shoppiq.dto.response.CartResponse;
-import com.pkmprojects.shoppiq.dto.request.UpdateCartItemRequest;
-import com.pkmprojects.shoppiq.entity.Cart;
-import com.pkmprojects.shoppiq.entity.CartItem;
-import com.pkmprojects.shoppiq.entity.Item;
-import com.pkmprojects.shoppiq.entity.ItemDetails;
-import com.pkmprojects.shoppiq.entity.User;
-import com.pkmprojects.shoppiq.exception.CartItemAccessDeniedException;
-import com.pkmprojects.shoppiq.exception.CartItemNotFoundException;
-import com.pkmprojects.shoppiq.exception.InsufficientStockException;
-import com.pkmprojects.shoppiq.exception.ItemDetailsNotFoundException;
-import com.pkmprojects.shoppiq.repository.CartItemRepository;
-import com.pkmprojects.shoppiq.repository.CartRepository;
-import com.pkmprojects.shoppiq.repository.ItemDetailsRepository;
-import com.pkmprojects.shoppiq.service.impl.CartServiceImpl;
+import com.pkmprojects.shoppiq.dto.cart.AddCartItemRequest;
+import com.pkmprojects.shoppiq.dto.cart.CartItemResponse;
+import com.pkmprojects.shoppiq.dto.cart.CartResponse;
+import com.pkmprojects.shoppiq.dto.cart.UpdateCartItemRequest;
+import com.pkmprojects.shoppiq.entity.cart.Cart;
+import com.pkmprojects.shoppiq.entity.cart.CartItem;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.entity.item.ItemDetails;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.exception.general.cart.CartItemAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.cart.CartItemNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.inventory.InsufficientStockException;
+import com.pkmprojects.shoppiq.exception.general.item.ItemDetailsNotFoundException;
+import com.pkmprojects.shoppiq.repository.cart.CartItemRepository;
+import com.pkmprojects.shoppiq.repository.cart.CartRepository;
+import com.pkmprojects.shoppiq.service.cart.CartServiceImpl;
+import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -66,7 +66,7 @@ class CartServiceImplTest {
     private CartItemRepository cartItemRepository;
 
     @Mock
-    private ItemDetailsRepository itemDetailsRepository;
+    private ItemDetailsLookupService itemDetailsLookupService;
 
     @InjectMocks
     private CartServiceImpl cartService;
@@ -189,7 +189,7 @@ class CartServiceImplTest {
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.empty());
             when(cartRepository.save(any(Cart.class))).thenReturn(aliceCart);
-            when(itemDetailsRepository.findById(10L)).thenReturn(Optional.of(stubDetails));
+            when(itemDetailsLookupService.findById(10L)).thenReturn(Optional.of(stubDetails));
             when(cartItemRepository.findByCartAndItemDetails(aliceCart, stubDetails))
                     .thenReturn(Optional.empty());
             when(cartItemRepository.save(any(CartItem.class))).thenAnswer(inv -> {
@@ -218,7 +218,7 @@ class CartServiceImplTest {
             AddCartItemRequest request = new AddCartItemRequest(10L, 1);
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.of(aliceCart));
-            when(itemDetailsRepository.findById(10L)).thenReturn(Optional.of(stubDetails));
+            when(itemDetailsLookupService.findById(10L)).thenReturn(Optional.of(stubDetails));
             when(cartItemRepository.findByCartAndItemDetails(aliceCart, stubDetails))
                     .thenReturn(Optional.empty());
             when(cartItemRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -237,7 +237,7 @@ class CartServiceImplTest {
             CartItem existing = buildCartItem(100L, aliceCart, stubDetails, 5);
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.of(aliceCart));
-            when(itemDetailsRepository.findById(10L)).thenReturn(Optional.of(stubDetails));
+            when(itemDetailsLookupService.findById(10L)).thenReturn(Optional.of(stubDetails));
             when(cartItemRepository.findByCartAndItemDetails(aliceCart, stubDetails))
                     .thenReturn(Optional.of(existing));
             when(cartItemRepository.save(existing)).thenReturn(existing);
@@ -256,7 +256,7 @@ class CartServiceImplTest {
             AddCartItemRequest request = new AddCartItemRequest(10L, 51);
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.of(aliceCart));
-            when(itemDetailsRepository.findById(10L)).thenReturn(Optional.of(stubDetails));
+            when(itemDetailsLookupService.findById(10L)).thenReturn(Optional.of(stubDetails));
 
             assertThatThrownBy(() -> cartService.create(alice, request))
                     .isInstanceOf(InsufficientStockException.class);
@@ -272,7 +272,7 @@ class CartServiceImplTest {
             AddCartItemRequest request = new AddCartItemRequest(10L, 5);
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.of(aliceCart));
-            when(itemDetailsRepository.findById(10L)).thenReturn(Optional.of(stubDetails));
+            when(itemDetailsLookupService.findById(10L)).thenReturn(Optional.of(stubDetails));
             when(cartItemRepository.findByCartAndItemDetails(aliceCart, stubDetails))
                     .thenReturn(Optional.of(existing));
 
@@ -288,7 +288,7 @@ class CartServiceImplTest {
             AddCartItemRequest request = new AddCartItemRequest(999L, 1);
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.of(aliceCart));
-            when(itemDetailsRepository.findById(999L)).thenReturn(Optional.empty());
+            when(itemDetailsLookupService.findById(999L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> cartService.create(alice, request))
                     .isInstanceOf(ItemDetailsNotFoundException.class);
@@ -310,7 +310,7 @@ class CartServiceImplTest {
             }
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.of(aliceCart));
-            when(itemDetailsRepository.findById(10L)).thenReturn(Optional.of(discountedDetails));
+            when(itemDetailsLookupService.findById(10L)).thenReturn(Optional.of(discountedDetails));
             when(cartItemRepository.findByCartAndItemDetails(aliceCart, discountedDetails))
                     .thenReturn(Optional.empty());
             when(cartItemRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -558,7 +558,7 @@ class CartServiceImplTest {
             AddCartItemRequest request = new AddCartItemRequest(20L, 1);
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.of(aliceCart));
-            when(itemDetailsRepository.findById(20L)).thenReturn(Optional.of(noDiscount));
+            when(itemDetailsLookupService.findById(20L)).thenReturn(Optional.of(noDiscount));
             when(cartItemRepository.findByCartAndItemDetails(aliceCart, noDiscount))
                     .thenReturn(Optional.empty());
             when(cartItemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -577,7 +577,7 @@ class CartServiceImplTest {
             AddCartItemRequest request = new AddCartItemRequest(30L, 3);
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.of(aliceCart));
-            when(itemDetailsRepository.findById(30L)).thenReturn(Optional.of(fullDiscount));
+            when(itemDetailsLookupService.findById(30L)).thenReturn(Optional.of(fullDiscount));
             when(cartItemRepository.findByCartAndItemDetails(aliceCart, fullDiscount))
                     .thenReturn(Optional.empty());
             when(cartItemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -597,7 +597,7 @@ class CartServiceImplTest {
             AddCartItemRequest request = new AddCartItemRequest(40L, 1);
 
             when(cartRepository.findByUser(alice)).thenReturn(Optional.of(aliceCart));
-            when(itemDetailsRepository.findById(40L)).thenReturn(Optional.of(details));
+            when(itemDetailsLookupService.findById(40L)).thenReturn(Optional.of(details));
             when(cartItemRepository.findByCartAndItemDetails(aliceCart, details))
                     .thenReturn(Optional.empty());
             when(cartItemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

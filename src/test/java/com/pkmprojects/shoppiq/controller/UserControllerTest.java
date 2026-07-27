@@ -1,4 +1,5 @@
 package com.pkmprojects.shoppiq.controller;
+import com.pkmprojects.shoppiq.controller.user.UserController;
 
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
@@ -11,17 +12,16 @@ import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pkmprojects.shoppiq.dto.response.UserResponse;
+import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.dto.user.ChangePasswordRequest;
 import com.pkmprojects.shoppiq.dto.user.UpdateProfileRequest;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.RolesService;
-import com.pkmprojects.shoppiq.service.UserService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.role.RoleService;
+import com.pkmprojects.shoppiq.service.user.UserService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -78,7 +78,7 @@ class UserControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -106,7 +106,7 @@ class UserControllerTest {
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        authenticatedUser,
+                        new SecurityUser(authenticatedUser),
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
                 );

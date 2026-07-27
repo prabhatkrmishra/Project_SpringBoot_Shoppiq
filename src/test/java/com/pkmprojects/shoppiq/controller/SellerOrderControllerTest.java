@@ -14,22 +14,23 @@ import com.pkmprojects.shoppiq.controller.seller.SellerOrderController;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderItemResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
-import com.pkmprojects.shoppiq.exception.OrderNotFoundException;
-import com.pkmprojects.shoppiq.exception.OrderNotFullyOwnedException;
-import com.pkmprojects.shoppiq.exception.SellerNotFoundException;
-import com.pkmprojects.shoppiq.exception.SellerNotVerifiedException;
-import com.pkmprojects.shoppiq.exception.SellerSuspendedException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderInvalidStatusTransitionException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderNotFullyOwnedException;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerNotVerifiedException;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.RolesService;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.service.seller.SellerOrderService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -82,7 +83,7 @@ class SellerOrderControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -115,7 +116,7 @@ class SellerOrderControllerTest {
         }
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        authenticatedUser,
+                        new SecurityUser(authenticatedUser),
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_SELLER"))
                 );
@@ -356,7 +357,7 @@ class SellerOrderControllerTest {
         void updateOrderStatus_invalidTransition_returns400() throws Exception {
             authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.DELIVERED)))
-                    .thenThrow(new com.pkmprojects.shoppiq.exception.OrderInvalidStatusTransitionException(
+                    .thenThrow(new OrderInvalidStatusTransitionException(
                             OrderStatus.CONFIRMED, OrderStatus.DELIVERED));
 
             mockMvc.perform(put("/seller/orders/1/status").with(csrf())
@@ -583,7 +584,7 @@ class SellerOrderControllerTest {
         void updateOrderStatus_placedToDelivered_returns400() throws Exception {
             authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.DELIVERED)))
-                    .thenThrow(new com.pkmprojects.shoppiq.exception.OrderInvalidStatusTransitionException(
+                    .thenThrow(new OrderInvalidStatusTransitionException(
                             OrderStatus.PLACED, OrderStatus.DELIVERED));
 
             mockMvc.perform(put("/seller/orders/1/status").with(csrf())
@@ -596,7 +597,7 @@ class SellerOrderControllerTest {
         void updateOrderStatus_confirmedToCancelled_returns400() throws Exception {
             authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CANCELLED)))
-                    .thenThrow(new com.pkmprojects.shoppiq.exception.OrderInvalidStatusTransitionException(
+                    .thenThrow(new OrderInvalidStatusTransitionException(
                             OrderStatus.CONFIRMED, OrderStatus.CANCELLED));
 
             mockMvc.perform(put("/seller/orders/1/status").with(csrf())

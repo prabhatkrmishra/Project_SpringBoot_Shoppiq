@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.dto.banner;
 
-import com.pkmprojects.shoppiq.entity.Banner;
+import com.pkmprojects.shoppiq.entity.banner.Banner;
 import com.pkmprojects.shoppiq.entity.enums.BannerType;
 
 import java.time.Instant;

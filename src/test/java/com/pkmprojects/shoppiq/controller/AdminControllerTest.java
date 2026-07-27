@@ -10,16 +10,18 @@ import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.*;
 import com.pkmprojects.shoppiq.controller.admin.AdminController;
-import com.pkmprojects.shoppiq.dto.admin.analytics.*;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
-import com.pkmprojects.shoppiq.repository.UserRepository;
-import com.pkmprojects.shoppiq.service.*;
+import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.admin.*;
+import com.pkmprojects.shoppiq.service.category.CategoryService;
+import com.pkmprojects.shoppiq.service.item.ItemService;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,8 +39,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -95,7 +95,7 @@ class AdminControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private RolesService rolesService;
+    private RoleService rolesService;
 
     @MockitoBean
     private ItemService itemService;
@@ -293,9 +293,8 @@ class AdminControllerTest {
             User adminUser = mock(User.class);
             when(adminUser.getId()).thenReturn(1L);
             when(adminUser.getUsername()).thenReturn("admin");
-            when(adminUser.getAuthorities()).thenReturn(List.of());
             SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(adminUser, null, List.of()));
+                    new UsernamePasswordAuthenticationToken(new SecurityUser(adminUser), null, List.of()));
 
             AdminUserResponse response = mock(AdminUserResponse.class);
             when(userService.blockCustomer(eq(2L))).thenReturn(response);
@@ -311,9 +310,8 @@ class AdminControllerTest {
             User adminUser = mock(User.class);
             when(adminUser.getId()).thenReturn(1L);
             when(adminUser.getUsername()).thenReturn("admin");
-            when(adminUser.getAuthorities()).thenReturn(List.of());
             SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(adminUser, null, List.of()));
+                    new UsernamePasswordAuthenticationToken(new SecurityUser(adminUser), null, List.of()));
 
             AdminUserResponse response = mock(AdminUserResponse.class);
             when(userService.unblockCustomer(eq(2L))).thenReturn(response);

@@ -1,20 +1,23 @@
 package com.pkmprojects.shoppiq.controller.admin;
 
-import com.pkmprojects.shoppiq.dto.admin.analytics.*;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
 import com.pkmprojects.shoppiq.dto.admin.response.*;
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
+import com.pkmprojects.shoppiq.dto.cart.CartItemResponse;
+import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
+import com.pkmprojects.shoppiq.dto.item.ItemResponse;
+import com.pkmprojects.shoppiq.dto.review.ItemReviewResponse;
+import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
-import com.pkmprojects.shoppiq.dto.request.*;
-import com.pkmprojects.shoppiq.dto.response.*;
+
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
 import com.pkmprojects.shoppiq.enums.*;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.config.PaginationProperties;
-import com.pkmprojects.shoppiq.exception.business.AdminCannotBlockSelfException;
-import com.pkmprojects.shoppiq.service.ItemService;
-import com.pkmprojects.shoppiq.service.CategoryService;
+import com.pkmprojects.shoppiq.exception.admin.AdminCannotBlockSelfException;
+import com.pkmprojects.shoppiq.service.item.ItemService;
+import com.pkmprojects.shoppiq.service.category.CategoryService;
 import com.pkmprojects.shoppiq.service.admin.*;
 import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
 import jakarta.validation.Valid;
@@ -319,7 +322,7 @@ public class AdminController {
     @PutMapping("/users/{userId}/block")
     public AdminUserResponse blockCustomer(
             @PathVariable @Min(1) Long userId,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         if (userId.equals(currentUser.getId())) {
             throw AdminCannotBlockSelfException.block();
         }
@@ -329,7 +332,7 @@ public class AdminController {
     @PutMapping("/users/{userId}/unblock")
     public AdminUserResponse unblockCustomer(
             @PathVariable @Min(1) Long userId,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         if (userId.equals(currentUser.getId())) {
             throw AdminCannotBlockSelfException.unblock();
         }

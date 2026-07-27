@@ -2,7 +2,7 @@ package com.pkmprojects.shoppiq.controller.seller;
 
 import com.pkmprojects.shoppiq.dto.seller.response.SellerDashboardResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
-import com.pkmprojects.shoppiq.entity.User;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.service.seller.SellerDashboardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,14 +42,14 @@ public class SellerDashboardController {
 
     @GetMapping("/summary")
     public ResponseEntity<SellerDashboardResponse> getSummary(
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         SellerDashboardResponse summary = sellerDashboardService.getDashboardSummary(currentUser);
         return ResponseEntity.ok(summary);
     }
 
     @GetMapping("/recent-orders")
     public ResponseEntity<List<SellerOrderResponse>> getRecentOrders(
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         List<SellerOrderResponse> orders = sellerDashboardService.getRecentOrders(currentUser);
         return ResponseEntity.ok(orders);
     }

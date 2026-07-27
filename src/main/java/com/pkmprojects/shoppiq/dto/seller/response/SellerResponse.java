@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.dto.seller.response;
 
-import com.pkmprojects.shoppiq.entity.Address;
-import com.pkmprojects.shoppiq.entity.Seller;
+import com.pkmprojects.shoppiq.entity.address.Address;
+import com.pkmprojects.shoppiq.entity.seller.Seller;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 

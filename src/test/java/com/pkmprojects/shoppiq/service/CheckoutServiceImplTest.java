@@ -1,31 +1,51 @@
 package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
-import com.pkmprojects.shoppiq.dto.promo.CartItemPreview;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
-import com.pkmprojects.shoppiq.entity.*;
-import com.pkmprojects.shoppiq.entity.Order;
+import com.pkmprojects.shoppiq.entity.order.Order;
+import com.pkmprojects.shoppiq.entity.address.Address;
+import com.pkmprojects.shoppiq.entity.cart.Cart;
+import com.pkmprojects.shoppiq.entity.cart.CartItem;
+import com.pkmprojects.shoppiq.entity.item.Item;
+import com.pkmprojects.shoppiq.entity.item.ItemDetails;
+import com.pkmprojects.shoppiq.entity.order.OrderItem;
+import com.pkmprojects.shoppiq.entity.payment.Payment;
+import com.pkmprojects.shoppiq.entity.promo.PromoCode;
+import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.DiscountType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
-import com.pkmprojects.shoppiq.exception.*;
-import com.pkmprojects.shoppiq.repository.*;
-import com.pkmprojects.shoppiq.service.OrderEmailService;
-import com.pkmprojects.shoppiq.service.PaymentService;
-import com.pkmprojects.shoppiq.service.impl.CheckoutServiceImpl;
+import com.pkmprojects.shoppiq.events.OrderPlacedEvent;
+import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.address.AddressNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.cart.CartEmptyException;
+import com.pkmprojects.shoppiq.exception.general.inventory.InsufficientStockException;
+import com.pkmprojects.shoppiq.exception.general.inventory.StockConflictException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderAccessDeniedException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderCannotBeCancelledException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderInvalidStatusTransitionException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderNotFoundException;
+import com.pkmprojects.shoppiq.repository.address.AddressRepository;
+import com.pkmprojects.shoppiq.repository.cart.CartRepository;
+import com.pkmprojects.shoppiq.repository.order.OrderRepository;
+import com.pkmprojects.shoppiq.service.cart.CartService;
+import com.pkmprojects.shoppiq.service.checkout.CheckoutServiceImpl;
+import com.pkmprojects.shoppiq.service.inventory.InventoryService;
+import com.pkmprojects.shoppiq.service.payment.PaymentService;
+import com.pkmprojects.shoppiq.service.promo.PromoCodeService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -63,13 +83,15 @@ class CheckoutServiceImplTest {
     @Mock
     private OrderRepository orderRepository;
     @Mock
-    private ItemDetailsRepository itemDetailsRepository;
+    private CartService cartService;
+    @Mock
+    private InventoryService inventoryService;
     @Mock
     private PaymentService paymentService;
     @Mock
     private PromoCodeService promoCodeService;
     @Mock
-    private OrderEmailService orderEmailService;
+    private ApplicationEventPublisher eventPublisher;
     @Mock
     private Clock clock;
 
@@ -210,8 +232,6 @@ class CheckoutServiceImplTest {
                 setId(o, 99L);
                 return o;
             });
-            when(cartRepository.save(any(Cart.class))).thenReturn(cart);
-            when(itemDetailsRepository.save(any(ItemDetails.class))).thenAnswer(inv -> inv.getArgument(0));
 
             Payment payment = Payment.builder().build();
             setId(payment, 77L);
@@ -226,14 +246,11 @@ class CheckoutServiceImplTest {
             assertThat(response.paymentId()).isEqualTo(77L);
             assertThat(response.grandTotal()).isEqualByComparingTo("505.00");
 
-            // assert — inventory reduced
-            assertThat(details.getStockQuantity()).isEqualTo(3); // 5 - 2
-
-            // assert — cart cleared
-            assertThat(cart.getItems()).isEmpty();
-
+            // assert — delegated services called
+            verify(inventoryService).reduceStock(any());
+            verify(cartService).clearCart(user);
             verify(orderRepository).save(any(Order.class));
-            verify(cartRepository).save(cart);
+            verify(eventPublisher).publishEvent(any(OrderPlacedEvent.class));
         }
 
         @Test
@@ -333,8 +350,6 @@ class CheckoutServiceImplTest {
                 setId(o, 1L);
                 return o;
             });
-            when(cartRepository.save(any())).thenReturn(cart);
-            when(itemDetailsRepository.save(any(ItemDetails.class))).thenAnswer(inv -> inv.getArgument(0));
 
             Payment payment = Payment.builder().build();
             setId(payment, 42L);
@@ -360,8 +375,8 @@ class CheckoutServiceImplTest {
 
             when(cartRepository.findByUserWithItems(user)).thenReturn(Optional.of(cart));
             when(addressRepository.findById(5L)).thenReturn(Optional.of(address));
-            when(itemDetailsRepository.save(any(ItemDetails.class)))
-                    .thenThrow(new org.springframework.dao.OptimisticLockingFailureException("version mismatch"));
+            doThrow(StockConflictException.forOptimisticLock("Inventory was modified by another customer. Please refresh and try again."))
+                    .when(inventoryService).reduceStock(any());
 
             assertThatThrownBy(() ->
                     checkoutService.checkout(user, request)
@@ -388,8 +403,6 @@ class CheckoutServiceImplTest {
                 setId(o, 99L);
                 return o;
             });
-            when(cartRepository.save(any(Cart.class))).thenReturn(cart);
-            when(itemDetailsRepository.save(any(ItemDetails.class))).thenAnswer(inv -> inv.getArgument(0));
 
             Payment payment = Payment.builder().build();
             setId(payment, 77L);
@@ -435,8 +448,6 @@ class CheckoutServiceImplTest {
                 setId(o, 99L);
                 return o;
             });
-            when(cartRepository.save(any(Cart.class))).thenReturn(cart);
-            when(itemDetailsRepository.save(any(ItemDetails.class))).thenAnswer(inv -> inv.getArgument(0));
 
             Payment payment = Payment.builder().build();
             setId(payment, 77L);
@@ -448,7 +459,10 @@ class CheckoutServiceImplTest {
             assertThat(response.subtotal()).isEqualByComparingTo("300.00");
             assertThat(response.discount()).isEqualByComparingTo("30.00");
             assertThat(response.grandTotal()).isEqualByComparingTo("275.00");
-            verify(promoCodeService).recordUsage(eq(promoCode), eq(user), any(Order.class));
+            verify(eventPublisher).publishEvent(argThat(event ->
+                    event instanceof OrderPlacedEvent orderPlaced
+                            && orderPlaced.appliedPromoCode() == promoCode
+            ));
         }
     }
 

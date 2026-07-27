@@ -68,8 +68,8 @@ import java.util.concurrent.TimeUnit;
  * memory growth.</p>
  *
  * @author PrabhatKrMishra
- * @since 0.5.0
  * @see RateLimitProperties
+ * @since 0.5.0
  */
 public class RateLimitFilter extends OncePerRequestFilter {
 
@@ -160,7 +160,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 Rule rule = entry.getValue();
                 String bucketKey = resolveBucketKey(request, rule);
 
-                if (bucketKey != null) {
+                if (!bucketKey.isEmpty()) {
                     Bucket bucket = resolveBucket(bucketKey, rule);
                     ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
                     touchBucket(bucketKey);

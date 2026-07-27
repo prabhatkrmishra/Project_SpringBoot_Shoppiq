@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.dto.admin.response;
 
-import com.pkmprojects.shoppiq.entity.*;
+import com.pkmprojects.shoppiq.entity.order.Order;
+import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.*;
 
 import java.math.BigDecimal;

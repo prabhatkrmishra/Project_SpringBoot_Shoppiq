@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.gateway.payment;
 
-import com.pkmprojects.shoppiq.entity.Payment;
+import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import org.springframework.stereotype.Component;

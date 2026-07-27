@@ -1,7 +1,9 @@
 package com.pkmprojects.shoppiq.enums;
 
+import com.pkmprojects.shoppiq.entity.order.Order;
+
 /**
- * Supported payment methods for an {@link com.pkmprojects.shoppiq.entity.Order}.
+ * Supported payment methods for an {@link Order}.
  *
  * <p>
  * The frontend submits one of {@code CREDIT_CARD}, {@code PAYPAL} or

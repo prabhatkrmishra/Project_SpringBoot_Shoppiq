@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.dto.promo;
 
-import com.pkmprojects.shoppiq.entity.PromoCode;
+import com.pkmprojects.shoppiq.entity.promo.PromoCode;
 import com.pkmprojects.shoppiq.enums.CouponType;
 import com.pkmprojects.shoppiq.enums.DiscountType;
 
