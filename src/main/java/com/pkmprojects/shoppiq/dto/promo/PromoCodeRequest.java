@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.dto.promo;
 
+import com.pkmprojects.shoppiq.enums.CouponType;
 import com.pkmprojects.shoppiq.enums.DiscountType;
 import jakarta.validation.constraints.*;
 
@@ -9,18 +10,19 @@ import java.time.Instant;
 /**
  * Request payload for creating or updating a promo code.
  *
- * @param code             unique promo code string
- * @param description      optional human-readable description
- * @param discountType     PERCENTAGE or FIXED_AMOUNT
- * @param discountValue    percentage (0.01–100.00) or fixed amount
- * @param minOrderAmount   optional minimum order subtotal
+ * @param code              unique promo code string
+ * @param description       optional human-readable description
+ * @param discountType      PERCENTAGE or FIXED_AMOUNT
+ * @param discountValue     percentage (0.01–100.00) or fixed amount
+ * @param minOrderAmount    optional minimum order subtotal
  * @param maxDiscountAmount optional cap for percentage discounts
- * @param usageLimit       optional global usage limit
- * @param userUsageLimit   optional per-user usage limit
- * @param validFrom        when the code becomes valid
- * @param validUntil       when the code expires
- * @param active           whether the code is active
- *
+ * @param couponType        optional SINGLE or BULK cart constraint
+ * @param minItemQuantity   optional minimum unit quantity per item
+ * @param usageLimit        optional global usage limit
+ * @param userUsageLimit    optional per-user usage limit
+ * @param validFrom         when the code becomes valid
+ * @param validUntil        when the code expires
+ * @param active            whether the code is active
  * @author PrabhatKrMishra
  * @since 1.0.0
  */
@@ -48,6 +50,11 @@ public record PromoCodeRequest(
         @DecimalMin(value = "0.00", message = "Max discount amount cannot be negative.")
         @Digits(integer = 8, fraction = 2)
         BigDecimal maxDiscountAmount,
+
+        CouponType couponType,
+
+        @PositiveOrZero(message = "Minimum item quantity cannot be negative.")
+        Integer minItemQuantity,
 
         @PositiveOrZero(message = "Usage limit cannot be negative.")
         Integer usageLimit,

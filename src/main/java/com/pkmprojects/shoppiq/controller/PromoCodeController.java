@@ -29,19 +29,25 @@ public class PromoCodeController {
     /**
      * Validates a promo code and returns the discount amount.
      *
-     * @param body request body containing code and subtotal
+     * <p>Performs coupon-type and quantity validation based on the provided
+     * cart items.</p>
+     *
+     * @param body request body containing code, subtotal and cart items
      * @return discount details
      */
     @PostMapping("/validate")
     public ResponseEntity<PromoCodeValidateResponse> validate(@Valid @RequestBody PromoCodeValidateRequest body) {
-        PromoCode promoCode = promoCodeService.validateForPreview(body.code(), body.subtotal());
-        BigDecimal discount = promoCodeService.calculateDiscount(promoCode, body.subtotal());
+        PromoCode promoCode = promoCodeService.validateForPreview(
+                body.code(), body.subtotal(), body.cartItems());
+        BigDecimal discount = promoCodeService.calculateDiscount(
+                promoCode, body.subtotal(), body.cartItems());
 
         return ResponseEntity.ok(new PromoCodeValidateResponse(
                 promoCode.getCode(),
                 discount,
                 promoCode.getDiscountType(),
-                promoCode.getDiscountValue()
+                promoCode.getDiscountValue(),
+                promoCode.getCouponType()
         ));
     }
 }

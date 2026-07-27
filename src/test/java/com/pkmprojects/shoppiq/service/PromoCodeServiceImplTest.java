@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service;
 
+import com.pkmprojects.shoppiq.dto.promo.CartItemPreview;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeRequest;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeResponse;
 import com.pkmprojects.shoppiq.entity.Order;
@@ -54,9 +55,14 @@ class PromoCodeServiceImplTest {
     @InjectMocks
     private PromoCodeServiceImpl promoCodeService;
 
+    private static final List<CartItemPreview> TEST_ITEMS =
+            List.of(new CartItemPreview(1L, 1, BigDecimal.valueOf(500)));
+
+    private static final Instant NOW = Instant.parse("2026-07-26T10:30:00Z");
+
     @BeforeEach
     void setUp() {
-        lenient().when(clock.instant()).thenReturn(Instant.parse("2026-07-26T10:30:00Z"));
+        lenient().when(clock.instant()).thenReturn(NOW);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────
@@ -108,7 +114,7 @@ class PromoCodeServiceImplTest {
                                            Instant validFrom, Instant validUntil) {
         return new PromoCodeRequest(
                 code, "Test promo", type, value,
-                minAmount, maxDiscount, usageLimit, userUsageLimit,
+                minAmount, maxDiscount, null, null, usageLimit, userUsageLimit,
                 validFrom, validUntil, true
         );
     }
@@ -125,14 +131,14 @@ class PromoCodeServiceImplTest {
         @DisplayName("Success — valid percentage promo code")
         void validateAndCalculate_success_percentage() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "SAVE20", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(20), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
             when(promoCodeRepository.findByCode("SAVE20")).thenReturn(Optional.of(pc));
 
-            PromoCode result = promoCodeService.validateAndCalculate("SAVE20", user, BigDecimal.valueOf(500));
+            PromoCode result = promoCodeService.validateAndCalculate("SAVE20", user, BigDecimal.valueOf(500), TEST_ITEMS);
 
             assertThat(result).isNotNull();
             assertThat(result.getCode()).isEqualTo("SAVE20");
@@ -142,14 +148,14 @@ class PromoCodeServiceImplTest {
         @DisplayName("Success — valid fixed amount promo code")
         void validateAndCalculate_success_fixedAmount() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "FLAT50", DiscountType.FIXED_AMOUNT,
                     BigDecimal.valueOf(50), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
             when(promoCodeRepository.findByCode("FLAT50")).thenReturn(Optional.of(pc));
 
-            PromoCode result = promoCodeService.validateAndCalculate("FLAT50", user, BigDecimal.valueOf(500));
+            PromoCode result = promoCodeService.validateAndCalculate("FLAT50", user, BigDecimal.valueOf(500), TEST_ITEMS);
 
             assertThat(result).isNotNull();
             assertThat(result.getCode()).isEqualTo("FLAT50");
@@ -162,7 +168,7 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("NOPE")).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateAndCalculate("NOPE", user, BigDecimal.valueOf(500))
+                    promoCodeService.validateAndCalculate("NOPE", user, BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeNotFoundException.class);
         }
 
@@ -170,7 +176,7 @@ class PromoCodeServiceImplTest {
         @DisplayName("Fails — promo code inactive")
         void validateAndCalculate_inactive() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "INACTIVE", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), false);
@@ -178,7 +184,7 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("INACTIVE")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateAndCalculate("INACTIVE", user, BigDecimal.valueOf(500))
+                    promoCodeService.validateAndCalculate("INACTIVE", user, BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeInactiveException.class);
         }
 
@@ -186,7 +192,7 @@ class PromoCodeServiceImplTest {
         @DisplayName("Fails — promo code not yet valid")
         void validateAndCalculate_notYetValid() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "FUTURE", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null, 0,
                     now.plus(7, ChronoUnit.DAYS), now.plus(37, ChronoUnit.DAYS), true);
@@ -194,7 +200,7 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("FUTURE")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateAndCalculate("FUTURE", user, BigDecimal.valueOf(500))
+                    promoCodeService.validateAndCalculate("FUTURE", user, BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeNotYetValidException.class);
         }
 
@@ -202,7 +208,7 @@ class PromoCodeServiceImplTest {
         @DisplayName("Fails — promo code expired")
         void validateAndCalculate_expired() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "EXPIRED", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null, 0,
                     now.minus(30, ChronoUnit.DAYS), now.minus(1, ChronoUnit.DAYS), true);
@@ -210,7 +216,7 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("EXPIRED")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateAndCalculate("EXPIRED", user, BigDecimal.valueOf(500))
+                    promoCodeService.validateAndCalculate("EXPIRED", user, BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeExpiredException.class);
         }
 
@@ -218,7 +224,7 @@ class PromoCodeServiceImplTest {
         @DisplayName("Fails — global usage limit exceeded")
         void validateAndCalculate_usageLimitExceeded() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "LIMITED", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, 5, null, 5,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -226,7 +232,7 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("LIMITED")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateAndCalculate("LIMITED", user, BigDecimal.valueOf(500))
+                    promoCodeService.validateAndCalculate("LIMITED", user, BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeUsageLimitExceededException.class);
         }
 
@@ -234,7 +240,7 @@ class PromoCodeServiceImplTest {
         @DisplayName("Fails — per-user usage limit exceeded")
         void validateAndCalculate_userUsageLimitExceeded() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "ONCE", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, 1, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -243,7 +249,7 @@ class PromoCodeServiceImplTest {
             when(promoCodeUsageRepository.countByPromoCodeIdAndUserId(10L, 1L)).thenReturn(1L);
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateAndCalculate("ONCE", user, BigDecimal.valueOf(500))
+                    promoCodeService.validateAndCalculate("ONCE", user, BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeUserUsageLimitExceededException.class);
         }
 
@@ -251,7 +257,7 @@ class PromoCodeServiceImplTest {
         @DisplayName("Fails — minimum order amount not met")
         void validateAndCalculate_minAmountNotMet() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "MIN100", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), BigDecimal.valueOf(100), null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -259,7 +265,7 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("MIN100")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateAndCalculate("MIN100", user, BigDecimal.valueOf(50))
+                    promoCodeService.validateAndCalculate("MIN100", user, BigDecimal.valueOf(50), TEST_ITEMS)
             ).isInstanceOf(PromoCodeMinOrderAmountException.class);
         }
     }
@@ -275,12 +281,12 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Percentage discount — no cap")
         void calculateDiscount_percentage() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(1L, "SAVE20", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(20), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
-            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(500));
+            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(500), TEST_ITEMS);
 
             assertThat(discount).isEqualByComparingTo("100.00");
         }
@@ -288,12 +294,12 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Percentage discount — capped by maxDiscountAmount")
         void calculateDiscount_percentageCapped() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(1L, "CAP20", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(20), null, BigDecimal.valueOf(50), null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
-            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(500));
+            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(500), TEST_ITEMS);
 
             // 20% of 500 = 100, but capped at 50
             assertThat(discount).isEqualByComparingTo("50.00");
@@ -302,12 +308,12 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Fixed amount discount")
         void calculateDiscount_fixedAmount() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(1L, "FLAT50", DiscountType.FIXED_AMOUNT,
                     BigDecimal.valueOf(50), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
-            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(200));
+            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(200), TEST_ITEMS);
 
             assertThat(discount).isEqualByComparingTo("50.00");
         }
@@ -315,12 +321,12 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Discount never exceeds subtotal")
         void calculateDiscount_neverExceedsSubtotal() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(1L, "BIG", DiscountType.FIXED_AMOUNT,
                     BigDecimal.valueOf(500), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
-            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(200));
+            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(200), TEST_ITEMS);
 
             // 500 fixed but subtotal is only 200
             assertThat(discount).isEqualByComparingTo("200.00");
@@ -329,12 +335,15 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Percentage discount — rounding to 2 decimal places")
         void calculateDiscount_percentageRounding() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(1L, "ODD", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(15), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
-            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(99));
+            // Items summing to exactly 99 so eligible subtotal matches
+            List<CartItemPreview> oddItems =
+                    List.of(new CartItemPreview(1L, 1, BigDecimal.valueOf(99)));
+            BigDecimal discount = promoCodeService.calculateDiscount(pc, BigDecimal.valueOf(99), oddItems);
 
             // 15% of 99 = 14.85
             assertThat(discount).isEqualByComparingTo("14.85");
@@ -353,7 +362,7 @@ class PromoCodeServiceImplTest {
         @DisplayName("Increments usedCount and saves usage record")
         void recordUsage_success() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "SAVE20", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(20), null, null, null, null, 3,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -380,7 +389,7 @@ class PromoCodeServiceImplTest {
         @DisplayName("Fails — global usage limit exceeded")
         void recordUsage_usageLimitExceeded() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "LIMITED", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(20), null, null, 5, null, 5,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -398,7 +407,7 @@ class PromoCodeServiceImplTest {
         @DisplayName("Fails — per-user usage limit exceeded")
         void recordUsage_userUsageLimitExceeded() throws Exception {
             User user = buildUser(1L);
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "ONCE", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(20), null, null, null, 1, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -425,7 +434,7 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Success — creates a new promo code")
         void create_success() {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCodeRequest request = buildRequest("NEWCODE", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS));
@@ -447,7 +456,7 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Fails — duplicate code")
         void create_duplicateCode() {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCodeRequest request = buildRequest("DUP", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS));
@@ -470,7 +479,7 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Returns list of promo codes")
         void findAll_success() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc1 = buildPromoCode(1L, "CODE1", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -501,7 +510,7 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Toggles active from true to false")
         void toggleActive_deactivate() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(1L, "CODE1", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -517,7 +526,7 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Toggles active from false to true")
         void toggleActive_activate() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(1L, "CODE1", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), false);
@@ -551,14 +560,14 @@ class PromoCodeServiceImplTest {
         @Test
         @DisplayName("Success — valid promo code")
         void validateForPreview_success() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "SAVE20", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(20), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
             when(promoCodeRepository.findByCode("SAVE20")).thenReturn(Optional.of(pc));
 
-            PromoCode result = promoCodeService.validateForPreview("SAVE20", BigDecimal.valueOf(500));
+            PromoCode result = promoCodeService.validateForPreview("SAVE20", BigDecimal.valueOf(500), TEST_ITEMS);
 
             assertThat(result).isNotNull();
             assertThat(result.getCode()).isEqualTo("SAVE20");
@@ -570,14 +579,14 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("NOPE")).thenReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateForPreview("NOPE", BigDecimal.valueOf(500))
+                    promoCodeService.validateForPreview("NOPE", BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeNotFoundException.class);
         }
 
         @Test
         @DisplayName("Fails — promo code inactive")
         void validateForPreview_inactive() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "INACTIVE", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), false);
@@ -585,14 +594,14 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("INACTIVE")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateForPreview("INACTIVE", BigDecimal.valueOf(500))
+                    promoCodeService.validateForPreview("INACTIVE", BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeInactiveException.class);
         }
 
         @Test
         @DisplayName("Fails — promo code not yet valid")
         void validateForPreview_notYetValid() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "FUTURE", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null, 0,
                     now.plus(7, ChronoUnit.DAYS), now.plus(37, ChronoUnit.DAYS), true);
@@ -600,14 +609,14 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("FUTURE")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateForPreview("FUTURE", BigDecimal.valueOf(500))
+                    promoCodeService.validateForPreview("FUTURE", BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeNotYetValidException.class);
         }
 
         @Test
         @DisplayName("Fails — promo code expired")
         void validateForPreview_expired() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "EXPIRED", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, null, null, 0,
                     now.minus(30, ChronoUnit.DAYS), now.minus(1, ChronoUnit.DAYS), true);
@@ -615,14 +624,14 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("EXPIRED")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateForPreview("EXPIRED", BigDecimal.valueOf(500))
+                    promoCodeService.validateForPreview("EXPIRED", BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeExpiredException.class);
         }
 
         @Test
         @DisplayName("Fails — global usage limit exceeded")
         void validateForPreview_usageLimitExceeded() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "LIMITED", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), null, null, 5, null, 5,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -630,14 +639,14 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("LIMITED")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateForPreview("LIMITED", BigDecimal.valueOf(500))
+                    promoCodeService.validateForPreview("LIMITED", BigDecimal.valueOf(500), TEST_ITEMS)
             ).isInstanceOf(PromoCodeUsageLimitExceededException.class);
         }
 
         @Test
         @DisplayName("Fails — minimum order amount not met")
         void validateForPreview_minAmountNotMet() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "MIN100", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), BigDecimal.valueOf(100), null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
@@ -645,21 +654,21 @@ class PromoCodeServiceImplTest {
             when(promoCodeRepository.findByCode("MIN100")).thenReturn(Optional.of(pc));
 
             assertThatThrownBy(() ->
-                    promoCodeService.validateForPreview("MIN100", BigDecimal.valueOf(50))
+                    promoCodeService.validateForPreview("MIN100", BigDecimal.valueOf(50), TEST_ITEMS)
             ).isInstanceOf(PromoCodeMinOrderAmountException.class);
         }
 
         @Test
         @DisplayName("Success — minimum order amount met")
         void validateForPreview_minAmountMet() throws Exception {
-            Instant now = Instant.now();
+            Instant now = NOW;
             PromoCode pc = buildPromoCode(10L, "MIN100", DiscountType.PERCENTAGE,
                     BigDecimal.valueOf(10), BigDecimal.valueOf(100), null, null, null, 0,
                     now.minus(1, ChronoUnit.DAYS), now.plus(30, ChronoUnit.DAYS), true);
 
             when(promoCodeRepository.findByCode("MIN100")).thenReturn(Optional.of(pc));
 
-            PromoCode result = promoCodeService.validateForPreview("MIN100", BigDecimal.valueOf(100));
+            PromoCode result = promoCodeService.validateForPreview("MIN100", BigDecimal.valueOf(100), TEST_ITEMS);
 
             assertThat(result).isNotNull();
             assertThat(result.getCode()).isEqualTo("MIN100");

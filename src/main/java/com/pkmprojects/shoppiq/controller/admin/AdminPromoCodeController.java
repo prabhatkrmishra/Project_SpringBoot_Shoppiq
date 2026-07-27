@@ -49,6 +49,19 @@ public class AdminPromoCodeController {
     }
 
     /**
+     * Updates an existing promo code.
+     *
+     * @param id      promo code ID
+     * @param request updated promo code payload
+     * @return 200 OK with the updated promo code
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<PromoCodeResponse> update(@PathVariable Long id,
+                                                    @Valid @RequestBody PromoCodeRequest request) {
+        return ResponseEntity.ok(promoCodeService.update(id, request));
+    }
+
+    /**
      * Returns all promo codes, paginated.
      *
      * @return 200 OK with page of promo codes

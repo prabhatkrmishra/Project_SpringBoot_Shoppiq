@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.dto.promo;
 
 import com.pkmprojects.shoppiq.entity.PromoCode;
+import com.pkmprojects.shoppiq.enums.CouponType;
 import com.pkmprojects.shoppiq.enums.DiscountType;
 
 import java.math.BigDecimal;
@@ -21,6 +22,8 @@ public record PromoCodeResponse(
         BigDecimal discountValue,
         BigDecimal minOrderAmount,
         BigDecimal maxDiscountAmount,
+        CouponType couponType,
+        Integer minItemQuantity,
         Integer usageLimit,
         Integer usedCount,
         Integer userUsageLimit,
@@ -46,6 +49,8 @@ public record PromoCodeResponse(
                 promoCode.getDiscountValue(),
                 promoCode.getMinOrderAmount(),
                 promoCode.getMaxDiscountAmount(),
+                promoCode.getCouponType(),
+                promoCode.getMinItemQuantity(),
                 promoCode.getUsageLimit(),
                 promoCode.getUsedCount(),
                 promoCode.getUserUsageLimit(),

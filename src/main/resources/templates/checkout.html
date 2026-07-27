@@ -85,6 +85,7 @@
             var appliedPromoCode = null;
             var cartSubtotal = 0;
             var discountAmount = 0;
+            var checkoutCartData = null;
 
             function renderAddresses(addresses) {
                 var list = document.getElementById('address-list');
@@ -145,11 +146,9 @@
                 document.getElementById('checkout-total').textContent = formatCurrency(cart.subtotal);
                 cartSubtotal = cart.subtotal;
 
-                /* Pre-fill saved promo input but do NOT auto-apply.
-                   User must click Apply to re-validate. */
                 var savedPromo = sessionStorage.getItem('promoCode');
                 if (savedPromo) {
-                    document.getElementById('checkout-promo-input').value = savedPromo;
+                    applyPromo(savedPromo);
                 }
             }
 
@@ -190,18 +189,26 @@
                 document.getElementById('checkout-promo-input').disabled = false;
             }
 
-            function applyPromoCode() {
-                var input = document.getElementById('checkout-promo-input');
-                var msgEl = document.getElementById('checkout-promo-msg');
-                var code = input.value.trim();
-                if (!code) {
-                    msgEl.style.display = 'block';
-                    msgEl.innerHTML = '<span class="text-danger">Please enter a promo code</span>';
-                    return;
-                }
+            function buildCartPreviewItems() {
+                if (!checkoutCartData || !checkoutCartData.items) return [];
+                return checkoutCartData.items.map(function (item) {
+                    return {
+                        itemDetailsId: item.itemDetailsId,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice
+                    };
+                });
+            }
+
+            function applyPromo(code) {
                 var btn = document.getElementById('checkout-promo-apply');
                 setButtonLoading(btn, true);
-                API.post('/api/promo-codes/validate', {code: code, subtotal: cartSubtotal}).then(function (res) {
+                document.getElementById('checkout-promo-input').value = code;
+                API.post('/api/promo-codes/validate', {
+                    code: code,
+                    subtotal: cartSubtotal,
+                    cartItems: buildCartPreviewItems()
+                }).then(function (res) {
                     appliedPromoCode = code;
                     discountAmount = parseFloat(res.discount);
                     sessionStorage.setItem('promoCode', code);
@@ -211,6 +218,18 @@
                     clearPromoState(err.message || 'Invalid promo code');
                     setButtonLoading(btn, false);
                 });
+            }
+
+            function applyPromoCode() {
+                var input = document.getElementById('checkout-promo-input');
+                var msgEl = document.getElementById('checkout-promo-msg');
+                var code = input.value.trim();
+                if (!code) {
+                    msgEl.style.display = 'block';
+                    msgEl.innerHTML = '<span class="text-danger">Please enter a promo code</span>';
+                    return;
+                }
+                applyPromo(code);
             }
 
             function removePromo() {
@@ -230,6 +249,7 @@
                     API.get('/user/address/get/all')
                 ]).then(function (results) {
                     var cart = results[0];
+                    checkoutCartData = cart;
                     var addresses = results[1];
                     renderReviewItems(cart);
                     renderAddresses(addresses);

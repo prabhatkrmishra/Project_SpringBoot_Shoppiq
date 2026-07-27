@@ -406,6 +406,11 @@ public enum ErrorCode {
      */
     PROMO_CODE_MIN_ORDER_AMOUNT_NOT_MET("PROMO-400-006", "Order subtotal does not meet the promo code minimum."),
 
+    /**
+     * Promo code cart composition constraint not met.
+     */
+    PROMO_CODE_CART_CONSTRAINT("PROMO-400-007", "Cart does not meet the promo code type or quantity requirement."),
+
     // =========================================================
     // Banner Errors
     // =========================================================

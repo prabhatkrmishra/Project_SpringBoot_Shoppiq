@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.entity;
 
 import com.pkmprojects.shoppiq.audit.AuditableEntity;
+import com.pkmprojects.shoppiq.enums.CouponType;
 import com.pkmprojects.shoppiq.enums.DiscountType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -106,6 +107,35 @@ public class PromoCode extends AuditableEntity {
     @Digits(integer = 8, fraction = 2)
     @Column(name = "max_discount_amount", precision = 10, scale = 2)
     private BigDecimal maxDiscountAmount;
+
+    /**
+     * Cart composition constraint for this promo code.
+     *
+     * <ul>
+     *     <li>{@link CouponType#SINGLE} — only valid when every cart item has
+     *         quantity equal to 1 (single-unit purchase).</li>
+     *     <li>{@link CouponType#BULK} — only valid when at least one cart item has
+     *         quantity greater than 1 (multi-unit / bulk purchase).</li>
+     * </ul>
+     *
+     * <p>When {@code null}, the coupon type constraint is not enforced.</p>
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "coupon_type", length = 10)
+    private CouponType couponType;
+
+    /**
+     * Minimum unit quantity required for any single SKU in the cart.
+     *
+     * <p>When set, at least one cart item must have quantity greater than or
+     * equal to this value. Useful for tiered promotions (e.g. "buy 3, get 20% off")
+     * or BOGO codes ("buy 2, get 1 free").</p>
+     *
+     * <p>When {@code null}, no minimum quantity check is performed.</p>
+     */
+    @PositiveOrZero(message = "Minimum item quantity cannot be negative.")
+    @Column(name = "min_item_quantity")
+    private Integer minItemQuantity;
 
     /**
      * Maximum total number of times this code can be used across all users.

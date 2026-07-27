@@ -6,6 +6,7 @@ import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderCalculationRequest;
 import com.pkmprojects.shoppiq.dto.order.OrderCalculationResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
+import com.pkmprojects.shoppiq.dto.promo.CartItemPreview;
 import com.pkmprojects.shoppiq.entity.*;
 import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
@@ -160,10 +161,17 @@ public class CheckoutServiceImpl {
             codSurcharge = new BigDecimal("5.00");
         }
 
+        List<CartItemPreview> cartPreviews = cartItems.stream()
+                .map(ci -> new CartItemPreview(
+                        ci.getItemDetails().getId(),
+                        ci.getQuantity(),
+                        PriceUtil.effectivePrice(ci.getItemDetails())))
+                .toList();
+
         if (request.promoCode() != null && !request.promoCode().isBlank()) {
             appliedPromoCode = promoCodeService.validateAndCalculate(
-                    request.promoCode(), user, subtotal);
-            discount = promoCodeService.calculateDiscount(appliedPromoCode, subtotal);
+                    request.promoCode(), user, subtotal, cartPreviews);
+            discount = promoCodeService.calculateDiscount(appliedPromoCode, subtotal, cartPreviews);
         }
 
         BigDecimal grandTotal = subtotal.add(deliveryCharge).add(codSurcharge).add(tax).subtract(discount);
@@ -281,11 +289,18 @@ public class CheckoutServiceImpl {
 
         BigDecimal tax = BigDecimal.ZERO;
 
+        List<CartItemPreview> cartPreviews = cartItems.stream()
+                .map(ci -> new CartItemPreview(
+                        ci.getItemDetails().getId(),
+                        ci.getQuantity(),
+                        PriceUtil.effectivePrice(ci.getItemDetails())))
+                .toList();
+
         BigDecimal discount = BigDecimal.ZERO;
         if (request.promoCode() != null && !request.promoCode().isBlank()) {
             PromoCode appliedPromoCode = promoCodeService.validateAndCalculate(
-                    request.promoCode(), user, subtotal);
-            discount = promoCodeService.calculateDiscount(appliedPromoCode, subtotal);
+                    request.promoCode(), user, subtotal, cartPreviews);
+            discount = promoCodeService.calculateDiscount(appliedPromoCode, subtotal, cartPreviews);
         }
 
         BigDecimal grandTotal = subtotal.add(deliveryCharge).add(codSurcharge)

@@ -27,8 +27,10 @@
                             <th>ID</th>
                             <th>Code</th>
                             <th>Type</th>
+                            <th>Coupon Type</th>
                             <th>Value</th>
                             <th>Min Order</th>
+                            <th>Min Qty</th>
                             <th>Max Discount</th>
                             <th>Usage</th>
                             <th>Valid From</th>
@@ -39,7 +41,7 @@
                     </thead>
                     <tbody id="promo-body">
                         <tr>
-                            <td colspan="11" class="text-center text-muted">Loading...</td>
+                            <td colspan="13" class="text-center text-muted">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -78,6 +80,21 @@
                             <label for="promo-discount-value" class="form-label">Discount Value *</label>
                             <input type="number" id="promo-discount-value" class="form-input" min="0.01" step="0.01"
                                    required placeholder="e.g. 20">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promo-coupon-type" class="form-label">Coupon Type</label>
+                            <select id="promo-coupon-type" class="form-input">
+                                <option value="">None (no cart constraint)</option>
+                                <option value="SINGLE">Single — all items qty = 1</option>
+                                <option value="BULK">Bulk — at least one item qty &gt; 1</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="promo-min-item-qty" class="form-label">Min Item Quantity</label>
+                            <input type="number" id="promo-min-item-qty" class="form-input" min="0"
+                                   placeholder="None">
                         </div>
                     </div>
                     <div class="form-row">
@@ -158,6 +175,8 @@
                 document.getElementById('promo-description').value = promo ? (promo.description || '') : '';
                 document.getElementById('promo-discount-type').value = promo ? promo.discountType : 'PERCENTAGE';
                 document.getElementById('promo-discount-value').value = promo ? promo.discountValue : '';
+                document.getElementById('promo-coupon-type').value = promo ? (promo.couponType || '') : '';
+                document.getElementById('promo-min-item-qty').value = promo ? (promo.minItemQuantity != null ? promo.minItemQuantity : '') : '';
                 document.getElementById('promo-min-order').value = promo ? (promo.minOrderAmount || '') : '';
                 document.getElementById('promo-max-discount').value = promo ? (promo.maxDiscountAmount || '') : '';
                 document.getElementById('promo-usage-limit').value = promo ? (promo.usageLimit || '') : '';
@@ -178,7 +197,7 @@
             function renderPromoCodes(promos) {
                 var tbody = document.getElementById('promo-body');
                 if (!promos || promos.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted">No promo codes found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted">No promo codes found</td></tr>';
                     return;
                 }
                 tbody.innerHTML = '';
@@ -194,8 +213,10 @@
                         '<td>' + p.id + '</td>' +
                         '<td><strong><code>' + escapeHtml(p.code) + '</code></strong></td>' +
                         '<td class="text-sm">' + p.discountType + '</td>' +
+                        '<td class="text-sm">' + (p.couponType || '—') + '</td>' +
                         '<td class="text-sm">' + typeLabel + ' ' + p.discountValue + '</td>' +
                         '<td class="text-sm">' + (p.minOrderAmount ? '$' + p.minOrderAmount : '—') + '</td>' +
+                        '<td class="text-sm">' + (p.minItemQuantity != null ? p.minItemQuantity : '—') + '</td>' +
                         '<td class="text-sm">' + (p.maxDiscountAmount ? '$' + p.maxDiscountAmount : '—') + '</td>' +
                         '<td class="text-sm">' + usageText + '</td>' +
                         '<td class="text-sm">' + formatDateTime(p.validFrom) + '</td>' +
@@ -267,7 +288,7 @@
                     });
                 }).catch(function () {
                     document.getElementById('promo-body').innerHTML =
-                        '<tr><td colspan="11" class="text-center text-muted">Failed to load promo codes</td></tr>';
+                        '<tr><td colspan="13" class="text-center text-muted">Failed to load promo codes</td></tr>';
                 });
             }
 
@@ -285,11 +306,15 @@
 
                 document.getElementById('promo-form').addEventListener('submit', function (e) {
                     e.preventDefault();
+                    var couponTypeVal = document.getElementById('promo-coupon-type').value;
+                    var minItemQtyVal = document.getElementById('promo-min-item-qty').value;
                     var data = {
                         code: document.getElementById('promo-code').value.trim(),
                         description: document.getElementById('promo-description').value.trim() || null,
                         discountType: document.getElementById('promo-discount-type').value,
                         discountValue: parseFloat(document.getElementById('promo-discount-value').value),
+                        couponType: couponTypeVal || null,
+                        minItemQuantity: minItemQtyVal ? parseInt(minItemQtyVal) : null,
                         minOrderAmount: parseFloat(document.getElementById('promo-min-order').value) || null,
                         maxDiscountAmount: parseFloat(document.getElementById('promo-max-discount').value) || null,
                         usageLimit: parseInt(document.getElementById('promo-usage-limit').value) || null,
@@ -300,7 +325,10 @@
                     };
                     var btn = document.getElementById('promo-save-btn');
                     setButtonLoading(btn, true);
-                    API.post('/api/admin/promo-codes', data).then(function () {
+                    var apiCall = editingId
+                        ? API.put('/api/admin/promo-codes/' + editingId, data)
+                        : API.post('/api/admin/promo-codes', data);
+                    apiCall.then(function () {
                         showToast(editingId ? 'Promo code updated' : 'Promo code created', 'success');
                         closeModal();
                         loadPromoCodes();

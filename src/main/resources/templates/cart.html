@@ -232,6 +232,17 @@
                 document.getElementById('cart-promo-input').disabled = false;
             }
 
+            function buildCartPreviewItems() {
+                if (!cartData || !cartData.items) return [];
+                return cartData.items.map(function (item) {
+                    return {
+                        itemDetailsId: item.itemDetailsId,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice
+                    };
+                });
+            }
+
             function applyPromoCode() {
                 var input = document.getElementById('cart-promo-input');
                 var msgEl = document.getElementById('cart-promo-msg');
@@ -243,7 +254,11 @@
                 }
                 var btn = document.getElementById('cart-promo-apply');
                 setButtonLoading(btn, true);
-                API.post('/api/promo-codes/validate', {code: code, subtotal: cartData.subtotal}).then(function (res) {
+                API.post('/api/promo-codes/validate', {
+                    code: code,
+                    subtotal: cartData.subtotal,
+                    cartItems: buildCartPreviewItems()
+                }).then(function (res) {
                     appliedPromoCode = code;
                     appliedDiscount = parseFloat(res.discount);
                     sessionStorage.setItem('promoCode', code);

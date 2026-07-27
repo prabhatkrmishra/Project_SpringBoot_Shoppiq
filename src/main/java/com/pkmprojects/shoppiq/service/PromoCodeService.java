@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
+import com.pkmprojects.shoppiq.dto.promo.CartItemPreview;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeRequest;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeResponse;
 import com.pkmprojects.shoppiq.entity.Order;
@@ -8,6 +9,7 @@ import com.pkmprojects.shoppiq.entity.PromoCode;
 import com.pkmprojects.shoppiq.entity.User;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Contract for promo code validation, application and admin management.
@@ -21,24 +23,32 @@ public interface PromoCodeService {
      * Validates a promo code and calculates the discount amount.
      *
      * <p>Performs all validation checks: existence, active status, validity window,
-     * global and per-user usage limits, and minimum order amount. Returns the
-     * computed discount amount (never exceeding the subtotal).</p>
+     * global and per-user usage limits, minimum order amount, and cart composition
+     * constraints (coupon type, minimum item quantity). Returns the computed
+     * discount amount (never exceeding the eligible subtotal).</p>
      *
-     * @param code    the promo code string
-     * @param user    the user applying the code
+     * @param code     the promo code string
+     * @param user     the user applying the code
      * @param subtotal the order subtotal before discount
+     * @param items    the cart line items for coupon-type and quantity validation
      * @return the validated PromoCode entity and computed discount
      */
-    PromoCode validateAndCalculate(String code, User user, BigDecimal subtotal);
+    PromoCode validateAndCalculate(String code, User user, BigDecimal subtotal, List<CartItemPreview> items);
 
     /**
      * Calculates the discount amount for a validated promo code.
      *
+     * <p>For {@link com.pkmprojects.shoppiq.enums.CouponType#BULK} codes,
+     * the discount is computed against the eligible subtotal (items whose
+     * quantity meets the minimum threshold). For other codes, the full
+     * subtotal is used.</p>
+     *
      * @param promoCode the validated promo code
      * @param subtotal  the order subtotal
-     * @return the discount amount
+     * @param items     the cart line items for eligible-subtotal calculation
+     * @return the discount amount (clamped to the eligible subtotal)
      */
-    BigDecimal calculateDiscount(PromoCode promoCode, BigDecimal subtotal);
+    BigDecimal calculateDiscount(PromoCode promoCode, BigDecimal subtotal, List<CartItemPreview> items);
 
     /**
      * Records that a promo code was used on an order.
@@ -88,6 +98,15 @@ public interface PromoCodeService {
     PromoCodeResponse findById(Long id);
 
     /**
+     * Updates an existing promo code.
+     *
+     * @param id      promo code ID
+     * @param request updated promo code payload
+     * @return the updated promo code response
+     */
+    PromoCodeResponse update(Long id, PromoCodeRequest request);
+
+    /**
      * Toggles the active status of a promo code.
      *
      * @param id promo code ID
@@ -99,12 +118,13 @@ public interface PromoCodeService {
      * Validates a promo code and returns the discount amount (for preview purposes).
      *
      * <p>Checks existence, active status, validity window, global usage limit,
-     * and minimum order amount. Does not check per-user usage limits
-     * (use {@link #validateAndCalculate} at checkout).</p>
+     * minimum order amount, and cart composition constraints. Does not check
+     * per-user usage limits (use {@link #validateAndCalculate} at checkout).</p>
      *
      * @param code     the promo code string
      * @param subtotal the order subtotal
+     * @param items    the cart line items for coupon-type and quantity validation
      * @return the validated PromoCode entity and computed discount
      */
-    PromoCode validateForPreview(String code, BigDecimal subtotal);
+    PromoCode validateForPreview(String code, BigDecimal subtotal, List<CartItemPreview> items);
 }

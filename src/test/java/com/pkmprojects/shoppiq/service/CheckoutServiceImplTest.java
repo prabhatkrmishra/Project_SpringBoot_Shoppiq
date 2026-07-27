@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
+import com.pkmprojects.shoppiq.dto.promo.CartItemPreview;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.*;
@@ -420,9 +421,9 @@ class CheckoutServiceImplTest {
                     .build();
             setId(promoCode, 50L);
 
-            when(promoCodeService.validateAndCalculate(eq("SAVE10"), eq(user), any(BigDecimal.class)))
+            when(promoCodeService.validateAndCalculate(eq("SAVE10"), eq(user), any(BigDecimal.class), any(List.class)))
                     .thenReturn(promoCode);
-            when(promoCodeService.calculateDiscount(eq(promoCode), any(BigDecimal.class)))
+            when(promoCodeService.calculateDiscount(eq(promoCode), any(BigDecimal.class), any(List.class)))
                     .thenReturn(BigDecimal.valueOf(30));
 
             CheckoutRequest request = new CheckoutRequest(5L, PaymentMethod.COD, DeliveryType.NORMAL, "SAVE10");
