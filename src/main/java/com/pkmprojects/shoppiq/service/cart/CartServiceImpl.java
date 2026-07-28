@@ -17,25 +17,30 @@ import com.pkmprojects.shoppiq.repository.cart.CartItemRepository;
 import com.pkmprojects.shoppiq.repository.cart.CartRepository;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import com.pkmprojects.shoppiq.util.PriceUtil;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Default implementation of {@link CartService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link CartService}
+ * containing business logic for shopping cart operations.
  *
- * <h2>Design Notes</h2>
+ * <p>Manages the user's cart: adding items with stock validation, retrieving
+ * with calculated subtotals, updating quantities, deleting items with ownership
+ * verification, and clearing the cart. Used by {@code CartController}.</p>
+ *
+ * <p>Why this design:
  * <ul>
- *     <li>Uses constructor injection.</li>
- *     <li>Works exclusively with DTOs at the controller boundary.</li>
- *     <li>All write operations run inside transactions.</li>
- *     <li>Effective price = price × (1 - discountPercentage / 100),
- *         rounded to 2 decimal places using HALF_UP.</li>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Cart operations span multiple repository calls that must succeed or fail atomically.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
  * </ul>
+ * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see CartService
  * @since 1.0.0
  */
 @Service
@@ -60,6 +65,17 @@ public class CartServiceImpl implements CartService {
     // Public API
     // ---------------------------------------------------------------
 
+    /**
+     * Adds an item to the user's cart, creating the cart if it does not exist.
+     *
+     * <p>Validates stock availability and merges quantity if the item already exists in the cart.</p>
+     *
+     * @param user    authenticated user
+     * @param request add-to-cart payload
+     * @return created or updated cart item response
+     * @throws ItemDetailsNotFoundException   if the item details do not exist
+     * @throws InsufficientStockException     if stock is insufficient
+     */
     @Override
     public CartItemResponse create(User user, AddCartItemRequest request) {
 
@@ -67,9 +83,7 @@ public class CartServiceImpl implements CartService {
 
         ItemDetails itemDetails = itemDetailsLookupService
                 .findById(request.itemDetailsId())
-                .orElseThrow(() -> new ItemDetailsNotFoundException(
-                        "Item details with id '%d' were not found.".formatted(request.itemDetailsId())
-                ));
+                .orElseThrow(() -> ItemDetailsNotFoundException.id(request.itemDetailsId()));
 
         validateStock(itemDetails, request.quantity());
 
@@ -82,7 +96,14 @@ public class CartServiceImpl implements CartService {
         return toCartItemResponse(cartItem);
     }
 
+    /**
+     * Retrieves the current user's cart with calculated subtotals.
+     *
+     * @param user authenticated user
+     * @return cart response with items and subtotal, or empty cart if none exists
+     */
     @Override
+    @Transactional(readOnly = true)
     public CartResponse get(User user) {
 
         return cartRepository.findByUser(user)
@@ -97,12 +118,33 @@ public class CartServiceImpl implements CartService {
                 .orElseGet(() -> new CartResponse(null, 0, BigDecimal.ZERO, List.of()));
     }
 
+    /**
+     * Retrieves a specific cart item by ID with ownership verification.
+     *
+     * @param user       authenticated user
+     * @param cartItemId cart item ID
+     * @return cart item response
+     * @throws CartItemNotFoundException      if the item does not exist
+     * @throws CartItemAccessDeniedException   if the item belongs to another user
+     */
     @Override
+    @Transactional(readOnly = true)
     public CartItemResponse getById(User user, Long cartItemId) {
         CartItem cartItem = resolveOwnedCartItem(user, cartItemId);
         return toCartItemResponse(cartItem);
     }
 
+    /**
+     * Updates the quantity of a cart item with stock validation and ownership verification.
+     *
+     * @param user       authenticated user
+     * @param cartItemId cart item ID
+     * @param request    update payload
+     * @return updated cart item response
+     * @throws CartItemNotFoundException      if the item does not exist
+     * @throws CartItemAccessDeniedException   if the item belongs to another user
+     * @throws InsufficientStockException      if stock is insufficient
+     */
     @Override
     public CartItemResponse update(User user, Long cartItemId, UpdateCartItemRequest request) {
         CartItem cartItem = resolveOwnedCartItem(user, cartItemId);
@@ -112,6 +154,14 @@ public class CartServiceImpl implements CartService {
         return toCartItemResponse(cartItem);
     }
 
+    /**
+     * Deletes a cart item with ownership verification.
+     *
+     * @param user       authenticated user
+     * @param cartItemId cart item ID
+     * @throws CartItemNotFoundException      if the item does not exist
+     * @throws CartItemAccessDeniedException   if the item belongs to another user
+     */
     @Override
     public void delete(User user, Long cartItemId) {
         CartItem cartItem = resolveOwnedCartItem(user, cartItemId);
@@ -119,12 +169,7 @@ public class CartServiceImpl implements CartService {
     }
 
     /**
-     * Removes all items from the user's cart.
-     *
-     * <p>Looks up the user's cart and clears the {@code items} collection.
-     * Because {@code Cart.items} is mapped with
-     * {@code orphanRemoval = true}, cleared {@link CartItem} entities are
-     * automatically deleted by Hibernate.</p>
+     * Removes all items from the user's cart via orphan removal.
      *
      * <p>If the user has no cart, the operation is silently skipped.</p>
      *

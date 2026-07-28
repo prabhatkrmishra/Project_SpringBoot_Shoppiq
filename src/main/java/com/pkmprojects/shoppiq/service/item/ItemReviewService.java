@@ -8,7 +8,23 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import java.util.List;
 
 /**
- * Service responsible for managing product reviews.
+ * <strong>Spring Boot Concept:</strong> Service responsible for managing product reviews.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * Defines the <strong>Service layer</strong> contract for product review operations.
+ * Architecture: {@code ItemReviewController → ItemReviewService → ItemReviewRepository / ItemLookupService}.
+ * </p>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *     <li>Create reviews with business rules: no seller reviews, no admin reviews,
+ *         one review per user per product.</li>
+ *     <li>Retrieve reviews with visibility rules: APPROVED reviews for everyone,
+ *         plus the user's own PENDING/REJECTED reviews.</li>
+ *     <li>Update reviews — only the author or an admin can edit.</li>
+ *     <li>Delete reviews — only the author or an admin can delete.</li>
+ * </ul>
  *
  * <p>
  * Defines the business operations available for the Item Review module.
@@ -31,7 +47,7 @@ import java.util.List;
  *     <li>Implemented by {@code ItemReviewServiceImpl}.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface ItemReviewService {

@@ -11,7 +11,7 @@ import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.dto.user.ChangePasswordRequest;
 import com.pkmprojects.shoppiq.dto.user.UpdateProfileRequest;
@@ -69,7 +69,7 @@ class UserControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @MockitoBean
     private UserService userService;

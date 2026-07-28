@@ -12,14 +12,35 @@ import org.thymeleaf.context.Context;
 import java.util.Map;
 
 /**
- * Console email provider for development and testing.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link EmailProvider}
+ * that logs email content to the console instead of sending actual emails.
+ * Activated via the {@code shoppiq.email.provider=console} configuration property.
  *
  * <p>
  * Logs email content to the console instead of sending actual emails.
  * Useful for local development and integration tests.
  * </p>
  *
- * @author PrabhatKrMishra
+ * <p><strong>Educational value:</strong> This class demonstrates several
+ * Spring Boot patterns:
+ * <ul>
+ *   <li><strong>Conditional bean registration</strong> — {@code @ConditionalOnProperty}
+ *       ensures this bean is only created when {@code shoppiq.email.provider=console}.
+ *       When the property is set to {@code smtp}, this bean is not loaded and
+ *       {@link SmtpEmailProvider} takes over.</li>
+ *   <li><strong>@Value injection</strong> — the {@code fromAddress} is injected
+ *       from application properties with a default value, showing how to
+ *       externalise configuration.</li>
+ *   <li><strong>Strategy + @Qualifier</strong> — the {@code emailTemplateEngine}
+ *       is injected with {@code @Qualifier("emailTemplateEngine")} to
+ *       distinguish it from the main web template engine (if any).</li>
+ *   <li><strong>Thymeleaf template rendering</strong> — the provider renders
+ *       the HTML content using a dedicated {@link org.thymeleaf.TemplateEngine}
+ *       with a {@link org.thymeleaf.context.Context} populated with variables.</li>
+ * </ul>
+ * </p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Slf4j
@@ -28,12 +49,12 @@ import java.util.Map;
 public class ConsoleEmailProvider implements EmailProvider {
 
     private final TemplateEngine emailTemplateEngine;
+    private final String fromAddress;
 
-    @Value("${shoppiq.email.from:noreply@shoppiq.com}")
-    private String fromAddress;
-
-    public ConsoleEmailProvider(@Qualifier("emailTemplateEngine") TemplateEngine emailTemplateEngine) {
+    public ConsoleEmailProvider(@Qualifier("emailTemplateEngine") TemplateEngine emailTemplateEngine,
+                                @Value("${shoppiq.email.from:noreply@shoppiq.com}") String fromAddress) {
         this.emailTemplateEngine = emailTemplateEngine;
+        this.fromAddress = fromAddress;
     }
 
     @Override
@@ -65,6 +86,6 @@ public class ConsoleEmailProvider implements EmailProvider {
         if (variables != null) {
             context.setVariables(variables);
         }
-        return emailTemplateEngine.process("emails/" + templateName, context);
+        return emailTemplateEngine.process(templateName, context);
     }
 }

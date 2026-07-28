@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a persistent shopping cart owned by a single {@link User}.
+ * <strong>Spring Boot Concept:</strong> Represents a persistent shopping cart owned by a single {@link User}.
  *
  * <p>
  * Each user has at most one cart. The cart acts as a staging area for
@@ -24,7 +24,28 @@ import java.util.List;
  *     <li>One-to-Many with {@link CartItem}.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @OneToOne}</strong> — Enforces that each user has
+ *         exactly one cart. The {@code optional = false} and {@code unique = true}
+ *         on the join column make this a strict 1:1 constraint at the DB level.</li>
+ *     <li><strong>{@code @OneToMany(cascade = ALL, orphanRemoval = true)}</strong>
+ *         — When the cart is deleted, all its items are automatically deleted
+ *         (cascade). If an item is removed from the list, it is also deleted
+ *         (orphan removal).</li>
+ *     <li><strong>Bidirectional relationship maintenance</strong> — The
+ *         {@code addItem()} and {@code removeItem()} helper methods set both
+ *         sides of the relationship, keeping the in-memory model consistent
+ *         with the database.</li>
+ *     <li><strong>{@code @UniqueConstraint} on {@code user_id}</strong> —
+ *         Database-level uniqueness enforcement via the {@code @Table}
+ *         annotation, independent of JPA provider behavior.</li>
+ *     <li><strong>Lazy loading</strong> — Both relationships use
+ *         {@code FetchType.LAZY} to defer loading until accessed, preventing
+ *         unnecessary JOIN queries.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

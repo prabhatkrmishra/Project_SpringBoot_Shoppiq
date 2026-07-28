@@ -21,11 +21,15 @@ import java.util.List;
  * <h2>Design Notes</h2>
  * <ul>
  *     <li>Immutable through Java Records.</li>
- *     <li>Nested records for each activity type.</li>
+ *     <li><b>Nested records</b> for each activity type ({@link RecentOrderData},
+ *     {@link RecentPaymentData}, etc.) — a compositional pattern that groups
+ *     related data without creating separate top-level files.</li>
  *     <li>Limited to the most recent 10 entries per category.</li>
+ *     <li>Each nested record acts as a lightweight <i>projection</i> of the
+ *     full entity, returning only fields needed for the dashboard widget.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record RecentActivityResponse(

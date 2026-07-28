@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.aiservice.dto.admin;
 import java.time.Instant;
 
 /**
- * Admin DTO for listing all AI chat conversations in the management dashboard.
+ * <strong>Spring Boot Concept:</strong> Admin DTO for listing all AI chat conversations in the management dashboard.
  *
  * <p>
  * Returned by the {@code GET /api/admin/ai-chats} endpoint as a paginated list.

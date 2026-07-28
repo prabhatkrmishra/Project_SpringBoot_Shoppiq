@@ -1,68 +1,31 @@
 package com.pkmprojects.shoppiq.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
-import java.util.Properties;
 import java.util.Set;
 
 /**
- * Configuration for email sending and Thymeleaf email template rendering.
+ * <strong>Spring Boot Concept:</strong> {@code @Configuration} class that
+ * configures a dedicated Thymeleaf {@link TemplateEngine} for email
+ * templates, separate from the web template engine.
  *
- * <p>
- * Provides a dedicated {@link TemplateEngine} for email templates that
- * is separate from the web template engine. This prevents conflicts
- * between web and email template resolution.
- * </p>
+ * <p>The {@code JavaMailSender} is auto-configured by Spring Boot via
+ * {@code spring.mail.*} properties. This configuration only provides
+ * the template resolution for email templates used by the verification
+ * module (email confirmation, password reset codes).</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Configuration
 public class EmailConfig {
-
-    @Value("${shoppiq.email.smtp.host}")
-    private String smtpHost;
-
-    @Value("${shoppiq.email.smtp.port}")
-    private int smtpPort;
-
-    @Value("${shoppiq.email.smtp.username}")
-    private String smtpUsername;
-
-    @Value("${shoppiq.email.smtp.password}")
-    private String smtpPassword;
-
-    /**
-     * Creates a {@link JavaMailSender} bean configured from application properties.
-     *
-     * @return configured mail sender
-     */
-    @Bean
-    public JavaMailSender javaMailSender() {
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(smtpHost);
-        mailSender.setPort(smtpPort);
-        mailSender.setUsername(smtpUsername);
-        mailSender.setPassword(smtpPassword);
-
-        Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.debug", "false");
-
-        return mailSender;
-    }
 
     /**
      * Creates a dedicated Thymeleaf {@link TemplateEngine} for email templates.
@@ -85,7 +48,7 @@ public class EmailConfig {
 
     private ITemplateResolver emailHtmlTemplateResolver() {
         ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
-        resolver.setPrefix("templates/");
+        resolver.setPrefix("templates/emails/");
         resolver.setSuffix(".html");
         resolver.setTemplateMode(TemplateMode.HTML);
         resolver.setCharacterEncoding("UTF-8");

@@ -2,7 +2,7 @@ package com.pkmprojects.shoppiq.controller;
 import com.pkmprojects.shoppiq.controller.banner.BannerController;
 import com.pkmprojects.shoppiq.controller.user.UserController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
@@ -65,7 +65,7 @@ class GlobalControllerAdviceTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @MockitoBean
     private UserService userService;

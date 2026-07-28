@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Response DTO for admin customer management.
+ * <strong>Spring Boot Concept:</strong> Response DTO for admin customer management.
  *
  * <p>
  * This DTO provides a comprehensive view of a user for administrators,

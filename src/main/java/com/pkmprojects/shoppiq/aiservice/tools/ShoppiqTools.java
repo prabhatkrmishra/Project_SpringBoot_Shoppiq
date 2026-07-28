@@ -40,7 +40,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * LangChain4j tool methods that give the AI assistant access to Shoppiq's
+ * <strong>Spring Boot Concept:</strong> LangChain4j tool methods that give the AI assistant access to Shoppiq's
  * product catalog, orders, cart, and review data.
  *
  * <p>
@@ -118,6 +118,10 @@ public class ShoppiqTools {
                 return "No product found with identifier '" + identifier + "'.";
             }
             item = candidates.getFirst();
+        }
+
+        if (item.getItemDetails() == null) {
+            return "Product '" + item.getName() + "' found but detailed information is currently unavailable.";
         }
 
         StringBuilder sb = new StringBuilder();
@@ -341,7 +345,7 @@ public class ShoppiqTools {
             String name = meta.getString("name") != null ? meta.getString("name") : "Product";
             String slug = meta.getString("slug") != null ? meta.getString("slug") : "";
             Double priceVal = meta.getDouble("price");
-            String price = priceVal != null ? String.format("%.2f", priceVal) : "n/a";
+            String price = priceVal != null ? "%.2f".formatted(priceVal) : "n/a";
             sb.append("- **").append(name).append("** — $").append(price);
             if (!slug.isBlank()) sb.append(" (/item/").append(slug).append(")");
             sb.append("\n");

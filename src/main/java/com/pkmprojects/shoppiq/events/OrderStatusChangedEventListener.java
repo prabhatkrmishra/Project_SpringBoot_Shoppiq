@@ -14,7 +14,10 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 
 /**
- * Handles all post-status-change side effects for orders.
+ * <strong>Spring Boot Concept:</strong> {@code @Async} event listener that
+ * handles all post-status-change side effects for orders. Demonstrates
+ * the <strong>Event Listener</strong> pattern with <strong>conditional
+ * logic</strong> based on event payload.
  *
  * <p>Subscribes to {@link OrderStatusChangedEvent} and performs two
  * side effect operations that were previously embedded inline in
@@ -26,6 +29,27 @@ import java.util.Set;
  *     <li><strong>Stock restoration</strong> — restores inventory when
  *         the order reaches CANCELLED, RETURNED, or REFUNDED.</li>
  * </ol>
+ *
+ * <p><strong>Educational value:</strong> This listener builds on the
+ * patterns shown in {@link OrderPlacedEventListener} and adds:
+ * <ul>
+ *   <li><strong>Re-fetching entities in async context</strong> — because
+ *       this listener runs asynchronously, the original {@link com.pkmprojects.shoppiq.entity.order.Order}
+ *       may be detached from the persistence context. The listener
+ *       re-fetches it with the required associations eagerly loaded
+ *       (via {@code orderRepository.findByIdWithUser()} and
+ *       {@code orderRepository.findByIdWithItems()}) to avoid
+ *       {@code LazyInitializationException}.</li>
+ *   <li><strong>Conditional side effects</strong> — the
+ *       {@code RESTORE_STOCK_STATUSES} set determines which statuses
+ *       trigger stock restoration, keeping the logic declarative and
+ *       easy to modify.</li>
+ *   <li><strong>Multiple publishers, one listener</strong> — both
+ *       {@code AdminOrderServiceImpl} and {@code SellerOrderServiceImpl}
+ *       publish the same event type, and this single listener handles
+ *       both, avoiding duplicated side-effect code.</li>
+ * </ul>
+ * </p>
  *
  * <h2>Async Execution</h2>
  * <p>This listener is annotated {@code @Async}, meaning it runs on a
@@ -40,7 +64,7 @@ import java.util.Set;
  * logged at WARN level and swallowed — the status update has already
  * been committed successfully at this point.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @see OrderStatusChangedEvent
  * @see InventoryService#restoreStock
  * @since 1.4.0

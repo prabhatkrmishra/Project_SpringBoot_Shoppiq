@@ -8,13 +8,18 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
- * Repository for {@link VerificationCode} persistence.
+ * <strong>Spring Boot Concept:</strong> Repository for {@link VerificationCode} persistence.
  *
- * @author PrabhatKrMishra
+ * <p><b>How it fits:</b> Provides atomic mark-used operations and
+ * batch invalidation of stale codes. The {@code findTopByUserIdAndEmailTypeAndUsedFalseAndExpiresAtAfter}
+ * derived query efficiently retrieves the latest valid (unused,
+ * non-expired) code for a user.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Repository
@@ -28,7 +33,7 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
      * @return the verification code if found
      */
     Optional<VerificationCode> findTopByUserIdAndEmailTypeAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
-            Long userId, EmailType emailType, LocalDateTime now);
+            Long userId, EmailType emailType, Instant now);
 
     /**
      * Finds a specific code for a user and email type.
@@ -51,11 +56,21 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
     void markAllUnusedCodesAsUsed(@Param("userId") Long userId, @Param("emailType") EmailType emailType);
 
     /**
+     * Atomically marks a specific code as used if it has not been used already.
+     *
+     * @param id the verification code ID
+     * @return the number of rows updated (0 if already used, 1 if successfully marked)
+     */
+    @Modifying
+    @Query("UPDATE VerificationCode v SET v.used = true WHERE v.id = :id AND v.used = false")
+    int markUsedAtomically(@Param("id") Long id);
+
+    /**
      * Deletes expired codes for cleanup.
      *
      * @param now the current timestamp
      */
     @Modifying
     @Query("DELETE FROM VerificationCode v WHERE v.expiresAt < :now")
-    void deleteExpiredCodes(@Param("now") LocalDateTime now);
+    void deleteExpiredCodes(@Param("now") Instant now);
 }

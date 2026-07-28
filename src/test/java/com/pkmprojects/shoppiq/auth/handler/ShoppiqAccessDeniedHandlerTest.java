@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.auth.handler;
 
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import com.pkmprojects.shoppiq.exception.constants.ProblemDetailProperties;
+import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,6 +49,9 @@ class ShoppiqAccessDeniedHandlerTest {
     @Mock
     private RequestDispatcher requestDispatcher;
 
+    @Mock
+    private ProblemDetailResponseWriter responseWriter;
+
     @InjectMocks
     private ShoppiqAccessDeniedHandler accessDeniedHandler;
 
@@ -63,6 +67,7 @@ class ShoppiqAccessDeniedHandlerTest {
 
         // Arrange
         when(request.getRequestURI()).thenReturn("/api/admin/users");
+        when(request.getHeader("Accept")).thenReturn("text/html");
         when(request.getRequestDispatcher("/error")).thenReturn(requestDispatcher);
 
         AccessDeniedException exception = new AccessDeniedException("Access denied.");

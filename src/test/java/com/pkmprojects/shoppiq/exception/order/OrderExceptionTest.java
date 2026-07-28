@@ -63,7 +63,7 @@ class OrderExceptionTest {
     @DisplayName("OrderCannotBeCancelledException carries ORDER_CANNOT_BE_CANCELLED and 400 status")
     void orderCannotBeCancelledException_properties() {
         OrderCannotBeCancelledException ex =
-                new OrderCannotBeCancelledException(10L, OrderStatus.SHIPPED);
+                OrderCannotBeCancelledException.forOrder(10L, OrderStatus.SHIPPED);
 
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ORDER_CANNOT_BE_CANCELLED);
         assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -74,7 +74,7 @@ class OrderExceptionTest {
     @DisplayName("OrderCannotBeCancelledException — DELIVERED status")
     void orderCannotBeCancelledException_delivered() {
         OrderCannotBeCancelledException ex =
-                new OrderCannotBeCancelledException(5L, OrderStatus.DELIVERED);
+                OrderCannotBeCancelledException.forOrder(5L, OrderStatus.DELIVERED);
 
         assertThat(ex.getDetail()).contains("DELIVERED");
     }
@@ -83,7 +83,7 @@ class OrderExceptionTest {
     @DisplayName("OrderCannotBeCancelledException — already CANCELLED")
     void orderCannotBeCancelledException_alreadyCancelled() {
         OrderCannotBeCancelledException ex =
-                new OrderCannotBeCancelledException(7L, OrderStatus.CANCELLED);
+                OrderCannotBeCancelledException.forOrder(7L, OrderStatus.CANCELLED);
 
         assertThat(ex.getDetail()).contains("CANCELLED");
     }

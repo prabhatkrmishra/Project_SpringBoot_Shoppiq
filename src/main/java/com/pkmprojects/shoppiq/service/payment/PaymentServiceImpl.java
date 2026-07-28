@@ -13,6 +13,7 @@ import com.pkmprojects.shoppiq.exception.general.payment.PaymentInvalidStateExce
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentNotFoundException;
 import com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayRegistry;
 import com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayStrategy;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +22,36 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Implementation of {@link PaymentService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link PaymentService}.
+ *
+ * <p><strong>What this Service implementation demonstrates:</strong></p>
+ * <ul>
+ *   <li><strong>Strategy pattern via dependency injection</strong> — The
+ *       {@link com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayRegistry} resolves the
+ *       appropriate {@link com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayStrategy} based
+ *       on the payment method (COD vs. ONLINE), demonstrating how to delegate external-system
+ *       logic to pluggable strategies.</li>
+ *   <li><strong>State machine enforcement</strong> — Each method checks the current
+ *       {@link com.pkmprojects.shoppiq.enums.PaymentStatus} before proceeding, throwing
+ *       {@link com.pkmprojects.shoppiq.exception.general.payment.PaymentInvalidStateException}
+ *       for illegal transitions.</li>
+ *   <li><strong>Duplicate payment prevention</strong> — {@link #createPayment} uses
+ *       {@code paymentLookupService.existsByOrder()} to enforce one payment per order.</li>
+ *   <li><strong>Idempotent operations</strong> — {@link #pay} returns immediately if already
+ *       {@code PROCESSING}; {@link #verifyPayment} returns immediately if already
+ *       {@code PAID}. This supports safe retries from the client.</li>
+ *   <li><strong>Ownership assertion</strong> — The private {@code assertOwnership} method
+ *       validates that the payment's order belongs to the authenticated user before allowing
+ *       customer-facing operations.</li>
+ *   <li><strong>Delegation to helper services</strong> — {@code PaymentLookupService} and
+ *       {@code PaymentWriteService} are separated from business logic, showing single-responsibility
+ *       decomposition at the service layer.</li>
+ *   <li><strong>{@code @PreAuthorize} for admin operations</strong> — {@link #refund} is
+ *       protected by Spring Security's method-level {@code hasRole('ADMIN')} check.</li>
+ *   <li><strong>Payment reference generation</strong> — The formatted reference
+ *       ({@code PAY-20240728-42}) is built in a private helper, demonstrating internal ID
+ *       generation within the service layer.</li>
+ * </ul>
  *
  * <h2>Business Rules Enforced</h2>
  * <ul>
@@ -36,7 +66,7 @@ import java.time.format.DateTimeFormatter;
  * <h2>Payment Reference Format</h2>
  * <pre>PAY-yyyyMMdd-{orderId}</pre>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Service
@@ -78,7 +108,7 @@ public class PaymentServiceImpl implements PaymentService {
     public Payment createPayment(Order order) {
 
         if (paymentLookupService.existsByOrder(order)) {
-            throw new DuplicatePaymentException(order.getId());
+            throw DuplicatePaymentException.forOrder(order.getId());
         }
 
         String reference = buildReference(order.getId());
@@ -180,6 +210,7 @@ public class PaymentServiceImpl implements PaymentService {
      * enforced because admins may refund any customer's payment.</p>
      */
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public PaymentStatusResponse refund(User user, Long paymentId) {
         Payment payment = findOrThrow(paymentId);
 
@@ -263,6 +294,6 @@ public class PaymentServiceImpl implements PaymentService {
      * @return payment reference string
      */
     private String buildReference(Long orderId) {
-        return "PAY-%s-%d".formatted(LocalDate.now().format(DATE_FMT), orderId);
+        return "PAY-%s-%d".formatted(LocalDate.now(clock).format(DATE_FMT), orderId);
     }
 }

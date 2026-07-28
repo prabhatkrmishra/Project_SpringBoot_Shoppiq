@@ -198,9 +198,9 @@ class CheckoutIntegrationTest {
             // Assert — order items (via DTO to avoid LazyInitializationException)
             OrderResponse orderDetail = checkoutService.getMyOrder(user, response.orderId());
             assertThat(orderDetail.orderItems()).hasSize(1);
-            assertThat(orderDetail.orderItems().get(0).quantity()).isEqualTo(2);
-            assertThat(orderDetail.orderItems().get(0).unitPriceSnapshot()).isEqualByComparingTo("250.00");
-            assertThat(orderDetail.orderItems().get(0).subtotal()).isEqualByComparingTo("500.00");
+            assertThat(orderDetail.orderItems().getFirst().quantity()).isEqualTo(2);
+            assertThat(orderDetail.orderItems().getFirst().unitPriceSnapshot()).isEqualByComparingTo("250.00");
+            assertThat(orderDetail.orderItems().getFirst().subtotal()).isEqualByComparingTo("500.00");
 
             // Assert — stock reduced
             ItemDetails updated = itemDetailsRepository.findById(itemDetails.getId()).orElseThrow();
@@ -400,7 +400,7 @@ class CheckoutIntegrationTest {
 
             var orders = checkoutService.getMyOrders(user);
             assertThat(orders).hasSize(1);
-            assertThat(orders.get(0).status()).isEqualTo(OrderStatus.PLACED);
+            assertThat(orders.getFirst().status()).isEqualTo(OrderStatus.PLACED);
         }
 
         @Test

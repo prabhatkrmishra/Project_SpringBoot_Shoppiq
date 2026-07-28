@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * Generic paginated response wrapper.
+ * <strong>Spring Boot Concept:</strong> Generic paginated response wrapper.
  *
  * <p>
  * Used consistently across all paginated REST endpoints to return

@@ -10,7 +10,7 @@ import lombok.*;
 import java.math.BigDecimal;
 
 /**
- * Represents the commercial and inventory information associated with an
+ * <strong>Spring Boot Concept:</strong> Represents the commercial and inventory information associated with an
  * {@link Item}.
  *
  * <p>
@@ -54,7 +54,35 @@ import java.math.BigDecimal;
  *     <li>Category is referenced using a foreign key.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>Composition pattern (Item + ItemDetails)</strong> — Separates
+ *         catalog-level data (name, description) from commerce-level data
+ *         (price, stock, SKU). This is a common JPA design choice when fields
+ *         change at different frequencies or are managed by different
+ *         services.</li>
+ *     <li><strong>{@code @OneToOne(mappedBy = "itemDetails")}</strong> — The
+ *         inverse side of the one-to-one relationship with Item. The
+ *         {@code mappedBy} attribute indicates that Item owns the FK.</li>
+ *     <li><strong>{@code @ManyToOne} to {@link Category}</strong> — Category
+ *         is a reference entity; ItemDetails holds the FK. Uses
+ *         {@code FetchType.LAZY} to avoid unnecessary joins.</li>
+ *     <li><strong>Precision and scale on {@code BigDecimal}</strong> — {@code
+ *         @Column(precision = 10, scale = 2)} defines exact numeric storage
+ *         for monetary values, essential for financial accuracy.</li>
+ *     <li><strong>{@code @DecimalMin}, {@code @DecimalMax},
+ *         {@code @Digits}</strong> — Bean Validation constraints ensure
+ *         prices, discounts, and stock levels are within acceptable ranges
+ *         before persisting.</li>
+ *     <li><strong>{@code @JsonIgnore}</strong> on the owning Item reference
+ *         — Prevents infinite JSON serialization when the parent Item is
+ *         serialized with its ItemDetails.</li>
+ *     <li><strong>{@code update()} method</strong> — Preserves identity and
+ *         version while allowing all mutable commercial fields to be replaced
+ *         atomically.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity
@@ -148,7 +176,7 @@ public class ItemDetails extends AuditableEntity {
      */
     @Builder.Default
     @Column(name = "on_sale", nullable = false)
-    private Boolean onSale = false;
+    private boolean onSale = false;
 
     /**
      * Product category.
@@ -199,7 +227,7 @@ public class ItemDetails extends AuditableEntity {
         this.stockQuantity = source.getStockQuantity();
         this.discountPercentage = source.getDiscountPercentage();
         this.imageUrl = source.getImageUrl();
-        this.onSale = source.getOnSale();
+        this.onSale = source.isOnSale();
         this.category = source.getCategory();
     }
 }

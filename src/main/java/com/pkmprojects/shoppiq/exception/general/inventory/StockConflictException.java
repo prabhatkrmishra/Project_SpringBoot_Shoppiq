@@ -4,26 +4,28 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * Exception thrown when a stock conflict occurs during checkout due to concurrent modifications.
+ * <strong>Spring Boot Concept:</strong> Exception thrown when a stock
+ * conflict occurs during checkout due to concurrent modifications.
  *
- * <p>This happens when two or more customers attempt to purchase the same item
- * at the same time, and the inventory is depleted between the stock check
- * and the order placement.</p>
+ * <p>Leaf exception in the invalid-operation hierarchy. Extends
+ * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
+ * (HTTP 400) to represent optimistic locking failures when two customers
+ * purchase the same item simultaneously.</p>
  *
- * @author Shoppiq
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public final class StockConflictException extends InvalidOperationException {
 
-    StockConflictException(String detail) {
+    private StockConflictException(String detail) {
         super(ErrorCode.ITEM_STOCK_CONFLICT, detail);
     }
 
     /**
-     * Creates a stock conflict exception for a specific SKU.
+     * Creates an exception for a stock conflict on a specific SKU.
      *
-     * @param sku the product SKU that experienced the conflict
-     * @return exception with user-friendly message
+     * @param sku the SKU that experienced the conflict
+     * @return a new exception instance
      */
     public static StockConflictException forItem(String sku) {
         return new StockConflictException(
@@ -32,10 +34,10 @@ public final class StockConflictException extends InvalidOperationException {
     }
 
     /**
-     * Creates a stock conflict exception for concurrent optimistic lock failures.
+     * Creates an exception for a generic optimistic lock failure.
      *
      * @param detail the error message
-     * @return exception with the provided detail
+     * @return a new exception instance
      */
     public static StockConflictException forOptimisticLock(String detail) {
         return new StockConflictException(detail);

@@ -5,7 +5,22 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 
 /**
- * Admin service for seller management.
+ * <strong>Spring Boot Concept:</strong> Admin service for seller management.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * Defines the <strong>Service layer</strong> contract for seller administration.
+ * Architecture: {@code AdminSellerController → AdminSellerService → SellerLookupService / SellerWriteService}.
+ * </p>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *     <li>List sellers by verification status (PENDING, APPROVED, REJECTED).</li>
+ *     <li>Approve pending seller applications — updates verification status, creates store,
+ *         and grants ROLE_SELLER privilege.</li>
+ *     <li>Reject pending seller applications.</li>
+ *     <li>Suspend/unsuspend active sellers (cascades to store status).</li>
+ * </ul>
  *
  * <h2>Responsibilities</h2>
  * <ul>
@@ -14,7 +29,7 @@ import com.pkmprojects.shoppiq.enums.VerificationStatus;
  *     <li>Reject pending seller applications.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface AdminSellerService {

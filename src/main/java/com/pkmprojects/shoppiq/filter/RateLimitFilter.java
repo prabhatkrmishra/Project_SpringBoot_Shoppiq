@@ -27,6 +27,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 
+import jakarta.annotation.PreDestroy;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Iterator;
@@ -38,12 +39,32 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Rate limiting filter that enforces per-path token-bucket quotas using
+ * <strong>Spring Boot Concept:</strong> {@link jakarta.servlet.Filter}
+ * implementation that enforces per-path token-bucket rate limiting using
  * Bucket4j.
  *
  * <p>Placed before {@link com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter}
  * in the security filter chain so that abusive traffic is rejected before any
- * authentication processing occurs.</p>
+ * authentication processing occurs. This is an example of the
+ * <em>Filter in the Chain of Responsibility</em> pattern: each filter in the
+ * chain handles or forwards the request, and the order of filters matters.</p>
+ *
+ * <p><strong>Educational value:</strong> This class demonstrates several
+ * Spring Boot concepts:
+ * <ul>
+ *   <li><strong>OncePerRequestFilter</strong> — Spring's base class for
+ *       filters that should execute exactly once per request dispatch.</li>
+ *   <li><strong>Filter chain positioning</strong> — placed <em>before</em>
+ *       authentication so unauthenticated abusive traffic is rejected early,
+ *       saving resources.</li>
+ *   <li><strong>Bucket4j token bucket</strong> — a concurrency-safe rate
+ *       limiting algorithm with greedy refill.</li>
+ *   <li><strong>ConcurrentHashMap + scheduled eviction</strong> — managing
+ *       ephemeral state in a web application without a backing store.</li>
+ *   <li><strong>{@code @PreDestroy}</strong> — clean shutdown of the
+ *       eviction scheduler.</li>
+ * </ul>
+ * </p>
  *
  * <h4>Key resolution</h4>
  * <ul>
@@ -67,7 +88,7 @@ import java.util.concurrent.TimeUnit;
  * per key. Expired buckets are evicted periodically to prevent unbounded
  * memory growth.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @see RateLimitProperties
  * @since 0.5.0
  */
@@ -91,6 +112,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return t;
     });
 
+    /**
+     * Constructs the filter, parses path patterns from the rule
+     * configuration, and starts the bucket eviction scheduler.
+     *
+     * @param properties              rate limit configuration
+     * @param jwtAuthenticationUtils utility for JWT operations
+     * @param responseWriter          writer for RFC 9457 error responses
+     */
     public RateLimitFilter(RateLimitProperties properties,
                            JwtAuthenticationUtils jwtAuthenticationUtils,
                            ProblemDetailResponseWriter responseWriter) {
@@ -110,6 +139,22 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 EVICT_INTERVAL_SECONDS, EVICT_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
+    /**
+     * Shuts down the bucket eviction scheduler gracefully.
+     */
+    @PreDestroy
+    void shutdown() {
+        evictor.shutdown();
+        try {
+            if (!evictor.awaitTermination(5, TimeUnit.SECONDS)) {
+                evictor.shutdownNow();
+            }
+        } catch (InterruptedException _) {
+            evictor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
     private static final class BucketEntry {
         final Bucket bucket;
         final long createdAt;
@@ -122,6 +167,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
     }
 
+    /**
+     * Removes buckets that have exceeded their maximum age or idle time.
+     */
     private void evictStaleBuckets() {
         long now = System.nanoTime();
         long nowMillis = System.currentTimeMillis();
@@ -141,6 +189,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
     }
 
+    /**
+     * Applies rate limiting to the incoming request by matching its path
+     * against configured rules and consuming a token from the corresponding
+     * bucket.
+     *
+     * @param request     the HTTP request
+     * @param response    the HTTP response
+     * @param filterChain the filter chain
+     * @throws ServletException if filter processing fails
+     * @throws IOException      if writing the error response fails
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -201,6 +260,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * @return the bucket key, or {@code null} if the key cannot be resolved
      * (e.g. USER_IP rule but no valid JWT present)
      */
+    /**
+     * Resolves the bucket key for the current request based on the rule's
+     * {@link KeyType}.
+     *
+     * @param request the incoming HTTP request
+     * @param rule    the matched rate limit rule
+     * @return the bucket key, or {@code null} if the key cannot be resolved
+     * (e.g. USER_IP rule but no valid JWT present)
+     */
     private String resolveBucketKey(HttpServletRequest request, Rule rule) {
         String remoteAddr = request.getRemoteAddr();
 
@@ -214,13 +282,21 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 try {
                     Long userId = jwtAuthenticationUtils.getUserIdFromToken(token);
                     yield "uid:" + userId + ":ip:" + remoteAddr;
-                } catch (Exception e) {
+                } catch (Exception _) {
                     yield "ip:" + remoteAddr;
                 }
             }
         };
     }
 
+    /**
+     * Retrieves an existing bucket for the given key or creates a new one
+     * with the bandwidth defined by the rule.
+     *
+     * @param key  the bucket key
+     * @param rule the rate limit rule defining capacity and refill
+     * @return the bucket instance
+     */
     /**
      * Retrieves an existing bucket for the given key or creates a new one
      * with the bandwidth defined by the rule.
@@ -251,6 +327,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 .bucket;
     }
 
+    /**
+     * Updates the last-accessed timestamp of a bucket entry to prevent
+     * premature eviction.
+     *
+     * @param key the bucket key
+     */
     private void touchBucket(String key) {
         BucketEntry entry = buckets.get(key);
         if (entry != null) {
@@ -258,6 +340,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
     }
 
+    /**
+     * Skips rate limiting when the feature is disabled or no rules are
+     * configured.
+     *
+     * @param request the HTTP request
+     * @return {@code true} if the filter should be skipped
+     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         return !properties.isEnabled() || ruleIndex.isEmpty();

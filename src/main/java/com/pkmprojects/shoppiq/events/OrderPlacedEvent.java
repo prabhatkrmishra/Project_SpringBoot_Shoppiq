@@ -6,11 +6,35 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import org.springframework.context.ApplicationEvent;
 
 /**
- * Published after a successful order is placed and persisted.
+ * <strong>Spring Boot Concept:</strong> Custom {@link org.springframework.context.ApplicationEvent}
+ * published after a successful order is placed and persisted. This is the
+ * core of Spring's <strong>Event-Driven Design</strong> within the same
+ * application context.
  *
  * <p>This event decouples the checkout transaction from post-order
  * side effects such as email notifications, promo code usage recording,
  * analytics, and inventory reconciliation.</p>
+ *
+ * <p><strong>Educational value:</strong> Spring's {@code ApplicationEvent}
+ * mechanism is a lightweight, in-process event system that does not require
+ * a message broker (no RabbitMQ, no Kafka). It is ideal for decoupling
+ * primary business logic from side effects within the same application:
+ * <ul>
+ *   <li><strong>Loose coupling</strong> — {@code CheckoutServiceImpl} publishes
+ *       events without knowing who listens or what they do.</li>
+ *   <li><strong>Synchronous vs asynchronous</strong> — events are delivered
+ *       synchronously by default, but listeners annotated with {@code @Async}
+ *       execute on a separate thread (see {@link OrderPlacedEventListener}).</li>
+ *   <li><strong>Transaction-aware listeners</strong> — using
+ *       {@code @TransactionalEventListener(phase = AFTER_COMMIT)} would
+ *       execute listeners only after the source transaction commits.</li>
+ *   <li><strong>Event as data carrier</strong> — this class carries the
+ *       {@link com.pkmprojects.shoppiq.entity.order.Order},
+ *       {@link com.pkmprojects.shoppiq.entity.user.User}, and optional
+ *       {@link com.pkmprojects.shoppiq.entity.promo.PromoCode} so listeners
+ *       have all the context they need without querying the database again.</li>
+ * </ul>
+ * </p>
  *
  * <h2>Publisher</h2>
  * <p>Published by {@code CheckoutServiceImpl.doCheckout()} after the
@@ -36,7 +60,7 @@ import org.springframework.context.ApplicationEvent;
  * annotated with {@code @Async} run on a separate thread and are
  * not subject to the source transaction's rollback.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @see OrderPlacedEventListener
  * @since 1.4.0
  */

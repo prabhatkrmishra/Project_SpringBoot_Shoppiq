@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Request body for updating the quantity of an existing cart item.
+ * <strong>Spring Boot Concept:</strong> Request body for updating the quantity of an existing cart item.
  *
  * @param quantity the new quantity (minimum 1)
  *

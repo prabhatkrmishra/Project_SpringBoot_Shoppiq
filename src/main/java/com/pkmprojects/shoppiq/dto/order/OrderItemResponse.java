@@ -7,7 +7,16 @@ import java.math.BigDecimal;
 /**
  * Response payload representing a single line item inside an order.
  *
- * @author PrabhatKrMishra
+ * <p>This Java record uses <b>price snapshotting</b> — the {@code itemNameSnapshot}
+ * and {@code unitPriceSnapshot} preserve the values at the time of purchase,
+ * so order history remains accurate even if the product's name or price changes
+ * later. This is a critical e-commerce pattern.</p>
+ *
+ * <p><b>Null-safe mapping:</b> The {@link #from(com.pkmprojects.shoppiq.entity.order.OrderItem) from()}
+ * method handles nullable {@code ItemDetails} references gracefully, extracting
+ * image URL and item ID only when available.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record OrderItemResponse(

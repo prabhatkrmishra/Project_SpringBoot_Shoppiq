@@ -5,22 +5,18 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * Base exception indicating that a requested resource could not be found.
+ * <strong>Spring Boot Concept:</strong> Mid-level category exception that
+ * groups all "not found" cases under HTTP {@code 404 Not Found}.
  *
- * <p>
- * Domain-specific "not found" exceptions should extend this class rather than
- * extending {@link ShoppiqException} directly.
- * </p>
+ * <p>Domain-specific "not found" exceptions (item, order, user, cart, etc.)
+ * should extend this class. Together with
+ * {@link DuplicateResourceException} (409), {@link InvalidOperationException}
+ * (400), and {@link UnauthorizedOperationException} (403), this forms a
+ * category hierarchy where each abstract parent maps to exactly one HTTP
+ * status — the {@code @ControllerAdvice} handler derives the status from
+ * the exception itself without if/else chains.</p>
  *
- * <h2>Typical Usage</h2>
- * <ul>
- *     <li>Item not found.</li>
- *     <li>Order not found.</li>
- *     <li>User not found.</li>
- *     <li>Cart not found.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public abstract class ResourceNotFoundException extends ShoppiqException {

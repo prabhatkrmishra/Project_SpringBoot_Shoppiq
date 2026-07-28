@@ -3,9 +3,17 @@ package com.pkmprojects.shoppiq.dto.notification;
 import com.pkmprojects.shoppiq.entity.notification.NotificationPreference;
 
 /**
- * Response payload describing a user's email notification preferences.
+ * <strong>Spring Boot Concept:</strong> Response payload describing a user's email notification preferences.
  *
- * @author PrabhatKrMishra
+ * <p>This Java record is a read-only projection of a user's notification
+ * settings. All four preference fields are booleans — the simplest validation
+ * case (no annotations needed since booleans always have a value).</p>
+ *
+ * <p><b>Mapping pattern:</b> The {@link #from(com.pkmprojects.shoppiq.entity.notification.NotificationPreference) from()}
+ * method extracts the user ID from the parent entity and maps each boolean
+ * flag, demonstrating entity-to-DTO conversion for a one-to-one relationship.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record NotificationPreferenceResponse(

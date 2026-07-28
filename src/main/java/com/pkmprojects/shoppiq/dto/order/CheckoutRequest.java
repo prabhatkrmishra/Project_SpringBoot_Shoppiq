@@ -7,7 +7,17 @@ import jakarta.validation.constraints.NotNull;
 /**
  * Request payload for placing an order at checkout.
  *
- * @author PrabhatKrMishra
+ * <p>This Java record demonstrates <b>enum validation</b> using Jakarta
+ * Validation. The {@code paymentMethod} and {@code deliveryType} fields
+ * accept enum values that Spring Boot automatically deserializes from JSON
+ * strings. Invalid values result in a {@code HttpMessageNotReadableException}
+ * with a descriptive error.</p>
+ *
+ * <p><b>Optional field:</b> {@code promoCode} is nullable — if not provided,
+ * no discount is applied. This is a common pattern for conditional fields
+ * in request DTOs.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record CheckoutRequest(

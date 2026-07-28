@@ -5,7 +5,7 @@ import com.pkmprojects.shoppiq.entity.category.Category;
 import java.util.Objects;
 
 /**
- * Response DTO for category data returned to clients.
+ * <strong>Spring Boot Concept:</strong> Response DTO for category data returned to clients.
  *
  * <p>Contains all publicly visible category information including the
  * auto-generated slug for URL-friendly access.</p>
@@ -23,14 +23,21 @@ import java.util.Objects;
  * <pre>
  * {
  *   "id": 1,
- *   "name": "Electronics & Gadgets",
+ *   "name": "Electronics &amp; Gadgets",
  *   "slug": "electronics-gadgets",
  *   "description": "All things electronic"
  * }
  * </pre>
  *
+ * <p><b>Record as response DTO:</b> Java records are ideal here because
+ * response DTOs must be read-only. The static factory method
+ * {@link #fromEntity(Category)} centralizes entity-to-DTO mapping logic.</p>
+ *
  * @see Category
  * @see com.pkmprojects.shoppiq.controller.CategoryController
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 public record CategoryResponse(
 
@@ -47,7 +54,7 @@ public record CategoryResponse(
         String name,
 
         /*
-          URL-friendly slug derived create the name.
+          URL-friendly slug derived from the name.
           Used in REST endpoints for clean, SEO-friendly URLs.
 
           <p>Example: /api/category/by-slug/electronics-gadgets</p>
@@ -64,13 +71,13 @@ public record CategoryResponse(
 
 ) {
     /**
-     * Factory method to create a CategoryResponse create a Category entity.
+     * Factory method to create a CategoryResponse from a Category entity.
      *
      * <p>Convenience method that centralizes the mapping logic,
      * making it easy to convert between entity and DTO layers.</p>
      *
      * @param category the category entity to convert
-     * @return a new CategoryResponse instance with values extracted create the entity
+     * @return a new CategoryResponse instance with values extracted from the entity
      */
     public static CategoryResponse fromEntity(Category category) {
 

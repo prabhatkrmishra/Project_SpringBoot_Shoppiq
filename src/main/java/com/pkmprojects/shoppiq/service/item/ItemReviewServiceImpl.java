@@ -6,13 +6,15 @@ import com.pkmprojects.shoppiq.dto.review.ItemReviewResponse;
 import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.entity.review.ItemReview;
 import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.enums.ReviewStatus;
 import com.pkmprojects.shoppiq.exception.general.item.DuplicateItemReviewException;
 import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.review.ItemReviewAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.general.review.ItemReviewNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.user.UserNotFoundException;
 import com.pkmprojects.shoppiq.repository.item.ItemReviewRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -21,23 +23,23 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Default implementation of {@link ItemReviewService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link ItemReviewService}
+ * containing business logic for product review management.
  *
- * <p>
- * Responsible for managing product reviews including creation,
- * retrieval, update and deletion.
+ * <p>Handles review creation (with seller/admin prevention and duplicate enforcement),
+ * retrieval with visibility filtering for APPROVED vs user-own reviews, and update/deletion
+ * with ownership or admin authorization. Used by {@code ItemReviewController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Review write operations are atomic; reads use {@code readOnly = true}.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
  * </p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Create reviews.</li>
- *     <li>Retrieve reviews.</li>
- *     <li>Update reviews.</li>
- *     <li>Delete reviews.</li>
- *     <li>Validate referenced users and items.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see ItemReviewService
  * @since 1.0.0
  */
 @Service
@@ -176,12 +178,18 @@ public class ItemReviewServiceImpl implements ItemReviewService {
 
     @Override
     public PageResponse<ItemReviewResponse> getByItemForUser(Long itemId, User currentUser, int page, int size) {
-        List<ItemReviewResponse> all = getByItemForUser(itemId, currentUser);
-        int start = Math.min(page * size, all.size());
-        int end = Math.min(start + size, all.size());
-        List<ItemReviewResponse> content = all.subList(start, end);
-        int totalPages = (all.isEmpty()) ? 0 : (int) Math.ceil((double) all.size() / size);
-        return new PageResponse<>(content, page, size, all.size(), totalPages, page == 0, page >= totalPages - 1);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Long userId = (currentUser != null) ? currentUser.getId() : null;
+
+        Page<ItemReview> reviewPage;
+        if (userId != null) {
+            reviewPage = itemReviewRepository.findVisibleReviewsForUser(itemId, userId, pageable);
+        } else {
+            reviewPage = itemReviewRepository.findAllByItemIdAndStatusOrderByCreatedAtDesc(
+                    itemId, ReviewStatus.APPROVED, pageable);
+        }
+
+        return PageResponse.of(reviewPage, ItemReviewResponse::fromEntity);
     }
 
     /**

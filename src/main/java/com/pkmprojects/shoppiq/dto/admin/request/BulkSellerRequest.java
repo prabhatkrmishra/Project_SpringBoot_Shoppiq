@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
- * Request DTO used for bulk creation of {@link Seller sellers}
+ * <strong>Spring Boot Concept:</strong> Request DTO used for bulk creation of {@link Seller sellers}
  * by an admin user for test-data population.
  *
  * <p>

@@ -222,7 +222,7 @@ class ItemReviewServiceImplTest {
             List<ItemReviewResponse> result = reviewService.getByItemForUser(10L, null);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).rating()).isEqualTo(4);
+            assertThat(result.getFirst().rating()).isEqualTo(4);
         }
 
         @Test

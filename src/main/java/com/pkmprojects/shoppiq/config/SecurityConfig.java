@@ -6,10 +6,7 @@ import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
-import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.filter.RateLimitFilter;
-import com.pkmprojects.shoppiq.repository.user.UserRepository;
-import com.pkmprojects.shoppiq.service.role.RoleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -21,63 +18,27 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
-import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
- * Core Spring Security configuration.
+ * <strong>Spring Boot Concept:</strong> {@code @Configuration} class that
+ * configures the core Spring Security filter chain.
  *
- * <p>Configures the security filter chain with JWT-based stateless
- * authentication, Google OAuth2 login, authority mapping, and endpoint
- * authorization rules. Both username/password and OAuth2 authentication
- * converge on the same JWT cookie mechanism.</p>
+ * <p>Provides JWT-based stateless authentication, Google OAuth2 login,
+ * authority mapping, and endpoint authorization rules. The application is
+ * completely stateless — no {@code HttpSession} is ever created or read.
+ * OAuth2 authorization-code state is stored in short-lived cookies via
+ * {@link HttpCookieOAuth2AuthorizationRequestRepository}. Both username/
+ * password and OAuth2 authentication converge on the same JWT cookie
+ * mechanism.</p>
  *
- * <h4>Stateless architecture (Option 2 — fully cookie-based)</h4>
- * <p>The application is completely stateless. No {@code HttpSession} is
- * ever created or read:</p>
- * <ul>
- *   <li>OAuth2 authorization-code state is stored in a short-lived
- *       {@code oauth2_auth_request} cookie via
- *       {@link HttpCookieOAuth2AuthorizationRequestRepository}.</li>
- *   <li>New-user registration state is stored in an
- *       {@code oauth2_registration} cookie via
- *       {@link com.pkmprojects.shoppiq.auth.oauth2.OAuthRegistrationCookieService}.</li>
- *   <li>Session policy is {@code STATELESS} — Spring Security never
- *       creates or reads a session.</li>
- * </ul>
- *
- * <h4>Request flow (returning user)</h4>
- * <pre>
- * Browser → GET /oauth2/authorization/google
- *       ↓
- * HttpCookieOAuth2AuthorizationRequestRepository.saveAuthorizationRequest()
- *       ↓ (cookie: oauth2_auth_request)
- * Google Login
- *       ↓
- * /login/oauth2/code/google?code=…&state=…
- *       ↓
- * HttpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequest()
- *       ↓ (cookie cleared)
- * OAuth2SuccessHandler — issue JWT cookie, redirect
- *       ↓
- * Every subsequent request — JwtAuthenticationFilter only
- * </pre>
- *
- * @see HttpCookieOAuth2AuthorizationRequestRepository
- * @see OAuth2SuccessHandler
- * @see JwtAuthenticationFilter
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @Configuration
 @EnableWebSecurity
@@ -89,8 +50,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
-    private final UserRepository userRepository;
-    private final RoleService rolesService;
     private final ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint;
     private final ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler;
     private final OAuthReturnUrlFilter oauthReturnUrlFilter;
@@ -100,8 +59,6 @@ public class SecurityConfig {
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           OAuth2SuccessHandler oAuth2SuccessHandler,
                           HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository,
-                          UserRepository userRepository,
-                          RoleService rolesService,
                           ShoppiqAuthenticationEntryPoint shoppiqAuthenticationEntryPoint,
                           ShoppiqAccessDeniedHandler shoppiqAccessDeniedHandler,
                           OAuthReturnUrlFilter oauthReturnUrlFilter,
@@ -110,62 +67,11 @@ public class SecurityConfig {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
         this.cookieAuthorizationRequestRepository = cookieAuthorizationRequestRepository;
-        this.userRepository = userRepository;
-        this.rolesService = rolesService;
         this.shoppiqAuthenticationEntryPoint = shoppiqAuthenticationEntryPoint;
         this.shoppiqAccessDeniedHandler = shoppiqAccessDeniedHandler;
         this.oauthReturnUrlFilter = oauthReturnUrlFilter;
         this.rateLimitFilter = rateLimitFilter;
         this.corsConfigurationSource = corsConfigurationSource;
-    }
-
-    /**
-     * Maps authorities received from Google's OIDC provider into
-     * application-specific authorities during the OAuth2 login flow.
-     *
-     * <p>Returning users receive authorities derived from their database roles.
-     * New users receive a temporary CUSTOMER authority that allows access to
-     * the registration-completion flow until a local account is created.</p>
-     *
-     * @return mapper converting OIDC authorities into application authorities
-     */
-    @Bean
-    public GrantedAuthoritiesMapper userAuthoritiesMapper() {
-        return (authorities) -> {
-            Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
-
-            authorities.forEach(authority -> {
-                if (authority instanceof OidcUserAuthority oidcUserAuthority) {
-                    Map<String, Object> userAttributesMap = oidcUserAuthority.getAttributes();
-                    String email = (String) userAttributesMap.get("email");
-
-                    if (email != null) {
-                        User user = userRepository.findUserByEmail(email).orElse(null);
-
-                        if (user != null) {
-                            Set<GrantedAuthority> userAuthorities = user.getRoles().stream()
-                                    .filter(role -> {
-                                        boolean hasValidName = role.getRoleName() != null && !role.getRoleName().isBlank();
-                                        if (!hasValidName) {
-                                            logger.warn("User '{}' has role id={} with a null/blank roleName",
-                                                    email, role.getId());
-                                        }
-                                        return hasValidName;
-                                    })
-                                    .map(role -> new SimpleGrantedAuthority(role.getRoleName()))
-                                    .collect(Collectors.toSet());
-                            mappedAuthorities.addAll(userAuthorities);
-                            logger.debug("Mapped returning OAuth2 user '{}' to roles: {}", email, user.getRoles());
-                        } else {
-                            mappedAuthorities.add(new SimpleGrantedAuthority(rolesService.getCustomerRole().getRoleName()));
-                            logger.debug("Mapped new OAuth2 user '{}' to temporary role: CUSTOMER", email);
-                        }
-                    }
-                }
-            });
-
-            return mappedAuthorities;
-        };
     }
 
     /**
@@ -385,11 +291,11 @@ public class SecurityConfig {
     }
 
     /**
-     * Exposes the AuthenticationManager bean for programmatic use in
-     * {@link com.pkmprojects.shoppiq.auth.service.AuthService}.
+     * Exposes the {@link AuthenticationManager} bean for programmatic use
+     * in authentication services.
      *
      * @param config Spring Boot auto-configuration
-     * @return the AuthenticationManager
+     * @return the {@link AuthenticationManager}
      * @throws Exception if retrieval fails
      */
     @Bean

@@ -10,7 +10,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 
 /**
- * Extends {@link BaseEntity} by adding automatic auditing support.
+ * <strong>Spring Boot Concept:</strong> Extends {@link BaseEntity} by adding automatic auditing support.
  *
  * <p>
  * All entities that inherit create this class automatically receive creation
@@ -27,7 +27,7 @@ import java.time.Instant;
  * <h2>Design Decisions</h2>
  * <ul>
  *     <li>Uses {@link Instant} to store timestamps in UTC.</li>
- *     <li>Separates auditing concerns create identity management.</li>
+ *     <li>Separates auditing concerns from identity management.</li>
  * </ul>
  *
  * <h2>Used By</h2>
@@ -41,7 +41,24 @@ import java.time.Instant;
  *     <li>Review</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @EntityListeners(AuditingEntityListener.class)}</strong>
+ *         — Registers a JPA callback listener that automatically populates
+ *         {@code @CreatedDate} and {@code @LastModifiedDate} fields on persist
+ *         and update operations.</li>
+ *     <li><strong>{@code @CreatedDate} / {@code @LastModifiedDate}</strong>
+ *         — Spring Data JPA annotations that work with {@code AuditingEntityListener}
+ *         to set timestamps transparently. Requires {@code @EnableJpaAuditing}
+ *         in a configuration class.</li>
+ *     <li><strong>{@link Instant}</strong> — Java time-zone-agnostic timestamp
+ *         stored in UTC, avoiding timezone conversion pitfalls.</li>
+ *     <li><strong>Inheritance hierarchy:</strong> {@code BaseEntity → AuditableEntity
+ *         → ConcreteEntity} — demonstrates layering shared persistence concerns
+ *         (ID/version vs. auditing) into separate abstract classes.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Getter

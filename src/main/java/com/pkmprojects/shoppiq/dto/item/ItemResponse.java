@@ -28,12 +28,16 @@ import java.time.Instant;
  * <h2>Design Notes</h2>
  * <ul>
  *     <li>Contains a nested {@link CategoryResponse} instead of exposing
- *     the Category entity.</li>
+ *     the Category entity — preventing circular references and lazy-loading issues.</li>
  *     <li>Immutable through Java Records.</li>
- *     <li>Created using {@link #fromEntity(Item)}.</li>
+ *     <li>Created using {@link #fromEntity(Item)} — traverses the
+ *     {@code Item → ItemDetails → Category} entity graph to flatten
+ *     data into a single DTO.</li>
+ *     <li><b>Nested DTO pattern:</b> {@code CategoryResponse} is reused inside
+ *     this response, demonstrating how DTOs can compose cleanly.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record ItemResponse(

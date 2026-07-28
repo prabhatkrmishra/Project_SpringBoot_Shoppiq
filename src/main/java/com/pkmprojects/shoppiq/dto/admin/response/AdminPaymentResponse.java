@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Response DTO for admin payment management.
+ * <strong>Spring Boot Concept:</strong> Response DTO for admin payment management.
  *
  * <p>
  * This DTO provides a comprehensive view of a payment for administrators,

@@ -2,11 +2,17 @@ package com.pkmprojects.shoppiq.service.itemdetails;
 
 import com.pkmprojects.shoppiq.entity.item.ItemDetails;
 
+import java.util.List;
+
 /**
- * Write facade for item-details persistence.
+ * <strong>Spring Boot Concept:</strong> Write facade for item-details persistence.
  *
- * <p>Decouples caller code from {@code ItemDetailsRepository},
- * providing mutation operations for inventory management.</p>
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * A write-only facade decoupling callers from {@code ItemDetailsRepository}.
+ * Part of the CQRS-inspired pattern — read queries go through
+ * {@code ItemDetailsLookupService}, mutations go through this interface.
+ * </p>
  *
  * <h2>Consumers</h2>
  * <ul>
@@ -16,7 +22,7 @@ import com.pkmprojects.shoppiq.entity.item.ItemDetails;
  *     <li>{@code SellerInventoryServiceImpl} — seller stock management.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.4.0
  * @see ItemDetailsLookupService
  */
@@ -29,4 +35,12 @@ public interface ItemDetailsWriteService {
      * @return the saved entity
      */
     ItemDetails save(ItemDetails itemDetails);
+
+    /**
+     * Persists multiple item-details in a single round-trip.
+     *
+     * @param itemDetailsList the item details to save
+     * @return the saved entities
+     */
+    List<ItemDetails> saveAll(List<ItemDetails> itemDetailsList);
 }

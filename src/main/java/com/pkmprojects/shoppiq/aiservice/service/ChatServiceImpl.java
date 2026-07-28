@@ -24,7 +24,6 @@ import dev.langchain4j.service.AiServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Flux;
 
@@ -39,7 +38,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Primary implementation of {@link ChatService} backed by LangChain4j's
+ * <strong>Spring Boot Concept:</strong> Primary implementation of {@link ChatService} backed by LangChain4j's
  * {@link AiServices} builder pattern.
  *
  * <p>
@@ -93,8 +92,7 @@ public class ChatServiceImpl implements ChatService {
     public record GuestMessage(String role, String content, Instant createdAt) {
     }
 
-    @Value("${shoppiq.ai.resolve-threshold:3}")
-    private int resolveThreshold;
+    private final int resolveThreshold;
 
     /**
      * Constructs a new {@code ChatServiceImpl} with all required dependencies.
@@ -119,7 +117,8 @@ public class ChatServiceImpl implements ChatService {
                            UserRepository userRepository,
                            ModelResolutionService modelResolutionService,
                            @Qualifier("authenticatedSystemPrompt") SystemPromptProvider authenticatedPrompt,
-                           @Qualifier("guestSystemPrompt") SystemPromptProvider guestPrompt) {
+                           @Qualifier("guestSystemPrompt") SystemPromptProvider guestPrompt,
+                           int resolveThreshold) {
         this.chatMemoryProvider = chatMemoryProvider;
         this.chatMemoryConfig = chatMemoryConfig;
         this.shoppiqTools = shoppiqTools;
@@ -130,6 +129,7 @@ public class ChatServiceImpl implements ChatService {
         this.modelResolutionService = modelResolutionService;
         this.authenticatedPrompt = authenticatedPrompt;
         this.guestPrompt = guestPrompt;
+        this.resolveThreshold = resolveThreshold;
     }
 
     // ========================= Authenticated Chat =========================

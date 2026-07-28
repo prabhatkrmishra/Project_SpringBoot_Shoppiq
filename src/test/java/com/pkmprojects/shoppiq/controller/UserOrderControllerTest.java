@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.controller;
 import com.pkmprojects.shoppiq.controller.order.OrderController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
@@ -90,7 +90,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 class OrderControllerTest {
 
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
+    @Autowired JsonMapper objectMapper;
 
     @MockitoBean CheckoutServiceImpl checkoutService;
     @MockitoBean UserRepository userRepository;
@@ -369,7 +369,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order in non-cancellable state")
         void cancelOrder_notCancellable() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.SHIPPED))
+            doThrow(OrderCannotBeCancelledException.forOrder(10L, OrderStatus.SHIPPED))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
@@ -421,7 +421,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order not in DELIVERED state")
         void requestReturn_notDelivered() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.SHIPPED, OrderStatus.RETURN_REQUEST))
+            doThrow(OrderInvalidStatusTransitionException.fromTo(OrderStatus.SHIPPED, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/return/10").with(csrf()))
@@ -473,7 +473,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order not in DELIVERED state")
         void requestRefund_notDelivered() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.PLACED, OrderStatus.REFUND_REQUEST))
+            doThrow(OrderInvalidStatusTransitionException.fromTo(OrderStatus.PLACED, OrderStatus.REFUND_REQUEST))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/refund/10").with(csrf()))
@@ -525,7 +525,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order not in DELIVERED state")
         void requestReplacement_notDelivered() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.CANCELLED, OrderStatus.REPLACE_REQUEST))
+            doThrow(OrderInvalidStatusTransitionException.fromTo(OrderStatus.CANCELLED, OrderStatus.REPLACE_REQUEST))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/replace/10").with(csrf()))
@@ -596,7 +596,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order already in CANCEL_REQUEST state")
         void cancelOrder_alreadyCancelRequest() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.CANCEL_REQUEST))
+            doThrow(OrderCannotBeCancelledException.forOrder(10L, OrderStatus.CANCEL_REQUEST))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
@@ -607,7 +607,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order in RETURN_REQUEST state")
         void cancelOrder_returnRequest() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderCannotBeCancelledException(10L, OrderStatus.RETURN_REQUEST))
+            doThrow(OrderCannotBeCancelledException.forOrder(10L, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).cancelOrder(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/cancel/10").with(csrf()))
@@ -627,7 +627,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order already in RETURN_REQUEST state")
         void requestReturn_alreadyReturnRequest() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.RETURN_REQUEST, OrderStatus.RETURN_REQUEST))
+            doThrow(OrderInvalidStatusTransitionException.fromTo(OrderStatus.RETURN_REQUEST, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/return/10").with(csrf()))
@@ -638,7 +638,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order already RETURNED")
         void requestReturn_alreadyReturned() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.RETURNED, OrderStatus.RETURN_REQUEST))
+            doThrow(OrderInvalidStatusTransitionException.fromTo(OrderStatus.RETURNED, OrderStatus.RETURN_REQUEST))
                     .when(checkoutService).requestReturn(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/return/10").with(csrf()))
@@ -658,7 +658,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order already in REFUND_REQUEST state")
         void requestRefund_alreadyRefundRequest() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REFUND_REQUEST, OrderStatus.REFUND_REQUEST))
+            doThrow(OrderInvalidStatusTransitionException.fromTo(OrderStatus.REFUND_REQUEST, OrderStatus.REFUND_REQUEST))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/refund/10").with(csrf()))
@@ -669,7 +669,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order already REFUNDED")
         void requestRefund_alreadyRefunded() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REFUNDED, OrderStatus.REFUND_REQUEST))
+            doThrow(OrderInvalidStatusTransitionException.fromTo(OrderStatus.REFUNDED, OrderStatus.REFUND_REQUEST))
                     .when(checkoutService).requestRefund(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/refund/10").with(csrf()))
@@ -689,7 +689,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order already in REPLACE_REQUEST state")
         void requestReplacement_alreadyReplaceRequest() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REPLACE_REQUEST, OrderStatus.REPLACE_REQUEST))
+            doThrow(OrderInvalidStatusTransitionException.fromTo(OrderStatus.REPLACE_REQUEST, OrderStatus.REPLACE_REQUEST))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/replace/10").with(csrf()))
@@ -700,7 +700,7 @@ class OrderControllerTest {
         @DisplayName("400 Bad Request — order already REPLACED")
         void requestReplacement_alreadyReplaced() throws Exception {
             authenticateCustomer();
-            doThrow(new OrderInvalidStatusTransitionException(OrderStatus.REPLACED, OrderStatus.REPLACE_REQUEST))
+            doThrow(OrderInvalidStatusTransitionException.fromTo(OrderStatus.REPLACED, OrderStatus.REPLACE_REQUEST))
                     .when(checkoutService).requestReplacement(any(), eq(10L));
 
             mockMvc.perform(put("/user/order/replace/10").with(csrf()))

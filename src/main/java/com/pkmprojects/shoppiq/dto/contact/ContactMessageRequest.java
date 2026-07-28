@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request DTO for submitting a contact message.
+ * <strong>Spring Boot Concept:</strong> Request DTO for submitting a contact message.
  *
  * @author PrabhatKrMishra
  * @since 1.0.0

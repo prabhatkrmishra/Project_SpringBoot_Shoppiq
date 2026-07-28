@@ -5,9 +5,15 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
 
 /**
- * Business contract for managing verification codes.
+ * <strong>Spring Boot Concept:</strong> Business contract for managing verification codes used in email
+ * verification and password reset flows.
  *
- * @author PrabhatKrMishra
+ * <p><b>How it fits:</b> Supports user authentication and account
+ * recovery — authenticated users can access AI chat features.
+ * Verification codes are generated with {@link java.security.SecureRandom}
+ * and have single-use + expiry semantics.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface VerificationCodeService {

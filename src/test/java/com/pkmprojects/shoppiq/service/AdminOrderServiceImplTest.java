@@ -11,6 +11,7 @@ import com.pkmprojects.shoppiq.exception.general.order.OrderInvalidStatusTransit
 import com.pkmprojects.shoppiq.exception.general.order.OrderNotFoundException;
 import com.pkmprojects.shoppiq.repository.order.OrderRepository;
 import com.pkmprojects.shoppiq.service.admin.AdminOrderServiceImpl;
+import com.pkmprojects.shoppiq.service.order.OrderStatusTransitionValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,13 +46,16 @@ class AdminOrderServiceImplTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
-    @InjectMocks
     private AdminOrderServiceImpl orderService;
+    private OrderStatusTransitionValidator transitionValidator;
 
     private Order testOrder;
 
     @BeforeEach
     void setUp() {
+        transitionValidator = new OrderStatusTransitionValidator();
+        orderService = new AdminOrderServiceImpl(orderRepository, eventPublisher, transitionValidator);
+
         User user = User.builder()
                 .username("testuser")
                 .email("test@example.com")

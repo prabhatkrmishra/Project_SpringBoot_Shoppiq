@@ -2,15 +2,53 @@ package com.pkmprojects.shoppiq.service.address;
 
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.address.CreateAddressRequest;
-import com.pkmprojects.shoppiq.dto.address.UpdateAddressRequest;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 import java.util.List;
 
 /**
- * Service for managing user shipping addresses.
+ * <strong>Spring Boot Concept:</strong> Service interface for managing user shipping addresses.
  *
- * @author PrabhatKrMishra
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * This interface defines the <strong>Service layer</strong> contract for address management.
+ * In the standard {@code Controller → Service → Repository} pattern:
+ * </p>
+ * <ul>
+ *   <li><strong>Controller</strong> receives HTTP requests and delegates to this service.</li>
+ *   <li><strong>Service</strong> (this interface) defines the business operations.</li>
+ *   <li><strong>Repository</strong> handles database persistence (hidden behind the implementation).</li>
+ * </ul>
+ *
+ * <h2>What is {@code @Service}?</h2>
+ * <p>
+ * {@code @Service} is a Spring Stereotype annotation (specialization of {@code @Component})
+ * that marks a class as a <strong>Service</strong> in the business layer. Spring automatically
+ * discovers these classes via component-scanning and registers them as beans in the
+ * application context, making them available for dependency injection into controllers
+ * and other services.
+ * </p>
+ *
+ * <h2>Interface-Segregation Pattern</h2>
+ * <p>
+ * Separating the contract (interface) from the implementation allows:
+ * <ul>
+ *   <li>Loose coupling between layers — controllers depend on abstractions, not concrete classes.</li>
+ *   <li>Easier testing — mock implementations can be substituted.</li>
+ *   <li>Multiple implementations if needed (e.g., a stub for testing).</li>
+ * </ul>
+ * </p>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *   <li>Create new shipping addresses for authenticated users.</li>
+ *   <li>Retrieve addresses with ownership verification (users can only see their own addresses).</li>
+ *   <li>Update existing addresses (ownership-gated).</li>
+ *   <li>Delete addresses (ownership-gated).</li>
+ *   <li>Enforce the "one default address per user" invariant.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface AddressService {
@@ -49,7 +87,7 @@ public interface AddressService {
      * @param request updated address data
      * @return the updated address
      */
-    AddressResponse update(User user, Long id, UpdateAddressRequest request);
+    AddressResponse update(User user, Long id, CreateAddressRequest request);
 
     /**
      * Deletes an address, verifying ownership.

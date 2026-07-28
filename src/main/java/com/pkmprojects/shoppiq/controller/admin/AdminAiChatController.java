@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Admin REST controller for managing and reviewing AI chat conversations.
+ * <strong>Spring Boot Concept:</strong> Admin REST controller for managing and reviewing AI chat conversations.
  *
  * <p>
  * Provides paginated listing with search/filter capabilities, a detail view for

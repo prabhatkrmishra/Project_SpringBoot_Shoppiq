@@ -1,10 +1,14 @@
 package com.pkmprojects.shoppiq.audit;
 
-import jakarta.persistence.*;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Id;
+import jakarta.persistence.Version;
 import lombok.Getter;
 
 /**
- * Represents the root persistence class for all JPA entities in the Shoppiq application.
+ * <strong>Spring Boot Concept:</strong> Represents the root persistence class for all JPA entities in the Shoppiq application.
  *
  * <p>
  * This class centralizes the common persistence attributes required by every
@@ -33,7 +37,22 @@ import lombok.Getter;
  *     <li>Any future entity requiring persistence.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @MappedSuperclass}</strong> — JPA inheritance strategy
+ *         where the superclass is not an entity itself but its fields are inherited
+ *         by subclass entities and mapped to their tables.</li>
+ *     <li><strong>{@code @Id} + {@code @GeneratedValue(strategy = IDENTITY)}</strong>
+ *         — Standard JPA primary key pattern using database auto-increment.</li>
+ *     <li><strong>{@code @Version}</strong> — Built-in optimistic locking that
+ *         prevents lost updates in concurrent environments without explicit locks.</li>
+ *     <li><strong>{@code abstract}</strong> — Prevents direct instantiation;
+ *         only concrete subclasses can be persisted.</li>
+ *     <li><strong>Lombok {@code @Getter}</strong> — Reduces boilerplate by generating
+ *         getters for all fields at compile time.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Getter

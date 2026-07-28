@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Represents a promotional code (coupon) that can be applied during checkout.
+ * <strong>Spring Boot Concept:</strong> Represents a promotional code (coupon) that can be applied during checkout.
  *
  * <p>A {@code PromoCode} defines a discount rule that customers can apply
  * to their order subtotal. It supports both percentage-based and fixed-amount
@@ -33,7 +33,32 @@ import java.time.Instant;
  *     <li>{@code usedCount} is incremented atomically at checkout time.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>Rich domain constraints</strong> — Demonstrates multiple
+ *         business rules encoded in entity fields: validity window
+ *         ({@code validFrom}, {@code validUntil}), global usage cap
+ *         ({@code usageLimit}), per-user cap ({@code userUsageLimit}),
+ *         minimum order ({@code minOrderAmount}), and cart composition rules
+ *         ({@link CouponType}, {@code minItemQuantity}).</li>
+ *     <li><strong>{@code @Enumerated(EnumType.STRING)}</strong> — Both
+ *         {@link DiscountType} and {@link CouponType} are stored as strings,
+ *         making queries and schema inspection human-readable.</li>
+ *     <li><strong>{@code @PositiveOrZero}</strong> — Bean Validation on
+ *         {@code usedCount} ensures the counter never goes negative.</li>
+ *     <li><strong>{@code active} boolean flag</strong> — Soft enable/disable
+ *         without deleting the record. An inactive code cannot be applied
+ *         even if within its validity window.</li>
+ *     <li><strong>{@code incrementUsedCount()} method</strong> — Domain
+ *         method to atomically bump the usage counter. Called by the service
+ *         layer at checkout to enforce usage limits.</li>
+ *     <li><strong>Nullable constraints</strong> — Several fields are null
+ *         when optional ({@code minOrderAmount}, {@code maxDiscountAmount},
+ *         {@code couponType}, {@code minItemQuantity}, {@code usageLimit},
+ *         {@code userUsageLimit}), demonstrating null-as-unlimited patterns.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

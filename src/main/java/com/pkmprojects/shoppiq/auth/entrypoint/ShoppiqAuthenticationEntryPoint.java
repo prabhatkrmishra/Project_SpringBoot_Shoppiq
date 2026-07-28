@@ -17,20 +17,49 @@ import java.io.IOException;
 import java.net.URI;
 
 /**
- * Spring Security authentication entry point responsible for converting
- * authentication failures into RFC 9457 compliant responses.
+ * <strong>Spring Boot Concept:</strong> Spring Security {@link AuthenticationEntryPoint} — converts authentication
+ * failures into RFC 9457 {@code ProblemDetail} responses.
  *
- * <p>
- * Invoked whenever an unauthenticated client attempts to access
- * a protected resource.
- * </p>
+ * <h3>Spring Security concepts demonstrated</h3>
+ * <ul>
+ *   <li><strong>AuthenticationEntryPoint contract</strong> — Spring Security
+ *       invokes this class when an unauthenticated client (no valid JWT) tries
+ *       to access a protected endpoint. It is registered in the security filter
+ *       chain and triggered by {@code ExceptionTranslationFilter}.</li>
+ *   <li><strong>Content-negotiated error response</strong> — API clients
+ *       ({@code Accept: application/json}) receive a structured RFC 9457 JSON
+ *       response, while browser requests are redirected to the login page with
+ *       a {@code returnUrl} parameter preserving the original destination.</li>
+ *   <li><strong>RFC 9457 ProblemDetail</strong> — a standardized error format
+ *       ({@code type}, {@code title}, {@code status}, {@code detail},
+ *       {@code instance}, custom properties) that supersedes ad-hoc error bodies.
+ *       Spring Boot 3+ natively supports {@code ProblemDetail} via
+ *       {@code ErrorController}.</li>
+ * </ul>
  *
- * <p>
- * For API requests (Accept: application/json), returns a JSON ProblemDetail response.
- * For browser requests (Accept: text/html), forwards to the /error page.
- * </p>
+ * <h3>Authentication flow</h3>
+ * <pre>
+ * Unauthenticated request → Filter chain → AuthorizationFilter rejects
+ *       ↓
+ * ExceptionTranslationFilter catches AccessDeniedException/AuthenticationException
+ *       ↓
+ * Calls AuthenticationEntryPoint.commence()
+ *       ↓
+ * ┌─ API request → ProblemDetailFactory + ProblemDetailResponseWriter → JSON
+ * └─ Browser    → 302 redirect to /login?returnUrl=...
+ * </pre>
  *
- * @author PrabhatKrMishra
+ * <h3>Design patterns</h3>
+ * <ul>
+ *   <li><strong>Strategy pattern</strong> — {@link AuthenticationEntryPoint} is a
+ *       strategy interface; this class provides the Shoppiq-specific implementation.</li>
+ *   <li><strong>Factory delegation</strong> — error details are built by
+ *       {@link com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory}
+ *       and written by {@link com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter},
+ *       keeping this class focused on routing logic.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component

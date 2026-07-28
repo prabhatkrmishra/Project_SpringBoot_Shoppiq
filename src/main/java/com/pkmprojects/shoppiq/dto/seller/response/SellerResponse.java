@@ -1,17 +1,31 @@
 package com.pkmprojects.shoppiq.dto.seller.response;
 
+import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.entity.address.Address;
 import com.pkmprojects.shoppiq.entity.seller.Seller;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * Response DTO for seller profile.
  *
- * @author PrabhatKrMishra
+ * <p>This Java record flattens the {@code Seller → User → Address} entity
+ * graph into a single DTO. It reuses the shared
+ * {@link com.pkmprojects.shoppiq.dto.address.AddressResponse} for the
+ * business address.</p>
+ *
+ * <p><b>Null-safe mapping:</b> The {@link #fromEntity(com.pkmprojects.shoppiq.entity.seller.Seller) fromEntity()}
+ * method handles nullable associations (user, address) gracefully, returning
+ * null for fields when the associated entity does not exist.</p>
+ *
+ * <p><b>Verification workflow:</b> The {@code verificationStatus} and
+ * {@code sellerStatus} fields track the seller's onboarding progress,
+ * from PENDING through VERIFIED, and ACTIVE through SUSPENDED.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record SellerResponse(
@@ -40,39 +54,11 @@ public record SellerResponse(
 
         Double rating,
 
-        LocalDateTime joinedAt
+        Instant joinedAt
 ) {
 
-    public record AddressResponse(
-            Long id,
-            String label,
-            String fullName,
-            String phone,
-            String line1,
-            String line2,
-            String city,
-            String state,
-            String postalCode,
-            String country
-    ) {
-        static AddressResponse fromEntity(Address address) {
-            if (address == null) return null;
-            return new AddressResponse(
-                    address.getId(),
-                    address.getLabel(),
-                    address.getFullName(),
-                    address.getPhone(),
-                    address.getLine1(),
-                    address.getLine2(),
-                    address.getCity(),
-                    address.getState(),
-                    address.getPostalCode(),
-                    address.getCountry()
-            );
-        }
-    }
-
     public static SellerResponse fromEntity(Seller seller) {
+        Address address = seller.getBusinessAddress();
         return new SellerResponse(
                 seller.getId(),
                 seller.getUser() != null ? seller.getUser().getId() : null,
@@ -81,7 +67,7 @@ public record SellerResponse(
                 seller.getPhone(),
                 seller.getGstNumber(),
                 seller.getPanNumber(),
-                AddressResponse.fromEntity(seller.getBusinessAddress()),
+                address != null ? AddressResponse.from(address) : null,
                 seller.getVerificationStatus(),
                 seller.getSellerStatus(),
                 seller.getCommissionRate(),

@@ -8,13 +8,28 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Read-only product/inventory query facade for admin dashboards and reports.
+ * <strong>Spring Boot Concept:</strong> Read-only product/inventory query facade for admin dashboards and reports.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * A ReadModel facade that decouples admin services from {@code ItemRepository},
+ * {@code ItemDetailsRepository}, and {@code SellerRepository}. Provides aggregate
+ * queries over product, inventory, and seller data.
+ * </p>
+ *
+ * <h2>Responsibilities</h2>
+ * <ul>
+ *   <li>Count items, item-details, low-stock, and out-of-stock products.</li>
+ *   <li>Retrieve all item-details for inventory reports.</li>
+ *   <li>Query recent reviews for activity feeds.</li>
+ *   <li>Lookup seller by ID for commission reports.</li>
+ * </ul>
  *
  * <p>Decouples admin services from {@code ItemRepository},
  * {@code ItemDetailsRepository}, {@code ItemReviewRepository},
  * and {@code SellerRepository}.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.4.0
  */
 public interface AdminProductReadModel {

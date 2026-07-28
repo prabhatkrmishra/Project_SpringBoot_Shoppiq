@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 /**
- * Administrative endpoints for managing the RAG product vector store.
+ * <strong>Spring Boot Concept:</strong> Administrative endpoints for managing the RAG product vector store.
  *
  * @author PrabhatKrMishra
  * @since 1.0.0

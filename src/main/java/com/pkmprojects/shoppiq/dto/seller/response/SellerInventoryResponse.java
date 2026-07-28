@@ -7,7 +7,7 @@ import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import java.math.BigDecimal;
 
 /**
- * Seller-facing inventory response DTO.
+ * <strong>Spring Boot Concept:</strong> Seller-facing inventory response DTO.
  *
  * <p>Provides inventory information for a product owned by a seller,
  * including current stock level, computed stock status, and publishing

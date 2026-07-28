@@ -5,10 +5,17 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * Base exception indicating that an operation
- * cannot be performed in the current state.
+ * <strong>Spring Boot Concept:</strong> Mid-level category exception that
+ * groups all "bad request" business rule violations under HTTP
+ * {@code 400 Bad Request}.
  *
- * @author PrabhatKrMishra
+ * <p>Base exception indicating that an operation cannot be performed in the
+ * current state. A single abstract parent serves multiple concrete exceptions
+ * across different domains (auth, user profile) while sharing HTTP 400 —
+ * clients see the same status for all invalid operations regardless of the
+ * specific domain.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public abstract class InvalidOperationException extends ShoppiqException {

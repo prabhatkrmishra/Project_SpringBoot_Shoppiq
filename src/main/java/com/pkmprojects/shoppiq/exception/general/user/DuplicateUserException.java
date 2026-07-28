@@ -4,29 +4,16 @@ import com.pkmprojects.shoppiq.exception.business.DuplicateResourceException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * Exception thrown when an attempt is made to create a user that already exists.
+ * <strong>Spring Boot Concept:</strong> Exception thrown when an attempt
+ * is made to create a user that already exists.
  *
- * <p>
- * This exception represents violations of the application's uniqueness
- * constraints for user resources, such as duplicate email addresses or
- * usernames.
- * </p>
+ * <p>Leaf exception in the duplicate-resource hierarchy. Extends
+ * {@link com.pkmprojects.shoppiq.exception.business.DuplicateResourceException}
+ * (HTTP 409) with factory methods for duplicate email, duplicate username,
+ * and a generic fallback for constraint violations where the exact
+ * conflicting field cannot be determined.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Represent duplicate user creation attempts.</li>
- *     <li>Associate the failure with {@link ErrorCode#USER_ALREADY_EXISTS}.</li>
- *     <li>Provide expressive factory methods for common duplicate scenarios.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>The constructor is private to enforce the use of factory methods.</li>
- *     <li>Factory methods improve readability and centralize message creation.</li>
- *     <li>Additional duplicate scenarios can be added without changing callers.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public final class DuplicateUserException extends DuplicateResourceException {

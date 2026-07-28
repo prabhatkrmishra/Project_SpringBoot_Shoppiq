@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.aiservice.dto;
 import java.time.Instant;
 
 /**
- * Summary DTO for listing a user's AI chat conversations.
+ * <strong>Spring Boot Concept:</strong> Summary DTO for listing a user's AI chat conversations.
  *
  * <p>
  * Returned by the {@code GET /api/ai/chat/conversations} endpoint. Contains

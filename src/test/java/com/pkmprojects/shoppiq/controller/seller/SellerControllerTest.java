@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.controller.seller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
@@ -39,7 +39,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -68,7 +68,7 @@ class SellerControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @MockitoBean
     private SellerService sellerService;
@@ -109,7 +109,7 @@ class SellerControllerTest {
                 SellerStatus.INACTIVE,
                 BigDecimal.ZERO,
                 null,
-                LocalDateTime.now()
+                Instant.now()
         );
     }
 
@@ -208,7 +208,7 @@ class SellerControllerTest {
             SellerResponse updatedResponse = new SellerResponse(
                     SELLER_ID, USER_ID, "Updated Shop", BUSINESS_EMAIL, PHONE,
                     GST_NUMBER, PAN_NUMBER, null, VerificationStatus.PENDING,
-                    SellerStatus.INACTIVE, BigDecimal.ZERO, null, LocalDateTime.now()
+                    SellerStatus.INACTIVE, BigDecimal.ZERO, null, Instant.now()
             );
 
             when(sellerService.updateProfile(any(SellerProfileUpdateRequest.class), any(User.class)))

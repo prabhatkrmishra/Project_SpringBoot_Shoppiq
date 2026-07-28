@@ -14,7 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST controller for admin promo code management.
+ * <strong>Spring Boot Concept:</strong> REST controller for admin promo code management.
  *
  * <p>All endpoints require {@code ADMIN} role and are mounted under
  * {@code /api/admin/promo-codes}.</p>

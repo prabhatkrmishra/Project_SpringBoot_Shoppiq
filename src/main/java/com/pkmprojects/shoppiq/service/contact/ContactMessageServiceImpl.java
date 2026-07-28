@@ -14,9 +14,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Default implementation of {@link ContactMessageService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link ContactMessageService}
+ * containing business logic for contact message management.
  *
- * @author PrabhatKrMishra
+ * <p>Handles public contact form submissions, admin paginated retrieval, auto-marking
+ * messages as READ on view, manual read/unread toggling, and unread message counting.
+ * Used by {@code ContactMessageController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Status changes are atomic; reads use {@code readOnly = true}.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
+ * </p>
+ *
+ * @author prabhatkrmishra
+ * @see ContactMessageService
  * @since 1.0.0
  */
 @Service
@@ -29,6 +43,12 @@ public class ContactMessageServiceImpl implements ContactMessageService {
         this.contactMessageRepository = contactMessageRepository;
     }
 
+    /**
+     * Creates a new contact message from a public form submission.
+     *
+     * @param request contact message payload
+     * @return created contact message response
+     */
     @Override
     public ContactMessageResponse create(ContactMessageRequest request) {
         ContactMessage message = ContactMessage.builder()
@@ -42,6 +62,13 @@ public class ContactMessageServiceImpl implements ContactMessageService {
         return ContactMessageResponse.fromEntity(message);
     }
 
+    /**
+     * Retrieves a paginated list of all contact messages, newest first.
+     *
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated contact message responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ContactMessageResponse> getAllMessages(int page, int size) {
@@ -50,6 +77,13 @@ public class ContactMessageServiceImpl implements ContactMessageService {
         return PageResponse.of(messagePage, ContactMessageResponse::fromEntity);
     }
 
+    /**
+     * Retrieves a contact message by ID, auto-marking it as READ on first view.
+     *
+     * @param id contact message ID
+     * @return contact message response
+     * @throws ContactMessageNotFoundException if the message does not exist
+     */
     @Override
     public ContactMessageResponse getMessageById(Long id) {
         ContactMessage message = contactMessageRepository.findById(id)
@@ -63,6 +97,12 @@ public class ContactMessageServiceImpl implements ContactMessageService {
         return ContactMessageResponse.fromEntity(message);
     }
 
+    /**
+     * Deletes a contact message by ID.
+     *
+     * @param id contact message ID
+     * @throws ContactMessageNotFoundException if the message does not exist
+     */
     @Override
     public void deleteMessage(Long id) {
         if (!contactMessageRepository.existsById(id)) {
@@ -71,6 +111,13 @@ public class ContactMessageServiceImpl implements ContactMessageService {
         contactMessageRepository.deleteById(id);
     }
 
+    /**
+     * Marks a contact message as READ.
+     *
+     * @param id contact message ID
+     * @return updated contact message response
+     * @throws ContactMessageNotFoundException if the message does not exist
+     */
     @Override
     public ContactMessageResponse markAsRead(Long id) {
         ContactMessage message = contactMessageRepository.findById(id)
@@ -81,6 +128,13 @@ public class ContactMessageServiceImpl implements ContactMessageService {
         return ContactMessageResponse.fromEntity(message);
     }
 
+    /**
+     * Marks a contact message as UNREAD (PENDING).
+     *
+     * @param id contact message ID
+     * @return updated contact message response
+     * @throws ContactMessageNotFoundException if the message does not exist
+     */
     @Override
     public ContactMessageResponse markAsUnread(Long id) {
         ContactMessage message = contactMessageRepository.findById(id)
@@ -91,6 +145,11 @@ public class ContactMessageServiceImpl implements ContactMessageService {
         return ContactMessageResponse.fromEntity(message);
     }
 
+    /**
+     * Returns the count of unread (PENDING) contact messages.
+     *
+     * @return count of unread messages
+     */
     @Override
     @Transactional(readOnly = true)
     public long countUnreadMessages() {

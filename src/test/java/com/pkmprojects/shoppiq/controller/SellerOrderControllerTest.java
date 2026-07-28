@@ -357,7 +357,7 @@ class SellerOrderControllerTest {
         void updateOrderStatus_invalidTransition_returns400() throws Exception {
             authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.DELIVERED)))
-                    .thenThrow(new OrderInvalidStatusTransitionException(
+                    .thenThrow(OrderInvalidStatusTransitionException.fromTo(
                             OrderStatus.CONFIRMED, OrderStatus.DELIVERED));
 
             mockMvc.perform(put("/seller/orders/1/status").with(csrf())
@@ -584,7 +584,7 @@ class SellerOrderControllerTest {
         void updateOrderStatus_placedToDelivered_returns400() throws Exception {
             authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.DELIVERED)))
-                    .thenThrow(new OrderInvalidStatusTransitionException(
+                    .thenThrow(OrderInvalidStatusTransitionException.fromTo(
                             OrderStatus.PLACED, OrderStatus.DELIVERED));
 
             mockMvc.perform(put("/seller/orders/1/status").with(csrf())
@@ -597,7 +597,7 @@ class SellerOrderControllerTest {
         void updateOrderStatus_confirmedToCancelled_returns400() throws Exception {
             authenticateSeller();
             when(sellerOrderService.updateOrderStatus(any(User.class), eq(1L), eq(OrderStatus.CANCELLED)))
-                    .thenThrow(new OrderInvalidStatusTransitionException(
+                    .thenThrow(OrderInvalidStatusTransitionException.fromTo(
                             OrderStatus.CONFIRMED, OrderStatus.CANCELLED));
 
             mockMvc.perform(put("/seller/orders/1/status").with(csrf())

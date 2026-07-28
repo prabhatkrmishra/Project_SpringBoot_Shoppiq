@@ -12,7 +12,9 @@ import com.pkmprojects.shoppiq.exception.general.item.DuplicateItemException;
 import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
 import com.pkmprojects.shoppiq.service.category.CategoryLookupService;
 import com.pkmprojects.shoppiq.util.SlugUtil;
-import jakarta.transaction.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -24,13 +26,27 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Default implementation of {@link ItemService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link ItemService}
+ * containing business logic for product catalog operations.
  *
- * @author PrabhatKrMishra
+ * <p>Handles bulk item import with SKU uniqueness validation, category resolution,
+ * unique slug generation with retry-on-conflict, and catalog queries (by ID, slug,
+ * category, new arrivals, on-sale, top-selling). Used by {@code ItemController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Bulk import requires atomic multi-step creation; reads use {@code readOnly = true}.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
+ * </p>
+ *
+ * @author prabhatkrmishra
+ * @see ItemService
  * @since 1.0.0
  */
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService {
 
     private final ItemLookupService itemLookupService;
@@ -95,7 +111,25 @@ public class ItemServiceImpl implements ItemService {
                 .orElseThrow(() -> ItemNotFoundException.id(id));
     }
 
+/**
+     * Imports multiple items in bulk with SKU uniqueness validation and
+     * atomic slug-generation retry on conflict.
+     *
+     * <p>Validates that no request-level SKU duplicates exist, all referenced
+     * categories exist, and no SKU already exists in the database. Each item
+     * is persisted individually with slug retry logic.</p>
+     *
+     * <p><strong>Cache:</strong> Evicts all entries from the "items" cache after
+     * successful creation to ensure fresh data on subsequent reads.</p>
+     *
+     * @param requests list of item creation requests
+     * @return list of created item responses
+     * @throws DuplicateItemException   if a duplicate SKU is detected
+     * @throws CategoryNotFoundException if a referenced category is not found
+     */
     @Override
+    @Transactional
+    @CacheEvict(value = "items", allEntries = true)
     public List<ItemResponse> createBulk(List<ItemRequest> requests) {
         if (requests == null || requests.isEmpty()) {
             return List.of();
@@ -139,24 +173,60 @@ public class ItemServiceImpl implements ItemService {
                 .toList();
     }
 
+/**
+     * Retrieves a single item by its database identifier.
+     *
+     * <p><strong>Cache:</strong> Results are cached under the "items" cache by ID.
+     * Cache is evicted on item updates or deletions.</p>
+     *
+     * @param id item ID
+     * @return item response
+     * @throws ItemNotFoundException if no item exists with the given id
+     */
     @Override
+    @Cacheable("items")
     public ItemResponse getById(Long id) {
         return ItemResponse.fromEntity(findItem(id));
     }
 
+/**
+     * Retrieves a single item by its URL-friendly slug.
+     *
+     * <p><strong>Cache:</strong> Results are cached under the "items" cache by slug.
+     * Cache is evicted on item updates or deletions.</p>
+     *
+     * @param slug item slug
+     * @return item response
+     * @throws ItemNotFoundException if no item exists with the given slug
+     */
     @Override
+    @Cacheable("items")
     public ItemResponse getBySlug(String slug) {
         Item item = itemLookupService.findBySlug(slug)
                 .orElseThrow(() -> ItemNotFoundException.slug(slug));
         return ItemResponse.fromEntity(item);
     }
 
+    /**
+     * Retrieves a paginated list of all items, sorted by newest first.
+     *
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated item responses
+     */
     @Override
     public PageResponse<ItemResponse> getAll(int page, int size) {
         var itemPage = itemLookupService.findAll(page, size);
         return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
+    /**
+     * Retrieves a paginated list of newly arrived published items.
+     *
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated item responses
+     */
     @Override
     public PageResponse<ItemResponse> getNewArrivals(int page, int size) {
         var itemPage = itemLookupService.findNewArrivalsPage(
@@ -164,27 +234,50 @@ public class ItemServiceImpl implements ItemService {
         return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
+    /**
+     * Retrieves a paginated list of items currently on sale (with active discount).
+     *
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated item responses
+     */
     @Override
     public PageResponse<ItemResponse> getSaleItems(int page, int size) {
         var itemPage = itemLookupService.findOnSaleItemsPage(page, size);
         return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
+    /**
+     * Retrieves a paginated list of items belonging to the specified category.
+     *
+     * @param slug category slug
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated item responses
+     */
     @Override
     public PageResponse<ItemResponse> getByCategorySlug(String slug, int page, int size) {
         var itemPage = itemLookupService.findByCategorySlug(slug, page, size);
         return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
+    /**
+     * Retrieves the top-selling items based on order volume in the last 30 days.
+     *
+     * <p>Results are returned in ranking order as determined by total units sold.</p>
+     *
+     * @param size maximum number of top-selling items to return
+     * @return ordered list of top-selling item responses
+     */
     @Override
     public List<ItemResponse> getTopSelling(int size) {
         Instant since = clock.instant().minus(30, ChronoUnit.DAYS);
-        List<Object[]> rows = itemLookupService.findTopSellingItemIds(since, size);
+        var rows = itemLookupService.findTopSellingItemIds(since, size);
         if (rows.isEmpty()) {
             return List.of();
         }
         List<Long> itemIds = rows.stream()
-                .map(row -> ((Number) row[0]).longValue())
+                .map(r -> r.getItemId())
                 .toList();
         List<Item> items = itemLookupService.findAllByIds(itemIds);
         Map<Long, Item> itemMap = items.stream()

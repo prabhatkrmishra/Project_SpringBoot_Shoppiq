@@ -13,26 +13,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Default implementation of {@link AdminReviewService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminReviewService}
+ * containing business logic for admin review moderation.
  *
- * <p>
- * Provides review moderation operations for administrators
- * including retrieval and deletion.
+ * <p>Provides paginated review listing, approval, rejection, and deletion for
+ * moderating product reviews. Used by {@code AdminReviewController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Review moderation actions (approve/reject/delete) are atomic; reads use {@code readOnly = true}.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
  * </p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Retrieve paginated reviews.</li>
- *     <li>Delete a review.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Uses constructor injection.</li>
- *     <li>Read operations use read-only transactions.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see AdminReviewService
  * @since 1.0.0
  */
 @Service
@@ -45,6 +41,13 @@ public class AdminReviewServiceImpl implements AdminReviewService {
         this.itemReviewRepository = itemReviewRepository;
     }
 
+    /**
+     * Retrieves a paginated list of all reviews sorted by creation date descending.
+     *
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated review responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AdminReviewResponse> getAllReviews(int page, int size) {
@@ -55,6 +58,12 @@ public class AdminReviewServiceImpl implements AdminReviewService {
         return PageResponse.of(reviewPage, AdminReviewResponse::fromEntity);
     }
 
+    /**
+     * Deletes a review by ID.
+     *
+     * @param reviewId review ID
+     * @throws ItemReviewNotFoundException if the review does not exist
+     */
     @Override
     public void deleteReview(Long reviewId) {
         ItemReview review = itemReviewRepository.findById(reviewId)
@@ -63,6 +72,13 @@ public class AdminReviewServiceImpl implements AdminReviewService {
         itemReviewRepository.delete(review);
     }
 
+    /**
+     * Approves a pending review — transitions status to APPROVED.
+     *
+     * @param reviewId review ID
+     * @return updated review response
+     * @throws ItemReviewNotFoundException if the review does not exist
+     */
     @Override
     public AdminReviewResponse approveReview(Long reviewId) {
         ItemReview review = itemReviewRepository.findById(reviewId)
@@ -73,6 +89,13 @@ public class AdminReviewServiceImpl implements AdminReviewService {
         return AdminReviewResponse.fromEntity(saved);
     }
 
+    /**
+     * Rejects a pending review — transitions status to REJECTED.
+     *
+     * @param reviewId review ID
+     * @return updated review response
+     * @throws ItemReviewNotFoundException if the review does not exist
+     */
     @Override
     public AdminReviewResponse rejectReview(Long reviewId) {
         ItemReview review = itemReviewRepository.findById(reviewId)

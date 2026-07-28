@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
- * Request DTO used for bulk creation of {@link Item}.
+ * <strong>Spring Boot Concept:</strong> Request DTO used for bulk creation of {@link Item}.
  *
  * <p>
  * Wraps a list of {@link ItemRequest} to enable proper Bean Validation
@@ -32,9 +32,12 @@ import java.util.List;
  *     {@link ItemRequest} in the list.</li>
  *     <li>Used exclusively for bulk creation; updates are handled
  *     individually.</li>
+ *     <li><b>Why a record?</b> The compact, immutable nature of records
+ *     perfectly suits this "request envelope" pattern — the wrapper has no
+ *     behavior, just a validated collection.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkItemRequest(

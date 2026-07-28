@@ -6,7 +6,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * General-purpose exception for AI assistant errors that do not map to a
+ * <strong>Spring Boot Concept:</strong> General-purpose exception for AI assistant errors that do not map to a
  * specific resource-not-found scenario.
  *
  * <p>

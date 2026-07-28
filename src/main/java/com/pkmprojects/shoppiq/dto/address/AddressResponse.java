@@ -8,7 +8,20 @@ import java.time.Instant;
 /**
  * Response payload representing a single address.
  *
- * @author PrabhatKrMishra
+ * <p>This is a <b>Java record</b> — an immutable data carrier that automatically
+ * generates the constructor, {@code equals()}, {@code hashCode()}, {@code toString()},
+ * and accessor methods. Records are the idiomatic choice for DTOs in modern Spring
+ * Boot because they eliminate boilerplate and enforce immutability.</p>
+ *
+ * <p><b>API contract:</b> Returned by address endpoints (GET /api/addresses). The
+ * {@code default} field is serialized as {@code "default"} in JSON via
+ * {@link com.fasterxml.jackson.annotation.JsonProperty @JsonProperty}.</p>
+ *
+ * <p><b>Mapping pattern:</b> The static {@link #from(com.pkmprojects.shoppiq.entity.address.Address) from()}
+ * factory method converts a JPA entity to this DTO, keeping the persistence layer
+ * hidden from API consumers — a standard Spring Boot service-layer pattern.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AddressResponse(

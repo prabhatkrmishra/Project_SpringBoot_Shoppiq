@@ -4,7 +4,7 @@ import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.UserMessage;
 
 /**
- * LangChain4j service interface for synchronous (non-streaming) chat.
+ * <strong>Spring Boot Concept:</strong> LangChain4j service interface for synchronous (non-streaming) chat.
  *
  * <p>
  * This interface is a plain type definition used by

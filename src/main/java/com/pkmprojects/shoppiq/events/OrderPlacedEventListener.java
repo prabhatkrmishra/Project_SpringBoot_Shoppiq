@@ -10,7 +10,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
- * Handles post-checkout side effects after an order is placed.
+ * <strong>Spring Boot Concept:</strong> {@code @Async} event listener that
+ * handles post-checkout side effects after an order is placed. Demonstrates
+ * the <strong>Event Listener</strong> pattern — the subscriber side of
+ * Spring's event-driven architecture.
  *
  * <p>This listener subscribes to {@link OrderPlacedEvent} and performs
  * two side effect operations that were previously embedded inline in
@@ -23,6 +26,28 @@ import org.springframework.stereotype.Component;
  *     <li><strong>Order confirmation email</strong> — sends a "placed"
  *         email to the customer via {@link OrderEmailService}.</li>
  * </ol>
+ *
+ * <p><strong>Educational value:</strong> This class demonstrates how
+ * Spring events clean up service-layer code:
+ * <ul>
+ *   <li><strong>Before events</strong> — the checkout service had to call
+ *       {@code promoCodeService.recordUsage()} and
+ *       {@code orderEmailService.sendOrderStatusEmail()} inline, mixing
+ *       primary logic with side effects.</li>
+ *   <li><strong>After events</strong> — the checkout service publishes one
+ *       event and returns. All side effects are extracted into this listener,
+ *       making the checkout method shorter, more testable, and easier to
+ *       extend (add a new listener, don't modify the service).</li>
+ *   <li><strong>@Async + @EventListener</strong> — the listener is both
+ *       async (runs on a separate thread) and event-driven (triggered by
+ *       the event). This is a powerful combination for fire-and-forget
+ *       scenarios where the response should not be delayed by background
+ *       operations.</li>
+ *   <li><strong>Fail-safe error handling</strong> — both operations are
+ *       wrapped in try/catch. Side-effect failures never propagate back
+ *       to the caller because the primary transaction has already committed.</li>
+ * </ul>
+ * </p>
  *
  * <h2>Async Execution</h2>
  * <p>This listener is annotated {@code @Async}, meaning it runs on a
@@ -47,7 +72,7 @@ import org.springframework.stereotype.Component;
  * {@code sendEmail}) runs in its own implicit transaction managed by
  * Spring's async infrastructure.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @see OrderPlacedEvent
  * @since 1.4.0
  */

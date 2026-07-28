@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Centralized service for resolving AI model names to LangChain4j
+ * <strong>Spring Boot Concept:</strong> Centralized service for resolving AI model names to LangChain4j
  * {@link ChatModel} and {@link StreamingChatModel} instances.
  *
  * <p>

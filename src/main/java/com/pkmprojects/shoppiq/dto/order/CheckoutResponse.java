@@ -7,9 +7,18 @@ import com.pkmprojects.shoppiq.enums.OrderStatus;
 import java.math.BigDecimal;
 
 /**
- * Lightweight response returned immediately after a successful checkout.
+ * <strong>Spring Boot Concept:</strong> Lightweight response returned immediately after a successful checkout.
  *
- * @author PrabhatKrMishra
+ * <p>This Java record contains just enough information for the frontend to
+ * redirect the user to the order confirmation or payment page. It includes
+ * the {@code paymentId} for immediate payment verification.</p>
+ *
+ * <p><b>Response vs full order detail:</b> Unlike {@link OrderResponse} (which
+ * includes line items and full address details), this is a <i>lightweight
+ * confirmation</i> DTO designed for minimal payload size on the critical
+ * checkout path.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record CheckoutResponse(

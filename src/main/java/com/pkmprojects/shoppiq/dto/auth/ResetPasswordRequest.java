@@ -8,7 +8,14 @@ import jakarta.validation.constraints.Size;
 /**
  * Request DTO for resetting a password with a verification code.
  *
- * @author PrabhatKrMishra
+ * <p>This Java record demonstrates <b>password strength validation</b> using a
+ * regex {@code @Pattern}: at least one lowercase, one uppercase, one digit,
+ * and one special character. The {@code @Size(min=8)} enforces minimum length.</p>
+ *
+ * <p><b>API flow:</b> Step 2 of password reset — the user provides the code
+ * received via email along with their new password.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record ResetPasswordRequest(

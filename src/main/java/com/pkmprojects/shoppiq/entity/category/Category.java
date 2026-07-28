@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 /**
- * Represents a product category within the Shoppiq catalog.
+ * <strong>Spring Boot Concept:</strong> Represents a product category within the Shoppiq catalog.
  *
  * <p>
  * Categories classify products into logical groups such as
@@ -33,7 +33,25 @@ import lombok.*;
  *     <li>Name and slug are enforced as unique at the database level.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>Unique constraints via {@code @UniqueConstraint}</strong>
+ *         — Two separate constraints ({@code uk_categories_name},
+ *         {@code uk_categories_slug}) enforce uniqueness at the database
+ *         level, preventing duplicate entries regardless of application logic.</li>
+ *     <li><strong>{@code @Entity} with no explicit relationships</strong>
+ *         — A simple "reference" entity that is referenced by other entities
+ *         (via {@code @ManyToOne}) but has no collection mappings of its own.</li>
+ *     <li><strong>Jakarta Validation ({@code @NotBlank}, {@code @Size})</strong>
+ *         — Ensures data integrity before reaching the database. Validation
+ *         is triggered automatically when using {@code @Valid} in controllers
+ *         or {@code @Validated} in services.</li>
+ *     <li><strong>Service-layer delegation</strong> — Slug generation is not
+ *         done in the entity. This follows the principle that entities should
+ *         be plain data holders; business logic belongs in service classes.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

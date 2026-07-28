@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Spring Data repository for {@link ChatMessage} persistence.
+ * <strong>Spring Boot Concept:</strong> Spring Data repository for {@link ChatMessage} persistence.
  *
  * <p>
  * Provides message retrieval by conversation, role-based counting for

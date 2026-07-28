@@ -17,14 +17,41 @@ import org.thymeleaf.context.Context;
 import java.util.Map;
 
 /**
- * SMTP email provider using Spring's {@link JavaMailSender}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link EmailProvider}
+ * using Spring's {@link JavaMailSender} for SMTP-based email delivery.
+ * The default {@code shoppiq.email.provider=smtp} provider for production
+ * environments.
  *
  * <p>
  * Default provider for production environments. Supports HTML email
  * rendering via Thymeleaf templates.
  * </p>
  *
- * @author PrabhatKrMishra
+ * <p><strong>Educational value:</strong> This class demonstrates several
+ * Spring Boot infrastructure patterns:
+ * <ul>
+ *   <li><strong>JavaMailSender</strong> — Spring's abstraction over
+ *       {@code jakarta.mail}, auto-configured by {@code spring-boot-starter-mail}.
+ *       Adding {@code spring.mail.host}, {@code spring.mail.username}, etc.
+ *       to application.properties is all that's needed to configure it.</li>
+ *   <li><strong>@Async method</strong> — the {@code send()} method is
+ *       annotated with Spring's {@code @Async}, meaning it runs on a separate
+ *       thread pool (configured via {@code @EnableAsync} on a configuration
+ *       class). This ensures that the calling thread (usually a service layer
+ *       method) is not blocked by the SMTP call.</li>
+ *   <li><strong>Thymeleaf for email</strong> — uses a dedicated
+ *       {@link org.thymeleaf.TemplateEngine} (injected with
+ *       {@code @Qualifier("emailTemplateEngine")}) for rendering HTML
+ *       email templates, separate from the web-facing template engine.</li>
+ *   <li><strong>MimeMessageHelper</strong> — Spring's convenience wrapper
+ *       for building Jakarta Mail {@code MimeMessage}s, supporting HTML
+ *       content and attachments.</li>
+ *   <li><strong>Graceful disabling</strong> — checks {@code shoppiq.email.enabled}
+ *       at runtime, allowing operators to disable email without redeploying.</li>
+ * </ul>
+ * </p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Slf4j
@@ -33,17 +60,17 @@ public class SmtpEmailProvider implements EmailProvider {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine emailTemplateEngine;
-
-    @Value("${shoppiq.email.from:noreply@shoppiq.com}")
-    private String fromAddress;
-
-    @Value("${shoppiq.email.enabled:true}")
-    private boolean enabled;
+    private final String fromAddress;
+    private final boolean enabled;
 
     public SmtpEmailProvider(JavaMailSender mailSender,
-                              @Qualifier("emailTemplateEngine") TemplateEngine emailTemplateEngine) {
+                              @Qualifier("emailTemplateEngine") TemplateEngine emailTemplateEngine,
+                              @Value("${shoppiq.email.from:noreply@shoppiq.com}") String fromAddress,
+                              @Value("${shoppiq.email.enabled:true}") boolean enabled) {
         this.mailSender = mailSender;
         this.emailTemplateEngine = emailTemplateEngine;
+        this.fromAddress = fromAddress;
+        this.enabled = enabled;
     }
 
     @Override
@@ -88,6 +115,6 @@ public class SmtpEmailProvider implements EmailProvider {
         if (variables != null) {
             context.setVariables(variables);
         }
-        return emailTemplateEngine.process("emails/" + templateName, context);
+        return emailTemplateEngine.process(templateName, context);
     }
 }

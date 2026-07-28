@@ -1,35 +1,16 @@
 package com.pkmprojects.shoppiq.exception.constants;
 
 /**
- * Defines custom property names added to RFC 9457
- * {@link org.springframework.http.ProblemDetail} responses.
+ * <strong>Spring Boot Concept:</strong> Centralised constants class for
+ * RFC 9457 {@link org.springframework.http.ProblemDetail} custom properties.
  *
- * <p>
- * These properties supplement the standard RFC 9457 fields
- * and provide additional metadata required by Shoppiq clients.
- * </p>
+ * <p>These properties supplement the standard RFC 9457 fields with
+ * application-specific metadata ({@code timestamp}, {@code errorCode}).
+ * Defining them as constants prevents typos and ensures consistency
+ * across {@link com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory},
+ * exception handlers, and clients that read these fields.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Centralize custom ProblemDetail property names.</li>
- *     <li>Prevent duplicated string literals.</li>
- *     <li>Ensure consistency across the application.</li>
- * </ul>
- *
- * <h2>Current Properties</h2>
- * <ul>
- *     <li>{@code timestamp}</li>
- *     <li>{@code errorCode}</li>
- * </ul>
- *
- * <h2>Future Scope</h2>
- * <ul>
- *     <li>traceId</li>
- *     <li>correlationId</li>
- *     <li>requestId</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public final class ProblemDetailProperties {

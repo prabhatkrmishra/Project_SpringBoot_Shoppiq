@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Public REST controller for homepage banner data.
+ * <strong>Spring Boot Concept:</strong> Public REST controller for homepage banner data.
  *
  * <p>Exposes a read-only endpoint for the active banners displayed
  * on the homepage Sales &amp; Offers section.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @RestController

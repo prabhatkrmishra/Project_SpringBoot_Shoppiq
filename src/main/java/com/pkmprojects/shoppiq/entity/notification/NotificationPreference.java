@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * Stores a user's email notification preferences.
+ * <strong>Spring Boot Concept:</strong> Stores a user's email notification preferences.
  *
  * <p>
  * Each user owns at most one {@code NotificationPreference} row. The four
@@ -21,7 +21,25 @@ import lombok.*;
  *     <li>Relationship is owned by this entity via a {@code user_id} FK.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @OneToOne} owned by preference</strong> — The FK is
+ *         on this table (not on the {@code users} table), which is the
+ *         standard pattern when the relationship is optional or when the
+ *         child entity is added later.</li>
+ *     <li><strong>Boolean flag pattern</strong> — Four boolean columns
+ *         categorize notification types. This is simpler than a separate
+ *         "notification types" join table and works well when the number of
+ *         categories is small and stable.</li>
+ *     <li><strong>Opt-out defaults</strong> — {@code @Builder.Default true}
+ *         on all flags means new users are automatically subscribed to every
+ *         category, implementing an "opt-out" model rather than "opt-in".</li>
+ *     <li><strong>{@code @ForeignKey(name = "fk_notification_preferences_user")}</strong>
+ *         — Named FK constraint for readable schema and easier debugging of
+ *         constraint violations.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

@@ -12,9 +12,9 @@ import com.pkmprojects.shoppiq.service.admin.readmodel.AdminOrderReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminPaymentReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminProductReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminUserReadModel;
+import com.pkmprojects.shoppiq.config.InventoryConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.hibernate.Hibernate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -27,21 +27,28 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Default implementation of {@link AdminDashboardService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminDashboardService}
+ * containing business logic for admin dashboard aggregation.
  *
- * <p>
- * Provides aggregated dashboard statistics, sales analytics, and
- * recent activity feeds by querying read-model facades.
+ * <p>Computes dashboard summary statistics, time-series sales analytics, and
+ * recent activity feeds by querying ReadModel facades. Used by
+ * {@code AdminDashboardController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional(readOnly = true)</strong> — All aggregation methods are read-only, optimized for complex multi-table queries.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
  * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see AdminDashboardService
  * @since 1.0.0
  */
 @Service
 @Transactional(readOnly = true)
 public class AdminDashboardServiceImpl implements AdminDashboardService {
-
-    private static final int LOW_STOCK_THRESHOLD = 5;
 
     private final AdminUserReadModel userReadModel;
     private final AdminOrderReadModel orderReadModel;
@@ -58,6 +65,11 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         this.productReadModel = productReadModel;
     }
 
+    /**
+     * Computes the admin dashboard summary with user, product, order, revenue, and stock counts.
+     *
+     * @return dashboard summary response
+     */
     @Override
     public DashboardSummaryResponse getDashboardSummary() {
         long totalUsers = userReadModel.countAll();
@@ -79,7 +91,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         long cancelledOrders = orderReadModel.countByStatus(OrderStatus.CANCELLED);
 
         long outOfStockProducts = productReadModel.countOutOfStock();
-        long lowStockProducts = productReadModel.countLowStock(LOW_STOCK_THRESHOLD);
+        long lowStockProducts = productReadModel.countLowStock(InventoryConstants.LOW_STOCK_THRESHOLD);
 
         return DashboardSummaryResponse.from(
                 totalUsers,
@@ -95,6 +107,12 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         );
     }
 
+    /**
+     * Generates time-series sales analytics (daily/weekly/monthly), top-selling products,
+     * top categories, and revenue trends for the last 30 days.
+     *
+     * @return sales analytics response
+     */
     @Override
     public SalesAnalyticsResponse getSalesAnalytics() {
         LocalDate today = LocalDate.now(ZoneId.systemDefault());
@@ -104,10 +122,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endInstant = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        List<Order> orders = orderReadModel.findPlacedBetweenAsc(startInstant, endInstant)
-                .stream()
-                .filter(o -> o.getStatus() == OrderStatus.DELIVERED)
-                .toList();
+        List<Order> orders = orderReadModel.findPlacedBetweenAsc(startInstant, endInstant, OrderStatus.DELIVERED);
 
         Map<LocalDate, List<Order>> ordersByDate = orders.stream()
                 .collect(Collectors.groupingBy(
@@ -168,7 +183,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                     BigDecimal revenue = e.getValue().stream()
                             .map(oi -> oi.getUnitPriceSnapshot().multiply(BigDecimal.valueOf(oi.getQuantity())))
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    OrderItem first = e.getValue().get(0);
+                    OrderItem first = e.getValue().getFirst();
                     return new TopSellingProductData(
                             e.getKey(), first.getItemNameSnapshot(),
                             first.getItemDetails().getSku(), qty, revenue);
@@ -188,7 +203,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                             .map(oi -> oi.getUnitPriceSnapshot().multiply(BigDecimal.valueOf(oi.getQuantity())))
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                     return new TopCategoryData(
-                            e.getKey(), e.getValue().get(0).getItemDetails().getCategory().getName(),
+                            e.getKey(), e.getValue().getFirst().getItemDetails().getCategory().getName(),
                             qty, revenue);
                 })
                 .sorted(Comparator.comparing(TopCategoryData::totalRevenue).reversed())
@@ -215,10 +230,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 PaymentStatus.PAID, monthStart, endOfDay);
 
         long todayOrders = orderReadModel.countPlacedBetween(startOfDay, endOfDay);
-        long weekOrders = orderReadModel.findPlacedBetweenAsc(weekStart, endOfDay)
-                .stream().filter(o -> o.getStatus() == OrderStatus.DELIVERED).count();
-        long monthOrders = orderReadModel.findPlacedBetweenAsc(monthStart, endOfDay)
-                .stream().filter(o -> o.getStatus() == OrderStatus.DELIVERED).count();
+        long weekOrders = orderReadModel.countPlacedBetween(weekStart, endOfDay, OrderStatus.DELIVERED);
+        long monthOrders = orderReadModel.countPlacedBetween(monthStart, endOfDay, OrderStatus.DELIVERED);
 
         return new SalesAnalyticsResponse(
                 dailySales, weeklySales, monthlySales,
@@ -228,54 +241,46 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         );
     }
 
+    /**
+     * Collects the 10 most recent orders, payments, reviews, and user registrations.
+     *
+     * @return recent activity response
+     */
     @Override
     public RecentActivityResponse getRecentActivity() {
         List<Order> recentOrders = orderReadModel.findRecentTop10();
         List<RecentActivityResponse.RecentOrderData> recentOrderData = recentOrders.stream()
-                .map(order -> {
-                    Hibernate.initialize(order.getUser());
-                    return new RecentActivityResponse.RecentOrderData(
-                            order.getId(),
-                            order.getUser().getUsername(),
-                            order.getStatus().name(),
-                            order.getGrandTotal(),
-                            order.getPlacedAt()
-                    );
-                })
+                .map(order -> new RecentActivityResponse.RecentOrderData(
+                        order.getId(),
+                        order.getUser().getUsername(),
+                        order.getStatus().name(),
+                        order.getGrandTotal(),
+                        order.getPlacedAt()
+                ))
                 .toList();
 
         List<Payment> recentPayments = paymentReadModel.findRecentTop10();
         List<RecentActivityResponse.RecentPaymentData> recentPaymentData = recentPayments.stream()
-                .map(payment -> {
-                    Hibernate.initialize(payment.getOrder());
-                    if (payment.getOrder() != null) {
-                        Hibernate.initialize(payment.getOrder().getUser());
-                    }
-                    return new RecentActivityResponse.RecentPaymentData(
-                            payment.getId(),
-                            payment.getPaymentReference(),
-                            payment.getOrder() != null && payment.getOrder().getUser() != null
-                                    ? payment.getOrder().getUser().getUsername() : "Unknown",
-                            payment.getPaymentStatus().name(),
-                            payment.getAmount(),
-                            payment.getCreatedAt()
-                    );
-                })
+                .map(payment -> new RecentActivityResponse.RecentPaymentData(
+                        payment.getId(),
+                        payment.getPaymentReference(),
+                        payment.getOrder() != null && payment.getOrder().getUser() != null
+                                ? payment.getOrder().getUser().getUsername() : "Unknown",
+                        payment.getPaymentStatus().name(),
+                        payment.getAmount(),
+                        payment.getCreatedAt()
+                ))
                 .toList();
 
         List<ItemReview> recentReviews = productReadModel.findRecentReviewsTop10();
         List<RecentActivityResponse.RecentReviewData> recentReviewData = recentReviews.stream()
-                .map(review -> {
-                    Hibernate.initialize(review.getItem());
-                    Hibernate.initialize(review.getUser());
-                    return new RecentActivityResponse.RecentReviewData(
-                            review.getId(),
-                            review.getItem() != null ? review.getItem().getName() : "Unknown",
-                            review.getUser().getUsername(),
-                            review.getRating(),
-                            review.getCreatedAt()
-                    );
-                })
+                .map(review -> new RecentActivityResponse.RecentReviewData(
+                        review.getId(),
+                        review.getItem() != null ? review.getItem().getName() : "Unknown",
+                        review.getUser().getUsername(),
+                        review.getRating(),
+                        review.getCreatedAt()
+                ))
                 .toList();
 
         List<User> recentUsers = userReadModel.findRecentTop10();

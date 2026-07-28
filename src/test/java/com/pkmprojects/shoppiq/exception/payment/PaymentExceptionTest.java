@@ -62,7 +62,7 @@ class PaymentExceptionTest {
     @Test
     @DisplayName("DuplicatePaymentException — 409 with PAYMENT_ALREADY_EXISTS")
     void duplicatePayment() {
-        DuplicatePaymentException ex = new DuplicatePaymentException(10L);
+        DuplicatePaymentException ex = DuplicatePaymentException.forOrder(10L);
 
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PAYMENT_ALREADY_EXISTS);
         assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.CONFLICT);

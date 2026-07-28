@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.controller;
 import com.pkmprojects.shoppiq.controller.category.CategoryController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
@@ -22,6 +22,7 @@ import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.category.CategoryService;
 import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -68,7 +69,7 @@ class CategoryControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @MockitoBean
     private CategoryService categoryService;
@@ -151,15 +152,16 @@ class CategoryControllerTest {
 
         @Test
         @WithMockUser(roles = "ADMIN")
-        @DisplayName("Returns 400 when description is blank")
-        void create_blankDescription_returns400() throws Exception {
+        @DisplayName("Returns 201 when description is blank (description is optional)")
+        void create_blankDescription_returns201() throws Exception {
             CategoryRequest request = new CategoryRequest("Electronics", "");
+            when(categoryService.create(any(CategoryRequest.class)))
+                    .thenReturn(stubResponse(1L, "Electronics", "electronics"));
 
             mockMvc.perform(post("/categories").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.errorCode").value("VALIDATION-400-001"));
+                    .andExpect(status().isCreated());
         }
 
         @Test
@@ -311,6 +313,11 @@ class CategoryControllerTest {
     @Nested
     @DisplayName("GET /categories/all")
     class GetAll {
+
+        @BeforeEach
+        void setUp() {
+            when(paginationProperties.maxPageSize()).thenReturn(100);
+        }
 
         @Test
         @WithMockUser

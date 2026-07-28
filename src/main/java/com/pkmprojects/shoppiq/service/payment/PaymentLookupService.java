@@ -9,15 +9,16 @@ import org.springframework.data.domain.Page;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * Read-only payment query facade.
+ * <strong>Spring Boot Concept:</strong> Read-only payment query facade.
  *
  * <p>Decouples service-layer code from {@code PaymentRepository},
  * providing payment lookup, aggregate, and paging queries.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.4.0
  */
 public interface PaymentLookupService {
@@ -81,4 +82,23 @@ public interface PaymentLookupService {
      * Returns the 10 most recently created payments.
      */
     List<Payment> findRecentTop10();
+
+    /**
+     * Batch-sums paid amounts for the given user IDs — avoids N+1
+     * when enriching a list of users with their total spent (BUG-003).
+     *
+     * @param userIds the user IDs to sum paid amounts for
+     * @return map of userId → total paid amount
+     */
+    Map<Long, BigDecimal> sumPaidAmountByUserIds(List<Long> userIds);
+
+    /**
+     * Returns [paidAt/createdAt, amount] tuples for PAID payments within date range.
+     */
+    List<Object[]> aggregateDailyRevenueBetween(Instant start, Instant end);
+
+    /**
+     * Returns [paymentMethod, amount] tuples for PAID payments within date range.
+     */
+    List<Object[]> aggregateRevenueByPaymentMethodBetween(Instant start, Instant end);
 }

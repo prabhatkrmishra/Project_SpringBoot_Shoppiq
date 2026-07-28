@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request DTO for creating or updating a category.
+ * <strong>Spring Boot Concept:</strong> Request DTO for creating or updating a category.
  *
  * <p>Used in {@code CategoryController} to receive category data
  * and validate it before passing to the service layer.</p>
@@ -59,7 +59,6 @@ public record CategoryRequest(
           <p>Maximum 255 characters. Displayed on category landing pages
           to help customers understand what products they'll find.</p>
          */
-        @NotBlank(message = "Category description cannot be blank")
         @Size(max = 255, message = "Description cannot exceed 255 characters")
         String description
 

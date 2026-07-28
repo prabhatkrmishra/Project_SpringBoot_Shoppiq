@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.dto.admin.response;
 import java.math.BigDecimal;
 
 /**
- * Response DTO for admin product inventory listing.
+ * <strong>Spring Boot Concept:</strong> Response DTO for admin product inventory listing.
  *
  * <p>
  * This DTO provides a product-centric view of inventory with

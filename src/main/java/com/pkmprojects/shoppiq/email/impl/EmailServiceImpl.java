@@ -14,12 +14,13 @@ import com.pkmprojects.shoppiq.repository.notification.NotificationPreferenceRep
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
- * Default implementation of {@link EmailService}.
+ * <strong>Spring Boot Concept:</strong> Service-layer implementation
+ * ({@code @Service}) of {@link EmailService} that orchestrates email
+ * delivery with preference checking, audit logging, and error handling.
  *
  * <p>
  * Handles email delivery with preference checking, logging, and error handling.
@@ -27,7 +28,29 @@ import java.time.LocalDateTime;
  * user notification preferences.
  * </p>
  *
- * @author PrabhatKrMishra
+ * <p><strong>Educational value:</strong> This class demonstrates the
+ * <strong>Service layer</strong> in a clean layered architecture:
+ * <ul>
+ *   <li><strong>Dependency injection via constructor</strong> — uses
+ *       Lombok {@code @RequiredArgsConstructor} (which generates a constructor
+ *       for all final fields) and Spring resolves the three dependencies:
+ *       {@link com.pkmprojects.shoppiq.email.provider.EmailProviderRegistry},
+ *       {@link com.pkmprojects.shoppiq.email.repository.EmailLogRepository}, and
+ *       {@link com.pkmprojects.shoppiq.repository.notification.NotificationPreferenceRepository}.</li>
+ *   <li><strong>Repository pattern</strong> — persistence concerns are
+ *       delegated to repositories, keeping the service focused on
+ *       orchestration and business rules.</li>
+ *   <li><strong>Strategy delegation</strong> — the actual email sending is
+ *       delegated to the active {@link com.pkmprojects.shoppiq.email.provider.EmailProvider}
+ *       resolved from the registry. The service doesn't know whether it's
+ *       using SMTP or Console — it just calls {@code provider.send(message)}.</li>
+ *   <li><strong>Defensive error handling</strong> — both {@code EmailSendException}
+ *       and generic {@code Exception} are caught separately, with different
+ *       log levels, ensuring that email failures never propagate to the caller.</li>
+ * </ul>
+ * </p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Slf4j
@@ -40,11 +63,10 @@ public class EmailServiceImpl implements EmailService {
     private final NotificationPreferenceRepository preferenceRepository;
 
     @Override
-    @Transactional
     public void sendEmail(EmailMessage message) {
         if (message.getUserId() != null && !shouldSendEmail(message.getUserId(), message.getEmailType())) {
             log.debug("Email skipped due to user preference: type={}, userId={}", message.getEmailType(), message.getUserId());
-            logEmail(message, null, EmailStatus.PENDING);
+            logSkippedEmail(message);
             return;
         }
 
@@ -52,7 +74,6 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    @Transactional
     public void sendCriticalEmail(EmailMessage message) {
         sendWithLogging(message);
     }
@@ -64,7 +85,7 @@ public class EmailServiceImpl implements EmailService {
         try {
             provider.send(message);
             emailLog.setStatus(EmailStatus.SENT);
-            emailLog.setSentAt(LocalDateTime.now());
+            emailLog.setSentAt(Instant.now());
             log.debug("Email sent: type={}, to={}, provider={}", message.getEmailType(), message.getTo(), provider.getProviderName());
         } catch (EmailSendException e) {
             emailLog.setStatus(EmailStatus.FAILED);
@@ -108,10 +129,9 @@ public class EmailServiceImpl implements EmailService {
                 .build();
     }
 
-    private void logEmail(EmailMessage message, String errorMessage, EmailStatus status) {
+    private void logSkippedEmail(EmailMessage message) {
         EmailLog emailLog = createEmailLog(message, "SKIPPED");
-        emailLog.setErrorMessage(errorMessage);
-        emailLog.setStatus(status);
+        emailLog.setStatus(EmailStatus.PENDING);
         emailLogRepository.save(emailLog);
     }
 }

@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.aiservice.enums;
 
 /**
- * Represents the lifecycle status of an AI chat conversation.
+ * <strong>Spring Boot Concept:</strong> Represents the lifecycle status of an AI chat conversation.
  *
  * <p>
  * Conversations transition from {@link #ACTIVE} to {@link #RESOLVED} when the

@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.auth.oauth2;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
@@ -21,25 +21,27 @@ import java.util.Arrays;
 import java.util.Base64;
 
 /**
- * Cookie-based replacement for the HTTP-session storage of
- * {@link OAuthRegistrationSession}.
+ * Cookie-based service for persisting {@link OAuthRegistrationSession} during
+ * the OAuth2 registration completion flow.
  *
- * <h4>Why this exists</h4>
- * <p>With {@code SessionCreationPolicy.STATELESS} the server never creates or
- * reads an {@code HttpSession}. New OAuth2 users who must complete registration
- * still need a short-lived token that survives the round-trip between the
- * OAuth2 callback ({@code OAuth2SuccessHandler}) and the registration endpoint
- * ({@code POST /auth/google/complete-profile}). This service moves that state
- * into an HttpOnly cookie instead of a server-side session.</p>
+ * <h3>Spring Security / OAuth2 concepts demonstrated</h3>
+ * <ul>
+ *   <li><strong>Stateless OAuth2 registration state</strong> — with
+ *       {@code SessionCreationPolicy.STATELESS}, new OAuth2 users who must
+ *       complete registration still need a short-lived token that survives
+ *       the round-trip between the OAuth2 callback and the registration
+ *       endpoint. This cookie replaces what would typically be an HTTP session.</li>
+ *   <li><strong>HMAC-signed cookie payload</strong> — the serialized JSON is
+ *       signed with HMAC-SHA256 using the JWT secret, preventing tampering.
+ *       This is critical because the email address drives the local account
+ *       creation.</li>
+ *   <li><strong>Two-layer expiry enforcement</strong> — the cookie has a
+ *       {@code Max-Age} (browser deletes it automatically) AND the server
+ *       re-validates the {@code authenticatedAt} timestamp server-side in
+ *       {@code AuthController}, providing defense in depth.</li>
+ * </ul>
  *
- * <h4>What the cookie holds</h4>
- * <p>An {@link OAuthRegistrationSession} record — verified Google email,
- * display name, and an {@code authenticatedAt} timestamp — is serialized to
- * JSON and Base64url-encoded. The registration endpoint re-reads this cookie
- * to obtain the verified identity and enforce a timeout window, then clears it
- * once the local account is created.</p>
- *
- * <h4>Cookie lifecycle</h4>
+ * <h3>Cookie lifecycle</h3>
  * <pre>
  * OAuth2SuccessHandler — new user detected
  *       ↓
@@ -56,7 +58,7 @@ import java.util.Base64;
  * JWT cookie issued, user is logged in
  * </pre>
  *
- * <h4>Security</h4>
+ * <h3>Security properties</h3>
  * <ul>
  *   <li>{@code HttpOnly} — JavaScript cannot read the cookie, mitigating XSS.</li>
  *   <li>{@code Secure} — HTTPS-only in production (env-driven).</li>
@@ -64,21 +66,29 @@ import java.util.Base64;
  *       registration form lives on the same origin, so this does not restrict
  *       legitimate use while blocking CSRF.</li>
  *   <li>Short {@code Max-Age} — controlled by {@code oauth.registration
- *       .timeout-minutes} (default 10 min); the cookie is also re-validated
- *       for expiry server-side in {@code AuthController}.</li>
+ *       .timeout-minutes} (default 10 min).</li>
+ *   <li>HMAC-SHA256 integrity — prevents cookie tampering.</li>
  * </ul>
  *
- * <h4>Why the cookie content is not sensitive</h4>
- * <p>The cookie carries only the Google-verified email, display name, and a
- * timestamp — information already visible to the user and not a credential.
- * The registration endpoint always re-validates the timeout; if the cookie
- * is replayed after expiry it is rejected. The JWT (the actual credential)
- * is only issued after successful account creation and is written to a
- * separate cookie at that point.</p>
+ * <h3>Design patterns</h3>
+ * <ul>
+ *   <li><strong>Service pattern</strong> — encapsulates all cookie read/write/clear
+ *       operations behind a clean {@code save()}, {@code read()}, {@code clear()}
+ *       API, hiding serialization, HMAC, and cookie attribute details.</li>
+ *   <li><strong>Null-safe read</strong> — {@link #read} returns {@code null}
+ *       for any failure (missing cookie, invalid signature, deserialization
+ *       error) rather than throwing, simplifying error handling in the controller.</li>
+ *   <li><strong>JSON + HMAC instead of Java serialization</strong> — avoids
+ *       Java serialization vulnerabilities (gadget-chain RCE) that would be
+ *       present if using Spring Security's default session-based approach.</li>
+ * </ul>
  *
  * @see OAuthRegistrationSession
  * @see com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler
  * @see com.pkmprojects.shoppiq.auth.controller.AuthController
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @Component
 public class OAuthRegistrationCookieService {
@@ -137,18 +147,18 @@ public class OAuthRegistrationCookieService {
      * {@code JavaTimeModule} registered). This makes the cookie value human-readable
      * when Base64-decoded, which aids debugging.</p>
      */
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     @Value("${jwt.secret}")
     private String jwtSecret;
 
     /**
-     * Constructs the service with the application's primary Jackson mapper.
+     * Constructs the service with the application's primary Jackson 3 mapper.
      *
-     * @param objectMapper the {@link ObjectMapper} bean provided by
+     * @param objectMapper the {@link JsonMapper} bean provided by
      *                     {@code JacksonConfig}; must not be {@code null}
      */
-    public OAuthRegistrationCookieService(ObjectMapper objectMapper) {
+    public OAuthRegistrationCookieService(JsonMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

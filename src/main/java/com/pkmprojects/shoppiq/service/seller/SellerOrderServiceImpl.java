@@ -16,6 +16,7 @@ import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotVerifiedException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException;
 import com.pkmprojects.shoppiq.repository.order.OrderRepository;
+import com.pkmprojects.shoppiq.service.order.OrderStatusTransitionValidator;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Default implementation of {@link SellerOrderService}.
+ * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerOrderService}.
  *
  * <p>
  * Provides order management for sellers. Sellers can view orders
@@ -31,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
  * in the order belong to them.
  * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Service
@@ -41,15 +42,26 @@ public class SellerOrderServiceImpl implements SellerOrderService {
     private final SellerLookupService sellerLookupService;
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final OrderStatusTransitionValidator orderStatusTransitionValidator;
 
     public SellerOrderServiceImpl(SellerLookupService sellerLookupService,
                                   OrderRepository orderRepository,
-                                  ApplicationEventPublisher eventPublisher) {
+                                  ApplicationEventPublisher eventPublisher,
+                                  OrderStatusTransitionValidator orderStatusTransitionValidator) {
         this.sellerLookupService = sellerLookupService;
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
+        this.orderStatusTransitionValidator = orderStatusTransitionValidator;
     }
 
+    /**
+     * Retrieves a paginated list of orders containing the seller's products.
+     *
+     * @param user authenticated user
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated seller order responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<SellerOrderResponse> getOrders(User user, int page, int size) {
@@ -59,6 +71,14 @@ public class SellerOrderServiceImpl implements SellerOrderService {
         return PageResponse.of(orderPage, order -> SellerOrderResponse.from(order, seller.getId()));
     }
 
+    /**
+     * Retrieves a single order by ID, ensuring it contains the seller's products.
+     *
+     * @param user    authenticated user
+     * @param orderId order ID
+     * @return seller order response
+     * @throws OrderNotFoundException if the order does not exist or contains no seller items
+     */
     @Override
     @Transactional(readOnly = true)
     public SellerOrderResponse getOrder(User user, Long orderId) {
@@ -72,6 +92,20 @@ public class SellerOrderServiceImpl implements SellerOrderService {
         return SellerOrderResponse.from(order, seller.getId());
     }
 
+    /**
+     * Updates the order status with seller ownership validation.
+     *
+     * <p>Only allows status changes when all items in the order belong to the
+     * seller. Publishes an {@code OrderStatusChangedEvent} on success.</p>
+     *
+     * @param user      authenticated user
+     * @param orderId   order ID
+     * @param newStatus target order status
+     * @return updated seller order response
+     * @throws OrderNotFoundException                if the order does not exist
+     * @throws OrderNotFullyOwnedException            if not all items belong to the seller
+     * @throws OrderInvalidStatusTransitionException  if the status transition is not allowed
+     */
     @Override
     public SellerOrderResponse updateOrderStatus(User user, Long orderId, OrderStatus newStatus) {
         Seller seller = findActiveSeller(user);
@@ -88,8 +122,8 @@ public class SellerOrderServiceImpl implements SellerOrderService {
         }
 
         OrderStatus currentStatus = order.getStatus();
-        if (!isValidTransition(currentStatus, newStatus)) {
-            throw new OrderInvalidStatusTransitionException(currentStatus, newStatus);
+        if (!orderStatusTransitionValidator.isValidTransition(currentStatus, newStatus)) {
+            throw OrderInvalidStatusTransitionException.fromTo(currentStatus, newStatus);
         }
 
         order.setStatus(newStatus);
@@ -98,36 +132,6 @@ public class SellerOrderServiceImpl implements SellerOrderService {
         eventPublisher.publishEvent(new OrderStatusChangedEvent(order, currentStatus, newStatus));
 
         return SellerOrderResponse.from(order, seller.getId());
-    }
-
-    private boolean isValidTransition(OrderStatus from, OrderStatus to) {
-        if (from == to) return false;
-
-        if (from == OrderStatus.PLACED) {
-            return to == OrderStatus.CONFIRMED
-                    || to == OrderStatus.CANCEL_REQUEST
-                    || to == OrderStatus.CANCELLED;
-        }
-        if (from == OrderStatus.CANCEL_REQUEST) return to == OrderStatus.CANCELLED;
-        if (from == OrderStatus.CONFIRMED) return to == OrderStatus.SHIPPED;
-        if (from == OrderStatus.SHIPPED) return to == OrderStatus.OUT_FOR_DELIVERY;
-        if (from == OrderStatus.OUT_FOR_DELIVERY) return to == OrderStatus.DELIVERED;
-        if (from == OrderStatus.DELIVERED) {
-            return to == OrderStatus.RETURN_REQUEST
-                    || to == OrderStatus.REFUND_REQUEST
-                    || to == OrderStatus.REPLACE_REQUEST;
-        }
-        if (from == OrderStatus.RETURN_REQUEST) return to == OrderStatus.RETURN_PICKUP;
-        if (from == OrderStatus.REFUND_REQUEST) return to == OrderStatus.RETURN_PICKUP;
-        if (from == OrderStatus.REPLACE_REQUEST) return to == OrderStatus.REPLACE_PICKUP;
-        if (from == OrderStatus.RETURN_PICKUP) return to == OrderStatus.PICKUP_ARRIVED;
-        if (from == OrderStatus.PICKUP_ARRIVED) {
-            return to == OrderStatus.RETURNED || to == OrderStatus.REFUNDED || to == OrderStatus.ISSUE_REPLACE;
-        }
-        if (from == OrderStatus.REPLACE_PICKUP) return to == OrderStatus.PICKUP_ARRIVED;
-        if (from == OrderStatus.ISSUE_REPLACE) return to == OrderStatus.REPLACE_DELIVERED;
-        if (from == OrderStatus.REPLACE_DELIVERED) return to == OrderStatus.REPLACED;
-        return false;
     }
 
     private Order findOrderOrThrow(Long orderId) {

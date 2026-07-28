@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.dto.cart;
 import java.math.BigDecimal;
 
 /**
- * Response payload for a single cart line item.
+ * <strong>Spring Boot Concept:</strong> Response payload for a single cart line item.
  *
  * @param cartItemId    ID of the {@code CartItem} record
  * @param itemDetailsId ID of the associated {@code ItemDetails}

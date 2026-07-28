@@ -46,8 +46,9 @@ import com.pkmprojects.shoppiq.service.item.ItemWriteService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import com.pkmprojects.shoppiq.service.seller.SellerLookupService;
 import com.pkmprojects.shoppiq.service.seller.SellerWriteService;
+import com.pkmprojects.shoppiq.util.PriceUtil;
 import com.pkmprojects.shoppiq.util.SlugUtil;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -59,33 +60,23 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Default implementation of {@link AdminTestDataService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminTestDataService}
+ * containing bulk-creation business logic for populating test data.
  *
- * <p>
- * Provides transactional bulk-creation methods for populating test data.
- * All methods run inside a single transaction to maintain referential
- * integrity.
+ * <p>Creates users, items, addresses, reviews, sellers, cart items, and orders
+ * in bulk within single transactions. Used by {@code AdminTestDataController}
+ * for development and testing environments.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Bulk operations span multiple entities and repository calls that must succeed or fail atomically.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability, with 14 collaborators explicit in the constructor.</li>
+ * </ul>
  * </p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Create users with encoded passwords and default CUSTOMER role.</li>
- *     <li>Create addresses for existing users.</li>
- *     <li>Create product reviews for existing users and items.</li>
- *     <li>Create seller profiles for existing users.</li>
- *     <li>Add items to user carts.</li>
- *     <li>Create orders from user carts via checkout flow.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Uses constructor injection.</li>
- *     <li>All write operations run inside transactions.</li>
- *     <li>User context is supplied inline per item (userId).</li>
- *     <li>Duplicates and missing references cause the transaction to roll back.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see AdminTestDataService
  * @since 1.0.0
  */
 @Service
@@ -139,6 +130,12 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         this.roleService = roleService;
     }
 
+    /**
+     * Creates multiple user accounts with encoded passwords and default CUSTOMER role.
+     *
+     * @param request bulk user creation payload
+     * @return list of created user responses
+     */
     @Override
     public List<UserResponse> createBulkUsers(BulkUserRequest request) {
         List<UserResponse> responses = new ArrayList<>();
@@ -159,6 +156,12 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         return responses;
     }
 
+    /**
+     * Creates multiple items with auto-approval, category/seller validation, and unique slug generation.
+     *
+     * @param request bulk item creation payload
+     * @return list of created item responses
+     */
     @Override
     public List<ItemResponse> createBulkItems(BulkAdminItemRequest request) {
         List<ItemResponse> responses = new ArrayList<>();
@@ -199,6 +202,12 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         return responses;
     }
 
+    /**
+     * Creates multiple addresses respecting the one-default invariant per user.
+     *
+     * @param request bulk address creation payload
+     * @return list of created address responses
+     */
     @Override
     public List<AddressResponse> createBulkAddresses(BulkAddressRequest request) {
         List<AddressResponse> responses = new ArrayList<>();
@@ -231,6 +240,12 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         return responses;
     }
 
+    /**
+     * Creates multiple product reviews, preventing duplicates per user-item pair.
+     *
+     * @param request bulk review creation payload
+     * @return list of created review responses
+     */
     @Override
     public List<ItemReviewResponse> createBulkReviews(BulkReviewRequest request) {
         List<ItemReviewResponse> responses = new ArrayList<>();
@@ -263,6 +278,12 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         return responses;
     }
 
+    /**
+     * Creates multiple seller profiles, preventing duplicates per user.
+     *
+     * @param request bulk seller creation payload
+     * @return list of created seller responses
+     */
     @Override
     public List<SellerResponse> createBulkSellers(BulkSellerRequest request) {
         List<SellerResponse> responses = new ArrayList<>();
@@ -285,7 +306,7 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
                     .panNumber(item.seller().panNumber())
                     .verificationStatus(VerificationStatus.PENDING)
                     .sellerStatus(SellerStatus.INACTIVE)
-                    .joinedAt(LocalDateTime.now())
+                    .joinedAt(Instant.now())
                     .build();
 
             Seller saved = sellerWriteService.save(seller);
@@ -295,6 +316,12 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         return responses;
     }
 
+    /**
+     * Adds items to user carts in bulk, merging quantities for existing duplicates.
+     *
+     * @param request bulk cart item creation payload
+     * @return list of created cart item responses
+     */
     @Override
     public List<CartItemResponse> createBulkCartItems(BulkCartRequest request) {
         List<CartItemResponse> responses = new ArrayList<>();
@@ -335,6 +362,12 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         return responses;
     }
 
+    /**
+     * Creates multiple orders via full checkout flow — validates stock, reduces inventory, clears carts.
+     *
+     * @param request bulk order creation payload
+     * @return list of checkout responses
+     */
     @Override
     public List<CheckoutResponse> createBulkOrders(BulkOrderRequest request) {
         List<CheckoutResponse> responses = new ArrayList<>();
@@ -432,6 +465,9 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
     // Private helpers
     // ---------------------------------------------------------------
 
+    /**
+     * Finds a user by ID or throws {@link UserNotFoundException}.
+     */
     private User findUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> UserNotFoundException.id(userId));
@@ -440,11 +476,12 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
     /**
      * Maps a {@link CartItem} to a {@link CartItemResponse}.
      *
-     * <p>Replicates the mapping logic from {@link CartServiceImpl}.</p>
+     * <p>Delegates pricing calculation to {@link PriceUtil#effectivePrice}
+     * to avoid duplicating business logic from {@link CartServiceImpl}.</p>
      */
     private CartItemResponse toCartItemResponse(CartItem cartItem) {
         ItemDetails details = cartItem.getItemDetails();
-        java.math.BigDecimal unitPrice = effectivePrice(details);
+        java.math.BigDecimal unitPrice = PriceUtil.effectivePrice(details);
         java.math.BigDecimal lineTotal = unitPrice.multiply(
                 java.math.BigDecimal.valueOf(cartItem.getQuantity()));
 
@@ -467,19 +504,6 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
                 lineTotal,
                 details.getImageUrl()
         );
-    }
-
-    /**
-     * Computes the effective (post-discount) price for an item.
-     *
-     * <p>Replicates the pricing logic from {@link CartServiceImpl}.</p>
-     */
-    private java.math.BigDecimal effectivePrice(ItemDetails itemDetails) {
-        java.math.BigDecimal discount = itemDetails.getDiscountPercentage()
-                .divide(java.math.BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
-        return itemDetails.getPrice()
-                .multiply(java.math.BigDecimal.ONE.subtract(discount))
-                .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     /**

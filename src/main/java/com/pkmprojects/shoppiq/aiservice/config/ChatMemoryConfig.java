@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Spring configuration that provides the LangChain4j {@link ChatMemoryProvider} bean
+ * <strong>Spring Boot Concept:</strong> Spring configuration that provides the LangChain4j {@link ChatMemoryProvider} bean
  * and memory lifecycle management.
  *
  * <p>

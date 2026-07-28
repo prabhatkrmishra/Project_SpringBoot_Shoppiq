@@ -116,10 +116,10 @@ class SellerDashboardServiceImplTest {
             when(orderRepository.countDistinctBySellerId(testSeller.getId())).thenReturn(3L);
             when(orderItemRepository.sumRevenueBySellerIdAndPaymentStatus(testSeller.getId(), PaymentStatus.PAID))
                     .thenReturn(new BigDecimal("500.00"));
-            when(itemDetailsLookupService.findLowStockProductsBySellerId(5, testSeller.getId()))
-                    .thenReturn(List.of(testItemDetails));
-            when(itemDetailsLookupService.findOutOfStockProductsBySellerId(testSeller.getId()))
-                    .thenReturn(List.of());
+            when(itemDetailsLookupService.countLowStockProductsBySellerId(5, testSeller.getId()))
+                    .thenReturn(1L);
+            when(itemDetailsLookupService.countOutOfStockProductsBySellerId(testSeller.getId()))
+                    .thenReturn(0L);
 
             SellerDashboardResponse result = sellerDashboardService.getDashboardSummary(testUser);
 
@@ -138,10 +138,10 @@ class SellerDashboardServiceImplTest {
             when(orderRepository.countDistinctBySellerId(testSeller.getId())).thenReturn(0L);
             when(orderItemRepository.sumRevenueBySellerIdAndPaymentStatus(testSeller.getId(), PaymentStatus.PAID))
                     .thenReturn(null);
-            when(itemDetailsLookupService.findLowStockProductsBySellerId(5, testSeller.getId()))
-                    .thenReturn(List.of());
-            when(itemDetailsLookupService.findOutOfStockProductsBySellerId(testSeller.getId()))
-                    .thenReturn(List.of());
+            when(itemDetailsLookupService.countLowStockProductsBySellerId(5, testSeller.getId()))
+                    .thenReturn(0L);
+            when(itemDetailsLookupService.countOutOfStockProductsBySellerId(testSeller.getId()))
+                    .thenReturn(0L);
 
             SellerDashboardResponse result = sellerDashboardService.getDashboardSummary(testUser);
 

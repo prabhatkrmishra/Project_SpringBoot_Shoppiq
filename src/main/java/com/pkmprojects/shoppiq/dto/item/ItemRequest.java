@@ -6,7 +6,7 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 
 /**
- * Request DTO used for creating and updating {@link Item}.
+ * <strong>Spring Boot Concept:</strong> Request DTO used for creating and updating {@link Item}.
  *
  * <p>
  * This DTO represents the complete product information required by the

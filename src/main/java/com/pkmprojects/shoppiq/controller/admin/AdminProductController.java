@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Admin REST controller for product lifecycle management.
+ * <strong>Spring Boot Concept:</strong> Admin REST controller for product lifecycle management.
  *
  * <h2>Endpoints</h2>
  * <ul>
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  *     <li>PUT  /api/admin/products/{id}/reject  — reject a product</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Validated
@@ -42,6 +42,13 @@ public class AdminProductController {
         this.pagination = pagination;
     }
 
+    /**
+     * Returns a paginated list of products in DRAFT status pending admin review.
+     *
+     * @param page zero-based page index
+     * @param size page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of pending products
+     */
     @GetMapping("/pending")
     public ResponseEntity<PageResponse<AdminProductResponse>> getPendingProducts(
             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -50,12 +57,24 @@ public class AdminProductController {
         return ResponseEntity.ok(adminProductService.getPendingProducts(page, size));
     }
 
+    /**
+     * Publishes a pending product, making it visible on the storefront.
+     *
+     * @param id the product ID
+     * @return 200 OK with the updated product
+     */
     @PutMapping("/{id}/publish")
     public ResponseEntity<AdminProductResponse> publishProduct(
             @PathVariable Long id) {
         return ResponseEntity.ok(adminProductService.publishProduct(id));
     }
 
+    /**
+     * Rejects a pending product, preventing it from being published.
+     *
+     * @param id the product ID
+     * @return 200 OK with the updated product (status remains DRAFT or set to REJECTED)
+     */
     @PutMapping("/{id}/reject")
     public ResponseEntity<AdminProductResponse> rejectProduct(
             @PathVariable Long id) {

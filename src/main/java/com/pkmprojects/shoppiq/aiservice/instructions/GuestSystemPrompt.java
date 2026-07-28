@@ -4,7 +4,7 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import org.springframework.stereotype.Component;
 
 /**
- * System prompt for guest (unauthenticated) conversations.
+ * <strong>Spring Boot Concept:</strong> System prompt for guest (unauthenticated) conversations.
  *
  * <p>
  * More limited than the authenticated prompt — does not include order,

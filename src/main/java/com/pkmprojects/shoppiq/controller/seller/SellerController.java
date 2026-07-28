@@ -18,25 +18,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller for seller profile management.
+ * <strong>Spring Boot Concept:</strong> REST controller for seller profile management.
  *
- * <h2>Responsibilities</h2>
+ * <p>Handles seller registration, profile retrieval, profile updates, account
+ * deactivation, and store publication. Most endpoints resolve the seller from
+ * the authenticated principal.</p>
+ *
+ * <p>Key design points:
  * <ul>
- *     <li>Register a new seller application.</li>
- *     <li>Retrieve the authenticated seller's profile.</li>
- *     <li>Update the authenticated seller's profile.</li>
- *     <li>Delete (deactivate) the authenticated seller's account.</li>
+ *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
+ *   <li><strong>Self-service</strong> — all operations act on the authenticated user's own seller profile only.</li>
  * </ul>
+ * </p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>All endpoints require authentication.</li>
- *     <li>The authenticated user is injected via {@link AuthenticationPrincipal}.</li>
- *     <li>Registration returns {@code 201 Created}.</li>
- *     <li>Profile retrieval, update, and delete return {@code 200 OK}.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see SellerService
  * @since 1.0.0
  */
 @RestController
@@ -49,6 +45,13 @@ public class SellerController {
         this.sellerService = sellerService;
     }
 
+    /**
+     * Registers a new seller application for the authenticated user.
+     *
+     * @param request     the seller registration payload
+     * @param currentUser the authenticated user requesting seller status
+     * @return 201 Created with the created seller profile
+     */
     @PostMapping("/register")
     public ResponseEntity<SellerResponse> register(
             @Valid @RequestBody SellerRegistrationRequest request,
@@ -57,6 +60,12 @@ public class SellerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    /**
+     * Returns the authenticated seller's profile.
+     *
+     * @param currentUser the authenticated seller
+     * @return 200 OK with the seller profile
+     */
     @GetMapping("/profile")
     public ResponseEntity<SellerResponse> getProfile(
             @AuthenticationPrincipal(expression = "user") User currentUser) {
@@ -64,6 +73,13 @@ public class SellerController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Updates the authenticated seller's profile information.
+     *
+     * @param request     the updated profile data
+     * @param currentUser the authenticated seller
+     * @return 200 OK with the updated seller profile
+     */
     @PutMapping("/update")
     public ResponseEntity<SellerResponse> updateProfile(
             @Valid @RequestBody SellerProfileUpdateRequest request,
@@ -72,6 +88,12 @@ public class SellerController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Deactivates (soft-deletes) the authenticated seller's account.
+     *
+     * @param currentUser the authenticated seller
+     * @return 200 OK
+     */
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteProfile(
             @AuthenticationPrincipal(expression = "user") User currentUser) {
@@ -79,6 +101,12 @@ public class SellerController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Publishes the seller's storefront, making it visible to customers.
+     *
+     * @param currentUser the authenticated seller
+     * @return 200 OK
+     */
     @PutMapping("/store/publish")
     public ResponseEntity<Void> publishStore(
             @AuthenticationPrincipal(expression = "user") User currentUser) {

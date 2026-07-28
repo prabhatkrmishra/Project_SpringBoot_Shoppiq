@@ -15,7 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST controller that exposes shopping-cart endpoints for authenticated
+ * <strong>Spring Boot Concept:</strong> REST controller that exposes shopping-cart endpoints for authenticated
  * customers.
  *
  * <p>

@@ -8,6 +8,11 @@ import java.math.BigDecimal;
  * <p>Shows commission details for each seller, including revenue
  * and computed commission based on the seller's commission rate.</p>
  *
+ * <p><b>Computed field pattern:</b> {@code commissionEarned} is calculated
+ * in the static factory method as {@code totalRevenue × (commissionRate / 100)}.
+ * This pattern keeps computation in the DTO layer, keeping controllers and
+ * services focused on orchestration.</p>
+ *
  * @param sellerId       seller identifier
  * @param businessName   seller business name
  * @param totalOrders    total orders containing seller's products
@@ -15,7 +20,7 @@ import java.math.BigDecimal;
  * @param commissionRate seller's commission rate (percentage)
  * @param commissionEarned computed commission amount
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record CommissionReportResponse(

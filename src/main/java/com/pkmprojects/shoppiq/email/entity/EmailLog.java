@@ -7,14 +7,38 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * Records every email sent by the application for auditing and debugging.
+ * <strong>Spring Boot Concept:</strong> JPA entity that records every email
+ * sent by the application for auditing and debugging purposes. This is an
+ * example of the <strong>Audit Log</strong> pattern in a layered Spring Boot
+ * application.
  *
  * <p>
  * Each row captures the recipient, email type, delivery status, and
  * the provider used to send the email. Failed sends include the error message.
  * </p>
  *
- * @author PrabhatKrMishra
+ * <p><strong>Educational value:</strong> This entity demonstrates:
+ * <ul>
+ *   <li><strong>JPA entity mapping</strong> — {@code @Entity}, {@code @Table},
+ *       {@code @Column}, {@code @Enumerated}, and {@code @ManyToOne}
+ *       annotations for relational mapping.</li>
+ *   <li><strong>AuditableEntity inheritance</strong> — extends a base entity
+ *       that provides created-at, updated-at, and other audit fields
+ *       (common Spring Data JPA pattern using {@code @EntityListeners} or
+ *       {@code AuditingEntityListener}).</li>
+ *   <li><strong>Lazy fetching</strong> — the {@code User} relationship uses
+ *       {@code FetchType.LAZY} for performance, with a foreign key constraint
+ *       named explicitly via {@code @ForeignKey}.</li>
+ *   <li><strong>Nested enum</strong> — {@code EmailStatus} is defined as a
+ *       nested enum for cohesive domain modeling (PENDING → SENT / FAILED).</li>
+ *   <li><strong>Lombok boilerplate reduction</strong> — uses {@code @Getter},
+ *       {@code @Setter}, {@code @Builder}, {@code @NoArgsConstructor},
+ *       {@code @AllArgsConstructor}, and
+ *       {@code @EqualsAndHashCode(callSuper = true)}.</li>
+ * </ul>
+ * </p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity
@@ -79,7 +103,7 @@ public class EmailLog extends AuditableEntity {
      * Timestamp when the email was sent (or attempted).
      */
     @Column(name = "sent_at")
-    private java.time.LocalDateTime sentAt;
+    private java.time.Instant sentAt;
 
     /**
      * Email delivery status.

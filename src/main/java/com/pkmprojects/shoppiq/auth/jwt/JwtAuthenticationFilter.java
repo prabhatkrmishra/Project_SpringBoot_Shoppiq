@@ -10,7 +10,6 @@ import com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,68 +30,81 @@ import java.io.IOException;
 import java.net.URI;
 
 /**
- * JWT Authentication Filter that processes the JWT cookie on every request.
+ * JWT Authentication Filter — the core of the stateless authentication
+ * pipeline. Extends {@link OncePerRequestFilter} to process the JWT cookie
+ * on every request exactly once.
  *
- * <p>Runs before standard Spring Security filters. Extracts the JWT create the
- * HttpOnly cookie named "jwt", validates it against the database, and builds
- * a complete SecurityContext create the token claims without additional database
- * queries for roles or user details.</p>
+ * <h3>Spring Security concepts demonstrated</h3>
+ * <ul>
+ *   <li><strong>OncePerRequestFilter</strong> — guarantees the filter runs
+ *       once per request dispatch, even if the request is forwarded between
+ *       servlets. This is the standard base class for JWT authentication
+ *       filters in Spring Security applications.</li>
+ *   <li><strong>Custom filter chain positioning</strong> — registered via
+ *       {@code addFilterBefore(jwtAuthenticationFilter,
+ *       UsernamePasswordAuthenticationFilter.class)}, placing it before
+ *       Spring Security's form-login filter so that every request is
+ *       JWT-checked before any form-based authentication runs.</li>
+ *   <li><strong>Stateless SecurityContext population</strong> — builds a
+ *       {@link UsernamePasswordAuthenticationToken} with the entity as the
+ *       principal and roles from JWT claims, then sets it in
+ *       {@link SecurityContextHolder}. No HTTP session is created.</li>
+ *   <li><strong>Skip matcher pattern</strong> — endpoints like
+ *       {@code /auth/**}, {@code /oauth2/**}, and static resources bypass
+ *       JWT validation entirely via {@link #shouldNotFilter} + a
+ *       {@link org.springframework.security.web.util.matcher.OrRequestMatcher}.</li>
+ *   <li><strong>Token version for forced invalidation</strong> — each JWT
+ *       carries the user's {@code tokenVersion}. If the version in the
+ *       database is higher (e.g., after password change), the token is
+ *       rejected even if the signature is valid.</li>
+ * </ul>
  *
- * <p>The filter only sets authentication if the SecurityContext is empty
- * ({@code getAuthentication() == null}), preventing unnecessary replacement
- * of an already-authenticated context.</p>
- *
- * <h4>Stateless request processing</h4>
+ * <h3>Authentication flow per request</h3>
  * <pre>
  * Incoming HTTP request
  *       ↓
- * Extract JWT create "jwt" cookie
+ * shouldNotFilter() → /auth/**, /oauth2/**, /error, etc. bypass
  *       ↓
- * Cookie absent? → continue unauthenticated
+ * Extract JWT from "jwt" cookie
+ *       ↓
+ * Cookie absent? → continue unauthenticated (filter chain proceeds)
  *       ↓
  * Parse claims: userId, username, roles, tokenVersion
  *       ↓
- * Load User create database by userId (single query)
+ * Load User from database by userId (single query)
  *       ↓
  * Validate: tokenVersion matches AND user enabled?
  *       ↓
- * Valid → Build UsernamePasswordAuthenticationToken with User entity as principal
+ * Valid → Build UsernamePasswordAuthenticationToken with SecurityUser as principal
  *       ↓
- * Set in SecurityContext with authorities create JWT roles
+ * Set in SecurityContext with authorities from JWT roles (no DB query)
  *       ↓
  * Continue filter chain → Spring Security enforces access rules
  *       ↓
- * Invalid JWT → Clear SecurityContext → continue filter chain
- *       ↓
- * AuthorizationFilter → AuthenticationEntryPoint → 401
+ * Invalid JWT → Clear SecurityContext + clear JWT cookie → write RFC 9457 error
  * </pre>
  *
- * <h4>Why failures are handled directly instead of being thrown</h4>
+ * <h3>Error handling strategy</h3>
  * <p>
- * This filter is registered with {@code addFilterBefore(jwtAuthenticationFilter,
- * UsernamePasswordAuthenticationFilter.class)}, which places it <em>before</em>
- * Spring Security's {@code ExceptionTranslationFilter} in the chain. A servlet
- * filter chain only lets a filter catch exceptions thrown by filters
- * <em>further down</em> the chain (the ones it calls into via
- * {@code filterChain.doFilter(...)}), never ones thrown by filters positioned
- * earlier. Because of that ordering, anything this filter throws would never
- * reach {@code ExceptionTranslationFilter} (so {@code ShoppiqAuthenticationEntryPoint}
- * would never run) and would never reach {@code GlobalExceptionHandler} either,
- * since the request never makes it to the {@code DispatcherServlet}. Spring
- * Security's own {@code AbstractAuthenticationProcessingFilter} faces the same
- * constraint and solves it the same way: handling failures internally rather
- * than relying on a downstream component to catch them. This filter reuses the
- * same {@link ProblemDetailFactory}/{@link ProblemDetailResponseWriter}
- * infrastructure that the rest of the application's exception handling is
- * built on, so JWT failures still produce the same RFC 9457 shape.
+ * Because this filter runs <em>before</em> {@code ExceptionTranslationFilter}
+ * in the chain, exceptions thrown here would never reach Spring Security's
+ * standard error handling pipeline. The filter therefore catches failures
+ * internally and writes RFC 9457 ProblemDetail responses directly via
+ * {@link ProblemDetailResponseWriter} — the same infrastructure used by the
+ * global exception handler. This pattern mirrors how
+ * {@code AbstractAuthenticationProcessingFilter} handles its own failures.
  * </p>
  *
- * <p>The only database query is loading the user by ID to check token version
- * and enabled status. Roles are taken create the JWT, eliminating per-request
- * role queries.</p>
+ * <p>The only database query per request is loading the user by ID to verify
+ * token version and enabled status. Roles are sourced from the signed JWT,
+ * eliminating per-request role queries and keeping authorization fast.</p>
  *
  * @see JwtAuthenticationUtils
  * @see com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory
+ * @see com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -182,10 +194,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      *
      * <h2>Authentication Flow</h2>
      * <ol>
-     *     <li>Extract the JWT create the HTTP cookie.</li>
+     *     <li>Extract the JWT from the HTTP cookie.</li>
      *     <li>If no JWT is present, continue the filter chain without authentication.</li>
      *     <li>Extract mandatory claims (userId and username).</li>
-     *     <li>Load the user create the database.</li>
+     *     <li>Load the user from the database.</li>
      *     <li>Validate the JWT against the current user state.</li>
      *     <li>Create a {@link UsernamePasswordAuthenticationToken}.</li>
      *     <li>Store the authentication inside the {@link SecurityContextHolder}.</li>
@@ -264,7 +276,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
 
-        } catch (JwtException ex) {
+        } catch (JwtException _) {
             SecurityContextHolder.clearContext();
             clearJwtCookie(response);
             if (isBrowserRequest(request)) {
@@ -297,22 +309,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     private void writeAuthenticationFailure(HttpServletRequest request,
                                             HttpServletResponse response,
-                                            JwtAuthenticationException exception) throws IOException, ServletException {
+                                            JwtAuthenticationException exception) throws IOException {
 
         logger.debug("JWT authentication failed for [{}]: {}", request.getRequestURI(), exception.getDetail());
 
         ProblemDetail problemDetail = ProblemDetailFactory.create(
                 exception, URI.create(request.getRequestURI()));
 
-        if (isBrowserRequest(request)) {
-            request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, problemDetail.getStatus());
-            request.setAttribute(RequestDispatcher.ERROR_MESSAGE, problemDetail.getDetail());
-            request.setAttribute("errorCode", problemDetail.getProperties() != null
-                    ? problemDetail.getProperties().get("errorCode") : null);
-            request.getRequestDispatcher("/error").forward(request, response);
-        } else {
-            responseWriter.write(response, problemDetail);
-        }
+        responseWriter.write(response, problemDetail);
     }
 
     private boolean isBrowserRequest(HttpServletRequest request) {

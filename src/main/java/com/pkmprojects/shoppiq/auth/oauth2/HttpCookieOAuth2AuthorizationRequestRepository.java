@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.auth.oauth2;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,25 +26,33 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Cookie-based {@link AuthorizationRequestRepository} that stores the OAuth2
- * authorization request in an HttpOnly cookie instead of the HTTP session.
+ * Cookie-based {@link AuthorizationRequestRepository} — replaces Spring
+ * Security's default {@code HttpSessionOAuth2AuthorizationRequestRepository}
+ * with an HttpOnly cookie implementation for the OAuth2 authorization code
+ * flow.
  *
- * <p>This is the cornerstone of the fully stateless OAuth2 architecture
- * (Option 2). By keeping authorization state in a short-lived cookie rather
- * than a server-side session, the application can use
- * {@code SessionCreationPolicy.STATELESS} throughout the entire lifecycle —
- * including the OAuth2 authorization code flow.</p>
+ * <h3>OAuth2 / Spring Security concepts demonstrated</h3>
+ * <ul>
+ *   <li><strong>AuthorizationRequestRepository contract</strong> — Spring
+ *       Security's OAuth2 client uses this SPI to persist the pending
+ *       {@link OAuth2AuthorizationRequest} between the authorization redirect
+ *       and the callback. The default implementation stores it in the HTTP
+ *       session.</li>
+ *   <li><strong>Stateless OAuth2 with SessionCreationPolicy.STATELESS</strong> —
+ *       because this application never creates an {@code HttpSession}, the
+ *       default session-based repository would silently lose the pending
+ *       request. This class persists it in a short-lived, HMAC-signed,
+ *       HttpOnly cookie instead, enabling a fully stateless OAuth2 flow.</li>
+ *   <li><strong>Authorization code flow (PKCE optional)</strong> — the flow
+ *       follows the standard OAuth2 pattern: redirect to Google → Google
+ *       asks for consent → Google redirects back with an authorization
+ *       {@code code} → the code is exchanged for tokens.</li>
+ *   <li><strong>State parameter validation</strong> — the {@code state} value
+ *       carried in the cookie must match the {@code state} returned by Google,
+ *       preventing CSRF attacks against the callback endpoint.</li>
+ * </ul>
  *
- * <h4>Why the default repository does not work here</h4>
- * <p>Spring Security's default implementation,
- * {@code HttpSessionOAuth2AuthorizationRequestRepository}, stores the pending
- * {@link OAuth2AuthorizationRequest} in the HTTP session between the
- * authorization redirect and the callback. With {@code STATELESS} session
- * policy, no session is ever created, so the default repository would silently
- * lose the request and cause the callback to fail with a {@code state}
- * mismatch. This class replaces it with a short-lived HttpOnly cookie.</p>
- *
- * <h4>Cookie lifecycle</h4>
+ * <h3>Cookie lifecycle</h3>
  * <pre>
  * GET /oauth2/authorization/google
  *       ↓
@@ -61,7 +69,7 @@ import java.util.stream.Collectors;
  * OAuth2SuccessHandler issues JWT cookie
  * </pre>
  *
- * <h4>Security properties</h4>
+ * <h3>Security properties</h3>
  * <ul>
  *   <li>{@code HttpOnly} — cookie is not accessible to JavaScript, mitigating XSS theft</li>
  *   <li>{@code Secure} — HTTPS-only transmission in production (env-driven via
@@ -72,11 +80,29 @@ import java.util.stream.Collectors;
  *       {@code accounts.google.com}, which is a different site.</li>
  *   <li>Short {@code Max-Age} of 300 s — limits exposure if the user abandons
  *       the login flow mid-way.</li>
- *   <li>HMAC-SHA256 signed payload — prevents tampering and RCE via Java deserialization gadget chains.</li>
+ *   <li>HMAC-SHA256 signed payload — prevents tampering and RCE via Java
+ *       deserialization gadget chains (the original Spring Security default
+ *       used Java serialization which is vulnerable to gadget-chain attacks).</li>
+ * </ul>
+ *
+ * <h3>Design patterns</h3>
+ * <ul>
+ *   <li><strong>Strategy pattern</strong> — implements
+ *       {@link AuthorizationRequestRepository} to replace the default session-based
+ *       strategy with a cookie-based one.</li>
+ *   <li><strong>Secure serialization</strong> — uses JSON + HMAC-SHA256 instead of
+ *       Java serialization, avoiding deserialization gadget-chain vulnerabilities.</li>
+ *   <li><strong>Careful SameSite choice</strong> — uses {@code Lax} (not
+ *       {@code Strict}) because Google's callback redirect is a cross-site
+ *       navigation from {@code accounts.google.com}; {@code Strict} would
+ *       cause the browser to omit the cookie, breaking the flow.</li>
  * </ul>
  *
  * @see org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository
  * @see OAuth2SuccessHandler
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @Component
 public class HttpCookieOAuth2AuthorizationRequestRepository
@@ -126,7 +152,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper objectMapper = JsonMapper.builder().build();
     private byte[] hmacKey;
 
     @jakarta.annotation.PostConstruct
@@ -476,7 +502,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         try {
             String expected = sign(payload);
             return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
+        } catch (Exception _) {
             return false;
         }
     }

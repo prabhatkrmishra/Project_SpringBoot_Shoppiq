@@ -3,14 +3,14 @@ package com.pkmprojects.shoppiq.exception.auth;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * Exception thrown when the authenticated OIDC user cannot be processed.
+ * <strong>Spring Boot Concept:</strong> Concrete leaf exception in the
+ * {@code auth} branch for OpenID Connect (OIDC) authentication failures.
  *
- * <p>
- * This may occur when mandatory claims are missing or when the OIDC
- * provider returns an unsupported user profile.
- * </p>
+ * <p>Thrown when the authenticated OIDC user cannot be processed. This may
+ * occur when mandatory claims are missing or the OIDC provider returns
+ * an unsupported user profile.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public class InvalidOidcUserException extends AuthenticationException {

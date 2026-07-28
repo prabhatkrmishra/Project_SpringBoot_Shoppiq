@@ -21,9 +21,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Default implementation of {@link AdminSellerService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminSellerService}
+ * containing business logic for admin seller approval workflow.
  *
- * @author PrabhatKrMishra
+ * <p>Manages the seller lifecycle: approving applications with automatic store
+ * creation and role assignment, rejecting applications, and suspending/unsuspending
+ * sellers. Used by {@code AdminSellerController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Seller approval spans multiple operations (status update + store creation + role grant) that must be atomic.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
+ * </p>
+ *
+ * @author prabhatkrmishra
+ * @see AdminSellerService
  * @since 1.0.0
  */
 @Service
@@ -48,6 +62,13 @@ public class AdminSellerServiceImpl implements AdminSellerService {
         this.roleService = roleService;
     }
 
+    /**
+     * Retrieves a paginated list of all sellers sorted by ID descending.
+     *
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated seller responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AdminSellerResponse> getAllSellers(int page, int size) {
@@ -55,6 +76,14 @@ public class AdminSellerServiceImpl implements AdminSellerService {
         return PageResponse.of(sellerPage, AdminSellerResponse::fromEntity);
     }
 
+    /**
+     * Retrieves a paginated list of sellers filtered by verification status.
+     *
+     * @param status verification status filter
+     * @param page   zero-based page index
+     * @param size   page size
+     * @return paginated seller responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AdminSellerResponse> getSellersByStatus(VerificationStatus status, int page, int size) {
@@ -62,6 +91,15 @@ public class AdminSellerServiceImpl implements AdminSellerService {
         return PageResponse.of(sellerPage, AdminSellerResponse::fromEntity);
     }
 
+    /**
+     * Approves a seller application — transitions PENDING to APPROVED, creates a DRAFT store,
+     * and grants ROLE_SELLER to the user.
+     *
+     * @param sellerId seller ID
+     * @return updated seller response
+     * @throws SellerNotFoundException       if the seller does not exist
+     * @throws SellerApprovalInvalidException if the seller is not in PENDING status
+     */
     @Override
     public AdminSellerResponse approveSeller(Long sellerId) {
         Seller seller = sellerLookupService.findById(sellerId)
@@ -81,6 +119,14 @@ public class AdminSellerServiceImpl implements AdminSellerService {
         return AdminSellerResponse.fromEntity(seller);
     }
 
+    /**
+     * Rejects a seller application — transitions PENDING to REJECTED and sets status to INACTIVE.
+     *
+     * @param sellerId seller ID
+     * @return updated seller response
+     * @throws SellerNotFoundException       if the seller does not exist
+     * @throws SellerApprovalInvalidException if the seller is not in PENDING status
+     */
     @Override
     public AdminSellerResponse rejectSeller(Long sellerId) {
         Seller seller = sellerLookupService.findById(sellerId)
@@ -97,6 +143,14 @@ public class AdminSellerServiceImpl implements AdminSellerService {
         return AdminSellerResponse.fromEntity(seller);
     }
 
+    /**
+     * Suspends an active seller — cascades to store status (SUSPENDED).
+     *
+     * @param sellerId seller ID
+     * @return updated seller response
+     * @throws SellerNotFoundException       if the seller does not exist
+     * @throws SellerApprovalInvalidException if the seller is not ACTIVE
+     */
     @Override
     public AdminSellerResponse suspendSeller(Long sellerId) {
         Seller seller = sellerLookupService.findById(sellerId)
@@ -117,6 +171,14 @@ public class AdminSellerServiceImpl implements AdminSellerService {
         return AdminSellerResponse.fromEntity(seller);
     }
 
+    /**
+     * Unsuspends a seller — restores status to ACTIVE and sets store to DRAFT.
+     *
+     * @param sellerId seller ID
+     * @return updated seller response
+     * @throws SellerNotFoundException       if the seller does not exist
+     * @throws SellerApprovalInvalidException if the seller is not SUSPENDED
+     */
     @Override
     public AdminSellerResponse unsuspendSeller(Long sellerId) {
         Seller seller = sellerLookupService.findById(sellerId)
@@ -137,6 +199,9 @@ public class AdminSellerServiceImpl implements AdminSellerService {
         return AdminSellerResponse.fromEntity(seller);
     }
 
+    /**
+     * Creates a DRAFT store for the approved seller with a unique slug.
+     */
     private void createStore(Seller seller) {
         String baseSlug = SlugUtil.toSlug(seller.getBusinessName());
         String slug = baseSlug;

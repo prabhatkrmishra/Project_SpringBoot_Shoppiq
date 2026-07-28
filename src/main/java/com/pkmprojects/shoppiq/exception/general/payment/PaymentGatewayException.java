@@ -5,22 +5,36 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * Thrown when communication with an external payment gateway fails
- * (network error, non-2xx response, malformed payload, timeout, …).
+ * <strong>Spring Boot Concept:</strong> Exception thrown when communication
+ * with an external payment gateway fails.
  *
- * <p>Surfaced to clients as an HTTP {@code 502 Bad Gateway} so the failure is
- * clearly attributed to the upstream payment provider rather than the
- * application itself.</p>
+ * <p>Extends {@link com.pkmprojects.shoppiq.exception.base.ShoppiqException}
+ * directly (not a business exception) because gateway errors are integration
+ * failures. Uses HTTP 502 (Bad Gateway) to attribute the failure to the
+ * upstream provider. Provides factory methods for wrapping a
+ * {@link Throwable} with cause chaining, and for capturing the gateway's
+ * HTTP status code and response body for diagnostics.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public final class PaymentGatewayException extends ShoppiqException {
 
+    /**
+     * Creates a new payment gateway exception with a detail message.
+     *
+     * @param detail error description
+     */
     public PaymentGatewayException(String detail) {
         super(ErrorCode.PAYMENT_GATEWAY_ERROR, HttpStatus.BAD_GATEWAY, detail);
     }
 
+    /**
+     * Creates a new payment gateway exception wrapping a cause.
+     *
+     * @param detail error description
+     * @param cause  the underlying throwable
+     */
     public PaymentGatewayException(String detail, Throwable cause) {
         super(ErrorCode.PAYMENT_GATEWAY_ERROR, HttpStatus.BAD_GATEWAY, detail);
         initCause(cause);

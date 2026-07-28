@@ -8,7 +8,7 @@ import com.pkmprojects.shoppiq.dto.order.OrderCalculationRequest;
 import com.pkmprojects.shoppiq.dto.order.OrderCalculationResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.service.checkout.CheckoutServiceImpl;
+import com.pkmprojects.shoppiq.service.checkout.CheckoutService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -20,7 +20,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST controller exposing order-management endpoints for authenticated customers.
+ * <strong>Spring Boot Concept:</strong> REST controller exposing order-management endpoints for authenticated customers.
  *
  * <h2>Endpoints</h2>
  * <ul>
@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.*;
  * Ownership is enforced at the service layer.
  * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Validated
@@ -47,7 +47,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final CheckoutServiceImpl checkoutService;
+    private final CheckoutService checkoutService;
     private final PaginationProperties pagination;
 
     // =========================================================

@@ -25,10 +25,14 @@ import java.time.Instant;
  * <ul>
  *     <li>Immutable through Java Records.</li>
  *     <li>Created using {@link #fromEntity(ItemReview)}.</li>
- *     <li>Does not expose the complete {@code User} entity.</li>
+ *     <li>Does not expose the complete {@code User} entity — only
+ *     {@code reviewerId}, {@code reviewerName}, {@code reviewerUsername}.</li>
+ *     <li><b>Moderation:</b> Includes {@code status} field with
+ *     {@link com.pkmprojects.shoppiq.enums.ReviewStatus} — only
+ *     APPROVED reviews are visible on the product page.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record ItemReviewResponse(

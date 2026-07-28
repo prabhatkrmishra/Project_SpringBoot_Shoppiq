@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * <p>All endpoints require {@code ADMIN} role and are mounted under
  * {@code /api/admin/banners}.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Validated

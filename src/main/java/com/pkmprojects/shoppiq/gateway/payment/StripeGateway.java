@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.gateway.payment;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.config.PaymentGatewayProperties;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
@@ -14,21 +14,50 @@ import java.time.Instant;
 import java.util.Map;
 
 /**
- * Stripe payment gateway integration (global).
+ * <strong>Spring Boot Concept:</strong> Concrete payment gateway strategy
+ * for Stripe (global), extending {@link AbstractRestGateway}.
  *
  * <p>Flow: {@link #process(Payment)} creates a PaymentIntent
  * ({@code POST /v1/payment_intents}); {@link #verify(Payment, String)} fetches
  * the intent by id ({@code GET /v1/payment_intents/{id}}) and marks the payment
  * {@code PAID} once its status is {@code succeeded}.</p>
  *
- * @author PrabhatKrMishra
+ * <p><strong>Educational value:</strong> Stripe differs from Razorpay and
+ * PayPal in several interesting ways:
+ * <ul>
+ *   <li><strong>Bearer auth</strong> — Stripe uses the API key directly as
+ *       a bearer token (no separate OAuth token endpoint).</li>
+ *   <li><strong>Idempotent process</strong> — on re-processing, Stripe checks
+ *       if a gateway ID already exists and skips the API call, just like the
+ *       other gateways.</li>
+ *   <li><strong>Immediate status check</strong> — the initial
+ *       {@code createPaymentIntent} response already contains the status;
+ *       if it's already {@code succeeded}, the payment is marked PAID
+ *       immediately instead of going to PROCESSING.</li>
+ *   <li><strong>Lowercase currency</strong> — Stripe expects the currency
+ *       code in lowercase (e.g. {@code usd}), unlike Razorpay which expects
+ *       uppercase (e.g. {@code INR}).</li>
+ * </ul>
+ * These differences illustrate how the Strategy pattern accommodates
+ * provider-specific nuances behind a uniform interface.
+ * </p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component
-public class StripeGateway extends AbstractRestGateway {
+public final class StripeGateway extends AbstractRestGateway {
 
+    /**
+     * Constructs a Stripe gateway with the given HTTP client, JSON mapper,
+     * and gateway-specific configuration.
+     *
+     * @param restClientBuilder builder for {@link RestClient}
+     * @param objectMapper      Jackson 3 {@link JsonMapper}
+     * @param properties        typed payment gateway properties
+     */
     public StripeGateway(RestClient.Builder restClientBuilder,
-                         ObjectMapper objectMapper,
+                         JsonMapper objectMapper,
                          PaymentGatewayProperties properties) {
         super(restClientBuilder, objectMapper,
                 properties.getStripe().getBaseUrl(),
@@ -36,16 +65,36 @@ public class StripeGateway extends AbstractRestGateway {
                 properties.getStripe().getApiSecret());
     }
 
+    /**
+     * Returns the gateway type handled by this strategy.
+     *
+     * @return {@link PaymentGateway#STRIPE}
+     */
     @Override
     public PaymentGateway supports() {
         return PaymentGateway.STRIPE;
     }
 
+    /**
+     * Returns the human-readable gateway name for error messages.
+     *
+     * @return {@code "Stripe"}
+     */
     @Override
     protected String gatewayName() {
         return "Stripe";
     }
 
+    /**
+     * Creates a Stripe PaymentIntent for the given payment.
+     *
+     * <p>If a gateway payment ID already exists the payment is simply
+     * marked {@code PROCESSING} (idempotent re-entry). If the PaymentIntent
+     * is already {@code succeeded} the payment is marked {@code PAID}
+     * immediately.</p>
+     *
+     * @param payment the payment to process
+     */
     @Override
     public void process(Payment payment) {
         if (payment.getGatewayPaymentId() != null) {
@@ -60,7 +109,7 @@ public class StripeGateway extends AbstractRestGateway {
         );
 
         String response = exchange(HttpMethod.POST, "/payment_intents", body, bearer(apiKey));
-        com.fasterxml.jackson.databind.JsonNode node = parse(response);
+        tools.jackson.databind.JsonNode node = parse(response);
         String intentId = node.get("id").asText();
         String status = node.get("status").asText();
 
@@ -70,9 +119,19 @@ public class StripeGateway extends AbstractRestGateway {
         payment.setGatewayResponse(response);
     }
 
+    /**
+     * Verifies a Stripe PaymentIntent by fetching its status from the
+     * Stripe API.
+     *
+     * @param payment       the payment to verify
+     * @param transactionId the Stripe PaymentIntent ID
+     * @throws PaymentGatewayException if the PaymentIntent status is not
+     *                                 {@code succeeded}
+     */
     @Override
     public void verify(Payment payment, String transactionId) {
-        String response = exchange(HttpMethod.GET, "/payment_intents/" + transactionId, null, bearer(apiKey));
+        String sanitized = sanitizeTransactionId(transactionId);
+        String response = exchange(HttpMethod.GET, "/payment_intents/" + sanitized, null, bearer(apiKey));
         String status = parse(response).get("status").asText();
 
         if ("succeeded".equals(status)) {

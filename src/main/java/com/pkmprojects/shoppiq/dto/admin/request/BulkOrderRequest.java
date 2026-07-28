@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
- * Request DTO used for bulk creation of {@link Order orders}
+ * <strong>Spring Boot Concept:</strong> Request DTO used for bulk creation of {@link Order orders}
  * by an admin user for test-data population.
  *
  * <p>
@@ -29,9 +29,11 @@ import java.util.List;
  *     <li>{@code @Valid} triggers cascading validation on each
  *     {@link AdminOrderItem} in the list.</li>
  *     <li>Used exclusively for admin test-data bulk creation.</li>
+ *     <li>This pattern is identical for all bulk DTOs — a single-record wrapper
+ *     with a validated list — providing a consistent API experience.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkOrderRequest(

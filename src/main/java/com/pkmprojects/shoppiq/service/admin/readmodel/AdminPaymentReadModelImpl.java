@@ -12,12 +12,22 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Default implementation of {@link AdminPaymentReadModel}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminPaymentReadModel}
+ * providing read-only payment queries for admin dashboards and reports.
  *
- * <p>Delegates to {@link com.pkmprojects.shoppiq.service.payment.PaymentLookupService}
- * for payment aggregate queries used in admin dashboards and reports.</p>
+ * <p>Delegates to {@link PaymentLookupService} for aggregate payment queries
+ * including amount sums by status and date range.</p>
  *
- * @author PrabhatKrMishra
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional(readOnly = true)</strong> — All queries are read-only, optimized for database performance.</li>
+ *   <li><strong>@RequiredArgsConstructor</strong> — Lombok-generated constructor injection for final fields.</li>
+ * </ul>
+ * </p>
+ *
+ * @author prabhatkrmishra
+ * @see AdminPaymentReadModel
  * @since 1.4.0
  */
 @Service
@@ -27,28 +37,92 @@ class AdminPaymentReadModelImpl implements AdminPaymentReadModel {
 
     private final PaymentLookupService paymentLookupService;
 
+    /**
+     * Sums payment amounts by status.
+     *
+     * @param status the payment status to filter by
+     * @return total sum of payment amounts
+     */
     @Override
     public BigDecimal sumAmountByStatus(PaymentStatus status) {
         return paymentLookupService.sumAmountByStatus(status);
     }
 
+    /**
+     * Sums payment amounts by status within a date range.
+     *
+     * @param status the payment status to filter by
+     * @param start  start of the date range (inclusive)
+     * @param end    end of the date range (inclusive)
+     * @return total sum of payment amounts in the range
+     */
     @Override
     public BigDecimal sumAmountByStatusAndDateRange(PaymentStatus status, Instant start, Instant end) {
         return paymentLookupService.sumAmountByStatusAndDateRange(status, start, end);
     }
 
+    /**
+     * Finds paid payments within a date range, ordered by paid-at timestamp ascending.
+     *
+     * @param start start of the date range (inclusive)
+     * @param end   end of the date range (inclusive)
+     * @return list of paid payments in ascending order
+     */
     @Override
     public List<Payment> findPaidBetweenAsc(Instant start, Instant end) {
         return paymentLookupService.findPaidBetweenAsc(start, end);
     }
 
+    /**
+     * Finds payments within a date range matching any of the given statuses.
+     *
+     * @param start    start of the date range (inclusive)
+     * @param end      end of the date range (inclusive)
+     * @param statuses list of payment statuses to include
+     * @return list of matching payments
+     */
     @Override
     public List<Payment> findByDateRangeAndStatuses(Instant start, Instant end, List<PaymentStatus> statuses) {
         return paymentLookupService.findByDateRangeAndStatuses(start, end, statuses);
     }
 
+    /**
+     * Retrieves the 10 most recently created payments.
+     *
+     * @return list of the 10 most recent payments
+     */
     @Override
     public List<Payment> findRecentTop10() {
         return paymentLookupService.findRecentTop10();
+    }
+
+    /**
+     * Aggregates daily revenue for PAID payments within a date range.
+     *
+     * <p>Returns [paidAt, amount] tuples for efficient grouping in service layer,
+     * avoiding full entity loads.</p>
+     *
+     * @param start start of the date range (inclusive)
+     * @param end   end of the date range (inclusive)
+     * @return list of [paidAt, amount] tuples for daily revenue aggregation
+     */
+    @Override
+    public List<Object[]> aggregateDailyRevenueBetween(Instant start, Instant end) {
+        return paymentLookupService.aggregateDailyRevenueBetween(start, end);
+    }
+
+    /**
+     * Aggregates revenue by payment method for PAID payments within a date range.
+     *
+     * <p>Returns [paymentMethod, amount] tuples for efficient grouping in service layer,
+     * avoiding full entity loads.</p>
+     *
+     * @param start start of the date range (inclusive)
+     * @param end   end of the date range (inclusive)
+     * @return list of [paymentMethod, amount] tuples for payment method aggregation
+     */
+    @Override
+    public List<Object[]> aggregateRevenueByPaymentMethodBetween(Instant start, Instant end) {
+        return paymentLookupService.aggregateRevenueByPaymentMethodBetween(start, end);
     }
 }

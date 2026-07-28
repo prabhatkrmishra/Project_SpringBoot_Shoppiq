@@ -13,6 +13,7 @@ import com.pkmprojects.shoppiq.enums.DiscountType;
 import com.pkmprojects.shoppiq.exception.general.promo.*;
 import com.pkmprojects.shoppiq.repository.promo.PromoCodeRepository;
 import com.pkmprojects.shoppiq.repository.promo.PromoCodeUsageRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -26,12 +27,39 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Handles promo code validation, discount calculation and admin management.
+ * <strong>Spring Boot Concept:</strong> Handles promo code validation, discount calculation and admin management.
+ *
+ * <p><strong>What this Service implementation demonstrates:</strong></p>
+ * <ul>
+ *   <li><strong>Multi-step validation pipeline</strong> — {@link #validateAndCalculate} performs
+ *       a sequential check: existence → active → validity window → global usage → per-user usage
+ *       → minimum order amount → cart constraints. Each failure throws a specific exception
+ *       subclass, giving precise error feedback to the client.</li>
+ *   <li><strong>Atomic usage counting</strong> — {@link #recordUsage} uses
+ *       {@link com.pkmprojects.shoppiq.repository.promo.PromoCodeRepository#incrementUsedCountAtomically}
+ *       with a conditional JPQL update ({@code WHERE ... AND (usageLimit IS NULL OR usedCount < usageLimit)})
+ *       to safely increment the counter under concurrent access. If the update affects zero rows,
+ *       the limit was reached between the check and the increment.</li>
+ *   <li><strong>Discount computation with clamping</strong> — {@link #calculateDiscount} handles
+ *       percentage vs. fixed discounts, applies max discount caps, and clamps the result to the
+ *       eligible subtotal (and overall subtotal as a safety net) so the discount never exceeds
+ *       the order total.</li>
+ *   <li><strong>Eligible subtotal for BULK coupons</strong> — {@code computeEligibleSubtotal}
+ *       demonstrates domain logic: for BULK coupons with a minimum item quantity, only items
+ *       meeting the threshold contribute to the discount base.</li>
+ *   <li><strong>Cart constraint validation</strong> — {@code validateCartConstraints} enforces
+ *       coupon-type rules (SINGLE requires all qty = 1, BULK requires at least one qty > 1)
+ *       and minimum item quantity thresholds.</li>
+ *   <li><strong>Admin CRUD</strong> — Standard create/update/delete/find operations with
+ *       duplicate-code checking and paginated listing.</li>
+ *   <li><strong>{@code @Transactional}</strong> — Write operations like {@link #recordUsage}
+ *       are transactional. Read-only validation uses {@code readOnly = true}.</li>
+ * </ul>
  *
  * <h2>Coupon type constraints</h2>
  * <ul>
- *     <li>{@link CouponType#SINGLE}: all cart items must have quantity == 1.</li>
- *     <li>{@link CouponType#BULK}: at least one cart item must have quantity &gt; 1.</li>
+ *     <li>{@link com.pkmprojects.shoppiq.enums.CouponType#SINGLE}: all cart items must have quantity == 1.</li>
+ *     <li>{@link com.pkmprojects.shoppiq.enums.CouponType#BULK}: at least one cart item must have quantity &gt; 1.</li>
  * </ul>
  *
  * <h2>Minimum item quantity</h2>
@@ -42,7 +70,7 @@ import java.util.List;
  * <p>The computed discount is always clamped to the eligible subtotal so
  * it never pushes the total negative.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Service
@@ -65,51 +93,59 @@ public class PromoCodeServiceImpl implements PromoCodeService {
     // Validation & Calculation
     // =========================================================
 
+    /**
+     * Validates a promo code against the user and cart, returning the entity if valid.
+     *
+     * <p>Performs sequential validation: existence -> active -> validity window ->
+     * global usage limit -> per-user usage limit -> minimum order amount ->
+     * cart constraints. Each failure throws a specific exception subclass.</p>
+     *
+     * @param code     the promo code string
+     * @param user     authenticated user
+     * @param subtotal order subtotal before discount
+     * @param items    cart line item previews
+     * @return the validated promo code entity
+     * @throws PromoCodeNotFoundException              if the code does not exist
+     * @throws PromoCodeInactiveException               if the code is inactive
+     * @throws PromoCodeNotYetValidException            if the code is not yet valid
+     * @throws PromoCodeExpiredException                if the code has expired
+     * @throws PromoCodeUsageLimitExceededException     if the global usage limit is reached
+     * @throws PromoCodeUserUsageLimitExceededException if the per-user usage limit is reached
+     * @throws PromoCodeMinOrderAmountException         if the subtotal is below the minimum
+     * @throws PromoCodeCartConstraintException         if cart constraints are violated
+     */
     @Override
     @Transactional(readOnly = true)
     public PromoCode validateAndCalculate(String code, User user, BigDecimal subtotal,
                                           List<CartItemPreview> items) {
 
-        PromoCode promoCode = promoCodeRepository.findByCode(code.toUpperCase().trim())
-                .orElseThrow(() -> PromoCodeNotFoundException.forCode(code));
+        PromoCode promoCode = validateCommon(code, subtotal, items);
 
-        Instant now = clock.instant();
-
-        if (!Boolean.TRUE.equals(promoCode.getActive())) {
-            throw PromoCodeInactiveException.forCode(code);
-        }
-
-        if (now.isBefore(promoCode.getValidFrom())) {
-            throw PromoCodeNotYetValidException.forCode(code, promoCode.getValidFrom());
-        }
-
-        if (now.isAfter(promoCode.getValidUntil())) {
-            throw PromoCodeExpiredException.forCode(code, promoCode.getValidUntil());
-        }
-
-        if (promoCode.getUsageLimit() != null
-                && promoCode.getUsedCount() >= promoCode.getUsageLimit()) {
-            throw PromoCodeUsageLimitExceededException.forCode(code, promoCode.getUsageLimit());
-        }
-
+        // Per-user usage check (only in validateAndCalculate, not preview)
         if (promoCode.getUserUsageLimit() != null) {
             long userUsed = promoCodeUsageRepository.countByPromoCodeIdAndUserId(
                     promoCode.getId(), user.getId());
             if (userUsed >= promoCode.getUserUsageLimit()) {
-                throw PromoCodeUserUsageLimitExceededException.forCode(code, promoCode.getUserUsageLimit());
+                throw PromoCodeUserUsageLimitExceededException.forCode(
+                        promoCode.getCode(), promoCode.getUserUsageLimit());
             }
         }
-
-        if (promoCode.getMinOrderAmount() != null
-                && subtotal.compareTo(promoCode.getMinOrderAmount()) < 0) {
-            throw PromoCodeMinOrderAmountException.forCode(code, promoCode.getMinOrderAmount(), subtotal);
-        }
-
-        validateCartConstraints(promoCode, items);
 
         return promoCode;
     }
 
+    /**
+     * Computes the discount amount for a validated promo code against the cart.
+     *
+     * <p>Handles percentage vs. fixed discounts, applies max discount caps,
+     * and clamps the result to the eligible subtotal so it never exceeds
+     * the order total.</p>
+     *
+     * @param promoCode the validated promo code
+     * @param subtotal  order subtotal before discount
+     * @param items     cart line item previews (used for BULK coupon eligible subtotal)
+     * @return the computed discount amount
+     */
     @Override
     public BigDecimal calculateDiscount(PromoCode promoCode, BigDecimal subtotal,
                                         List<CartItemPreview> items) {
@@ -143,6 +179,18 @@ public class PromoCodeServiceImpl implements PromoCodeService {
         return discount;
     }
 
+    /**
+     * Records usage of a promo code, atomically incrementing the used count.
+     *
+     * <p>Uses a conditional JPQL update to safely increment the counter
+     * under concurrent access. If the update affects zero rows, the limit
+     * was reached between validation and recording.</p>
+     *
+     * @param promoCode the promo code to record usage for
+     * @param user      the user who applied the code
+     * @param order     the order the code was applied to
+     * @throws PromoCodeUsageLimitExceededException if the usage limit was reached concurrently
+     */
     @Override
     public void recordUsage(PromoCode promoCode, User user, Order order) {
         PromoCode freshPromoCode = promoCodeRepository.findById(promoCode.getId())
@@ -163,8 +211,12 @@ public class PromoCodeServiceImpl implements PromoCodeService {
             }
         }
 
-        freshPromoCode.incrementUsedCount();
-        promoCodeRepository.save(freshPromoCode);
+        int updated = promoCodeRepository.incrementUsedCountAtomically(freshPromoCode.getId());
+        if (updated == 0) {
+            throw PromoCodeUsageLimitExceededException.forCode(
+                    promoCode.getCode(), freshPromoCode.getUsageLimit() != null
+                            ? freshPromoCode.getUsageLimit() : Integer.MAX_VALUE);
+        }
 
         PromoCodeUsage usage = PromoCodeUsage.builder()
                 .promoCode(freshPromoCode)
@@ -173,7 +225,16 @@ public class PromoCodeServiceImpl implements PromoCodeService {
                 .usedAt(clock.instant())
                 .build();
 
-        promoCodeUsageRepository.save(usage);
+        try {
+            promoCodeUsageRepository.save(usage);
+        } catch (DataIntegrityViolationException e) {
+            // The DB-level unique constraint on (promo_code_id, user_id) caught a
+            // concurrent duplicate -- another request inserted a usage record for
+            // this user after the count-check above. Treat it as a limit exceeded.
+            throw PromoCodeUserUsageLimitExceededException.forCode(
+                    promoCode.getCode(), freshPromoCode.getUserUsageLimit() != null
+                            ? freshPromoCode.getUserUsageLimit() : 1);
+        }
     }
 
     // =========================================================
@@ -265,6 +326,13 @@ public class PromoCodeServiceImpl implements PromoCodeService {
     // Admin CRUD
     // =========================================================
 
+    /**
+     * Creates a new promo code with normalized uppercase code and duplicate check.
+     *
+     * @param request promo code creation payload
+     * @return created promo code response
+     * @throws DuplicatePromoCodeException if a code with the same name already exists
+     */
     @Override
     public PromoCodeResponse create(PromoCodeRequest request) {
 
@@ -295,6 +363,15 @@ public class PromoCodeServiceImpl implements PromoCodeService {
         return PromoCodeResponse.from(promoCode);
     }
 
+    /**
+     * Updates an existing promo code with duplicate-code checking on name change.
+     *
+     * @param id      promo code ID
+     * @param request promo code update payload
+     * @return updated promo code response
+     * @throws PromoCodeNotFoundException  if the promo code does not exist
+     * @throws DuplicatePromoCodeException if the new code conflicts with another
+     */
     @Override
     public PromoCodeResponse update(Long id, PromoCodeRequest request) {
 
@@ -329,6 +406,12 @@ public class PromoCodeServiceImpl implements PromoCodeService {
         return PromoCodeResponse.from(promoCode);
     }
 
+    /**
+     * Deletes a promo code by ID.
+     *
+     * @param id promo code ID
+     * @throws PromoCodeNotFoundException if the promo code does not exist
+     */
     @Override
     public void delete(Long id) {
         PromoCode promoCode = promoCodeRepository.findById(id)
@@ -336,6 +419,13 @@ public class PromoCodeServiceImpl implements PromoCodeService {
         promoCodeRepository.delete(promoCode);
     }
 
+    /**
+     * Retrieves a paginated list of all promo codes, sorted newest first.
+     *
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated promo code responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<PromoCodeResponse> findAll(int page, int size) {
@@ -344,6 +434,13 @@ public class PromoCodeServiceImpl implements PromoCodeService {
         return PageResponse.of(promoPage, PromoCodeResponse::from);
     }
 
+    /**
+     * Retrieves a single promo code by ID.
+     *
+     * @param id promo code ID
+     * @return promo code response
+     * @throws PromoCodeNotFoundException if the promo code does not exist
+     */
     @Override
     @Transactional(readOnly = true)
     public PromoCodeResponse findById(Long id) {
@@ -352,6 +449,13 @@ public class PromoCodeServiceImpl implements PromoCodeService {
         return PromoCodeResponse.from(promoCode);
     }
 
+    /**
+     * Toggles the active status of a promo code.
+     *
+     * @param id promo code ID
+     * @return updated promo code response with toggled active flag
+     * @throws PromoCodeNotFoundException if the promo code does not exist
+     */
     @Override
     public PromoCodeResponse toggleActive(Long id) {
         PromoCode promoCode = promoCodeRepository.findById(id)
@@ -361,34 +465,66 @@ public class PromoCodeServiceImpl implements PromoCodeService {
         return PromoCodeResponse.from(promoCode);
     }
 
+    /**
+     * Validates a promo code for preview purposes (no usage recording).
+     *
+     * <p>Performs existence, active, validity window, usage limit, minimum order,
+     * and cart constraint checks without recording usage.</p>
+     *
+     * @param code     the promo code string
+     * @param subtotal order subtotal before discount
+     * @param items    cart line item previews
+     * @return the validated promo code entity
+     * @throws PromoCodeNotFoundException          if the code does not exist
+     * @throws PromoCodeInactiveException           if the code is inactive
+     * @throws PromoCodeNotYetValidException        if the code is not yet valid
+     * @throws PromoCodeExpiredException            if the code has expired
+     * @throws PromoCodeUsageLimitExceededException if the global usage limit is reached
+     * @throws PromoCodeMinOrderAmountException     if the subtotal is below the minimum
+     * @throws PromoCodeCartConstraintException     if cart constraints are violated
+     */
     @Override
     public PromoCode validateForPreview(String code, BigDecimal subtotal,
                                         List<CartItemPreview> items) {
+        return validateCommon(code, subtotal, items);
+    }
+
+    // =========================================================
+    // Shared validation
+    // =========================================================
+
+    /**
+     * Common validation logic shared between {@link #validateAndCalculate} and
+     * {@link #validateForPreview} (BUG-0015). Checks existence, active status,
+     * validity window, global usage limit, minimum order, and cart constraints.
+     */
+    private PromoCode validateCommon(String code, BigDecimal subtotal,
+                                     List<CartItemPreview> items) {
         String normalizedCode = code.toUpperCase().trim();
 
         PromoCode promoCode = promoCodeRepository.findByCode(normalizedCode)
                 .orElseThrow(() -> PromoCodeNotFoundException.forCode(normalizedCode));
 
         if (!Boolean.TRUE.equals(promoCode.getActive())) {
-            throw PromoCodeInactiveException.forCode(normalizedCode);
+            throw PromoCodeInactiveException.forCode(promoCode.getCode());
         }
 
         Instant now = clock.instant();
         if (promoCode.getValidFrom() != null && now.isBefore(promoCode.getValidFrom())) {
-            throw PromoCodeNotYetValidException.forCode(normalizedCode, promoCode.getValidFrom());
+            throw PromoCodeNotYetValidException.forCode(promoCode.getCode(), promoCode.getValidFrom());
         }
         if (promoCode.getValidUntil() != null && now.isAfter(promoCode.getValidUntil())) {
-            throw PromoCodeExpiredException.forCode(normalizedCode, promoCode.getValidUntil());
+            throw PromoCodeExpiredException.forCode(promoCode.getCode(), promoCode.getValidUntil());
         }
 
         if (promoCode.getUsageLimit() != null && promoCode.getUsedCount() >= promoCode.getUsageLimit()) {
-            throw PromoCodeUsageLimitExceededException.forCode(normalizedCode, promoCode.getUsageLimit());
+            throw PromoCodeUsageLimitExceededException.forCode(promoCode.getCode(), promoCode.getUsageLimit());
         }
 
         if (promoCode.getMinOrderAmount() != null
                 && subtotal.compareTo(promoCode.getMinOrderAmount()) < 0) {
             throw PromoCodeMinOrderAmountException.forCode(
-                    normalizedCode, promoCode.getMinOrderAmount(), subtotal);
+                    promoCode.getCode(), promoCode.getMinOrderAmount(), subtotal);
         }
 
         validateCartConstraints(promoCode, items);

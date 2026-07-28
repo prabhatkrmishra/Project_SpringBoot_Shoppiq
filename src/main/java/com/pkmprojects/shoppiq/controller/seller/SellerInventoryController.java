@@ -21,24 +21,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller for seller inventory management.
+ * <strong>Spring Boot Concept:</strong> REST controller for seller inventory management.
  *
- * <h2>Responsibilities</h2>
+ * <p>Exposes endpoints for sellers to view their full inventory, identify
+ * low-stock and out-of-stock products, and adjust stock quantities. All
+ * endpoints require SELLER or ADMIN role.</p>
+ *
+ * <p>Key design points:
  * <ul>
- *     <li>List the seller's full inventory with stock status.</li>
- *     <li>Identify low stock products.</li>
- *     <li>Identify out of stock products.</li>
- *     <li>Adjust stock quantities for individual products.</li>
+ *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
+ *   <li><strong>Seller-scoped</strong> — inventory is filtered to the authenticated seller's products.</li>
  * </ul>
+ * </p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>All endpoints require SELLER or ADMIN role.</li>
- *     <li>The authenticated user is injected via {@link AuthenticationPrincipal}.</li>
- *     <li>Ownership is enforced at the service layer.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see SellerInventoryService
  * @since 1.0.0
  */
 @Validated
@@ -54,6 +51,14 @@ public class SellerInventoryController {
         this.pagination = pagination;
     }
 
+    /**
+     * Returns a paginated list of the seller's full inventory with stock status.
+     *
+     * @param currentUser the authenticated seller
+     * @param page        zero-based page index
+     * @param size        page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of inventory responses
+     */
     @GetMapping
     public ResponseEntity<PageResponse<SellerInventoryResponse>> getInventory(
             @AuthenticationPrincipal(expression = "user") User currentUser,
@@ -63,6 +68,14 @@ public class SellerInventoryController {
         return ResponseEntity.ok(sellerInventoryService.getInventory(currentUser, page, size));
     }
 
+    /**
+     * Returns the seller's low-stock products (stock below threshold).
+     *
+     * @param currentUser the authenticated seller
+     * @param page        zero-based page index
+     * @param size        page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of low-stock inventory responses
+     */
     @GetMapping("/low-stock")
     public ResponseEntity<PageResponse<SellerInventoryResponse>> getLowStock(
             @AuthenticationPrincipal(expression = "user") User currentUser,
@@ -72,6 +85,14 @@ public class SellerInventoryController {
         return ResponseEntity.ok(sellerInventoryService.getLowStockProducts(currentUser, page, size));
     }
 
+    /**
+     * Returns the seller's out-of-stock products.
+     *
+     * @param currentUser the authenticated seller
+     * @param page        zero-based page index
+     * @param size        page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of out-of-stock inventory responses
+     */
     @GetMapping("/out-of-stock")
     public ResponseEntity<PageResponse<SellerInventoryResponse>> getOutOfStock(
             @AuthenticationPrincipal(expression = "user") User currentUser,
@@ -81,6 +102,15 @@ public class SellerInventoryController {
         return ResponseEntity.ok(sellerInventoryService.getOutOfStockProducts(currentUser, page, size));
     }
 
+    /**
+     * Adjusts the stock quantity for a seller's product with an audit reason.
+     *
+     * @param id          the product ID (must be positive)
+     * @param quantity    the quantity adjustment delta (positive or negative)
+     * @param reason      the audit reason for the adjustment
+     * @param currentUser the authenticated seller
+     * @return 200 OK with the updated inventory response
+     */
     @PutMapping("/{id}/adjust")
     public ResponseEntity<SellerInventoryResponse> adjustStock(
             @PathVariable @Positive(message = "Product id must be a positive number") Long id,

@@ -8,12 +8,17 @@ import java.math.BigDecimal;
 /**
  * Response payload returned after validating a promo code.
  *
- * @param code          the validated promo code string
- * @param discount      the calculated discount amount for the given subtotal
- * @param discountType  PERCENTAGE or FIXED_AMOUNT
- * @param discountValue the raw discount value (percentage or fixed amount)
- * @param couponType    the cart constraint type (SINGLE / BULK / null)
- * @author PrabhatKrMishra
+ * <p>This response includes both the raw discount parameters
+ * ({@code discountType}, {@code discountValue}) and the computed
+ * {@code discount} amount for the given cart. The frontend uses
+ * this to display the discount preview before the user confirms
+ * the order.</p>
+ *
+ * <p><b>Computed field:</b> {@code discount} is the actual monetary
+ * discount that would be applied — for percentage discounts, this is
+ * {@code subtotal × discountValue / 100}, capped at {@code maxDiscountAmount}.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record PromoCodeValidateResponse(

@@ -4,7 +4,21 @@ import com.pkmprojects.shoppiq.dto.admin.response.AdminReviewResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 
 /**
- * Business contract for admin review moderation.
+ * <strong>Spring Boot Concept:</strong> Business contract for admin review moderation.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * Defines the <strong>Service layer</strong> contract for moderating product reviews.
+ * Architecture: {@code AdminReviewController → AdminReviewService → ItemReviewRepository}.
+ * </p>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *     <li>Retrieve all reviews with pagination (sorted newest-first).</li>
+ *     <li>Approve pending reviews — sets status to APPROVED, making them visible to customers.</li>
+ *     <li>Reject pending reviews — sets status to REJECTED, hiding them from the product page.</li>
+ *     <li>Delete inappropriate reviews entirely.</li>
+ * </ul>
  *
  * <p>
  * Defines the operations for moderating product reviews,
@@ -23,7 +37,7 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
  *     <li>Implemented by {@code AdminReviewServiceImpl}.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface AdminReviewService {

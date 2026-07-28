@@ -104,8 +104,8 @@ class BannerServiceImplTest {
             List<BannerResponse> result = bannerService.findAllActive();
 
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).badgeText()).isEqualTo("Limited Time");
-            assertThat(result.get(0).badgeType()).isEqualTo(BannerType.PRIMARY);
+            assertThat(result.getFirst().badgeText()).isEqualTo("Limited Time");
+            assertThat(result.getFirst().badgeType()).isEqualTo(BannerType.PRIMARY);
             assertThat(result.get(1).badgeText()).isEqualTo("Just In");
         }
 
@@ -144,7 +144,7 @@ class BannerServiceImplTest {
             PageResponse<BannerResponse> result = bannerService.findAll(0, 20);
 
             assertThat(result.content()).hasSize(2);
-            assertThat(result.content().get(0).badgeText()).isEqualTo("Limited Time");
+            assertThat(result.content().getFirst().badgeText()).isEqualTo("Limited Time");
             assertThat(result.content().get(1).badgeText()).isEqualTo("Just In");
             assertThat(result.totalElements()).isEqualTo(2);
         }

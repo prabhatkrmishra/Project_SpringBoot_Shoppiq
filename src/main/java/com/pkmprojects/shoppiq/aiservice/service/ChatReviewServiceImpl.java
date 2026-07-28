@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Read-only implementation of {@link ChatReviewService}.
+ * <strong>Spring Boot Concept:</strong> Read-only implementation of {@link ChatReviewService}.
  *
  * @author PrabhatKrMishra
  * @since 1.4.0

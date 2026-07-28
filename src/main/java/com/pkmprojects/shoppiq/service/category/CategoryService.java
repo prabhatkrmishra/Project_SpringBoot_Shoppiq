@@ -7,7 +7,34 @@ import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
 import java.util.List;
 
 /**
- * Service interface for managing product categories.
+ * <strong>Spring Boot Concept:</strong> Service interface for managing product categories.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * This is the primary <strong>Service layer</strong> interface for category management.
+ * It acts as the boundary between the presentation layer (controllers) and the
+ * persistence layer (repositories), following the
+ * {@code CategoryController → CategoryService → CategoryLookupService / CategoryWriteService}
+ * pattern.
+ * </p>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *     <li>Create new categories with unique name/slug validation.</li>
+ *     <li>Bulk create categories.</li>
+ *     <li>Update existing categories (regenerates slug on name change).</li>
+ *     <li>Delete categories (prevented if referenced by products).</li>
+ *     <li>Retrieve categories by identifier or slug.</li>
+ *     <li>Retrieve top-selling categories from the last 30 days.</li>
+ * </ul>
+ *
+ * <h2>Business Rules Enforced</h2>
+ * <ul>
+ *     <li>Category names must be unique (case-insensitive).</li>
+ *     <li>Category slugs must be unique.</li>
+ *     <li>Slugs are automatically generated from category names via {@code SlugUtil}.</li>
+ *     <li>Categories referenced by products cannot be deleted (future enforcement).</li>
+ * </ul>
  *
  * <p>
  * This service defines the business operations for category management.
@@ -43,7 +70,7 @@ import java.util.List;
  *     <li>Categories referenced by products cannot be deleted.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface CategoryService {

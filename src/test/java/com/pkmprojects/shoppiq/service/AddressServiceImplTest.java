@@ -2,7 +2,6 @@ package com.pkmprojects.shoppiq.service;
 
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.address.CreateAddressRequest;
-import com.pkmprojects.shoppiq.dto.address.UpdateAddressRequest;
 import com.pkmprojects.shoppiq.entity.address.Address;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
@@ -111,8 +110,8 @@ class AddressServiceImplTest {
         );
     }
 
-    private UpdateAddressRequest updateRequest(boolean isDefault) {
-        return new UpdateAddressRequest(
+    private CreateAddressRequest updateRequest(boolean isDefault) {
+        return new CreateAddressRequest(
                 "Office", "Alice Smith", "9876543210",
                 "42 Connaught Place", null,
                 "Delhi", "Delhi", "110001", "India", isDefault
@@ -234,7 +233,7 @@ class AddressServiceImplTest {
             List<AddressResponse> result = addressService.getAll(alice);
 
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).id()).isEqualTo(1L);
+            assertThat(result.getFirst().id()).isEqualTo(1L);
             assertThat(result.get(1).id()).isEqualTo(2L);
         }
 

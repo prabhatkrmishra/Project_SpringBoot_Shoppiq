@@ -9,16 +9,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Conditional configuration that registers the {@link RateLimitFilter}
- * bean only when {@code app.rate-limit.enabled=true} (or when the
- * property is absent, matching the production default).
+ * <strong>Spring Boot Concept:</strong> {@code @Configuration} class that
+ * conditionally registers the {@link RateLimitFilter} bean when
+ * {@code app.rate-limit.enabled=true} (default, matching production).
  *
  * <p>In the {@code test} profile the property is explicitly set to
- * {@code false}, so this configuration class never activates and no
- * {@code RateLimitFilter} bean is created — avoiding unsatisfied
- * dependencies in {@code @WebMvcTest} slices.</p>
+ * {@code false}, so no {@code RateLimitFilter} bean is created —
+ * avoiding unsatisfied dependencies in {@code @WebMvcTest} slices.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 0.5.0
  */
 @Configuration
@@ -26,6 +25,14 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties(RateLimitProperties.class)
 public class RateLimitFilterConfig {
 
+    /**
+     * Creates the rate limit filter bean with externalized properties.
+     *
+     * @param properties            the rate limit configuration
+     * @param jwtAuthenticationUtils utility for extracting JWT user information
+     * @param responseWriter        utility for writing RFC 9457 responses
+     * @return a configured {@link RateLimitFilter} instance
+     */
     @Bean
     public RateLimitFilter rateLimitFilter(RateLimitProperties properties,
                                            JwtAuthenticationUtils jwtAuthenticationUtils,

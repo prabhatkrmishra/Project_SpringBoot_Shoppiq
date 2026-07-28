@@ -7,7 +7,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 /**
- * Represents a CMS-managed promotional banner displayed on the homepage.
+ * <strong>Spring Boot Concept:</strong> Represents a CMS-managed promotional banner displayed on the homepage.
  *
  * <p>Banners are rendered in the Sales &amp; Offers section and can be
  * created, edited, reordered, toggled, and deleted by administrators.</p>
@@ -20,7 +20,25 @@ import lombok.*;
  *     <li>Controls display order and active/inactive state.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @Entity} + {@code @Table}</strong> — Standard JPA
+ *         entity mapped to the {@code homepage_banners} table.</li>
+ *     <li><strong>{@code @Enumerated(EnumType.STRING)}</strong> — Stores enum
+ *         values as readable strings in the database rather than ordinal integers,
+ *         making the schema self-documenting and resilient to enum reordering.</li>
+ *     <li><strong>Jakarta Validation ({@code @NotBlank}, {@code @NotNull},
+ *         {@code @Size})</strong> — Bean Validation annotations that trigger
+ *         automatic validation before persist/update when used with
+ *         {@code @Valid} in the controller or service layer.</li>
+ *     <li><strong>{@code @Builder.Default}</strong> — Lombok annotation that
+ *         ensures the builder initializes fields to the specified default value
+ *         (e.g., {@code active = true}, {@code headingColor = "#FFFFFF"}).</li>
+ *     <li><strong>Extends {@link AuditableEntity}</strong> — Inherits automatic
+ *         ID generation, optimistic locking, and audit timestamps.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

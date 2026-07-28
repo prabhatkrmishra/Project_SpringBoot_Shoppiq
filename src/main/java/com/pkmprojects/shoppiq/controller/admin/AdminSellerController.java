@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  *     <li>PUT  /api/admin/sellers/{id}/reject     — reject seller</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Validated
@@ -44,6 +44,14 @@ public class AdminSellerController {
         this.pagination = pagination;
     }
 
+    /**
+     * Returns a paginated list of sellers, optionally filtered by verification status.
+     *
+     * @param status optional verification status filter (PENDING, APPROVED, REJECTED)
+     * @param page   zero-based page index
+     * @param size   page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of seller responses
+     */
     @GetMapping
     public ResponseEntity<PageResponse<AdminSellerResponse>> getSellers(
             @RequestParam(required = false) VerificationStatus status,
@@ -56,24 +64,48 @@ public class AdminSellerController {
         return ResponseEntity.ok(adminSellerService.getAllSellers(page, size));
     }
 
+    /**
+     * Approves a seller's registration, enabling them to list products.
+     *
+     * @param sellerId the seller ID
+     * @return 200 OK with the updated seller response
+     */
     @PutMapping("/{sellerId}/approve")
     public ResponseEntity<AdminSellerResponse> approveSeller(
             @PathVariable Long sellerId) {
         return ResponseEntity.ok(adminSellerService.approveSeller(sellerId));
     }
 
+    /**
+     * Rejects a seller's registration application.
+     *
+     * @param sellerId the seller ID
+     * @return 200 OK with the updated seller response
+     */
     @PutMapping("/{sellerId}/reject")
     public ResponseEntity<AdminSellerResponse> rejectSeller(
             @PathVariable Long sellerId) {
         return ResponseEntity.ok(adminSellerService.rejectSeller(sellerId));
     }
 
+    /**
+     * Suspends an approved seller, temporarily disabling their storefront.
+     *
+     * @param sellerId the seller ID
+     * @return 200 OK with the updated seller response
+     */
     @PutMapping("/{sellerId}/suspend")
     public ResponseEntity<AdminSellerResponse> suspendSeller(
             @PathVariable Long sellerId) {
         return ResponseEntity.ok(adminSellerService.suspendSeller(sellerId));
     }
 
+    /**
+     * Unsuspends a previously suspended seller, reactivating their storefront.
+     *
+     * @param sellerId the seller ID
+     * @return 200 OK with the updated seller response
+     */
     @PutMapping("/{sellerId}/unsuspend")
     public ResponseEntity<AdminSellerResponse> unsuspendSeller(
             @PathVariable Long sellerId) {

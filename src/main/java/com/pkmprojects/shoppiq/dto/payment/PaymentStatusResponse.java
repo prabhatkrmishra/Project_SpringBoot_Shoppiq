@@ -9,7 +9,12 @@ import java.time.Instant;
  * Lightweight response that returns only the current payment status.
  * Used for verify/cancel/refund operations.
  *
- * @author PrabhatKrMishra
+ * <p>This is a <b>minimal projection</b> — a stripped-down DTO that returns
+ * only the essential status fields. This pattern is useful for action endpoints
+ * (verify/refund/cancel) where the full {@link PaymentResponse} would be
+ * unnecessarily verbose.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record PaymentStatusResponse(

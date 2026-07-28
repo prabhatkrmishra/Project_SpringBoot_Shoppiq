@@ -11,43 +11,35 @@ import com.pkmprojects.shoppiq.exception.general.item.ProductAlreadyOnSaleExcept
 import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsWriteService;
+import com.pkmprojects.shoppiq.config.InventoryConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * Default implementation of {@link AdminInventoryService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminInventoryService}
+ * containing business logic for admin inventory management.
  *
- * <p>
- * Provides inventory management operations for administrators
- * including stock viewing, adjustment, and bulk updates.
+ * <p>Provides paginated inventory listing, stock adjustment, bulk stock updates,
+ * low/out-of-stock identification, and on-sale/discount management. Used by
+ * {@code AdminInventoryController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Stock adjustments and bulk updates are atomic; reads use {@code readOnly = true}.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
  * </p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>List all products with inventory details.</li>
- *     <li>Adjust stock for individual products.</li>
- *     <li>Bulk update stock for multiple products.</li>
- *     <li>Identify low stock and out of stock products.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Uses constructor injection.</li>
- *     <li>Write operations execute in read-write transactions.</li>
- *     <li>Stock adjustments are validated against minimum bounds.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see AdminInventoryService
  * @since 1.0.0
  */
 @Service
 @Transactional
 public class AdminInventoryServiceImpl implements AdminInventoryService {
-
-    private static final int LOW_STOCK_THRESHOLD = 5;
 
     private final ItemLookupService itemLookupService;
     private final ItemDetailsLookupService itemDetailsLookupService;
@@ -61,6 +53,13 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         this.itemDetailsWriteService = itemDetailsWriteService;
     }
 
+    /**
+     * Retrieves a paginated list of all products with inventory details.
+     *
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated product inventory responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AdminProductInventoryResponse> getAllProductInventory(int page, int size) {
@@ -68,24 +67,45 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         return PageResponse.of(itemPage, this::mapToInventoryResponse);
     }
 
+    /**
+     * Retrieves products with stock below the low-stock threshold.
+     *
+     * @return list of low-stock product inventory responses
+     */
     @Override
     @Transactional(readOnly = true)
     public List<AdminProductInventoryResponse> getLowStockProducts() {
-        List<ItemDetails> lowStock = itemDetailsLookupService.findLowStockProducts(LOW_STOCK_THRESHOLD);
+        List<ItemDetails> lowStock = itemDetailsLookupService.findLowStockProducts(InventoryConstants.LOW_STOCK_THRESHOLD);
         return lowStock.stream()
                 .map(details -> mapToInventoryResponse(details.getItem()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
+    /**
+     * Retrieves products with zero stock.
+     *
+     * @return list of out-of-stock product inventory responses
+     */
     @Override
     @Transactional(readOnly = true)
     public List<AdminProductInventoryResponse> getOutOfStockProducts() {
         List<ItemDetails> outOfStock = itemDetailsLookupService.findOutOfStockProducts();
         return outOfStock.stream()
                 .map(details -> mapToInventoryResponse(details.getItem()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
+    /**
+     * Adjusts the stock quantity for a product.
+     *
+     * <p>Validates that the new quantity is non-negative before persisting.</p>
+     *
+     * @param itemId  item ID
+     * @param request stock adjustment payload containing new quantity
+     * @return updated product inventory response
+     * @throws ItemNotFoundException          if the item does not exist
+     * @throws ItemStockNegativeException     if the new quantity is negative
+     */
     @Override
     public AdminProductInventoryResponse adjustStock(Long itemId, StockAdjustmentRequest request) {
         Item item = itemLookupService.findById(itemId)
@@ -104,6 +124,12 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         return mapToInventoryResponse(item);
     }
 
+    /**
+     * Updates stock for multiple products in a single transaction.
+     *
+     * @param adjustments map of item ID to stock adjustment request
+     * @return list of updated product inventory responses
+     */
     @Override
     public List<AdminProductInventoryResponse> bulkUpdateStock(java.util.Map<Long, StockAdjustmentRequest> adjustments) {
         List<AdminProductInventoryResponse> results = adjustments.entrySet().stream()
@@ -123,17 +149,22 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
                     itemDetailsWriteService.save(details);
                     return mapToInventoryResponse(item);
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         return results;
     }
 
+    /**
+     * Computes inventory dashboard summary with total, in-stock, low-stock, and out-of-stock counts.
+     *
+     * @return inventory dashboard summary
+     */
     @Override
     @Transactional(readOnly = true)
     public InventoryDashboardSummary getInventoryDashboardSummary() {
         long totalItems = itemDetailsLookupService.count();
         long outOfStockItems = itemDetailsLookupService.countOutOfStockProducts();
-        long lowStockItems = itemDetailsLookupService.countLowStockProducts(LOW_STOCK_THRESHOLD);
+        long lowStockItems = itemDetailsLookupService.countLowStockProducts(InventoryConstants.LOW_STOCK_THRESHOLD);
         long inStockItems = totalItems - outOfStockItems - lowStockItems;
 
         return new InventoryDashboardSummary(
@@ -144,13 +175,22 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         );
     }
 
+    /**
+     * Toggles the on-sale status for a product.
+     *
+     * @param itemId item ID
+     * @param onSale desired on-sale state
+     * @return updated product inventory response
+     * @throws ItemNotFoundException               if the item does not exist
+     * @throws ProductAlreadyOnSaleException        if the product is already on sale
+     */
     @Override
     public AdminProductInventoryResponse toggleOnSale(Long itemId, boolean onSale) {
         Item item = itemLookupService.findById(itemId)
                 .orElseThrow(() -> ItemNotFoundException.id(itemId));
 
         ItemDetails details = item.getItemDetails();
-        if (onSale && Boolean.TRUE.equals(details.getOnSale())) {
+        if (onSale && Boolean.TRUE.equals(details.isOnSale())) {
             throw ProductAlreadyOnSaleException.forItem(item.getName());
         }
         details.setOnSale(onSale);
@@ -159,6 +199,14 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         return mapToInventoryResponse(item);
     }
 
+    /**
+     * Updates the discount percentage for a product.
+     *
+     * @param itemId            item ID
+     * @param discountPercentage new discount percentage
+     * @return updated product inventory response
+     * @throws ItemNotFoundException if the item does not exist
+     */
     @Override
     public AdminProductInventoryResponse updateDiscount(Long itemId, java.math.BigDecimal discountPercentage) {
         Item item = itemLookupService.findById(itemId)
@@ -171,6 +219,14 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         return mapToInventoryResponse(item);
     }
 
+    /**
+     * Toggles on-sale status and optionally updates discount for multiple products.
+     *
+     * @param itemIds            list of item IDs
+     * @param onSale             desired on-sale state
+     * @param discountPercentage optional discount percentage to apply
+     * @return list of updated product inventory responses
+     */
     @Override
     public List<AdminProductInventoryResponse> bulkToggleOnSale(List<Long> itemIds, boolean onSale, java.math.BigDecimal discountPercentage) {
         List<AdminProductInventoryResponse> results = itemIds.stream()
@@ -179,7 +235,7 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
                             .orElseThrow(() -> ItemNotFoundException.id(itemId));
 
                     ItemDetails details = item.getItemDetails();
-                    if (onSale && Boolean.TRUE.equals(details.getOnSale())) {
+                    if (onSale && Boolean.TRUE.equals(details.isOnSale())) {
                         return mapToInventoryResponse(item);
                     }
                     details.setOnSale(onSale);
@@ -190,11 +246,19 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
 
                     return mapToInventoryResponse(item);
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         return results;
     }
 
+    /**
+     * Puts a product on sale with an optional discount percentage.
+     *
+     * @param itemId             item ID
+     * @param discountPercentage optional discount percentage
+     * @return updated product inventory response
+     * @throws ItemNotFoundException if the item does not exist
+     */
     @Override
     public AdminProductInventoryResponse putOnSale(Long itemId, java.math.BigDecimal discountPercentage) {
         Item item = itemLookupService.findById(itemId)
@@ -223,10 +287,10 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
                 details.getPrice(),
                 details.getDiscountPercentage(),
                 details.getStockQuantity(),
-                LOW_STOCK_THRESHOLD,
+                InventoryConstants.LOW_STOCK_THRESHOLD,
                 true,
                 details.getImageUrl(),
-                Boolean.TRUE.equals(details.getOnSale())
+                Boolean.TRUE.equals(details.isOnSale())
         );
     }
 

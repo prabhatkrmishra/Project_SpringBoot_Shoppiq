@@ -12,32 +12,27 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
- * Default implementation of {@link AdminPaymentService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminPaymentService}
+ * containing business logic for admin payment management.
  *
- * <p>
- * Provides payment management operations for administrators
- * including retrieval, refunds, and dashboard statistics.
+ * <p>Provides paginated payment retrieval with optional status filtering, single
+ * payment lookup, refund processing, and payment dashboard statistics. Used by
+ * {@code AdminPaymentController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Refund processing is atomic; reads use {@code readOnly = true}.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
  * </p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Retrieve paginated payments with optional status filter.</li>
- *     <li>Retrieve single payment by ID.</li>
- *     <li>Process refunds for PAID payments.</li>
- *     <li>Provide payment dashboard statistics.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Uses constructor injection.</li>
- *     <li>Read operations use read-only transactions.</li>
- *     <li>Refunds only allowed for PAID payments.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see AdminPaymentService
  * @since 1.0.0
  */
 @Service
@@ -53,6 +48,14 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
         this.paymentWriteService = paymentWriteService;
     }
 
+    /**
+     * Retrieves a paginated list of payments with optional status filtering.
+     *
+     * @param status optional payment status filter
+     * @param page   zero-based page index
+     * @param size   page size
+     * @return paginated payment responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AdminPaymentResponse> getAllPayments(PaymentStatus status, int page, int size) {
@@ -63,31 +66,50 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
         return PageResponse.of(paymentPage, AdminPaymentResponse::fromEntity);
     }
 
+    /**
+     * Retrieves a single payment by ID.
+     *
+     * @param paymentId payment ID
+     * @return payment response
+     * @throws PaymentNotFoundException if the payment does not exist
+     */
     @Override
     @Transactional(readOnly = true)
     public AdminPaymentResponse getPaymentById(Long paymentId) {
         Payment payment = paymentLookupService.findById(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException(
-                        "Payment with id '%d' was not found.".formatted(paymentId)));
+                .orElseThrow(() -> PaymentNotFoundException.forId(paymentId));
         return AdminPaymentResponse.fromEntity(payment);
     }
 
+    /**
+     * Processes a refund for a PAID payment — transitions status to REFUNDED.
+     *
+     * @param paymentId payment ID
+     * @return updated payment response
+     * @throws PaymentNotFoundException        if the payment does not exist
+     * @throws PaymentInvalidStateException     if the payment is not PAID
+     */
     @Override
     public AdminPaymentResponse refundPayment(Long paymentId) {
         Payment payment = paymentLookupService.findById(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException(
-                        "Payment with id '%d' was not found.".formatted(paymentId)));
+                .orElseThrow(() -> PaymentNotFoundException.forId(paymentId));
 
         if (payment.getPaymentStatus() != PaymentStatus.PAID) {
             throw PaymentInvalidStateException.refundNotAllowed(paymentId, payment.getPaymentStatus());
         }
 
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
+        payment.setRefundedAt(Instant.now());
         paymentWriteService.save(payment);
 
         return AdminPaymentResponse.fromEntity(payment);
     }
 
+    /**
+     * Computes payment dashboard statistics including counts by status, total revenue, and refunded amount.
+     *
+     * @return payment dashboard stats
+     */
     @Override
     @Transactional(readOnly = true)
     public PaymentDashboardStats getPaymentDashboardStats() {

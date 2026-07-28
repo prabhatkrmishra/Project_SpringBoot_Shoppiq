@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Spring Data repository for {@link ChatConversation} persistence.
+ * <strong>Spring Boot Concept:</strong> Spring Data repository for {@link ChatConversation} persistence.
  *
  * <p>
  * Provides both single-result lookups and paginated queries. The search methods
@@ -97,10 +97,11 @@ public interface ChatConversationRepository extends JpaRepository<ChatConversati
      * @param pageable pagination parameters
      * @return paginated list of matching conversations
      */
-    @Query("SELECT c FROM ChatConversation c WHERE " +
-            "LOWER(c.chatId) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "LOWER(c.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "LOWER(c.user.username) LIKE LOWER(CONCAT('%', :query, '%'))")
+    @Query("""
+            SELECT c FROM ChatConversation c
+            WHERE LOWER(c.chatId) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(c.title) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(c.user.username) LIKE LOWER(CONCAT('%', :query, '%'))""")
     Page<ChatConversation> searchByQuery(@Param("query") String query, Pageable pageable);
 
     /**
@@ -111,10 +112,12 @@ public interface ChatConversationRepository extends JpaRepository<ChatConversati
      * @param pageable pagination parameters
      * @return paginated list of matching conversations
      */
-    @Query("SELECT c FROM ChatConversation c WHERE c.status = :status AND " +
-            "(LOWER(c.chatId) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "LOWER(c.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "LOWER(c.user.username) LIKE LOWER(CONCAT('%', :query, '%')))")
+    @Query("""
+            SELECT c FROM ChatConversation c
+            WHERE c.status = :status
+              AND (LOWER(c.chatId) LIKE LOWER(CONCAT('%', :query, '%'))
+                OR LOWER(c.title) LIKE LOWER(CONCAT('%', :query, '%'))
+                OR LOWER(c.user.username) LIKE LOWER(CONCAT('%', :query, '%')))""")
     Page<ChatConversation> searchByQueryAndStatus(@Param("query") String query,
                                                   @Param("status") ConversationStatus status,
                                                   Pageable pageable);

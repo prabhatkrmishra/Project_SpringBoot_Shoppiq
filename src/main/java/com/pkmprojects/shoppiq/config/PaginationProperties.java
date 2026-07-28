@@ -3,14 +3,14 @@ package com.pkmprojects.shoppiq.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Externalized pagination defaults.
+ * <strong>Spring Boot Concept:</strong> {@code @ConfigurationProperties}
+ * record bound to {@code app.pagination.*} in {@code application.yaml}.
  *
- * <p>
- * Bound to {@code app.pagination.*} in {@code application.yaml}.
- * Allows operators to tune page sizes without touching code.
- * </p>
+ * <p>Provides externalized pagination defaults (default page size, max page
+ * size, and role-specific sizes for admin, seller, and catalog endpoints).
+ * Allows operators to tune page sizes without touching code.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @ConfigurationProperties(prefix = "app.pagination")

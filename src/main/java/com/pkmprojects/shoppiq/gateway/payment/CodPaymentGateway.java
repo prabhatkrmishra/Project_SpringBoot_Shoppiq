@@ -6,7 +6,9 @@ import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import org.springframework.stereotype.Component;
 
 /**
- * {@link PaymentGatewayStrategy} implementation for Cash on Delivery (COD) orders.
+ * <strong>Spring Boot Concept:</strong> Concrete implementation of
+ * {@link PaymentGatewayStrategy} for Cash on Delivery (COD) orders —
+ * a "no-op" strategy pattern implementation.
  *
  * <p>
  * COD payments involve no external gateway. The payment record is created in
@@ -15,11 +17,22 @@ import org.springframework.stereotype.Component;
  * by the delivery workflow.
  * </p>
  *
- * @author PrabhatKrMishra
+ * <p><strong>Educational value:</strong> This class demonstrates the
+ * <em>Null Object</em> / <em>No-Op Strategy</em> pattern in the context
+ * of the Strategy pattern. Every payment method must have a strategy
+ * implementation, even if it does nothing (like COD). By implementing
+ * the full interface with no-op methods, the checkout service can treat
+ * all payment methods uniformly — no special-case if/else for COD in the
+ * service layer. The {@link PaymentGatewayRegistry} resolves the correct
+ * strategy, and the service calls {@code process()} and {@code verify()}
+ * polymorphically regardless of whether the gateway is real or simulated.
+ * </p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component
-public class CodPaymentGateway implements PaymentGatewayStrategy {
+public final class CodPaymentGateway implements PaymentGatewayStrategy {
 
     @Override
     public PaymentGateway supports() {

@@ -6,7 +6,22 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import java.math.BigDecimal;
 
 /**
- * Business contract for admin customer management.
+ * <strong>Spring Boot Concept:</strong> Business contract for admin customer management.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * Defines the <strong>Service layer</strong> contract for customer management.
+ * Architecture: {@code AdminUserController → AdminUserService → UserRepository / PaymentLookupService}.
+ * </p>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *     <li>Retrieve all customers with optional enabled/disabled filter and pagination.</li>
+ *     <li>Retrieve a single customer by ID with order/payment summary.</li>
+ *     <li>Block a customer account (sets {@code enabled = false}) — disables login but preserves data.</li>
+ *     <li>Unblock a customer account.</li>
+ *     <li>Get customer dashboard statistics (totals, new this month, revenue, average order value).</li>
+ * </ul>
  *
  * <p>
  * Defines the operations for managing customer accounts,
@@ -29,7 +44,7 @@ import java.math.BigDecimal;
  *     <li>Implemented by {@code AdminUserServiceImpl}.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface AdminUserService {

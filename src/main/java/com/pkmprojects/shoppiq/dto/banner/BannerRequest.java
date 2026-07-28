@@ -4,7 +4,7 @@ import com.pkmprojects.shoppiq.entity.enums.BannerType;
 import jakarta.validation.constraints.*;
 
 /**
- * Request payload for creating or updating a homepage banner.
+ * <strong>Spring Boot Concept:</strong> Request payload for creating or updating a homepage banner.
  *
  * @param badgeText    badge pill label (e.g. "Limited Time")
  * @param badgeType    visual style variant (PRIMARY, SECONDARY, ACCENT)

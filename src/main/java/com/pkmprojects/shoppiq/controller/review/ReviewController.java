@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.*;
  *     <li>Acts solely as the HTTP boundary.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Validated

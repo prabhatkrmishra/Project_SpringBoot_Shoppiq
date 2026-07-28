@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Request DTO for updating the current user's profile.
+ * <strong>Spring Boot Concept:</strong> Request DTO for updating the current user's profile.
  *
  * <p>Only the display name is editable; email and username remain locked.</p>
  *

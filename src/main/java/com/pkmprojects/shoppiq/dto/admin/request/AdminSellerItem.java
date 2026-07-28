@@ -5,7 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Inner item DTO used by {@link BulkSellerRequest} for bulk seller creation.
+ * <strong>Spring Boot Concept:</strong> Inner item DTO used by {@link BulkSellerRequest} for bulk seller creation.
  *
  * <p>
  * Each item specifies the target user and the seller registration details.

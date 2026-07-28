@@ -11,12 +11,17 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Seller-facing order response DTO.
+ * <strong>Spring Boot Concept:</strong> Seller-facing order response DTO.
  *
  * <p>Shows order details filtered to only the seller's line items.
  * In a multi-seller order, the financial fields (subtotal, grandTotal)
  * reflect the full order totals; the seller's own items are listed
  * in {@code items}.</p>
+ *
+ * <p><b>Multi-seller filtering:</b> The static {@link #from(com.pkmprojects.shoppiq.entity.order.Order, Long) from()}
+ * method accepts a {@code sellerId} parameter and filters the order's items
+ * to only those owned by that seller. This is essential for marketplace
+ * platforms where a single order may contain products from multiple sellers.</p>
  *
  * @param id            order identifier
  * @param status        order status
@@ -32,7 +37,7 @@ import java.util.List;
  * @param createdAt     entity creation timestamp
  * @param updatedAt     entity last update timestamp
  * @param items         seller's line items in this order
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record SellerOrderResponse(

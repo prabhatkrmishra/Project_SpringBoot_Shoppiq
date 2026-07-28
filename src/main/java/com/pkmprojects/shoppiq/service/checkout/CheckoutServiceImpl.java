@@ -53,53 +53,32 @@ import java.time.Clock;
 import java.util.List;
 
 /**
- * Handles the full checkout workflow inside a single database transaction.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link CheckoutService}
+ * containing the full checkout workflow business logic.
  *
- * <p>Checkout steps:</p>
- * <ol>
- *   <li>Load cart — throw {@link CartEmptyException} if missing or empty.</li>
- *   <li>Load address — validate ownership.</li>
- *   <li>Validate stock for every cart item.</li>
- *   <li>Calculate totals (subtotal, shipping, tax, discount, grandTotal).</li>
- *   <li>Persist {@link Order} with {@code PLACED} status.</li>
- *   <li>Persist {@link OrderItem} snapshots.</li>
- *   <li>Reduce inventory via {@link InventoryService}.</li>
- *   <li>Clear the cart via {@link CartService}.</li>
- *   <li>Create payment via {@link PaymentService}.</li>
- *   <li>Publish {@link OrderPlacedEvent} for async side effects.</li>
- * </ol>
+ * <p>Orchestrates the entire order placement flow: validates cart and address,
+ * checks stock, calculates totals (subtotal, delivery, COD surcharge, tax,
+ * discount with promos), persists the order with items, reduces inventory,
+ * clears the cart, creates a payment record, and publishes
+ * {@code OrderPlacedEvent}. Also provides cost preview, order history,
+ * cancellation, return, refund, and replacement requests. Used by
+ * {@code CheckoutController}.</p>
  *
- * <p>Post-order side effects (email, promo usage recording) are handled
- * asynchronously by {@link com.pkmprojects.shoppiq.events.OrderPlacedEventListener}
- * after the checkout transaction commits.</p>
- *
- * <p>Shipping charges:</p>
+ * <p>Why this design:
  * <ul>
- *   <li>{@link DeliveryType#NORMAL} — free shipping</li>
- *   <li>{@link DeliveryType#EXPRESS_1DAY} — $7.50 express delivery charge</li>
- *   <li>{@link PaymentMethod#COD} — $5.00 cash-on-delivery surcharge</li>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — The checkout orchestrates ~10 persistence operations that must be atomic; also catches {@code OptimisticLockingFailureException} for concurrent stock conflicts.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
  * </ul>
+ * </p>
  *
- * <h2>Dependency Graph</h2>
- * <pre>
- * CheckoutServiceImpl
- *   ├── CartRepository          (load cart)
- *   ├── AddressRepository       (load + validate address)
- *   ├── OrderRepository         (persist order)
- *   ├── CartService             (clear cart after order)
- *   ├── InventoryService        (reduce stock after order)
- *   ├── PaymentService          (create payment record)
- *   ├── PromoCodeService        (validate promo, calculate discount)
- *   ├── ApplicationEventPublisher (dispatch OrderPlacedEvent)
- *   └── Clock                   (deterministic time for tests)
- * </pre>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see CheckoutService
  * @since 1.0.0
  */
 @Service
 @Transactional
-public class CheckoutServiceImpl {
+public class CheckoutServiceImpl implements CheckoutService {
 
     private final CartRepository cartRepository;
     private final AddressRepository addressRepository;
@@ -143,10 +122,11 @@ public class CheckoutServiceImpl {
      * @return lightweight checkout response containing orderId and grandTotal
      * @throws StockConflictException if inventory was modified concurrently
      */
+    @Override
     public CheckoutResponse checkout(User user, CheckoutRequest request) {
         try {
             return doCheckout(user, request);
-        } catch (OptimisticLockingFailureException e) {
+        } catch (OptimisticLockingFailureException _) {
             throw StockConflictException.forOptimisticLock(
                     "Inventory was modified by another customer. Please refresh and try again.");
         }
@@ -286,6 +266,7 @@ public class CheckoutServiceImpl {
      * @return full cost breakdown
      * @throws CartEmptyException if the cart is missing or empty
      */
+    @Override
     @Transactional(readOnly = true)
     public OrderCalculationResponse calculateOrderSummary(User user, OrderCalculationRequest request) {
 
@@ -350,10 +331,10 @@ public class CheckoutServiceImpl {
     // =========================================================
 
     /**
-     * Returns all orders belonging to the authenticated user.
+     * Returns all orders belonging to the authenticated user, newest first.
      *
      * @param user authenticated customer
-     * @return list of full order responses, newest first
+     * @return list of full order responses
      */
     @Transactional(readOnly = true)
     public List<OrderResponse> getMyOrders(User user) {
@@ -363,6 +344,15 @@ public class CheckoutServiceImpl {
                 .toList();
     }
 
+    /**
+     * Returns a paginated list of the authenticated user's orders, newest first.
+     *
+     * @param user authenticated customer
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated order responses
+     */
+    @Override
     @Transactional(readOnly = true)
     public PageResponse<OrderResponse> getMyOrders(User user, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "placedAt"));
@@ -377,6 +367,7 @@ public class CheckoutServiceImpl {
      * @param orderId target order id
      * @return full order response
      */
+    @Override
     @Transactional(readOnly = true)
     public OrderResponse getMyOrder(User user, Long orderId) {
         Order order = findOrderOrThrow(orderId);
@@ -398,12 +389,13 @@ public class CheckoutServiceImpl {
      * @param user    authenticated customer
      * @param orderId target order id
      */
+    @Override
     public void cancelOrder(User user, Long orderId) {
         Order order = findOrderOrThrow(orderId);
         assertOwnership(user, order);
 
         if (order.getStatus() != OrderStatus.PLACED) {
-            throw new OrderCannotBeCancelledException(orderId, order.getStatus());
+            throw OrderCannotBeCancelledException.forOrder(orderId, order.getStatus());
         }
 
         order.setStatus(OrderStatus.CANCEL_REQUEST);
@@ -422,12 +414,13 @@ public class CheckoutServiceImpl {
      * @param user    authenticated customer
      * @param orderId target order id
      */
+    @Override
     public void requestReturn(User user, Long orderId) {
         Order order = findOrderOrThrow(orderId);
         assertOwnership(user, order);
 
         if (order.getStatus() != OrderStatus.DELIVERED) {
-            throw new OrderInvalidStatusTransitionException(order.getStatus(), OrderStatus.RETURN_REQUEST);
+            throw OrderInvalidStatusTransitionException.fromTo(order.getStatus(), OrderStatus.RETURN_REQUEST);
         }
 
         order.setStatus(OrderStatus.RETURN_REQUEST);
@@ -446,12 +439,13 @@ public class CheckoutServiceImpl {
      * @param user    authenticated customer
      * @param orderId target order id
      */
+    @Override
     public void requestRefund(User user, Long orderId) {
         Order order = findOrderOrThrow(orderId);
         assertOwnership(user, order);
 
         if (order.getStatus() != OrderStatus.DELIVERED) {
-            throw new OrderInvalidStatusTransitionException(order.getStatus(), OrderStatus.REFUND_REQUEST);
+            throw OrderInvalidStatusTransitionException.fromTo(order.getStatus(), OrderStatus.REFUND_REQUEST);
         }
 
         order.setStatus(OrderStatus.REFUND_REQUEST);
@@ -470,12 +464,13 @@ public class CheckoutServiceImpl {
      * @param user    authenticated customer
      * @param orderId target order id
      */
+    @Override
     public void requestReplacement(User user, Long orderId) {
         Order order = findOrderOrThrow(orderId);
         assertOwnership(user, order);
 
         if (order.getStatus() != OrderStatus.DELIVERED) {
-            throw new OrderInvalidStatusTransitionException(order.getStatus(), OrderStatus.REPLACE_REQUEST);
+            throw OrderInvalidStatusTransitionException.fromTo(order.getStatus(), OrderStatus.REPLACE_REQUEST);
         }
 
         order.setStatus(OrderStatus.REPLACE_REQUEST);

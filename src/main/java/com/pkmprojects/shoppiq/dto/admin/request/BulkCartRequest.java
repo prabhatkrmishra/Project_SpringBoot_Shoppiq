@@ -28,9 +28,11 @@ import java.util.List;
  *     <li>{@code @Valid} triggers cascading validation on each
  *     {@link AdminCartItem} in the list.</li>
  *     <li>Used exclusively for admin test-data bulk creation.</li>
+ *     <li>This "wrapper record" pattern is the standard Spring Boot approach
+ *     for validating collections in request bodies.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkCartRequest(

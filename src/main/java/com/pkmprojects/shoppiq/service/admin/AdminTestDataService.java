@@ -13,7 +13,25 @@ import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
 import java.util.List;
 
 /**
- * Admin service for populating test data via bulk endpoints.
+ * <strong>Spring Boot Concept:</strong> Admin service for populating test data via bulk endpoints.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * This is a <strong>Service layer</strong> interface specifically designed for development/testing.
+ * It orchestrates bulk creation across multiple entity types, calling repositories and
+ * other services directly.
+ * </p>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *     <li>Create users in bulk with encoded passwords and default CUSTOMER role.</li>
+ *     <li>Create products with auto-approval (PUBLISHED status) and seller assignment.</li>
+ *     <li>Create addresses in bulk for existing users.</li>
+ *     <li>Create product reviews in bulk (avoids duplicates).</li>
+ *     <li>Create seller profiles in bulk for existing users.</li>
+ *     <li>Add items to user carts in bulk (supports quantity merging).</li>
+ *     <li>Create orders from user carts in bulk (full checkout flow without payment).</li>
+ * </ul>
  *
  * <p>
  * Provides transactional bulk-creation methods for all major entities.
@@ -38,7 +56,7 @@ import java.util.List;
  *     <li>Create orders from user carts in bulk.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface AdminTestDataService {

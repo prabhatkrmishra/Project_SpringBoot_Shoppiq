@@ -6,7 +6,21 @@ import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * Business contract for seller profile management.
+ * <strong>Spring Boot Concept:</strong> Business contract for seller profile management.
+ *
+ * <p><strong>What the Service layer demonstrates here:</strong></p>
+ * <ul>
+ *   <li><strong>Interface-first design</strong> — Separates the seller management contract
+ *       (registration, profile retrieval, updates, deactivation, store publishing) from its
+ *       implementation.</li>
+ *   <li><strong>Seller lifecycle</strong> — Registration creates a seller with
+ *       {@code verificationStatus = PENDING} and {@code sellerStatus = INACTIVE}. Full
+ *       activation requires admin approval, demonstrating a multi-step registration flow.</li>
+ *   <li><strong>Soft-delete deactivation</strong> — {@link #deleteProfile} sets the seller
+ *       status to {@code INACTIVE} instead of deleting the row.</li>
+ *   <li><strong>Store publishing</strong> — {@link #publishStore} transitions a store from
+ *       {@code DRAFT} to {@code PUBLISHED}, controlling visibility to customers.</li>
+ * </ul>
  *
  * <p>
  * Handles seller registration, profile retrieval, profile updates, and
@@ -22,7 +36,7 @@ import com.pkmprojects.shoppiq.entity.user.User;
  *     <li>Deactivate (soft-delete) the seller account.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface SellerService {

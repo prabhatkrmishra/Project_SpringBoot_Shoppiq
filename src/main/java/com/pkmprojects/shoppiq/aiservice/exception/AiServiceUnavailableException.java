@@ -6,7 +6,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Thrown when the AI service is disabled or unavailable.
+ * <strong>Spring Boot Concept:</strong> Thrown when the AI service is disabled or unavailable.
  *
  * <p>
  * Maps to {@link ErrorCode#AI_SERVICE_UNAVAILABLE} and produces a 503 Service Unavailable response.

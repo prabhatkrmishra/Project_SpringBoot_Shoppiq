@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Read-only implementation of {@link ChatProductService}.
+ * <strong>Spring Boot Concept:</strong> Read-only implementation of {@link ChatProductService}.
  *
  * @author PrabhatKrMishra
  * @since 1.4.0

@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * Represents a shipping address.
+ * <strong>Spring Boot Concept:</strong> Represents a shipping address.
  *
  * <p>
  * Addresses are owned by a user for customer shipping, but may also be
@@ -21,7 +21,30 @@ import lombok.*;
  *     <li>Fetch type is {@code LAZY} to avoid loading the full User graph.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @Entity}</strong> — Marks this class as a JPA entity
+ *         managed by the {@code EntityManager}.</li>
+ *     <li><strong>{@code @Table(name = "addresses")}</strong> — Maps the entity
+ *         to a specific database table; the table name differs from the class name.</li>
+ *     <li><strong>{@code @ManyToOne(fetch = FetchType.LAZY)}</strong> — A
+ *         many-to-one relationship with lazy loading to avoid N+1 queries.
+ *         The owning side holds the foreign key via {@code @JoinColumn}.</li>
+ *     <li><strong>{@code @ForeignKey}</strong> — Names the foreign key constraint
+ *         for readable schema migrations and easier debugging.</li>
+ *     <li><strong>Lombok {@code @Builder}, {@code @NoArgsConstructor},
+ *         {@code @AllArgsConstructor}</strong> — The Builder pattern for
+ *         constructing entities with many fields, while JPA requires a
+ *         no-arg constructor.</li>
+ *     <li><strong>{@code @EqualsAndHashCode(callSuper = true)}</strong>
+ *         — Includes the inherited {@code id} and {@code version} fields in
+ *         equality checks. Avoids issues with generated proxy objects.</li>
+ *     <li><strong>Nullable FK via {@code user_id}</strong> — Demonstrates a
+ *         nullable foreign key to support multiple ownership contexts
+ *         (user, seller, store).</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

@@ -12,15 +12,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Represents an authenticated Shoppiq user.
+ * <strong>Spring Boot Concept:</strong> Represents an authenticated Shoppiq user.
  *
  * <p>
  * This entity serves as the application's single source of truth for user
@@ -45,10 +46,43 @@ import java.util.Set;
  *     <li>Account disabling is supported without deleting user data.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @ManyToMany} with {@link Role}</strong> — Uses a
+ *         join table ({@code user_roles}) for role assignment. Fetched
+ *         {@code EAGER} because roles are typically loaded with the user
+ *         during authentication. With {@code Set<Role>}, duplicate roles
+ *         are automatically prevented.</li>
+ *     <li><strong>Token versioning for JWT invalidation</strong> — The
+ *         {@code tokenVersion} field is incremented to invalidate all
+ *         existing JWTs for a user (e.g., after password change or account
+ *         suspension). This is checked in the JWT filter.</li>
+ *     <li><strong>Account lockout with soft timeout</strong> —
+ *         {@code failedLoginAttempts} and {@code lockoutTime} implement
+ *         brute-force protection. The {@code isAccountNonLocked()} method
+ *         implements a 30-minute auto-expiry for lockouts.</li>
+ *     <li><strong>{@code @OneToMany} with {@link ItemReview} and
+ *         {@link Address}</strong> — Cascade ALL + orphanRemoval ensures
+ *         child records are deleted when the user is deleted.</li>
+ *     <li><strong>{@code @OneToOne(mappedBy = "user")} with Cart</strong>
+ *         — The inverse side of the user-cart relationship. Cart is the
+ *         owning side.</li>
+ *     <li><strong>{@code @JsonIgnore}</strong> — Applied to the password
+ *         field and sensitive relationships to prevent accidental exposure
+ *         in API responses.</li>
+ *     <li><strong>Adapter pattern for Spring Security</strong> — The
+ *         {@code SecurityUser} wrapper adapts this JPA entity to
+ *         {@code UserDetails} for authentication integration, keeping
+ *         the entity clean of framework-specific interfaces.</li>
+ *     <li><strong>Bidirectional helper methods</strong> — {@code addRole()},
+ *         {@code removeRole()}, {@code addReview()}, {@code removeReview()}
+ *         maintain consistency on both sides of the relationships.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  * @see com.pkmprojects.shoppiq.auth.security.SecurityUser
  * @see Role
- * @since 1.0.0
  */
 @Entity
 @Table(name = "users")
@@ -58,8 +92,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class User extends AuditableEntity
-        implements Serializable {
+public class User extends AuditableEntity {
 
     /**
      * Full name of the user.
@@ -132,7 +165,7 @@ public class User extends AuditableEntity
      * Timestamp when the email was verified.
      */
     @Column(name = "email_verified_at")
-    private LocalDateTime emailVerifiedAt;
+    private Instant emailVerifiedAt;
 
     /**
      * Number of consecutive failed login attempts.
@@ -147,7 +180,7 @@ public class User extends AuditableEntity
      * {@code null} means the account is not locked.
      */
     @Column(name = "lockout_time")
-    private LocalDateTime lockoutTime;
+    private Instant lockoutTime;
 
     /**
      * Security roles assigned to this user.
@@ -222,11 +255,15 @@ public class User extends AuditableEntity
      *
      * @return {@code true} if the account is not locked or the lockout has expired
      */
-    public boolean isAccountNonLocked() {
+    public boolean isAccountNonLocked(Clock clock) {
         if (lockoutTime == null) {
             return true;
         }
-        return lockoutTime.plusMinutes(30).isBefore(LocalDateTime.now());
+        return lockoutTime.plus(Duration.ofMinutes(30)).isBefore(Instant.now(clock));
+    }
+
+    public boolean isAccountNonLocked() {
+        return isAccountNonLocked(Clock.systemDefaultZone());
     }
 
     /**

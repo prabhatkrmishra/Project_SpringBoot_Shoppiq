@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a product available in the Shoppiq catalog.
+ * <strong>Spring Boot Concept:</strong> Represents a product available in the Shoppiq catalog.
  *
  * <p>
  * An {@code Item} contains the general catalog information displayed to
@@ -52,7 +52,34 @@ import java.util.List;
  *     <li>Seller is nullable for backward compatibility with legacy items.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @OneToOne(cascade = ALL, orphanRemoval = true)}</strong>
+ *         — ItemDetails is a tightly-coupled child; its lifecycle is fully
+ *         managed by Item. Deleting an Item also deletes its ItemDetails.</li>
+ *     <li><strong>{@code @OneToMany(mappedBy = "item", cascade = ALL,
+ *         orphanRemoval = true)}</strong> — Reviews are children; when a
+ *         review is removed from the collection and the session is flushed,
+ *         it is deleted from the database.</li>
+ *     <li><strong>{@code @ManyToOne} with nullable seller</strong> — Optional
+ *         relationship to Seller, supporting items without a marketplace
+ *         seller (legacy or admin-created products).</li>
+ *     <li><strong>{@code @EntityListeners(ItemEmbeddingEntityListener.class)}</strong>
+ *         — Registers a custom JPA callback listener for AI embedding
+ *         synchronization on lifecycle events (e.g., post-persist, post-update).</li>
+ *     <li><strong>{@code @JsonManagedReference}</strong> — Jackson annotation
+ *         on the reviews collection that works with {@code @JsonBackReference}
+ *         on the owning side to prevent infinite serialization recursion.</li>
+ *     <li><strong>{@code update()} method</strong> — A domain method that
+ *         copies mutable fields from a source DTO while preserving identity,
+ *         version, and audit metadata. Follows the "update pattern" common
+ *         in Spring Boot services.</li>
+ *     <li><strong>Bidirectional helper methods</strong> — {@code addReview()}
+ *         and {@code removeReview()} maintain both sides of the relationship,
+ *         keeping the in-memory graph consistent.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

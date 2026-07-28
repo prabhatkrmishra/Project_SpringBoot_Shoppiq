@@ -14,6 +14,7 @@ import com.pkmprojects.shoppiq.repository.order.OrderItemRepository;
 import com.pkmprojects.shoppiq.repository.order.OrderRepository;
 import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
+import com.pkmprojects.shoppiq.config.InventoryConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,21 +22,19 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Default implementation of {@link SellerDashboardService}.
+ * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerDashboardService}.
  *
  * <p>
  * Computes seller dashboard metrics including product count, order count,
  * revenue, and stock alerts using dedicated repository queries.
  * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Service
 @Transactional(readOnly = true)
 public class SellerDashboardServiceImpl implements SellerDashboardService {
-
-    private static final int LOW_STOCK_THRESHOLD = 5;
 
     private final SellerLookupService sellerLookupService;
     private final ItemLookupService itemLookupService;
@@ -55,6 +54,13 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
         this.itemDetailsLookupService = itemDetailsLookupService;
     }
 
+    /**
+     * Computes the seller dashboard summary including product count, order count,
+     * revenue, and stock alerts.
+     *
+     * @param user authenticated user
+     * @return dashboard summary response
+     */
     @Override
     public SellerDashboardResponse getDashboardSummary(User user) {
         Seller seller = findActiveSeller(user);
@@ -65,9 +71,9 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
         BigDecimal totalRevenue = orderItemRepository
                 .sumRevenueBySellerIdAndPaymentStatus(sellerId, PaymentStatus.PAID);
         long lowStockProducts = itemDetailsLookupService
-                .findLowStockProductsBySellerId(LOW_STOCK_THRESHOLD, sellerId).size();
+                .countLowStockProductsBySellerId(InventoryConstants.LOW_STOCK_THRESHOLD, sellerId);
         long outOfStockProducts = itemDetailsLookupService
-                .findOutOfStockProductsBySellerId(sellerId).size();
+                .countOutOfStockProductsBySellerId(sellerId);
 
         return SellerDashboardResponse.from(
                 totalProducts, totalOrders,
@@ -76,6 +82,12 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
         );
     }
 
+    /**
+     * Retrieves the 10 most recent orders containing the seller's products.
+     *
+     * @param user authenticated user
+     * @return list of recent seller order responses
+     */
     @Override
     public List<SellerOrderResponse> getRecentOrders(User user) {
         Seller seller = findActiveSeller(user);

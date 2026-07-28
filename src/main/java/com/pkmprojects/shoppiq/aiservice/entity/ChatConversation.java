@@ -9,7 +9,7 @@ import lombok.*;
 import java.time.Instant;
 
 /**
- * JPA entity representing an AI chat conversation.
+ * <strong>Spring Boot Concept:</strong> JPA entity representing an AI chat conversation.
  *
  * <p>
  * Each conversation is identified by a public-facing {@code chatId} (e.g.,

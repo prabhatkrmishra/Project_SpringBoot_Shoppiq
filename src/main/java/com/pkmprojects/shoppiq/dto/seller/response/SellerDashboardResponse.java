@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.dto.seller.response;
 import java.math.BigDecimal;
 
 /**
- * Seller-facing dashboard summary DTO.
+ * <strong>Spring Boot Concept:</strong> Seller-facing dashboard summary DTO.
  *
  * <p>Provides key metrics for the authenticated seller's store,
  * including product count, order count, revenue, and stock alerts.</p>

@@ -34,15 +34,41 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Service for user account management.
+ * <strong>Spring Boot Concept:</strong> Service for user account management.
  *
- * <p>Handles user creation create both username/password registration and
+ * <p><strong>What this Service layer class demonstrates:</strong></p>
+ * <ul>
+ *   <li><strong>Dual registration paths</strong> — Supports both username/password registration
+ *       ({@link #createUser}) and Google OAuth2 registration ({@link #createGoogleUser}).
+ *       OAuth2 users are created without a password (they authenticate via Google), but can
+ *       later set a password via {@link #changePassword}.</li>
+ *   <li><strong>Database-level uniqueness</strong> — Unique constraints on {@code email} and
+ *       {@code username} provide definitive duplicate protection. Application-level pre-checks
+ *       are intentionally avoided; conflicts are caught via
+ *       {@link org.springframework.dao.DataIntegrityViolationException} and rethrown as
+ *       {@link com.pkmprojects.shoppiq.exception.general.user.DuplicateUserException}.</li>
+ *   <li><strong>Transactional email dispatch</strong> — Verification emails are sent
+ *       <em>after</em> the database transaction commits using
+ *       {@link org.springframework.transaction.support.TransactionSynchronization#afterCommit()}.
+ *       This prevents a slow or failed email delivery from holding the database transaction open.</li>
+ *   <li><strong>Token version invalidation</strong> — {@link #changePassword} increments
+ *       {@code tokenVersion}, which invalidates all previously issued JWTs. This is a security
+ *       best practice for password changes.</li>
+ *   <li><strong>Seller registration inline</strong> — If {@code isSellerRegistration} is true
+ *       in the user request, a {@link com.pkmprojects.shoppiq.entity.seller.Seller} record is
+ *       created within the same transaction as the user, ensuring both succeed or both roll back.</li>
+ *   <li><strong>Password encoding</strong> — All passwords are BCrypt-hashed via
+ *       {@link org.springframework.security.crypto.password.PasswordEncoder} before storage.</li>
+ * </ul>
+ *
+ * <p>Handles user creation for both username/password registration and
  * Google OAuth2 registration. All creation methods are transactional and
  * rely on database-level unique constraints for definitive uniqueness
  * enforcement under concurrent access.</p>
@@ -56,8 +82,11 @@ import java.util.Set;
  * existence checks in controller are not performed here; conflicts are
  * caught via {@link DataIntegrityViolationException}.</p>
  *
- * @see OAuthRegistrationSession
+ * @see com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession
  * @see DuplicateUserException
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @Service
 public class UserService {
@@ -85,7 +114,7 @@ public class UserService {
     }
 
     /**
-     * Creates a new user create username/password registration.
+     * Creates a new user from username/password registration.
      *
      * <p>Password is hashed before storage. The CUSTOMER role is assigned
      * by default. Database constraints enforce email and username uniqueness.</p>
@@ -120,7 +149,7 @@ public class UserService {
                         .panNumber(newUserRequest.getPanNumber())
                         .verificationStatus(VerificationStatus.PENDING)
                         .sellerStatus(SellerStatus.INACTIVE)
-                        .joinedAt(LocalDateTime.now())
+                        .joinedAt(Instant.now())
                         .build();
                 sellerWriteService.save(seller);
                 logger.debug("Seller registration created for username: {}", newUserRequest.getUsername());
@@ -137,16 +166,16 @@ public class UserService {
                     sendVerificationEmail(emailTarget);
                 }
             });
-        } catch (DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException _) {
             logger.warn("User creation failed due to constraint violation for email: {} or username: {}", newUserRequest.getEmail(), newUserRequest.getUsername());
             throw DuplicateUserException.unknown();
         }
     }
 
     /**
-     * Creates a new user create Google OAuth2 registration.
+     * Creates a new user from Google OAuth2 registration.
      *
-     * <p>The email and name come create the verified {@link OAuthRegistrationSession}
+     * <p>The email and name come from the verified {@link OAuthRegistrationSession}
      * stored in the HTTP session. The username and password are chosen by the user
      * during the registration completion step. The password is BCrypt-hashed before
      * storage.</p>
@@ -158,7 +187,7 @@ public class UserService {
      * <p>The CUSTOMER role is assigned by default. Database unique constraints
      * on email and username provide the definitive duplicate protection.</p>
      *
-     * @param oauthSession the verified Google profile create the session,
+     * @param oauthSession the verified Google profile from the session,
      *                     containing email, name, and authentication timestamp
      * @param username     the username chosen by the user
      * @param password     the raw password chosen by the user
@@ -176,13 +205,13 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(password));
             user.setRoles(Set.of(rolesService.getCustomerRole()));
             user.setEmailVerified(true);
-            user.setEmailVerifiedAt(java.time.LocalDateTime.now());
+            user.setEmailVerifiedAt(java.time.Instant.now());
 
             User savedUser = userRepository.save(user);
 
             logger.debug("Google OAuth2 user account created for username: {}", username);
             return savedUser;
-        } catch (DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException _) {
             logger.warn("Google user creation failed due to constraint violation for username: {}", username);
             throw DuplicateUserException.unknown();
         }

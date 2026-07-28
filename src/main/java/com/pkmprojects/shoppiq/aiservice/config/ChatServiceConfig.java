@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Primary;
 import java.time.Duration;
 
 /**
- * Spring configuration that creates the NVIDIA NIM-backed {@link ChatModel}
+ * <strong>Spring Boot Concept:</strong> Spring configuration that creates the NVIDIA NIM-backed {@link ChatModel}
  * and {@link StreamingChatModel} beans, and wires them into {@link ChatServiceImpl}.
  *
  * <p>
@@ -52,8 +52,14 @@ public class ChatServiceConfig {
 
     private static final Logger log = LoggerFactory.getLogger(ChatServiceConfig.class);
 
-    @Value("${langchain4j.open-ai.chat-model.api-key}")
-    private String nvidiaApiKey;
+    private final String nvidiaApiKey;
+    private final int resolveThreshold;
+
+    public ChatServiceConfig(@Value("${langchain4j.open-ai.chat-model.api-key}") String nvidiaApiKey,
+                             @Value("${shoppiq.ai.resolve-threshold:3}") int resolveThreshold) {
+        this.nvidiaApiKey = nvidiaApiKey;
+        this.resolveThreshold = resolveThreshold;
+    }
 
     @Bean
     @Primary
@@ -109,6 +115,6 @@ public class ChatServiceConfig {
         return new ChatServiceImpl(
                 chatMemoryProvider, chatMemoryConfig,
                 shoppiqTools, contentRetriever, conversationRepository, messageRepository, userRepository,
-                modelResolutionService, authenticatedPrompt, guestPrompt);
+                modelResolutionService, authenticatedPrompt, guestPrompt, resolveThreshold);
     }
 }

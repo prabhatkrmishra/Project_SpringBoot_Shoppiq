@@ -8,31 +8,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Configuration properties for the rate limiting subsystem.
+ * <strong>Spring Boot Concept:</strong> {@code @ConfigurationProperties}
+ * class bound to {@code app.rate-limit} in {@code application.yaml}.
  *
- * <p>Reads the {@code app.rate-limit} block from
- * {@code application.yaml} and exposes it as a strongly typed bean.
- * Each {@link Rule} defines a single path-based rate limit with its
- * capacity, refill window, and keying strategy.</p>
+ * <p>Defines path-based rate limit rules using the token-bucket algorithm.
+ * Each {@link Rule} specifies a path pattern, capacity (limit), refill
+ * window duration, and keying strategy. Key types include {@link KeyType#IP}
+ * (client address) for unauthenticated endpoints and
+ * {@link KeyType#USER_IP} (composite userId:ip) for authenticated
+ * critical endpoints.</p>
  *
- * <h4>Key types</h4>
- * <ul>
- *   <li>{@link KeyType#IP} — the client's remote address is used as the
- *       bucket key. Suitable for unauthenticated endpoints where the
- *       caller identity is not known.</li>
- *   <li>{@link KeyType#USER_IP} — a composite key of
- *       {@code userId:remoteAddr} is used. Suitable for authenticated
- *       critical endpoints where both the user and the originating IP
- *       must be tracked.</li>
- * </ul>
- *
- * <h4>Disabled mode</h4>
- * <p>When {@link #enabled} is {@code false}, the rate limit filter
- * skips all checks. This is intended for test profiles.</p>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 0.5.0
- * @see com.pkmprojects.shoppiq.filter.RateLimitFilter
  */
 @Getter
 @Setter

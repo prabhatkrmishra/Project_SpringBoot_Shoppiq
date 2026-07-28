@@ -4,32 +4,17 @@ import com.pkmprojects.shoppiq.exception.business.DuplicateResourceException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * Exception thrown when attempting to create or update a category whose
- * name already exists.
+ * <strong>Spring Boot Concept:</strong> Exception thrown when attempting to
+ * create or update a category whose name already exists.
  *
- * <p>
- * Categories are uniquely identified by both their human-readable name
- * and generated slug. This exception is raised whenever a duplicate
- * category name would violate business rules.
- * </p>
+ * <p>Leaf exception in the duplicate-resource hierarchy. Extends
+ * {@link com.pkmprojects.shoppiq.exception.business.DuplicateResourceException}
+ * (HTTP 409) for category name uniqueness violations.</p>
  *
- * <h2>Typical Scenarios</h2>
- * <ul>
- *     <li>Creating a category with an existing name.</li>
- *     <li>Renaming a category to a name already used by another category.</li>
- * </ul>
- *
- * <h2>Example</h2>
- *
- * <pre>
- * Category "Electronics" already exists.
- * </pre>
- *
- * @author PrabhatKrMishra
- * @see CategoryNotFoundException
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
-public class DuplicateCategoryException extends DuplicateResourceException {
+public final class DuplicateCategoryException extends DuplicateResourceException {
 
     /**
      * Creates a duplicate category exception.
@@ -51,6 +36,12 @@ public class DuplicateCategoryException extends DuplicateResourceException {
      *
      * @param category duplicate category name
      * @return duplicate category exception
+     */
+    /**
+     * Creates an exception for a duplicate category name.
+     *
+     * @param category the duplicate category name
+     * @return a new exception instance
      */
     public static DuplicateCategoryException category(String category) {
         return new DuplicateCategoryException("Category with name '%s' already exists.".formatted(category));

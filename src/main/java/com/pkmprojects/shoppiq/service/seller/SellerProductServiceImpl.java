@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Default implementation of {@link SellerProductService}.
+ * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerProductService}.
  *
  * <p>
  * Handles the lifecycle of products owned by a seller. Enforces seller
@@ -43,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
  *     <li>All write operations are transactional.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Service
@@ -65,6 +65,22 @@ public class SellerProductServiceImpl implements SellerProductService {
         this.categoryLookupService = categoryLookupService;
     }
 
+    /**
+     * Creates a new product as DRAFT for the authenticated seller.
+     *
+     * <p>Validates seller status (ACTIVE, APPROVED, not SUSPENDED), checks
+     * SKU uniqueness, resolves the category, generates a unique slug, and
+     * persists the item with DRAFT publishing status.</p>
+     *
+     * @param request product creation payload
+     * @param user    authenticated user
+     * @return created item response
+     * @throws SellerNotFoundException      if no seller exists for the user
+     * @throws SellerSuspendedException      if the seller is suspended
+     * @throws SellerNotVerifiedException    if the seller is not verified
+     * @throws DuplicateItemException        if the SKU already exists
+     * @throws CategoryNotFoundException     if the category is not found
+     */
     @Override
     public ItemResponse createProduct(ItemRequest request, User user) {
         Seller seller = findActiveSeller(user);
@@ -115,6 +131,14 @@ public class SellerProductServiceImpl implements SellerProductService {
         throw new RuntimeException("Failed to generate unique slug after 10 attempts");
     }
 
+    /**
+     * Retrieves a paginated list of products owned by the authenticated seller.
+     *
+     * @param user authenticated user
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated item responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ItemResponse> getMyProducts(User user, int page, int size) {
@@ -123,6 +147,14 @@ public class SellerProductServiceImpl implements SellerProductService {
         return PageResponse.of(itemPage, ItemResponse::fromEntity);
     }
 
+    /**
+     * Retrieves a single product by ID, verifying ownership by the authenticated seller.
+     *
+     * @param id   item ID
+     * @param user authenticated user
+     * @return item response
+     * @throws ItemNotFoundException if the item does not exist or does not belong to the seller
+     */
     @Override
     @Transactional(readOnly = true)
     public ItemResponse getMyProductById(Long id, User user) {
@@ -132,6 +164,19 @@ public class SellerProductServiceImpl implements SellerProductService {
         return ItemResponse.fromEntity(item);
     }
 
+    /**
+     * Updates an existing product with ownership verification.
+     *
+     * <p>Validates SKU uniqueness, resolves the new category, regenerates
+     * the slug if the name changed, and resets publishing status to DRAFT
+     * if the product was previously PUBLISHED.</p>
+     *
+     * @param id      item ID
+     * @param request product update payload
+     * @param user    authenticated user
+     * @return updated item response
+     * @throws ItemNotFoundException if the item does not exist or does not belong to the seller
+     */
     @Override
     public ItemResponse updateProduct(Long id, ItemRequest request, User user) {
         Seller seller = findActiveSeller(user);
@@ -167,6 +212,13 @@ public class SellerProductServiceImpl implements SellerProductService {
         return ItemResponse.fromEntity(saveWithSlugRetry(item));
     }
 
+    /**
+     * Deletes a product with ownership verification.
+     *
+     * @param id   item ID
+     * @param user authenticated user
+     * @throws ItemNotFoundException if the item does not exist or does not belong to the seller
+     */
     @Override
     public void deleteProduct(Long id, User user) {
         Seller seller = findActiveSeller(user);

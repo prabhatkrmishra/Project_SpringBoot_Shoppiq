@@ -3,12 +3,12 @@ package com.pkmprojects.shoppiq.service.seller;
 import com.pkmprojects.shoppiq.entity.seller.Seller;
 
 /**
- * Write facade for seller persistence.
+ * <strong>Spring Boot Concept:</strong> Write facade for seller persistence.
  *
  * <p>Decouples caller code from {@code SellerRepository},
  * providing write operations for seller profile management.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.4.0
  */
 public interface SellerWriteService {

@@ -19,7 +19,19 @@ import lombok.Setter;
  * with {@code confirmPassword} are needed to set a password.
  * </p>
  *
- * @author PrabhatKrMishra
+ * <p><b>Lombok vs Record:</b> This DTO uses <b>Lombok</b> annotations
+ * ({@code @Getter}, {@code @Setter}, {@code @NoArgsConstructor},
+ * {@code @AllArgsConstructor}) instead of Java records because it has
+ * mutable fields ({@code currentPassword} is optional) and the class
+ * may need to be constructed piecemeal. This demonstrates that records
+ * are not always the right choice — Lombok offers flexibility when
+ * mutable state or partial construction is needed.</p>
+ *
+ * <p><b>Password strength validation:</b> Uses the same {@code @Pattern}
+ * regex as other password fields in the project, ensuring consistent
+ * password requirements across all DTOs.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @NoArgsConstructor

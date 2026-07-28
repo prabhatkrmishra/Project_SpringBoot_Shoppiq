@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Read-only product query facade for the AI chat assistant.
+ * <strong>Spring Boot Concept:</strong> Read-only product query facade for the AI chat assistant.
  *
  * <p>Decouples {@code ShoppiqTools} from {@code ItemRepository},
  * providing a narrow, AI-specific query surface that returns

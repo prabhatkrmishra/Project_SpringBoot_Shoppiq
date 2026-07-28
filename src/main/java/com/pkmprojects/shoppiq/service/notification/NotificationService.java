@@ -5,9 +5,21 @@ import com.pkmprojects.shoppiq.dto.notification.UpdateNotificationPreferenceRequ
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * Business contract for managing a user's email notification preferences.
+ * <strong>Spring Boot Concept:</strong> Business contract for managing a user's email notification preferences.
  *
- * @author PrabhatKrMishra
+ * <p><strong>What the Service layer demonstrates here:</strong></p>
+ * <ul>
+ *   <li><strong>Interface-first design</strong> — Defines the contract for notification
+ *       preference management, allowing the implementation to be swapped or mocked.</li>
+ *   <li><strong>Auto-creation pattern</strong> — {@link #getPreferences} creates a default
+ *       preference row (all flags enabled) if none exists, teaching the "get-or-create"
+ *       pattern common in Spring Boot service layers.</li>
+ *   <li><strong>Partial update pattern</strong> — {@link #updatePreferences} applies only
+ *       non-null fields from the request, demonstrating a merge/partial-update strategy
+ *       at the service layer.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface NotificationService {

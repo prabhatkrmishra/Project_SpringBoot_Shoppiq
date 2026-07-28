@@ -4,7 +4,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 /**
- * Static holder for the Spring {@link ApplicationEventPublisher}.
+ * <strong>Spring Boot Concept:</strong> Static holder for the Spring {@link ApplicationEventPublisher}.
  *
  * <p>
  * JPA entity listeners are instantiated by Hibernate, not by Spring, so they

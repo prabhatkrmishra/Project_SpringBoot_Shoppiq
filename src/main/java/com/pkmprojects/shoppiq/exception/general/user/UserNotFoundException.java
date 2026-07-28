@@ -4,30 +4,15 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * Exception thrown when a requested user cannot be found.
+ * <strong>Spring Boot Concept:</strong> Exception thrown when a requested
+ * user cannot be found.
  *
- * <p>
- * This exception represents lookup failures for {@code User} resources.
- * It is typically thrown by the service layer when a user cannot be
- * resolved using its identifier, email address or username.
- * </p>
+ * <p>Leaf exception in the resource-not-found hierarchy. Extends
+ * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
+ * (HTTP 404) with factory methods for lookup by ID, email, username, and
+ * a generic fallback for partial information lookups.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Represents missing user resources.</li>
- *     <li>Associates the failure with
- *     {@link ErrorCode#USER_NOT_FOUND}.</li>
- *     <li>Provides expressive factory methods for common lookup failures.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>The constructor is private to enforce factory method usage.</li>
- *     <li>Factory methods centralize message creation.</li>
- *     <li>Additional lookup scenarios can be added without modifying callers.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public final class UserNotFoundException extends ResourceNotFoundException {
@@ -86,6 +71,12 @@ public final class UserNotFoundException extends ResourceNotFoundException {
      *
      * @param info additional info
      * @return user not found exception
+     */
+    /**
+     * Creates a generic user not found exception with additional context.
+     *
+     * @param info additional context about the lookup
+     * @return a new exception instance
      */
     public static UserNotFoundException unknown(String info) {
         return new UserNotFoundException(

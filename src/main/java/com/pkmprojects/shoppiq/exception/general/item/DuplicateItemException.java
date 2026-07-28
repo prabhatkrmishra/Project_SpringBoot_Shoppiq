@@ -4,22 +4,15 @@ import com.pkmprojects.shoppiq.exception.business.DuplicateResourceException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * Exception thrown when attempting to create or update an item whose
- * unique business identifier already exists.
+ * <strong>Spring Boot Concept:</strong> Exception thrown when attempting to
+ * create or update an item whose unique business identifier (SKU) already
+ * exists.
  *
- * <p>
- * Currently the uniqueness constraint is enforced on the SKU.
- * </p>
+ * <p>Leaf exception in the duplicate-resource hierarchy. Extends
+ * {@link com.pkmprojects.shoppiq.exception.business.DuplicateResourceException}
+ * (HTTP 409) for item uniqueness violations.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Represents duplicate item resources.</li>
- *     <li>Associates the failure with
- *     {@link ErrorCode#ITEM_ALREADY_EXISTS}.</li>
- *     <li>Provides expressive factory methods.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public final class DuplicateItemException

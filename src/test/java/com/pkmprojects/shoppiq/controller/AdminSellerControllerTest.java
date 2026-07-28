@@ -33,7 +33,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -85,7 +85,7 @@ class AdminSellerControllerTest {
                 "9999999999", "GST" + id, "PAN" + id,
                 vStatus, SellerStatus.ACTIVE,
                 BigDecimal.valueOf(5.0), BigDecimal.valueOf(4.5),
-                LocalDateTime.now()
+                Instant.now()
         );
     }
 
@@ -136,11 +136,12 @@ class AdminSellerControllerTest {
 
         @Test
         @WithMockUser(roles = "USER")
-        @DisplayName("Forwards to error page when not admin")
+        @DisplayName("Returns 403 ProblemDetail when not admin (API client)")
         void getSellers_forbidden_returns403() throws Exception {
             mockMvc.perform(get("/api/admin/sellers"))
-                    .andExpect(status().isOk())
-                    .andExpect(forwardedUrl("/error"));
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value(403))
+                    .andExpect(jsonPath("$.errorCode").value("AUTH-403-001"));
         }
     }
 

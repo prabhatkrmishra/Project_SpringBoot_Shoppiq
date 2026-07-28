@@ -2,30 +2,33 @@ package com.pkmprojects.shoppiq.service.address;
 
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.address.CreateAddressRequest;
-import com.pkmprojects.shoppiq.dto.address.UpdateAddressRequest;
 import com.pkmprojects.shoppiq.entity.address.Address;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.general.address.AddressNotFoundException;
 import com.pkmprojects.shoppiq.repository.address.AddressRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 /**
- * Default implementation of {@link AddressService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link AddressService}
+ * containing business logic for customer address operations.
  *
- * <h2>Design Notes</h2>
+ * <p>Manages CRUD for user addresses with ownership validation and a one-default
+ * invariant. Used by {@code AddressController} for customer address management.</p>
+ *
+ * <p>Why this design:
  * <ul>
- *     <li>Uses constructor injection.</li>
- *     <li>All write operations run inside transactions.</li>
- *     <li>The one-default invariant is enforced via a bulk UPDATE before
- *         setting a new default, avoiding the need to load all addresses.</li>
- *     <li>Ownership is verified on every mutable operation.</li>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — All write operations (create, update, delete, setDefault) execute within database transactions to maintain consistency of the one-default invariant.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
  * </ul>
+ * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see AddressService
  * @since 1.0.0
  */
 @Service
@@ -95,7 +98,7 @@ public class AddressServiceImpl implements AddressService {
      * existing default for the user is unset first.</p>
      */
     @Override
-    public AddressResponse update(User user, Long id, UpdateAddressRequest request) {
+    public AddressResponse update(User user, Long id, CreateAddressRequest request) {
 
         Address address = findAndValidateOwnership(user, id);
 

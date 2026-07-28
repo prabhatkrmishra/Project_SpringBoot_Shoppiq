@@ -6,7 +6,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Thrown when a user attempts to access an AI conversation they do not own.
+ * <strong>Spring Boot Concept:</strong> Thrown when a user attempts to access an AI conversation they do not own.
  *
  * <p>
  * Maps to {@link ErrorCode#AI_ACCESS_DENIED} and produces a 403 Forbidden response.

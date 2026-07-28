@@ -38,25 +38,29 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * REST controller for admin dashboard and management operations.
+ * <strong>Spring Boot Concept:</strong> REST controller for admin dashboard and management operations.
  *
- * <p>
- * Exposes all administrative endpoints under {@code /admin/**}.
- * All endpoints require {@code ADMIN} role.
+ * <p>Exposes all administrative endpoints under {@code /api/admin/**} including
+ * dashboard summaries, inventory management, order management, user management,
+ * payment management, review moderation, report generation, and bulk test-data
+ * creation. All endpoints require the {@code ADMIN} role.</p>
+ *
+ * <p>Key design points:
+ * <ul>
+ *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
+ *   <li><strong>Sectioned by domain</strong> — methods are grouped into Dashboard, Inventory, Orders, Users, Payments, Reviews, and Reports sections.</li>
+ *   <li><strong>Self-protection</strong> — block/unblock operations check that the admin cannot target themselves.</li>
+ * </ul>
  * </p>
  *
- * <h2>Endpoints</h2>
- * <ul>
- *     <li>Dashboard: Summary, Sales Analytics, Recent Activity</li>
- *     <li>Inventory: List, Low Stock, Out of Stock, Adjust, Bulk Adjust</li>
- *     <li>Orders: List, Get by ID, Update Status</li>
- *     <li>Users: List, Get by ID, Block, Unblock, Stats</li>
- *     <li>Payments: List, Get by ID, Refund, Stats</li>
- *     <li>Reviews: List, Delete</li>
- *     <li>Reports: Sales, Revenue, Product, Customer, Inventory, Export</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see AdminDashboardService
+ * @see AdminInventoryService
+ * @see AdminOrderService
+ * @see AdminUserService
+ * @see AdminPaymentService
+ * @see AdminReviewService
+ * @see AdminReportService
  * @since 1.0.0
  */
 @Validated
@@ -105,16 +109,31 @@ public class AdminController {
     // Dashboard
     // =========================================================
 
+    /**
+     * Returns the admin dashboard summary including revenue, order count, user count, and product count.
+     *
+     * @return 200 OK with the dashboard summary response
+     */
     @GetMapping("/dashboard/summary")
     public DashboardSummaryResponse getDashboardSummary() {
         return dashboardService.getDashboardSummary();
     }
 
+    /**
+     * Returns sales analytics data for the admin dashboard chart views.
+     *
+     * @return 200 OK with the sales analytics response
+     */
     @GetMapping("/dashboard/sales-analytics")
     public SalesAnalyticsResponse getSalesAnalytics() {
         return dashboardService.getSalesAnalytics();
     }
 
+    /**
+     * Returns recent platform activity for the admin dashboard feed.
+     *
+     * @return 200 OK with the recent activity response
+     */
     @GetMapping("/dashboard/recent-activity")
     public RecentActivityResponse getRecentActivity() {
         return dashboardService.getRecentActivity();
@@ -124,6 +143,12 @@ public class AdminController {
     // Test Data (Admin Bulk Import)
     // =========================================================
 
+    /**
+     * Creates multiple items in bulk for testing/seed purposes.
+     *
+     * @param request the bulk item creation request
+     * @return 201 Created with list of created items
+     */
     @PostMapping("/test/items/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<ItemResponse> createBulkItems(
@@ -132,6 +157,12 @@ public class AdminController {
         return testDataService.createBulkItems(request);
     }
 
+    /**
+     * Creates multiple categories in bulk for testing/seed purposes.
+     *
+     * @param request the bulk category creation request
+     * @return 201 Created with list of created categories
+     */
     @PostMapping("/test/categories/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<CategoryResponse> createBulkCategories(
@@ -140,6 +171,12 @@ public class AdminController {
         return categoryService.createBulk(request.categories());
     }
 
+    /**
+     * Creates multiple users in bulk for testing/seed purposes.
+     *
+     * @param request the bulk user creation request
+     * @return 201 Created with list of created users
+     */
     @PostMapping("/test/users/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<UserResponse> createBulkUsers(
@@ -148,6 +185,12 @@ public class AdminController {
         return testDataService.createBulkUsers(request);
     }
 
+    /**
+     * Creates multiple addresses in bulk for testing/seed purposes.
+     *
+     * @param request the bulk address creation request
+     * @return 201 Created with list of created addresses
+     */
     @PostMapping("/test/addresses/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<AddressResponse> createBulkAddresses(
@@ -156,6 +199,12 @@ public class AdminController {
         return testDataService.createBulkAddresses(request);
     }
 
+    /**
+     * Creates multiple reviews in bulk for testing/seed purposes.
+     *
+     * @param request the bulk review creation request
+     * @return 201 Created with list of created reviews
+     */
     @PostMapping("/test/reviews/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<ItemReviewResponse> createBulkReviews(
@@ -164,6 +213,12 @@ public class AdminController {
         return testDataService.createBulkReviews(request);
     }
 
+    /**
+     * Creates multiple sellers in bulk for testing/seed purposes.
+     *
+     * @param request the bulk seller creation request
+     * @return 201 Created with list of created sellers
+     */
     @PostMapping("/test/sellers/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<SellerResponse> createBulkSellers(
@@ -172,6 +227,12 @@ public class AdminController {
         return testDataService.createBulkSellers(request);
     }
 
+    /**
+     * Creates multiple cart items in bulk for testing/seed purposes.
+     *
+     * @param request the bulk cart creation request
+     * @return 201 Created with list of created cart items
+     */
     @PostMapping("/test/carts/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<CartItemResponse> createBulkCarts(
@@ -180,6 +241,12 @@ public class AdminController {
         return testDataService.createBulkCartItems(request);
     }
 
+    /**
+     * Creates multiple orders in bulk for testing/seed purposes.
+     *
+     * @param request the bulk order creation request
+     * @return 201 Created with list of created orders
+     */
     @PostMapping("/test/orders/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public List<CheckoutResponse> createBulkOrders(
@@ -192,6 +259,13 @@ public class AdminController {
     // Inventory
     // =========================================================
 
+    /**
+     * Returns a paginated list of all product inventory records.
+     *
+     * @param page zero-based page index
+     * @param size page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of product inventory responses
+     */
     @GetMapping("/inventory")
     public PageResponse<AdminProductInventoryResponse> getAllInventory(
             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -201,16 +275,33 @@ public class AdminController {
         return inventoryService.getAllProductInventory(page, size);
     }
 
+    /**
+     * Returns products with stock quantities below the low-stock threshold.
+     *
+     * @return 200 OK with list of low-stock product responses
+     */
     @GetMapping("/inventory/low-stock")
     public List<AdminProductInventoryResponse> getLowStockProducts() {
         return inventoryService.getLowStockProducts();
     }
 
+    /**
+     * Returns products that are currently out of stock.
+     *
+     * @return 200 OK with list of out-of-stock product responses
+     */
     @GetMapping("/inventory/out-of-stock")
     public List<AdminProductInventoryResponse> getOutOfStockProducts() {
         return inventoryService.getOutOfStockProducts();
     }
 
+    /**
+     * Adjusts the stock quantity for a specific product.
+     *
+     * @param itemId  the product ID
+     * @param request the stock adjustment payload (quantity delta and reason)
+     * @return 200 OK with the updated product inventory response
+     */
     @PutMapping("/inventory/{itemId}")
     public AdminProductInventoryResponse adjustStock(
             @PathVariable @Min(1) Long itemId,
@@ -219,6 +310,12 @@ public class AdminController {
         return inventoryService.adjustStock(itemId, request);
     }
 
+    /**
+     * Performs bulk stock adjustments for multiple products at once.
+     *
+     * @param adjustments map of product ID to stock adjustment requests
+     * @return 200 OK with list of updated product inventory responses
+     */
     @PostMapping("/inventory/bulk-adjust")
     public List<AdminProductInventoryResponse> bulkAdjustStock(
             @RequestBody Map<Long, @Valid StockAdjustmentRequest> adjustments
@@ -226,6 +323,13 @@ public class AdminController {
         return inventoryService.bulkUpdateStock(adjustments);
     }
 
+    /**
+     * Toggles the on-sale flag for a product.
+     *
+     * @param itemId the product ID
+     * @param body   map containing the boolean {@code onSale} value
+     * @return 200 OK with the updated product inventory response
+     */
     @PutMapping("/inventory/{itemId}/on-sale")
     public AdminProductInventoryResponse toggleOnSale(
             @PathVariable @Min(1) Long itemId,
@@ -235,6 +339,13 @@ public class AdminController {
         return inventoryService.toggleOnSale(itemId, onSale);
     }
 
+    /**
+     * Updates the discount percentage for a product.
+     *
+     * @param itemId the product ID
+     * @param body   map containing the {@code discountPercentage} value
+     * @return 200 OK with the updated product inventory response
+     */
     @PutMapping("/inventory/{itemId}/discount")
     public AdminProductInventoryResponse updateDiscount(
             @PathVariable @Min(1) Long itemId,
@@ -244,6 +355,13 @@ public class AdminController {
         return inventoryService.updateDiscount(itemId, discountPercentage);
     }
 
+    /**
+     * Puts a product on sale by setting both the on-sale flag and discount percentage.
+     *
+     * @param itemId the product ID
+     * @param body   map containing the {@code discountPercentage} value
+     * @return 200 OK with the updated product inventory response
+     */
     @PutMapping("/inventory/{itemId}/put-on-sale")
     public AdminProductInventoryResponse putOnSale(
             @PathVariable @Min(1) Long itemId,
@@ -253,6 +371,12 @@ public class AdminController {
         return inventoryService.putOnSale(itemId, discountPercentage);
     }
 
+    /**
+     * Performs bulk on-sale toggle for multiple products.
+     *
+     * @param body map containing {@code itemIds} (list of IDs), {@code onSale} (boolean), and optional {@code discountPercentage}
+     * @return 200 OK with list of updated product inventory responses
+     */
     @PutMapping("/inventory/bulk-on-sale")
     public List<AdminProductInventoryResponse> bulkToggleOnSale(
             @RequestBody Map<String, Object> body
@@ -268,6 +392,11 @@ public class AdminController {
         return inventoryService.bulkToggleOnSale(itemIds, onSale, discountPercentage);
     }
 
+    /**
+     * Returns a summary of inventory metrics for the dashboard.
+     *
+     * @return 200 OK with inventory dashboard summary
+     */
     @GetMapping("/inventory/summary")
     public AdminInventoryService.InventoryDashboardSummary getInventorySummary() {
         return inventoryService.getInventoryDashboardSummary();
@@ -277,6 +406,14 @@ public class AdminController {
     // Orders
     // =========================================================
 
+    /**
+     * Returns a paginated list of all orders, optionally filtered by status.
+     *
+     * @param status optional order status filter
+     * @param page   zero-based page index
+     * @param size   page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of order responses
+     */
     @GetMapping("/orders")
     public PageResponse<AdminOrderResponse> getAllOrders(
             @RequestParam(required = false) OrderStatus status,
@@ -287,11 +424,24 @@ public class AdminController {
         return orderService.getAllOrders(status, page, size);
     }
 
+    /**
+     * Returns a single order by its ID.
+     *
+     * @param orderId the order ID
+     * @return 200 OK with the full order response
+     */
     @GetMapping("/orders/{orderId}")
     public AdminOrderResponse getOrderById(@PathVariable @Min(1) Long orderId) {
         return orderService.getOrderById(orderId);
     }
 
+    /**
+     * Updates the status of an order.
+     *
+     * @param orderId the order ID
+     * @param status  the new order status
+     * @return 200 OK with the updated order response
+     */
     @PutMapping("/orders/{orderId}/status")
     public AdminOrderResponse updateOrderStatus(
             @PathVariable @Min(1) Long orderId,
@@ -304,6 +454,14 @@ public class AdminController {
     // Users
     // =========================================================
 
+    /**
+     * Returns a paginated list of all customers, optionally filtered by enabled status.
+     *
+     * @param enabled optional filter for enabled/disabled users
+     * @param page    zero-based page index
+     * @param size    page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of user responses
+     */
     @GetMapping("/users")
     public PageResponse<AdminUserResponse> getAllCustomers(
             @RequestParam(required = false) Boolean enabled,
@@ -314,11 +472,25 @@ public class AdminController {
         return userService.getAllCustomers(enabled, page, size);
     }
 
+    /**
+     * Returns a single customer by their user ID.
+     *
+     * @param userId the user ID
+     * @return 200 OK with the user response
+     */
     @GetMapping("/users/{userId}")
     public AdminUserResponse getCustomerById(@PathVariable @Min(1) Long userId) {
         return userService.getCustomerById(userId);
     }
 
+    /**
+     * Blocks a customer account, preventing them from logging in.
+     *
+     * @param userId      the user ID to block
+     * @param currentUser the currently authenticated admin
+     * @return 200 OK with the updated user response
+     * @throws com.pkmprojects.shoppiq.exception.admin.AdminCannotBlockSelfException if the admin attempts to block themselves
+     */
     @PutMapping("/users/{userId}/block")
     public AdminUserResponse blockCustomer(
             @PathVariable @Min(1) Long userId,
@@ -329,6 +501,14 @@ public class AdminController {
         return userService.blockCustomer(userId);
     }
 
+    /**
+     * Unblocks a previously blocked customer account.
+     *
+     * @param userId      the user ID to unblock
+     * @param currentUser the currently authenticated admin
+     * @return 200 OK with the updated user response
+     * @throws com.pkmprojects.shoppiq.exception.admin.AdminCannotBlockSelfException if the admin attempts to unblock themselves
+     */
     @PutMapping("/users/{userId}/unblock")
     public AdminUserResponse unblockCustomer(
             @PathVariable @Min(1) Long userId,
@@ -339,6 +519,11 @@ public class AdminController {
         return userService.unblockCustomer(userId);
     }
 
+    /**
+     * Returns customer statistics for the admin dashboard.
+     *
+     * @return 200 OK with customer dashboard stats
+     */
     @GetMapping("/users/stats")
     public AdminUserService.CustomerDashboardStats getCustomerStats() {
         return userService.getCustomerDashboardStats();
@@ -348,6 +533,14 @@ public class AdminController {
     // Payments
     // =========================================================
 
+    /**
+     * Returns a paginated list of all payments, optionally filtered by status.
+     *
+     * @param status optional payment status filter
+     * @param page   zero-based page index
+     * @param size   page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of payment responses
+     */
     @GetMapping("/payments")
     public PageResponse<AdminPaymentResponse> getAllPayments(
             @RequestParam(required = false) PaymentStatus status,
@@ -358,16 +551,33 @@ public class AdminController {
         return paymentService.getAllPayments(status, page, size);
     }
 
+    /**
+     * Returns a single payment by its ID.
+     *
+     * @param paymentId the payment ID
+     * @return 200 OK with the payment response
+     */
     @GetMapping("/payments/{paymentId}")
     public AdminPaymentResponse getPaymentById(@PathVariable @Min(1) Long paymentId) {
         return paymentService.getPaymentById(paymentId);
     }
 
+    /**
+     * Processes a refund for a completed payment.
+     *
+     * @param paymentId the payment ID to refund
+     * @return 200 OK with the updated payment response
+     */
     @PutMapping("/payments/{paymentId}/refund")
     public AdminPaymentResponse refundPayment(@PathVariable @Min(1) Long paymentId) {
         return paymentService.refundPayment(paymentId);
     }
 
+    /**
+     * Returns payment statistics for the admin dashboard.
+     *
+     * @return 200 OK with payment dashboard stats
+     */
     @GetMapping("/payments/stats")
     public AdminPaymentService.PaymentDashboardStats getPaymentStats() {
         return paymentService.getPaymentDashboardStats();
@@ -377,6 +587,13 @@ public class AdminController {
     // Reviews
     // =========================================================
 
+    /**
+     * Returns a paginated list of all product reviews.
+     *
+     * @param page zero-based page index
+     * @param size page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of review responses
+     */
     @GetMapping("/reviews")
     public PageResponse<AdminReviewResponse> getAllReviews(
             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -386,17 +603,35 @@ public class AdminController {
         return reviewService.getAllReviews(page, size);
     }
 
+    /**
+     * Deletes a product review.
+     *
+     * @param reviewId the review ID
+     * @return 204 No Content
+     */
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<Void> deleteReview(@PathVariable @Min(1) Long reviewId) {
         reviewService.deleteReview(reviewId);
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Approves a pending review, making it visible on the product page.
+     *
+     * @param reviewId the review ID
+     * @return 200 OK with the updated review response
+     */
     @PutMapping("/reviews/{reviewId}/approve")
     public AdminReviewResponse approveReview(@PathVariable @Min(1) Long reviewId) {
         return reviewService.approveReview(reviewId);
     }
 
+    /**
+     * Rejects a pending review, preventing it from being displayed.
+     *
+     * @param reviewId the review ID
+     * @return 200 OK with the updated review response
+     */
     @PutMapping("/reviews/{reviewId}/reject")
     public AdminReviewResponse rejectReview(@PathVariable @Min(1) Long reviewId) {
         return reviewService.rejectReview(reviewId);
@@ -406,6 +641,13 @@ public class AdminController {
     // Reports
     // =========================================================
 
+    /**
+     * Generates a sales report for the given date range.
+     *
+     * @param startDate the start date (inclusive)
+     * @param endDate   the end date (inclusive)
+     * @return 200 OK with the sales report data
+     */
     @GetMapping("/reports/sales")
     public AdminReportService.SalesReport getSalesReport(
             @RequestParam @NotNull LocalDate startDate,
@@ -414,6 +656,13 @@ public class AdminController {
         return reportService.generateSalesReport(startDate, endDate);
     }
 
+    /**
+     * Generates a revenue report for the given date range.
+     *
+     * @param startDate the start date (inclusive)
+     * @param endDate   the end date (inclusive)
+     * @return 200 OK with the revenue report data
+     */
     @GetMapping("/reports/revenue")
     public AdminReportService.RevenueReport getRevenueReport(
             @RequestParam @NotNull LocalDate startDate,
@@ -422,6 +671,13 @@ public class AdminController {
         return reportService.generateRevenueReport(startDate, endDate);
     }
 
+    /**
+     * Generates a product performance report for the given date range.
+     *
+     * @param startDate the start date (inclusive)
+     * @param endDate   the end date (inclusive)
+     * @return 200 OK with the product report data
+     */
     @GetMapping("/reports/products")
     public AdminReportService.ProductReport getProductReport(
             @RequestParam @NotNull LocalDate startDate,
@@ -430,6 +686,13 @@ public class AdminController {
         return reportService.generateProductReport(startDate, endDate);
     }
 
+    /**
+     * Generates a customer activity report for the given date range.
+     *
+     * @param startDate the start date (inclusive)
+     * @param endDate   the end date (inclusive)
+     * @return 200 OK with the customer report data
+     */
     @GetMapping("/reports/customers")
     public AdminReportService.CustomerReport getCustomerReport(
             @RequestParam @NotNull LocalDate startDate,
@@ -438,16 +701,35 @@ public class AdminController {
         return reportService.generateCustomerReport(startDate, endDate);
     }
 
+    /**
+     * Generates an inventory status report.
+     *
+     * @return 200 OK with the inventory report data
+     */
     @GetMapping("/reports/inventory")
     public AdminReportService.InventoryReport getInventoryReport() {
         return reportService.generateInventoryReport();
     }
 
+    /**
+     * Generates a seller commission report.
+     *
+     * @return 200 OK with list of commission report entries
+     */
     @GetMapping("/reports/commission")
     public List<CommissionReportResponse> getCommissionReport() {
         return reportService.generateCommissionReport();
     }
 
+    /**
+     * Exports a report in the requested format (PDF, Excel, or CSV) as a downloadable file.
+     *
+     * @param type      the report type
+     * @param format    the export format (PDF, EXCEL, CSV)
+     * @param startDate the start date (inclusive)
+     * @param endDate   the end date (inclusive)
+     * @return 200 OK with the export file as a byte array attachment
+     */
     @GetMapping("/reports/export")
     public ResponseEntity<byte[]> exportReport(
             @RequestParam @NotNull AdminReportService.ReportType type,

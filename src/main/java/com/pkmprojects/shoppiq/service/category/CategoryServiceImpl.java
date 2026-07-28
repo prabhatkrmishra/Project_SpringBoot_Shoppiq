@@ -7,6 +7,9 @@ import com.pkmprojects.shoppiq.entity.category.Category;
 import com.pkmprojects.shoppiq.exception.general.category.CategoryNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.category.DuplicateCategoryException;
 import com.pkmprojects.shoppiq.util.SlugUtil;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,33 +20,22 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Default implementation of {@link CategoryService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link CategoryService}
+ * containing business logic for category management.
  *
- * <p>
- * This service encapsulates all business rules related to category
- * management. Controllers should delegate directly to this class
- * instead of interacting with repositories.
+ * <p>Creates, updates, deletes, and retrieves categories with duplicate-name
+ * validation and unique slug generation. Used by {@code CategoryController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional</strong> — Write operations are atomic; reads use {@code readOnly = true}.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
  * </p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Create categories.</li>
- *     <li>Update categories.</li>
- *     <li>Delete categories.</li>
- *     <li>Retrieve categories.</li>
- *     <li>Generate unique URL slugs.</li>
- *     <li>Enforce business validation.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Entities never leave the service layer.</li>
- *     <li>DTOs form the service contract.</li>
- *     <li>All write operations execute within transactions.</li>
- *     <li>Slug generation is centralized in this service.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see CategoryService
  * @since 1.0.0
  */
 @Service
@@ -73,8 +65,11 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Evicts the categories cache to ensure fresh data on next read.</p>
      */
     @Override
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse create(CategoryRequest request) {
 
         Objects.requireNonNull(request, "Category request cannot be null.");
@@ -82,21 +77,56 @@ public class CategoryServiceImpl implements CategoryService {
         validateDuplicateName(request.name());
 
         Category category = buildCategory(request);
-        category.setSlug(generateUniqueSlug(request.name()));
-        Category savedCategory = categoryWriteService.save(category);
-
-        return CategoryResponse.fromEntity(savedCategory);
+        return saveWithSlugRetry(category, request.name());
     }
 
+    /**
+     * Saves the category with retry-on-conflict for slug collisions (BUG-0023).
+     *
+     * <p>Follows the same pattern as {@code ItemServiceImpl.saveWithSlugRetry()}:
+     * if a {@link DataIntegrityViolationException} caused by a unique-slug
+     * constraint is caught, a new slug is generated and the save is retried
+     * (up to 10 attempts).</p>
+     */
+    private CategoryResponse saveWithSlugRetry(Category category, String name) {
+        int attempts = 0;
+        while (attempts < 10) {
+            category.setSlug(generateUniqueSlug(name));
+            try {
+                Category saved = categoryWriteService.save(category);
+                return CategoryResponse.fromEntity(saved);
+            } catch (DataIntegrityViolationException e) {
+                if (e.getMessage() != null && e.getMessage().contains("slug")) {
+                    attempts++;
+                } else {
+                    throw e;
+                }
+            }
+        }
+        throw new RuntimeException("Failed to generate unique slug after 10 attempts");
+    }
+
+    /**
+     * Creates multiple categories in bulk by delegating to {@link #create}.
+     *
+     * <p>Evicts the categories cache to ensure fresh data on next read.</p>
+     *
+     * @param requests list of category creation requests
+     * @return list of created category responses
+     */
     @Override
+    @CacheEvict(value = "categories", allEntries = true)
     public List<CategoryResponse> createBulk(List<CategoryRequest> requests) {
         return requests.stream().map(this::create).toList();
     }
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Evicts the categories cache to ensure fresh data on next read.</p>
      */
     @Override
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse update(Long id, CategoryRequest request) {
 
         Objects.requireNonNull(request, "Category request cannot be null.");
@@ -119,9 +149,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Evicts the categories cache to ensure fresh data on next read.</p>
      */
     @Override
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public void delete(Long id) {
 
         Category category = getCategoryOrThrow(id);
@@ -143,18 +176,24 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Results are cached to reduce database load on category lookups.</p>
      */
     @Override
     @Transactional(readOnly = true)
+    @Cacheable("categories")
     public CategoryResponse getById(Long id) {
         return CategoryResponse.fromEntity(getCategoryOrThrow(id));
     }
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Results are cached to reduce database load on category lookups.</p>
      */
     @Override
     @Transactional(readOnly = true)
+    @Cacheable("categories")
     public CategoryResponse getBySlug(String slug) {
 
         Category category = categoryLookupService.findBySlug(slug).orElseThrow(() -> CategoryNotFoundException.slug(slug));
@@ -164,9 +203,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Results are cached to reduce database load on category listings.</p>
      */
     @Override
     @Transactional(readOnly = true)
+    @Cacheable("categories")
     public java.util.List<CategoryResponse> getAll() {
 
         return categoryLookupService.findAll().stream().map(CategoryResponse::fromEntity).toList();
@@ -199,8 +241,9 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<CategoryResponse> getTopSelling(int size) {
         Instant since = clock.instant().minus(30, ChronoUnit.DAYS);
-        List<Object[]> rows = categoryLookupService.findTopSellingCategoryIds(since, size);
-        return rows.stream().map(row -> new CategoryResponse(((Number) row[0]).longValue(), (String) row[1], (String) row[2], (String) row[3])).toList();
+        return categoryLookupService.findTopSellingCategoryIds(since, size).stream()
+                .map(row -> new CategoryResponse(row.getId(), row.getName(), row.getSlug(), row.getDescription()))
+                .toList();
     }
 
     /**

@@ -16,11 +16,63 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
- * Service for admin mail functionality.
+ * <strong>Spring Boot Concept:</strong> Service for admin mail functionality.
  *
- * @author PrabhatKrMishra
+ * <h2>What is {@code @Service}?</h2>
+ * <p>
+ * {@code @Service} is a Spring Stereotype annotation. It registers this class as a Spring bean,
+ * making it available for injection into controllers (e.g., {@code AdminMailController}).
+ * It semantically marks this class as part of the <strong>Service layer</strong> in the
+ * layered architecture.
+ * </p>
+ *
+ * <h2>Why no {@code @Transactional} here?</h2>
+ * <p>
+ * This service does not directly interact with a single logical database transaction for its
+ * primary operations. Email sending is an external side effect (SMTP), and the data reads
+ * (user/subscriber lookups) are simple lookups. The {@code @Transactional} annotation is
+ * omitted because:
+ * <ul>
+ *   <li>Sending emails involves external I/O, not database writes.</li>
+ *   <li>Batch processing uses {@code @Async} for non-blocking execution.</li>
+ *   <li>Transactional boundaries are managed by the calling service or controller.</li>
+ * </ul>
+ * This is a valid exception to the "always use {@code @Transactional}" guideline because
+ * the service's primary responsibility is <strong>sending emails</strong>, not coordinating
+ * database writes.
+ * </p>
+ *
+ * <h2>Constructor Injection (Dependency Injection Pattern)</h2>
+ * <p>
+ * Dependencies ({@code EmailService}, {@code UserRepository}, etc.) are injected via the
+ * constructor. The {@code @Lazy} annotation on the self-reference prevents circular dependency
+ * issues when calling the {@code @Async} method internally.
+ * </p>
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <pre>
+ * AdminMailController → AdminMailService → EmailService (SMTP)
+ *     (HTTP/REST)          (mail logic)         (email delivery)
+ *                            ↕
+ *                     UserRepository
+ *                     NewsletterSubscriberRepository
+ * </pre>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *   <li>Send single or bulk emails from admin to users/subscribers.</li>
+ *   <li>Deduplicate registered users vs newsletter subscribers to avoid double-sending.</li>
+ *   <li>Use {@code @Async} for bulk sending so the HTTP response returns immediately.</li>
+ *   <li>Batch processing with delays to avoid overwhelming the SMTP server.</li>
+ *   <li>Respect notification preferences (critical admin mails bypass preferences).</li>
+ *   <li>Search users by name, email, username, or ID for recipient selection.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Slf4j
@@ -198,6 +250,12 @@ public class AdminMailService {
         log.debug("Mail sent to {}, type: {}", toEmail, emailType);
     }
 
+    /**
+     * Pauses the current thread between batches to avoid overwhelming the SMTP server.
+     *
+     * <p>Called only from {@link #sendToAllUsersAsync} which runs on an async
+     * thread, so blocking here does <em>not</em> hold up any request thread.</p>
+     */
     private void delay() {
         try {
             Thread.sleep(BATCH_DELAY_MS);
@@ -207,13 +265,37 @@ public class AdminMailService {
         }
     }
 
+    /**
+     * Searches users by name, email, username, or ID.
+     *
+     * @param query search term
+     * @return list of matching users
+     */
+    public List<User> searchUsers(String query) {
+        if (query.matches("\\d+")) {
+            return userRepository.findById(Long.parseLong(query))
+                    .map(List::of)
+                    .orElse(List.of());
+        }
+        List<User> byName = userRepository.findByNameContainingIgnoreCase(query);
+        List<User> byEmail = userRepository.findByEmailContainingIgnoreCase(query);
+        List<User> byUsername = userRepository.findByUsernameContainingIgnoreCase(query);
+
+        return Stream.of(byName, byEmail, byUsername)
+                .flatMap(List::stream)
+                .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a))
+                .values()
+                .stream()
+                .toList();
+    }
+
     private EmailType resolveEmailType(String emailType) {
         if (emailType == null || emailType.isBlank()) {
             return EmailType.ADMIN_MAIL;
         }
         try {
             return EmailType.valueOf(emailType.toUpperCase());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return EmailType.ADMIN_MAIL;
         }
     }

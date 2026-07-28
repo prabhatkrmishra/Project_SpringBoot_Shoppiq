@@ -1,6 +1,7 @@
 package com.pkmprojects.shoppiq.service.category;
 
 import com.pkmprojects.shoppiq.entity.category.Category;
+import com.pkmprojects.shoppiq.repository.category.projection.CategorySalesRanking;
 import org.springframework.data.domain.Page;
 
 import java.time.Instant;
@@ -8,10 +9,21 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Read-only category query facade.
+ * <strong>Spring Boot Concept:</strong> Read-only category query facade.
  *
- * <p>Decouples service-layer code from {@code CategoryRepository},
- * providing category lookup, search, and aggregate queries.</p>
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * A <strong>ReadModel</strong> facade that decouples service-layer code from
+ * {@code CategoryRepository}. Sits between the Service layer and Repository layer,
+ * providing lookup, search, and aggregate queries for categories.
+ * </p>
+ *
+ * <h2>What is a ReadModel Facade?</h2>
+ * <p>
+ * Instead of services calling {@code CategoryRepository} directly, they call this
+ * facade. This abstraction makes the code easier to test and refactor — if the
+ * repository changes, only this facade needs updating.
+ * </p>
  *
  * <h2>Consumers</h2>
  * <ul>
@@ -20,7 +32,7 @@ import java.util.Optional;
  *     <li>{@code SellerProductServiceImpl} — seller product management.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @see CategoryWriteService
  * @since 1.4.0
  */
@@ -103,14 +115,14 @@ public interface CategoryLookupService {
     Page<Category> findByNameOrDescriptionContaining(String search, int page, int size);
 
     /**
-     * Returns category IDs ranked by total quantity sold in delivered orders
+     * Returns categories ranked by total quantity sold in delivered orders
      * since the given date.
      *
      * @param since cutoff timestamp (inclusive)
      * @param limit max number of results
-     * @return list of {@code Object[]{categoryId, totalQuantity}} tuples
+     * @return typed projections with category details
      */
-    List<Object[]> findTopSellingCategoryIds(Instant since, int size);
+    List<CategorySalesRanking> findTopSellingCategoryIds(Instant since, int size);
 
     /**
      * Returns all categories matching the given IDs.

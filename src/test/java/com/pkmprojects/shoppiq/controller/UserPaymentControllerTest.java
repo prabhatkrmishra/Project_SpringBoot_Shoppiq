@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.controller;
 import com.pkmprojects.shoppiq.controller.payment.PaymentController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
@@ -71,7 +71,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 class PaymentControllerTest {
 
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
+    @Autowired JsonMapper objectMapper;
 
     @MockitoBean PaymentService paymentService;
     @MockitoBean UserRepository userRepository;

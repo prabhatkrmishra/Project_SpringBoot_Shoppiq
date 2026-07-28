@@ -5,22 +5,18 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * Base exception representing authentication failures within Shoppiq.
+ * <strong>Spring Boot Concept:</strong> Mid-level category exception in the
+ * {@code auth} package — groups all authentication failures under HTTP
+ * {@code 401 Unauthorized}.
  *
- * <p>
- * This exception should be used for failures that occur during the
- * authentication process, such as invalid credentials, invalid tokens,
- * expired tokens, or invalid OIDC users.
- * </p>
+ * <p>Thrown when authentication fails (invalid credentials, invalid or
+ * expired JWT, invalid OIDC user). Together with
+ * {@link com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException}
+ * (403), these two form the security-related branches of the exception
+ * hierarchy: 401 indicates the client is not authenticated, while 403
+ * indicates the client is authenticated but lacks required permissions.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Represent authentication failures.</li>
- *     <li>Associate authentication failures with HTTP 401.</li>
- *     <li>Provide a common parent for authentication exceptions.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public abstract class AuthenticationException extends ShoppiqException {

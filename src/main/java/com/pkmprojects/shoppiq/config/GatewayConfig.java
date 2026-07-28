@@ -1,15 +1,18 @@
 package com.pkmprojects.shoppiq.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Per-gateway connection settings.
+ * <strong>Spring Boot Concept:</strong> Nested configuration POJO for
+ * per-gateway connection settings (Razorpay, Stripe, PayPal, UPI).
  *
- * <p>Used by {@link PaymentGatewayProperties} to bind individual gateway
- * configuration from {@code shoppiq.payment.gateways.*}.</p>
+ * <p>Bound from {@code shoppiq.payment.gateways.<gateway>.*} via
+ * {@link PaymentGatewayProperties}. Uses {@code @JsonIgnore} on
+ * sensitive fields to prevent secret exposure in API responses.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Setter
@@ -29,6 +32,7 @@ public class GatewayConfig {
     /**
      * API secret / client secret (never exposed in responses).
      */
+    @JsonIgnore
     private String apiSecret;
 
     /**

@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Represents the payment record associated with a single {@link Order}.
+ * <strong>Spring Boot Concept:</strong> Represents the payment record associated with a single {@link Order}.
  *
  * <p>
  * The payment entity tracks the full payment lifecycle — from creation
@@ -37,7 +37,33 @@ import java.time.Instant;
  *   <li>Extends {@link AuditableEntity} for id, version, and timestamps.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @OneToOne} with Order</strong> — Each order has
+ *         exactly one payment record, enforced by a unique constraint on
+ *         {@code order_id} at the database level.</li>
+ *     <li><strong>Payment lifecycle enums</strong> — Four enums
+ *         ({@link PaymentStatus}, {@link PaymentMethod},
+ *         {@link PaymentGateway}) define the payment state machine, all
+ *         stored as {@code @Enumerated(STRING)} for readability.</li>
+ *     <li><strong>Internal reference + external transaction ID</strong> — The
+ *         {@code paymentReference} is an application-generated ID (format:
+ *         {@code PAY-YYYYMMDD-<orderId>}) used for customer support, while
+ *         {@code transactionId} is the external gateway's ID. This separation
+ *         decouples internal tracking from external systems.</li>
+ *     <li><strong>Gateway response audit trail</strong> — {@code gatewayResponse}
+ *         stores the raw JSON response from the payment gateway as a TEXT
+ *         column, providing a complete audit trail for troubleshooting.</li>
+ *     <li><strong>Gateway payment ID for idempotency</strong> —
+ *         {@code gatewayPaymentId} stores the gateway-assigned order/payment
+ *         intent identifier, enabling safe retry of payment initiation
+ *         without creating duplicate charges.</li>
+ *     <li><strong>Timestamps for key events</strong> — {@code paidAt} and
+ *         {@code refundedAt} capture when these transitions occur, in
+ *         addition to the inherited {@code createdAt}/{@code updatedAt}.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

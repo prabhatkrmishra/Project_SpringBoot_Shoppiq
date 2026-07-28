@@ -6,7 +6,7 @@ import com.pkmprojects.shoppiq.dto.item.ItemResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * Business contract for seller product management.
+ * <strong>Spring Boot Concept:</strong> Business contract for seller product management.
  *
  * <p>
  * Handles the lifecycle of products owned by a seller. Sellers can
@@ -34,7 +34,7 @@ import com.pkmprojects.shoppiq.entity.user.User;
  *     <li>SKU uniqueness is enforced across all sellers.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface SellerProductService {

@@ -12,10 +12,10 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
- * Represents a seller on the marketplace platform.
+ * <strong>Spring Boot Concept:</strong> Represents a seller on the marketplace platform.
  *
  * <p>
  * Each seller is linked to a single {@link User} via a one-to-one
@@ -42,7 +42,33 @@ import java.time.LocalDateTime;
  *         not computed live.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>Two independent status enums</strong> — {@link VerificationStatus}
+ *         (PENDING/APPROVED/REJECTED) and {@link SellerStatus}
+ *         (ACTIVE/SUSPENDED/INACTIVE) model two independent lifecycles:
+ *         verification is a one-time administrative review, while status
+ *         can change multiple times over the seller's lifetime.</li>
+ *     <li><strong>{@code @OneToOne} to {@link User}</strong> — Each seller
+ *         maps to exactly one user account. The FK is on this table
+ *         ({@code user_id}), making Seller the owning side.</li>
+ *     <li><strong>{@code @OneToOne} to {@link Address}</strong> — Business
+ *         address is stored as a separate FK reference rather than inline
+ *         columns, enabling the Address entity to be reused for shipping
+ *         and store addresses.</li>
+ *     <li><strong>Asynchronous rating</strong> — The {@code rating} field
+ *         is populated by a background job, not computed live in queries.
+ *         This avoids expensive real-time aggregation on every page load.</li>
+ *     <li><strong>Commission rate</strong> — A flat percentage stored for
+ *         admin financial reporting. Uses {@code BigDecimal} with
+ *         {@code precision = 5, scale = 2}.</li>
+ *     <li><strong>Business email separate from user email</strong> — The
+ *         seller's {@code businessEmail} is validated independently from
+ *         the User's login email, allowing the seller to use a different
+ *         contact for business communications.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity
@@ -146,5 +172,5 @@ public class Seller extends AuditableEntity {
      * Timestamp when the seller profile was first created.
      */
     @Column(name = "joined_at")
-    private LocalDateTime joinedAt;
+    private Instant joinedAt;
 }

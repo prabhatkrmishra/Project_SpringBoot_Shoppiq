@@ -5,7 +5,7 @@ import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
 import java.util.List;
 
 /**
- * Response DTO returned after sending a message to the AI assistant.
+ * <strong>Spring Boot Concept:</strong> Response DTO returned after sending a message to the AI assistant.
  *
  * <p>
  * Contains the conversation ID (for subsequent messages), the full

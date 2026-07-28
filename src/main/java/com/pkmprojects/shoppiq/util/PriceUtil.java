@@ -6,7 +6,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /**
- * Stateless utility for price calculations shared across service layers.
+ * <strong>Spring Boot Concept:</strong> Stateless utility for price calculations shared across service layers.
+ *
+ * <p><b>How it fits:</b> Used by the AI assistant's product detail
+ * tool to compute effective (post-discount) prices when responding
+ * to user queries about product costs.</p>
  *
  * <h2>Effective price formula</h2>
  * <pre>
@@ -14,11 +18,14 @@ import java.math.RoundingMode;
  * </pre>
  * Rounded to 2 decimal places using {@link RoundingMode#HALF_UP}.
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.1.0
  */
 public final class PriceUtil {
 
+    /**
+     * Prevents instantiation of this utility class.
+     */
     private PriceUtil() {
         // Stateless utility [not instantiable]
     }

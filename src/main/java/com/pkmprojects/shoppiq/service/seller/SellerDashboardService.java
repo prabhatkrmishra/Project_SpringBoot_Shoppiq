@@ -7,7 +7,7 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import java.util.List;
 
 /**
- * Business contract for the seller dashboard.
+ * <strong>Spring Boot Concept:</strong> Business contract for the seller dashboard.
  *
  * <p>
  * Provides summary metrics and recent activity data for the
@@ -21,7 +21,7 @@ import java.util.List;
  *     <li>Enforce seller-level preconditions (ACTIVE, not SUSPENDED).</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface SellerDashboardService {

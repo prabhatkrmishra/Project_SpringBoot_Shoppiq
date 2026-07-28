@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST controller for authenticated AI chat conversations.
+ * <strong>Spring Boot Concept:</strong> REST controller for authenticated AI chat conversations.
  *
  * <p>
  * Provides endpoints for creating conversations, sending messages (with

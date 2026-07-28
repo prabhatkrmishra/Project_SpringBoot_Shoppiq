@@ -7,31 +7,55 @@ import org.springframework.stereotype.Component;
 /**
  * Factory for creating JWT cookies with consistent security attributes.
  *
- * <p>Centralizes cookie configuration so that every JWT cookie — issued at
- * login, OAuth2 authentication, or registration completion — carries
- * identical security flags. The {@code secure} flag is environment-driven
- * via {@code app.security.secure-cookie}, allowing HTTP for development
- * and HTTPS for production.</p>
- *
- * <h4>Cookie attributes</h4>
+ * <h3>Spring Security / cookie concepts demonstrated</h3>
  * <ul>
- *   <li>{@code HttpOnly} — inaccessible to JavaScript, mitigates XSS</li>
- *   <li>{@code Secure} — HTTPS-only in production</li>
- *   <li>{@code SameSite=Lax} — sent on same-site top-level navigations; mitigates CSRF
- *       while allowing browser redirect after login</li>
- *   <li>{@code Path=/} — sent with every request to this origin</li>
- *   <li>{@code Max-Age} — controls persistence (session vs. remember-me)</li>
+ *   <li><strong>HttpOnly cookie for JWT transport</strong> — the JWT is
+ *       delivered exclusively as an HttpOnly cookie (never in a response body
+ *       or {@code Authorization} header). This prevents JavaScript from
+ *       reading the token, mitigating XSS-based credential theft.</li>
+ *   <li><strong>SameSite=Lax CSRF protection</strong> — the {@code SameSite=Lax}
+ *       attribute tells the browser to send the cookie only on same-site
+ *       top-level navigations, not on cross-site requests. This provides
+ *       built-in CSRF protection without requiring a separate CSRF token.</li>
+ *   <li><strong>Environment-driven Secure flag</strong> — the {@code Secure}
+ *       flag is controlled by {@code app.security.secure-cookie}, enabling
+ *       HTTP for local development and HTTPS for production without code changes.</li>
+ *   <li><strong>Max-Age for session vs. persistent cookies</strong> —
+ *       {@code Max-Age=-1} creates a session cookie (deleted when browser
+ *       closes); {@code Max-Age=0} expires it immediately (logout);
+ *       positive values create persistent cookies (remember-me).</li>
+ * </ul>
+ *
+ * <h3>Design patterns</h3>
+ * <ul>
+ *   <li><strong>Factory pattern</strong> — a single place that creates
+ *       consistently-configured cookies. Every JWT cookie in the application
+ *       goes through this factory, ensuring identical security attributes.</li>
+ *   <li><strong>Centralized configuration</strong> — the {@code Secure} flag
+ *       is injected once and applied to all cookies, avoiding scattered
+ *       conditionals throughout the codebase.</li>
+ *   <li><strong>Simple API</strong> — a single {@link #buildJwtCookie} method
+ *       accepts the token value and Max-Age, hiding all cookie attribute
+ *       complexity from callers.</li>
  * </ul>
  *
  * @see JwtAuthenticationUtils
+ * @see com.pkmprojects.shoppiq.auth.service.AuthService
+ * @see com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @Component
 public class JwtCookieFactory {
 
     private static final String JWT_COOKIE_NAME = "jwt";
 
-    @Value("${app.security.secure-cookie:true}")
-    private boolean secureCookie;
+    private final boolean secureCookie;
+
+    public JwtCookieFactory(@Value("${app.security.secure-cookie:true}") boolean secureCookie) {
+        this.secureCookie = secureCookie;
+    }
 
     /**
      * Builds a JWT cookie with security attributes.

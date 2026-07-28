@@ -7,13 +7,13 @@ import org.springframework.data.domain.Page;
 import java.util.Optional;
 
 /**
- * Read-only seller lookup facade.
+ * <strong>Spring Boot Concept:</strong> Read-only seller lookup facade.
  *
  * <p>Decouples service-layer code from {@code SellerRepository},
  * providing the seller resolution queries used across the
  * seller, admin, and user domains.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.4.0
  */
 public interface SellerLookupService {

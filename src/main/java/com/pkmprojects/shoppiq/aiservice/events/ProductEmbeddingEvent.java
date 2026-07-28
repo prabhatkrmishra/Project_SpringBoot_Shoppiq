@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.aiservice.events;
 import java.math.BigDecimal;
 
 /**
- * Carries the minimal product information needed to (re)build a vector-store
+ * <strong>Spring Boot Concept:</strong> Carries the minimal product information needed to (re)build a vector-store
  * embedding. Published by {@link ItemEmbeddingEntityListener} on JPA lifecycle
  * events and consumed by {@code ProductCatalogIngester} after transaction commit.
  *

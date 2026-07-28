@@ -5,12 +5,18 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * Thrown when a verification code is invalid or expired.
+ * <strong>Spring Boot Concept:</strong> Exception thrown when a verification
+ * code is invalid or expired.
  *
- * @author PrabhatKrMishra
+ * <p>Extends {@link com.pkmprojects.shoppiq.exception.base.ShoppiqException}
+ * directly, accepting the {@link ErrorCode} as a constructor parameter to
+ * distinguish between different verification failures (expired vs. invalid)
+ * using the same exception class.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
-public class VerificationCodeException extends ShoppiqException {
+public final class VerificationCodeException extends ShoppiqException {
 
     /**
      * Creates a new VerificationCodeException.

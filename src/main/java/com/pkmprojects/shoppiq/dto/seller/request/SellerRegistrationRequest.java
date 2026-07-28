@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request DTO for seller registration.
+ * <strong>Spring Boot Concept:</strong> Request DTO for seller registration.
  *
  * @author PrabhatKrMishra
  * @since 1.0.0

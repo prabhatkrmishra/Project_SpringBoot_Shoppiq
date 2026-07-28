@@ -107,8 +107,8 @@ class RoleControllerTest {
         @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 200 with list of roles")
         void getAllRoles_returnsList() throws Exception {
-            Role role1 = new Role(1L, "ROLE_CUSTOMER");
-            Role role2 = new Role(2L, "ROLE_SELLER");
+            Role role1 = new Role("ROLE_CUSTOMER");
+            Role role2 = new Role("ROLE_SELLER");
 
             when(rolesService.getAllExistingRoles())
                     .thenReturn(List.of(role1, role2));
@@ -129,7 +129,7 @@ class RoleControllerTest {
         @WithMockUser(roles = "ADMIN")
         @DisplayName("Returns 200 with created role on success")
         void createRole_validName_returns200() throws Exception {
-            Role createdRole = new Role(3L, "ROLE_MODERATOR");
+            Role createdRole = new Role("ROLE_MODERATOR");
 
             when(rolesService.createNewRole("MODERATOR"))
                     .thenReturn(createdRole);

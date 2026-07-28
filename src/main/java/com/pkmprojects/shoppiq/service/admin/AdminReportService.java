@@ -9,7 +9,25 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Business contract for admin reporting and exports.
+ * <strong>Spring Boot Concept:</strong> Business contract for admin reporting and exports.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * Defines the <strong>Service layer</strong> contract for business reporting.
+ * Architecture: {@code AdminReportController → AdminReportService → ReadModels}.
+ * This service aggregates data from multiple read-model facades to produce complex
+ * business reports.
+ * </p>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *     <li>Generate sales report with daily breakdown and top products/categories.</li>
+ *     <li>Generate revenue report with discounts, taxes, shipping, and payment method breakdowns.</li>
+ *     <li>Generate product performance report with sales and stock data.</li>
+ *     <li>Generate customer report with segmentation (VIP, Regular, New).</li>
+ *     <li>Generate inventory report with stock status and valuation.</li>
+ *     <li>Export reports in PDF, Excel, CSV formats (future implementation).</li>
+ * </ul>
  *
  * <p>
  * Defines the operations for generating business reports
@@ -32,7 +50,7 @@ import java.util.Map;
  *     <li>Implemented by {@code AdminReportServiceImpl}.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface AdminReportService {

@@ -116,11 +116,12 @@ class AdminProductControllerTest {
 
         @Test
         @WithMockUser(roles = "USER")
-        @DisplayName("Forwards to error page when not admin")
+        @DisplayName("Returns 403 ProblemDetail when not admin (API client)")
         void getPendingProducts_forbidden_returns403() throws Exception {
             mockMvc.perform(get("/api/admin/products/pending?page=0&size=20"))
-                    .andExpect(status().isOk())
-                    .andExpect(forwardedUrl("/error"));
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value(403))
+                    .andExpect(jsonPath("$.errorCode").value("AUTH-403-001"));
         }
     }
 

@@ -5,9 +5,17 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * Thrown when an email fails to send.
+ * <strong>Spring Boot Concept:</strong> Exception thrown when an email fails
+ * to send.
  *
- * @author PrabhatKrMishra
+ * <p>Extends {@link com.pkmprojects.shoppiq.exception.base.ShoppiqException}
+ * directly (not a business exception subclass) because email failures are
+ * integration errors, not business logic violations. Uses HTTP 502
+ * (Bad Gateway) to indicate the failure originates from an upstream service.
+ * The constructor accepting {@link Throwable} preserves the root cause
+ * (e.g., network timeout, SMTP auth failure) for debugging.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public class EmailSendException extends ShoppiqException {

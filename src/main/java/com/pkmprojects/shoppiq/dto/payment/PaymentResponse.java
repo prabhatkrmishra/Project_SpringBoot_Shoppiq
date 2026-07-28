@@ -11,7 +11,16 @@ import java.time.Instant;
 /**
  * Full payment detail response.
  *
- * @author PrabhatKrMishra
+ * <p>This Java record exposes comprehensive payment information including
+ * gateway details, transaction IDs, and timestamps. It is the response
+ * counterpart of the {@link com.pkmprojects.shoppiq.entity.payment.Payment}
+ * entity, exposing only non-sensitive fields.</p>
+ *
+ * <p><b>Enum serialization:</b> The {@code paymentMethod}, {@code status},
+ * and {@code gateway} fields are Java enums that Spring Boot serializes
+ * as strings — no custom serializer needed.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record PaymentResponse(

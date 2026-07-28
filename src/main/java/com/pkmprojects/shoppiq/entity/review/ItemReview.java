@@ -14,7 +14,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 /**
- * Represents a customer review for an {@link Item}.
+ * <strong>Spring Boot Concept:</strong> Represents a customer review for an {@link Item}.
  *
  * <p>
  * Each review is submitted by a single {@link User} for a single
@@ -44,7 +44,30 @@ import lombok.*;
  *     <li>Ratings are restricted to values between 1 and 5.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>Bidirectional {@code @ManyToOne} on both sides</strong>
+ *         — ItemReview has FKs to both {@link Item} and {@link User},
+ *         making it the owning side of both relationships. The inverse
+ *         sides are the {@code List<ItemReview>} collections in Item and
+ *         User.</li>
+ *     <li><strong>{@code @JsonBackReference} / {@code @JsonIgnore}</strong>
+ *         — Prevents infinite JSON serialization recursion. The Item
+ *         reference uses {@code @JsonBackReference} (paired with
+ *         {@code @JsonManagedReference} on the Item side), while the User
+ *         reference is simply {@code @JsonIgnore}d (never exposed in API
+ *         responses).</li>
+ *     <li><strong>{@code @Min(1)} / {@code @Max(5)}</strong> — Bean
+ *         Validation limits the rating to a 1–5 scale.</li>
+ *     <li><strong>{@code @Enumerated(EnumType.STRING)} for moderation
+ *         status</strong> — {@link ReviewStatus} tracks whether the review
+ *         is {@code PENDING}, {@code APPROVED}, or {@code REJECTED},
+ *         enabling admin moderation workflow.</li>
+ *     <li><strong>{@code update()} method</strong> — Allows updating rating
+ *         and text while preserving identity, version, and relationships.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

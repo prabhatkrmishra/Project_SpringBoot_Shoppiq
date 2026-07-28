@@ -201,7 +201,7 @@ class SellerProductServiceImplTest {
             PageResponse<ItemResponse> result = sellerProductService.getMyProducts(testUser, 0, 10);
 
             assertThat(result.content()).hasSize(1);
-            assertThat(result.content().get(0).name()).isEqualTo("Test Product");
+            assertThat(result.content().getFirst().name()).isEqualTo("Test Product");
         }
 
         @Test

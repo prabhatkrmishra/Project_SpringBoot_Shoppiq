@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
- * Request DTO used for bulk creation of {@link User users}
+ * <strong>Spring Boot Concept:</strong> Request DTO used for bulk creation of {@link User users}
  * by an admin user for test-data population.
  *
  * <p>

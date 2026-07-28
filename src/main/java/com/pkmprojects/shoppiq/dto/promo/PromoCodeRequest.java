@@ -8,7 +8,22 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Request payload for creating or updating a promo code.
+ * <strong>Spring Boot Concept:</strong> Request payload for creating or updating a promo code.
+ *
+ * <p>This Java record demonstrates <b>extensive Bean Validation</b> on a
+ * complex DTO with many optional fields. Key patterns:</p>
+ * <ul>
+ *   <li>Optional numeric fields use {@code @DecimalMin} + {@code @Digits}
+ *       for monetary precision</li>
+ *   <li>Optional integer fields use {@code @PositiveOrZero}</li>
+ *   <li>Enum fields like {@code discountType} and {@code couponType} are
+ *       auto-validated by Spring Boot deserialization</li>
+ *   <li>Date/time fields use {@code @NotNull} since {@code validFrom} and
+ *       {@code validUntil} are required for the promo to be usable</li>
+ * </ul>
+ *
+ * <p><b>API contract:</b> POST/PUT /api/admin/promo-codes — all discount
+ * configuration is managed server-side through this single DTO.</p>
  *
  * @param code              unique promo code string
  * @param description       optional human-readable description
@@ -23,7 +38,7 @@ import java.time.Instant;
  * @param validFrom         when the code becomes valid
  * @param validUntil        when the code expires
  * @param active            whether the code is active
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record PromoCodeRequest(

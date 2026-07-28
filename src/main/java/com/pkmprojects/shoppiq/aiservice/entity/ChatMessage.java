@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * JPA entity representing a single message within an AI chat conversation.
+ * <strong>Spring Boot Concept:</strong> JPA entity representing a single message within an AI chat conversation.
  *
  * <p>
  * Messages are stored sequentially and rendered in chronological order. Each

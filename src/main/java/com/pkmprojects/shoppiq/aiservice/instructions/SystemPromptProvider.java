@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.aiservice.instructions;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * Provides a system prompt for an AI chat conversation.
+ * <strong>Spring Boot Concept:</strong> Provides a system prompt for an AI chat conversation.
  *
  * <p>
  * Implementations supply the behavioral instructions that shape how the

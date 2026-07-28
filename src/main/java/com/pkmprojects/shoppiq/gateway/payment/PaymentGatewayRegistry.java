@@ -9,8 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Resolves the correct {@link PaymentGatewayStrategy} for a given
- * {@link PaymentMethod}.
+ * <strong>Spring Boot Concept:</strong> Registry that collects all
+ * {@link PaymentGatewayStrategy} beans at startup via constructor injection
+ * and resolves the correct implementation for a given {@link PaymentMethod}.
  *
  * <p>All {@link PaymentGatewayStrategy} beans are collected at startup and
  * indexed by the gateway they {@link PaymentGatewayStrategy#supports() support}.
@@ -18,7 +19,23 @@ import java.util.Map;
  * concrete implementations — adding a new gateway only requires a new strategy
  * bean plus a single entry in {@link #resolve(PaymentMethod)}.</p>
  *
- * @author PrabhatKrMishra
+ * <p><strong>Educational value:</strong> This class demonstrates Spring's
+ * <strong>Bean aggregation / Registry</strong> pattern:
+ * <ul>
+ *   <li>Spring auto-injects all beans implementing {@code PaymentGatewayStrategy}
+ *       into the constructor as a {@code List}.</li>
+ *   <li>The registry indexes them by their {@code supports()} return value
+ *       into an {@link java.util.EnumMap} for O(1) lookup.</li>
+ *   <li>The checkout service only depends on {@code PaymentGatewayRegistry}
+ *       (not on individual gateway beans), so adding a new payment provider
+ *       is purely additive — no existing code changes.</li>
+ *   <li>This is the <strong>Strategy + Registry</strong> pattern: the Strategy
+ *       interface defines the contract, and the Registry acts as a
+ *       <em>context</em> that selects the right strategy at runtime.</li>
+ * </ul>
+ * </p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component
@@ -27,6 +44,12 @@ public class PaymentGatewayRegistry {
     private final Map<PaymentGateway, PaymentGatewayStrategy> byGateway;
     private final PaymentGatewayStrategy onlineFallback;
 
+    /**
+     * Collects all {@link PaymentGatewayStrategy} beans and indexes them
+     * by their {@link PaymentGatewayStrategy#supports() supported} gateway.
+     *
+     * @param strategies all strategy beans discovered by Spring
+     */
     public PaymentGatewayRegistry(List<PaymentGatewayStrategy> strategies) {
         Map<PaymentGateway, PaymentGatewayStrategy> map = new EnumMap<>(PaymentGateway.class);
         for (PaymentGatewayStrategy strategy : strategies) {

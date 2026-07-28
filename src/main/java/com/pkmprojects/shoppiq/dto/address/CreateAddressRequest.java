@@ -8,7 +8,22 @@ import jakarta.validation.constraints.Size;
 /**
  * Request payload for creating a new address.
  *
- * @author PrabhatKrMishra
+ * <p>This <b>Java record</b> demonstrates Jakarta Bean Validation annotations to
+ * enforce the API contract at the controller boundary. When validation fails,
+ * Spring Boot returns a structured {@code 400 Bad Request} response automatically.</p>
+ *
+ * <p><b>Validation patterns shown:</b></p>
+ * <ul>
+ *   <li>{@link jakarta.validation.constraints.NotBlank @NotBlank} — required fields</li>
+ *   <li>{@link jakarta.validation.constraints.Size @Size} — maximum length constraints</li>
+ *   <li>{@link jakarta.validation.constraints.Pattern @Pattern} — phone number format validation</li>
+ * </ul>
+ *
+ * <p><b>Serialization:</b> The {@code default} field uses
+ * {@link com.fasterxml.jackson.annotation.JsonProperty @JsonProperty("default")}
+ * to map the Java field name to a JavaScript reserved word in JSON.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record CreateAddressRequest(

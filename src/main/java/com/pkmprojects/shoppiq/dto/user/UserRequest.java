@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Request DTO for username/password registration.
+ * <strong>Spring Boot Concept:</strong> Request DTO for username/password registration.
  *
  * <p>
  * Bean Validation constraints mirror those used elsewhere in the
@@ -19,6 +19,20 @@ import lombok.Setter;
  * as a standard RFC 9457 validation response, rather than surfacing later
  * as an opaque database constraint violation.
  * </p>
+ *
+ * <p><b>Lombok vs Record:</b> This DTO uses <b>Lombok</b> rather than a Java
+ * record because it has a <b>conditional business logic method</b>
+ * ({@link #isSellerRegistration()}) that checks whether the user also wants
+ * to register as a seller. Records are not designed for behavioral methods
+ * that inspect or derive from the data — Lombok POJOs are more natural here.</p>
+ *
+ * <p><b>Dual-purpose DTO:</b> This single DTO handles both simple user
+ * registration and combined user+seller registration. When {@code businessName}
+ * and related seller fields are provided, the service layer creates a seller
+ * profile alongside the user account.</p>
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @NoArgsConstructor
 @AllArgsConstructor

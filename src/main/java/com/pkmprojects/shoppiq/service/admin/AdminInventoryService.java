@@ -7,7 +7,27 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import java.util.List;
 
 /**
- * Business contract for admin inventory management.
+ * <strong>Spring Boot Concept:</strong> Business contract for admin inventory management.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * This interface defines the <strong>Service layer</strong> contract for inventory operations.
+ * In the pattern {@code AdminInventoryController → AdminInventoryService → Services/Repositories}:
+ * </p>
+ * <ul>
+ *   <li><strong>Controller</strong> handles REST requests and delegates to this service.</li>
+ *   <li><strong>Service</strong> (this interface) defines the business operations for inventory management.</li>
+ *   <li><strong>Repositories/Services</strong> handle data access (hidden behind the implementation).</li>
+ * </ul>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *     <li>List all products with inventory details.</li>
+ *     <li>Adjust stock for a single product.</li>
+ *     <li>Bulk update stock for multiple products.</li>
+ *     <li>Get low stock and out of stock alerts.</li>
+ *     <li>Get inventory dashboard summary.</li>
+ * </ul>
  *
  * <p>
  * Defines the operations for managing product inventory,
@@ -30,7 +50,7 @@ import java.util.List;
  *     <li>Implemented by {@code AdminInventoryServiceImpl}.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface AdminInventoryService {

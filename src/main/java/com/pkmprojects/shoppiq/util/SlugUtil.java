@@ -7,7 +7,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * Utility class for converting human-readable text into URL-friendly slugs.
+ * <strong>Spring Boot Concept:</strong> Utility class for converting human-readable text into URL-friendly slugs.
  *
  * <p>
  * A slug is a lowercase, normalized, URL-safe representation of text.
@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
  * All regular expressions are immutable and precompiled.
  * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @see CategoryService
  * @since 1.0.0
  */

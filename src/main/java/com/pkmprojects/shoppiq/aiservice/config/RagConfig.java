@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration for Retrieval-Augmented Generation (RAG).
+ * <strong>Spring Boot Concept:</strong> Configuration for Retrieval-Augmented Generation (RAG).
  *
  * <p>
  * Wires together the local embedding model (BGE-small-en, 384-dim), the Qdrant
@@ -41,20 +41,23 @@ public class RagConfig {
 
     private static final Logger log = LoggerFactory.getLogger(RagConfig.class);
 
-    @Value("${langchain4j.qdrant.host:localhost}")
-    private String host;
+    private final String host;
+    private final int port;
+    private final String collectionName;
+    private final Integer maxResults;
+    private final Double minScore;
 
-    @Value("${langchain4j.qdrant.port:6334}")
-    private int port;
-
-    @Value("${langchain4j.qdrant.collection-name:shoppiq_products}")
-    private String collectionName;
-
-    @Value("${shoppiq.ai.rag.max-results:5}")
-    private Integer maxResults;
-
-    @Value("${shoppiq.ai.rag.min-score:0.75}")
-    private Double minScore;
+    public RagConfig(@Value("${langchain4j.qdrant.host:localhost}") String host,
+                     @Value("${langchain4j.qdrant.port:6334}") int port,
+                     @Value("${langchain4j.qdrant.collection-name:shoppiq_products}") String collectionName,
+                     @Value("${shoppiq.ai.rag.max-results:5}") Integer maxResults,
+                     @Value("${shoppiq.ai.rag.min-score:0.75}") Double minScore) {
+        this.host = host;
+        this.port = port;
+        this.collectionName = collectionName;
+        this.maxResults = maxResults;
+        this.minScore = minScore;
+    }
 
     @Bean
     public EmbeddingModel embeddingModel() {

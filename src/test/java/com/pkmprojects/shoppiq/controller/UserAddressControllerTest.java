@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.controller;
 import com.pkmprojects.shoppiq.controller.address.AddressController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
@@ -14,7 +14,6 @@ import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.address.CreateAddressRequest;
-import com.pkmprojects.shoppiq.dto.address.UpdateAddressRequest;
 import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
@@ -88,7 +87,7 @@ class AddressControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @MockitoBean
     private AddressService addressService;
@@ -130,8 +129,8 @@ class AddressControllerTest {
         );
     }
 
-    private static UpdateAddressRequest validUpdateRequest(boolean isDefault) {
-        return new UpdateAddressRequest(
+    private static CreateAddressRequest validUpdateRequest(boolean isDefault) {
+        return new CreateAddressRequest(
                 "Office", "Alice Smith", "9876543210",
                 "42 Connaught Place", null,
                 "Delhi", "Delhi", "110001", "India", isDefault
@@ -440,7 +439,7 @@ class AddressControllerTest {
                     "Delhi", "Delhi", "110001", "India",
                     false, NOW, NOW
             );
-            when(addressService.update(any(User.class), eq(5L), any(UpdateAddressRequest.class)))
+            when(addressService.update(any(User.class), eq(5L), any(CreateAddressRequest.class)))
                     .thenReturn(response);
 
             mockMvc.perform(put("/user/address/update/5").with(csrf())
@@ -494,7 +493,7 @@ class AddressControllerTest {
         @DisplayName("Returns 404 when address does not exist")
         void update_notFound_returns404() throws Exception {
             authenticateUser();
-            when(addressService.update(any(User.class), eq(99L), any(UpdateAddressRequest.class)))
+            when(addressService.update(any(User.class), eq(99L), any(CreateAddressRequest.class)))
                     .thenThrow(AddressNotFoundException.id(99L));
 
             mockMvc.perform(put("/user/address/update/99").with(csrf())
@@ -508,7 +507,7 @@ class AddressControllerTest {
         @DisplayName("Returns 403 when address belongs to another user")
         void update_wrongOwner_returns403() throws Exception {
             authenticateUser();
-            when(addressService.update(any(User.class), eq(5L), any(UpdateAddressRequest.class)))
+            when(addressService.update(any(User.class), eq(5L), any(CreateAddressRequest.class)))
                     .thenThrow(AddressAccessDeniedException.forAddress(5L));
 
             mockMvc.perform(put("/user/address/update/5").with(csrf())

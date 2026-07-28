@@ -3,7 +3,7 @@ spring:
     add-properties: false
 
 server:
-  forward-headers-strategy: framework
+  forward-headers-strategy: native
   tomcat:
     remoteip:
       remote-ip-header: x-forwarded-for
@@ -51,6 +51,20 @@ app:
   cors:
     enabled: true
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+  info:
+    env:
+      enabled: false
+    os:
+      enabled: false
 
 shoppiq:
   email:

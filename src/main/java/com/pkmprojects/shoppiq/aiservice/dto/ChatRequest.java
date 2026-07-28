@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request DTO for sending a message to the AI assistant.
+ * <strong>Spring Boot Concept:</strong> Request DTO for sending a message to the AI assistant.
  *
  * <p>
  * Used by both the authenticated {@code /api/ai/chat} and guest

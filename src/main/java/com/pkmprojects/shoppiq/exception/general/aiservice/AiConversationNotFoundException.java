@@ -4,14 +4,15 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * Thrown when an AI chat conversation cannot be found by its chat ID or database ID.
+ * <strong>Spring Boot Concept:</strong> Exception thrown when an AI chat
+ * conversation cannot be found by its chat ID or database ID.
  *
- * <p>
- * This is a concrete subclass of {@link ResourceNotFoundException} used exclusively
- * by the AI service layer. It maps to {@link ErrorCode#AI_CONVERSATION_NOT_FOUND}
- * and produces a 404 HTTP response.
+ * <p>Leaf exception in the resource-not-found hierarchy. Extends
+ * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
+ * (HTTP 404) with multiple factory methods for different lookup scenarios
+ * (public chat ID and internal database ID).</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public final class AiConversationNotFoundException extends ResourceNotFoundException {

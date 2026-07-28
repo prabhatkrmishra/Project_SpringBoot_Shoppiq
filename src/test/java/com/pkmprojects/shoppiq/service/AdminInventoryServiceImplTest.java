@@ -94,9 +94,9 @@ class AdminInventoryServiceImplTest {
             PageResponse<AdminProductInventoryResponse> result = inventoryService.getAllProductInventory(0, 20);
 
             assertThat(result.content()).hasSize(1);
-            assertThat(result.content().get(0).itemName()).isEqualTo("Test Product");
-            assertThat(result.content().get(0).sku()).isEqualTo("SKU-001");
-            assertThat(result.content().get(0).stockQuantity()).isEqualTo(50);
+            assertThat(result.content().getFirst().itemName()).isEqualTo("Test Product");
+            assertThat(result.content().getFirst().sku()).isEqualTo("SKU-001");
+            assertThat(result.content().getFirst().stockQuantity()).isEqualTo(50);
         }
 
         @Test
@@ -125,7 +125,7 @@ class AdminInventoryServiceImplTest {
             List<AdminProductInventoryResponse> result = inventoryService.getLowStockProducts();
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).stockStatus()).isEqualTo(AdminProductInventoryResponse.StockStatus.LOW_STOCK);
+            assertThat(result.getFirst().stockStatus()).isEqualTo(AdminProductInventoryResponse.StockStatus.LOW_STOCK);
         }
     }
 
@@ -142,7 +142,7 @@ class AdminInventoryServiceImplTest {
             List<AdminProductInventoryResponse> result = inventoryService.getOutOfStockProducts();
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).stockStatus()).isEqualTo(AdminProductInventoryResponse.StockStatus.OUT_OF_STOCK);
+            assertThat(result.getFirst().stockStatus()).isEqualTo(AdminProductInventoryResponse.StockStatus.OUT_OF_STOCK);
         }
     }
 

@@ -2,7 +2,6 @@ package com.pkmprojects.shoppiq.controller.address;
 
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.address.CreateAddressRequest;
-import com.pkmprojects.shoppiq.dto.address.UpdateAddressRequest;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.service.address.AddressService;
 import jakarta.validation.Valid;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST controller that exposes address-management endpoints for authenticated
+ * <strong>Spring Boot Concept:</strong> REST controller that exposes address-management endpoints for authenticated
  * customers.
  *
  * <p>
@@ -35,7 +34,7 @@ import java.util.List;
  *     <li>{@code PUT    /user/address/default/{id}}   — set default address</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Validated
@@ -100,7 +99,7 @@ public class AddressController {
     public AddressResponse update(
             @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable Long id,
-            @Valid @RequestBody UpdateAddressRequest request
+            @Valid @RequestBody CreateAddressRequest request
     ) {
         return addressService.update(user, id, request);
     }

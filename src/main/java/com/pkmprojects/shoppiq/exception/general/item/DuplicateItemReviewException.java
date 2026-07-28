@@ -4,22 +4,14 @@ import com.pkmprojects.shoppiq.exception.business.DuplicateResourceException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * Exception thrown when attempting to create or update an item whose
- * unique business identifier already exists.
+ * <strong>Spring Boot Concept:</strong> Exception thrown when attempting to
+ * create a review for a product that the user has already reviewed.
  *
- * <p>
- * Currently the uniqueness constraint is enforced on the SKU.
- * </p>
+ * <p>Leaf exception in the duplicate-resource hierarchy. Extends
+ * {@link com.pkmprojects.shoppiq.exception.business.DuplicateResourceException}
+ * (HTTP 409) to enforce the one-review-per-user-per-item business rule.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Represents duplicate item resources.</li>
- *     <li>Associates the failure with
- *     {@link ErrorCode#ITEM_ALREADY_EXISTS}.</li>
- *     <li>Provides expressive factory methods.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public final class DuplicateItemReviewException
@@ -43,15 +35,15 @@ public final class DuplicateItemReviewException
      */
     public static DuplicateItemReviewException userId(Long userId) {
         return new DuplicateItemReviewException(
-                "Item review with user id %s already exists."
+                "Item review with user id '%d' already exists."
                         .formatted(userId)
         );
     }
 
     /**
-     * Creates a generic duplicate item exception.
+     * Creates a generic duplicate item review exception.
      *
-     * @return duplicate item exception
+     * @return duplicate item review exception
      */
     public static DuplicateItemReviewException unknown() {
         return new DuplicateItemReviewException(

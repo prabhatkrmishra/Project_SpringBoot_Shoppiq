@@ -370,17 +370,12 @@ class PromoCodeServiceImplTest {
             setId(order, 99L);
 
             when(promoCodeRepository.findById(10L)).thenReturn(Optional.of(pc));
-            when(promoCodeRepository.save(any(PromoCode.class))).thenAnswer(inv -> {
-                PromoCode saved = inv.getArgument(0);
-                setId(saved, 10L);
-                return saved;
-            });
+            when(promoCodeRepository.incrementUsedCountAtomically(10L)).thenReturn(1);
             when(promoCodeUsageRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             promoCodeService.recordUsage(pc, user, order);
 
-            assertThat(pc.getUsedCount()).isEqualTo(4);
-            verify(promoCodeRepository).save(pc);
+            verify(promoCodeRepository).incrementUsedCountAtomically(10L);
             verify(promoCodeUsageRepository).save(any());
         }
 
@@ -493,7 +488,7 @@ class PromoCodeServiceImplTest {
             PageResponse<PromoCodeResponse> result = promoCodeService.findAll(0, 20);
 
             assertThat(result.content()).hasSize(2);
-            assertThat(result.content().get(0).code()).isEqualTo("CODE1");
+            assertThat(result.content().getFirst().code()).isEqualTo("CODE1");
             assertThat(result.content().get(1).code()).isEqualTo("CODE2");
         }
     }

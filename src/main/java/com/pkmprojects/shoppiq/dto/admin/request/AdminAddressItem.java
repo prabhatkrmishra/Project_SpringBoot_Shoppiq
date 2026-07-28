@@ -12,9 +12,14 @@ import jakarta.validation.constraints.NotNull;
  * for that user.
  * </p>
  *
+ * <p><b>Validation pattern:</b> Cascading validation via {@code @Valid} on the
+ * nested {@link com.pkmprojects.shoppiq.dto.address.CreateAddressRequest} ensures
+ * that both the wrapper and the inner DTO are validated together. This is a
+ * common pattern for composite request DTOs in Spring Boot.</p>
+ *
  * @param userId  ID of the existing user who will own the address
  * @param address address creation payload
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AdminAddressItem(

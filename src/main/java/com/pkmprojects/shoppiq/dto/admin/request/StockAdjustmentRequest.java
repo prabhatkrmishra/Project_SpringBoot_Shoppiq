@@ -21,11 +21,16 @@ import jakarta.validation.constraints.PositiveOrZero;
  *
  * <h2>Design Notes</h2>
  * <ul>
- *     <li>Positive quantity indicates stock addition.</li>
- *     <li>Reason field provides audit trail context.</li>
+ *     <li>{@code quantity} is an <b>absolute replacement</b>, not a delta — the
+ *     service layer sets stock to this exact value.</li>
+ *     <li>{@code reason} provides audit trail context (e.g., "New Shipment").</li>
+ *     <li>{@code @PositiveOrZero} allows setting stock to zero (out of stock).</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <p><b>Why a record?</b> The compact syntax clearly communicates the DTO's
+ * shape: exactly two fields with their constraints visible at a glance.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record StockAdjustmentRequest(

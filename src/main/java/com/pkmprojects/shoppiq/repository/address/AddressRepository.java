@@ -11,9 +11,27 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository for {@link Address} entities.
+ * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link Address} entities.
  *
- * @author PrabhatKrMishra
+ * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
+ * <ul>
+ *   <li><strong>Derived query methods</strong> — Spring Data JPA parses method names like
+ *       {@code findByUserAndIsDefaultTrue} and automatically generates the corresponding
+ *       SQL: {@code SELECT * FROM addresses WHERE user_id = ? AND is_default = TRUE}.</li>
+ *   <li><strong>{@code @Query} with JPQL</strong> — The {@link #clearDefaultForUser} method
+ *       uses a custom JPQL {@code UPDATE} statement with {@code @Modifying}, teaching that
+ *       derived method names cannot express bulk updates efficiently.</li>
+ *   <li><strong>Interface-based repositories</strong> — No implementation needed; Spring
+ *       provides the proxy at runtime via {@link org.springframework.data.jpa.repository.JpaRepository}.</li>
+ * </ul>
+ *
+ * <p><strong>Method naming → SQL translation examples:</strong></p>
+ * <pre>
+ *   findAllByUser(User)          → SELECT * FROM addresses WHERE user_id = ?
+ *   findByUserAndIsDefaultTrue   → SELECT * FROM addresses WHERE user_id = ? AND is_default = TRUE
+ * </pre>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface AddressRepository extends JpaRepository<Address, Long> {

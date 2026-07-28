@@ -7,12 +7,21 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Request payload for validating a promo code against cart contents.
+ * <strong>Spring Boot Concept:</strong> Request payload for validating a promo code against cart contents.
+ *
+ * <p>This DTO demonstrates <b>cascading validation with collections</b>:
+ * the {@code cartItems} list uses {@code List<@Valid CartItemPreview>}
+ * so that each cart item is validated independently. The {@code subtotal}
+ * is provided by the frontend as a cross-check against the server's own
+ * cart calculation.</p>
+ *
+ * <p><b>API contract:</b> POST /api/promo/validate — returns
+ * {@link PromoCodeValidateResponse}.</p>
  *
  * @param code      the promo code string to validate
  * @param subtotal  the current cart subtotal (pre-promo)
  * @param cartItems cart line items for coupon-type and quantity validation
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record PromoCodeValidateRequest(

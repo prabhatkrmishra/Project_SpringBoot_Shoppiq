@@ -121,8 +121,8 @@ class SellerInventoryServiceImplTest {
                     sellerInventoryService.getInventory(testUser, 0, 10);
 
             assertThat(result.content()).hasSize(1);
-            assertThat(result.content().get(0).itemName()).isEqualTo("Test Product");
-            assertThat(result.content().get(0).sku()).isEqualTo("SKU-001");
+            assertThat(result.content().getFirst().itemName()).isEqualTo("Test Product");
+            assertThat(result.content().getFirst().sku()).isEqualTo("SKU-001");
         }
 
         @Test
@@ -155,7 +155,7 @@ class SellerInventoryServiceImplTest {
                     sellerInventoryService.getLowStockProducts(testUser, 0, 10);
 
             assertThat(result.content()).hasSize(1);
-            assertThat(result.content().get(0).stockQuantity()).isEqualTo(3);
+            assertThat(result.content().getFirst().stockQuantity()).isEqualTo(3);
         }
 
         @Test
@@ -188,7 +188,7 @@ class SellerInventoryServiceImplTest {
                     sellerInventoryService.getOutOfStockProducts(testUser, 0, 10);
 
             assertThat(result.content()).hasSize(1);
-            assertThat(result.content().get(0).stockQuantity()).isEqualTo(0);
+            assertThat(result.content().getFirst().stockQuantity()).isEqualTo(0);
         }
 
         @Test
@@ -210,8 +210,8 @@ class SellerInventoryServiceImplTest {
     class AdjustStock {
 
         @Test
-        @DisplayName("sets stock quantity successfully")
-        void setsStockQuantitySuccessfully() {
+        @DisplayName("adjusts stock quantity successfully")
+        void adjustsStockQuantitySuccessfully() {
             stubActiveSeller();
             when(itemLookupService.findByIdAndSellerId(testItem.getId(), testSeller.getId()))
                     .thenReturn(Optional.of(testItem));
@@ -220,7 +220,7 @@ class SellerInventoryServiceImplTest {
             SellerInventoryResponse result =
                     sellerInventoryService.adjustStock(testItem.getId(), 10, "Restock", testUser);
 
-            assertThat(result.stockQuantity()).isEqualTo(10);
+            assertThat(result.stockQuantity()).isEqualTo(60);
             verify(itemDetailsWriteService).save(testItemDetails);
         }
 
@@ -237,14 +237,14 @@ class SellerInventoryServiceImplTest {
         }
 
         @Test
-        @DisplayName("throws ItemStockNegativeException for negative quantity")
+        @DisplayName("throws ItemStockNegativeException for negative resulting quantity")
         void throwsWhenNegativeQuantity() {
             stubActiveSeller();
             when(itemLookupService.findByIdAndSellerId(testItem.getId(), testSeller.getId()))
                     .thenReturn(Optional.of(testItem));
 
             assertThatThrownBy(() ->
-                    sellerInventoryService.adjustStock(testItem.getId(), -10, "Remove", testUser))
+                    sellerInventoryService.adjustStock(testItem.getId(), -60, "Remove", testUser))
                     .isInstanceOf(ItemStockNegativeException.class);
         }
     }

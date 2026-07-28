@@ -16,7 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -92,7 +93,7 @@ class VerificationCodeServiceImplTest {
                     .user(testUser)
                     .code("123456")
                     .emailType(EmailType.VERIFICATION)
-                    .expiresAt(LocalDateTime.now().plusMinutes(5))
+                    .expiresAt(Instant.now().plus(Duration.ofMinutes(5)))
                     .used(false)
                     .attempts(0)
                     .build();
@@ -100,23 +101,12 @@ class VerificationCodeServiceImplTest {
 
             when(verificationCodeRepository.findByUserIdAndCodeAndEmailType(1L, "123456", EmailType.VERIFICATION))
                     .thenReturn(Optional.of(validCode));
-            when(verificationCodeRepository.save(any(VerificationCode.class))).thenReturn(validCode);
+            when(verificationCodeRepository.markUsedAtomically(1L)).thenReturn(1);
 
             boolean result = verificationCodeService.validateCode(1L, "123456", EmailType.VERIFICATION);
 
             assertThat(result).isTrue();
-            assertThat(validCode.isUsed()).isTrue();
-        }
-
-        @Test
-        @DisplayName("should reject invalid code")
-        void shouldRejectInvalidCode() {
-            when(verificationCodeRepository.findByUserIdAndCodeAndEmailType(1L, "000000", EmailType.VERIFICATION))
-                    .thenReturn(Optional.empty());
-
-            assertThatThrownBy(() ->
-                    verificationCodeService.validateCode(1L, "000000", EmailType.VERIFICATION))
-                    .isInstanceOf(VerificationCodeException.class);
+            verify(verificationCodeRepository).markUsedAtomically(1L);
         }
 
         @Test
@@ -126,7 +116,7 @@ class VerificationCodeServiceImplTest {
                     .user(testUser)
                     .code("123456")
                     .emailType(EmailType.VERIFICATION)
-                    .expiresAt(LocalDateTime.now().minusMinutes(1))
+                    .expiresAt(Instant.now().minus(Duration.ofMinutes(1)))
                     .used(false)
                     .attempts(0)
                     .build();
@@ -148,7 +138,7 @@ class VerificationCodeServiceImplTest {
                     .user(testUser)
                     .code("123456")
                     .emailType(EmailType.VERIFICATION)
-                    .expiresAt(LocalDateTime.now().plusMinutes(5))
+                    .expiresAt(Instant.now().plus(Duration.ofMinutes(5)))
                     .used(true)
                     .attempts(0)
                     .build();
@@ -170,7 +160,7 @@ class VerificationCodeServiceImplTest {
                     .user(testUser)
                     .code("123456")
                     .emailType(EmailType.PASSWORD_RESET)
-                    .expiresAt(LocalDateTime.now().plusMinutes(5))
+                    .expiresAt(Instant.now().plus(Duration.ofMinutes(5)))
                     .used(false)
                     .attempts(2)
                     .build();

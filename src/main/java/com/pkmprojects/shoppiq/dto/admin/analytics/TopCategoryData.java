@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.dto.admin.analytics;
 import java.math.BigDecimal;
 
 /**
- * Top category data point for analytics.
+ * <strong>Spring Boot Concept:</strong> Top category data point for analytics.
  *
  * @author PrabhatKrMishra
  * @since 1.0.0

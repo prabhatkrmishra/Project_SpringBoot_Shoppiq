@@ -9,10 +9,10 @@ import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.user.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
@@ -46,10 +46,16 @@ class AuthControllerTest {
     @Mock
     private OAuthRegistrationCookieService registrationCookieService;
 
-    @InjectMocks
     private AuthController authController;
 
     private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        authController = new AuthController(authService, userService, userRepository,
+                jwtAuthenticationUtils, jwtCookieFactory, registrationCookieService,
+                3600000L, 2592000000L, 10);
+    }
 
     private void setupMockMvc() {
         mockMvc = MockMvcBuilders.standaloneSetup(authController)

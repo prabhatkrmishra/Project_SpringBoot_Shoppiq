@@ -10,7 +10,14 @@ import java.time.Instant;
 /**
  * Full promo code detail response.
  *
- * @author PrabhatKrMishra
+ * <p>The response DTO counterpart of {@link PromoCodeRequest}. It adds
+ * server-managed fields — {@code id}, {@code usedCount}, {@code createdAt},
+ * {@code updatedAt} — that are not present in the request.</p>
+ *
+ * <p><b>Tracking field:</b> {@code usedCount} is incremented server-side each
+ * time the promo is applied to an order, enabling usage limit enforcement.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record PromoCodeResponse(

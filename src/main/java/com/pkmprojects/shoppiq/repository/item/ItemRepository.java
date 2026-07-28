@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.repository.item;
 
 import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
+import com.pkmprojects.shoppiq.repository.item.projection.ItemSalesRanking;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,14 +14,54 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Repository responsible for {@link Item} persistence.
+ * <strong>Spring Boot Concept:</strong> Spring Data JPA repository responsible for {@link Item} persistence.
  *
- * <p>
- * Provides CRUD operations together with catalog-specific lookup
- * methods required by the business layer.
- * </p>
+ * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
+ * <ul>
+ *   <li><strong>Derived queries across associations</strong> — {@code findBySellerId},
+ *       {@code countBySellerId}, {@code findByIdAndSellerId} navigate the {@code seller}
+ *       relationship, generating {@code WHERE seller_id = ?}.</li>
+ *   <li><strong>Nested property traversal</strong> — {@code existsByItemDetailsSku} resolves
+ *       {@code Item → itemDetails → sku}, generating
+ *       {@code SELECT ... FROM items i JOIN item_details id ON i.item_details_id = id.id WHERE id.sku = ?}.</li>
+ *   <li><strong>Negated ID check</strong> — {@code existsByItemDetailsSkuAndIdNot} shows
+ *       {@code IdNot} mapping to {@code id <> ?}.</li>
+ *   <li><strong>JPQL with JOIN FETCH</strong> — {@code findAllWithItemDetails} eagerly loads
+ *       {@code itemDetails} and {@code category} to avoid N+1. The {@code DISTINCT} keyword
+ *       prevents duplicate rows from the join.</li>
+ *   <li><strong>Enum filtering</strong> — {@code findByPublishingStatus} works with
+ *       {@link com.pkmprojects.shoppiq.enums.ProductPublishingStatus} directly.</li>
+ *   <li><strong>IN-clause queries</strong> — {@code findExistingSkus} uses
+ *       {@code WHERE id.sku IN :skus} to batch-check which SKUs already exist.</li>
+ *   <li><strong>Case-insensitive search</strong> — {@code findByNameContainingIgnoreCase}
+ *       generates {@code WHERE LOWER(name) LIKE LOWER(CONCAT('%', ?, '%'))}.</li>
+ *   <li><strong>Complex JPQL with multiple JOIN FETCHes</strong> — {@code findNewArrivals},
+ *       {@code findOnSaleItems}, and {@code findByCategorySlug} combine eager fetching
+ *       with filtering and sorting.</li>
+ *   <li><strong>Native query with projection</strong> — {@code findTopSellingItemIds}
+ *       executes raw SQL with aggregation ({@code SUM}), grouping, and returns
+ *       {@link com.pkmprojects.shoppiq.repository.item.projection.ItemSalesRanking} projections.</li>
+ * </ul>
  *
- * @author PrabhatKrMishra
+ * <p><strong>Method naming → SQL translation examples:</strong></p>
+ * <pre>
+ *   findBySellerId(Long)
+ *       → SELECT * FROM items WHERE seller_id = ?
+ *   countBySellerId(Long)
+ *       → SELECT COUNT(*) FROM items WHERE seller_id = ?
+ *   findByIdAndSellerId(Long, Long)
+ *       → SELECT * FROM items WHERE id = ? AND seller_id = ?
+ *   existsByItemDetailsSku(String)
+ *       → SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+ *         FROM items i JOIN item_details id ON i.item_details_id = id.id WHERE id.sku = ?
+ *   findBySlug(String)
+ *       → SELECT * FROM items WHERE slug = ?
+ *   findByNameContainingIgnoreCase(String, Pageable)
+ *       → SELECT * FROM items WHERE LOWER(name) LIKE LOWER(CONCAT('%', ?, '%'))
+ *         ORDER BY ? LIMIT ? OFFSET ?
+ * </pre>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface ItemRepository
@@ -174,7 +215,7 @@ public interface ItemRepository
      *
      * @param since  cutoff timestamp (inclusive)
      * @param limit  max number of results
-     * @return list of {@code Object[]{itemId, totalQuantity}} tuples
+     * @return typed projections with itemId
      */
     @Query(value = "SELECT i.id AS item_id, SUM(oi.quantity) AS total_qty " +
            "FROM items i " +
@@ -185,7 +226,7 @@ public interface ItemRepository
            "ORDER BY total_qty DESC " +
            "LIMIT :limit",
            nativeQuery = true)
-    List<Object[]> findTopSellingItemIds(
+    List<ItemSalesRanking> findTopSellingItemIds(
             @Param("since") java.time.Instant since,
             @Param("limit") int limit
     );

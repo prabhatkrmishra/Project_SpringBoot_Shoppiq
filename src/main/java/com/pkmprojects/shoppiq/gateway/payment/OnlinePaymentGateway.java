@@ -4,19 +4,32 @@ import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
 /**
- * Placeholder {@link PaymentGatewayStrategy} for online payments.
+ * <strong>Spring Boot Concept:</strong> Profile-based placeholder (stub)
+ * implementation of {@link PaymentGatewayStrategy} for local development.
  *
  * <p>
  * This implementation simulates online payment processing without calling
- * a real gateway. It is intended to be replaced with a concrete gateway
- * (Razorpay, Stripe, or PayPal) in a future phase by implementing
+ * a real gateway. It is ONLY available in the {@code dev} profile and MUST
+ * NOT be enabled in production. Intended to be replaced with a concrete
+ * gateway (Razorpay, Stripe, or PayPal) in a future phase by implementing
  * {@link PaymentGatewayStrategy} and registering it via the
  * {@link PaymentGatewayRegistry}.
+ * </p>
+ *
+ * <p><strong>Educational value:</strong> This class demonstrates Spring's
+ * <strong>{@code @Profile}</strong> mechanism: the bean is only created when
+ * the {@code dev} profile is active. This allows the application to run
+ * without real payment gateway credentials during development while the
+ * exact same code path (Strategy → Registry → service call) is exercised.
+ * When a real gateway bean exists (e.g. {@link RazorpayGateway} with its
+ * own {@code supports()} return value), it automatically replaces this
+ * placeholder in the registry — no configuration changes needed.
  * </p>
  *
  * <h2>Simulated Behaviour</h2>
@@ -27,11 +40,12 @@ import java.time.Instant;
  *       and marks the payment as {@code PAID}.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component
-public class OnlinePaymentGateway implements PaymentGatewayStrategy {
+@Profile("dev")
+public final class OnlinePaymentGateway implements PaymentGatewayStrategy {
 
     private static final String PLACEHOLDER_PAYMENT_URL =
             "https://pay.shoppiq.dev/simulate?ref=%s";
@@ -96,6 +110,10 @@ public class OnlinePaymentGateway implements PaymentGatewayStrategy {
      */
     @Override
     public void verify(Payment payment, String transactionId) {
+        if (transactionId == null || transactionId.isBlank()) {
+            throw new com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayException(
+                    "Online payment verification requires a transaction ID.");
+        }
         payment.setTransactionId(transactionId);
         payment.setPaymentStatus(PaymentStatus.PAID);
         payment.setPaidAt(Instant.now());

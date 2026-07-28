@@ -5,7 +5,7 @@ import dev.langchain4j.service.UserMessage;
 import reactor.core.publisher.Flux;
 
 /**
- * LangChain4j service interface for streaming (token-by-token) chat.
+ * <strong>Spring Boot Concept:</strong> LangChain4j service interface for streaming (token-by-token) chat.
  *
  * <p>
  * Identical to {@link ShoppiqAssistant} but returns a {@link Flux} of response

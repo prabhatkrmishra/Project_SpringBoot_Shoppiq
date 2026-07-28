@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.entity.enums;
 
 /**
- * Defines the visual style variant for a homepage banner.
+ * <strong>Spring Boot Concept:</strong> Defines the visual style variant for a homepage banner.
  *
  * <p>Each type maps to a CSS gradient class on the frontend:</p>
  * <ul>
@@ -13,7 +13,21 @@ package com.pkmprojects.shoppiq.entity.enums;
  *     <li>{@link #PREMIUM} &rarr; {@code offer-banner-premium} (gold/dark gradient)</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>Frontend-backend contract</strong> — Each enum value maps
+ *         to a specific CSS class in the frontend, creating a strongly-typed
+ *         contract between the backend API and the UI.</li>
+ *     <li><strong>Stored as STRING</strong> — Used with
+ *         {@code @Enumerated(EnumType.STRING)} in the {@link Banner} entity
+ *         for readable database values.</li>
+ *     <li><strong>Package placement</strong> — Located in
+ *         {@code entity.enums} rather than {@code enums} because this enum
+ *         is specific to the Banner entity module, demonstrating how enum
+ *         packages can mirror domain modules.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public enum BannerType {

@@ -14,13 +14,22 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Full order detail response.
+ * <strong>Spring Boot Concept:</strong> Full order detail response.
  *
  * <p>
  * Contains order info, address, payment details, totals and all order items.
  * </p>
  *
- * @author PrabhatKrMishra
+ * <p><b>Address snapshot pattern:</b> The private {@code toAddressResponse()}
+ * method first tries the frozen {@code OrderAddressSnapshot} (captured at
+ * checkout), falling back to the user's live {@code Address} entity for
+ * legacy orders. This ensures historical order accuracy.</p>
+ *
+ * <p><b>Composition:</b> This DTO composes {@link AddressResponse} and
+ * {@link OrderItemResponse}, demonstrating how complex responses are built
+ * from smaller, reusable DTOs.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record OrderResponse(

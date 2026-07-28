@@ -1,8 +1,9 @@
 package com.pkmprojects.shoppiq.gateway.payment;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.pkmprojects.shoppiq.config.GatewayConfig;
 import com.pkmprojects.shoppiq.config.PaymentGatewayProperties;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
@@ -33,13 +34,13 @@ import static org.assertj.core.api.Assertions.*;
 class PaymentGatewayIntegrationTest {
 
     private WireMockServer wireMock;
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @BeforeAll
     void startWireMock() {
         wireMock = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         wireMock.start();
-        objectMapper = new ObjectMapper();
+        objectMapper = JsonMapper.builder().build();
     }
 
     @AfterAll
@@ -166,11 +167,72 @@ class PaymentGatewayIntegrationTest {
     }
 
     // ────────────────────────────────────────────────────────────
+    // Transaction ID Validation (Path Traversal Prevention)
+    // ────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Razorpay: path traversal in transactionId throws PaymentGatewayException")
+    void razorpay_pathTraversalRejected() {
+        RazorpayGateway gateway = razorpayGateway();
+        Payment payment = samplePayment(PaymentMethod.ONLINE);
+
+        assertThatThrownBy(() -> gateway.verify(payment, "../../etc/passwd"))
+                .isInstanceOf(PaymentGatewayException.class)
+                .hasMessageContaining("invalid characters");
+    }
+
+    @Test
+    @DisplayName("Stripe: path traversal in transactionId throws PaymentGatewayException")
+    void stripe_pathTraversalRejected() {
+        StripeGateway gateway = stripeGateway();
+        Payment payment = samplePayment(PaymentMethod.STRIPE);
+
+        assertThatThrownBy(() -> gateway.verify(payment, "pi_1/../../admin"))
+                .isInstanceOf(PaymentGatewayException.class)
+                .hasMessageContaining("invalid characters");
+    }
+
+    @Test
+    @DisplayName("PayPal: path traversal in transactionId throws PaymentGatewayException")
+    void paypal_pathTraversalRejected() {
+        PaypalGateway gateway = paypalGateway();
+        Payment payment = samplePayment(PaymentMethod.PAYPAL);
+
+        assertThatThrownBy(() -> gateway.verify(payment, "ORDER_1/../../../etc"))
+                .isInstanceOf(PaymentGatewayException.class)
+                .hasMessageContaining("invalid characters");
+    }
+
+    @Test
+    @DisplayName("UPI: path traversal in transactionId throws PaymentGatewayException")
+    void upi_pathTraversalRejected() {
+        UpiGateway gateway = upiGateway();
+        Payment payment = samplePayment(PaymentMethod.UPI);
+
+        assertThatThrownBy(() -> gateway.verify(payment, "UPI_1/..%2f..%2fetc"))
+                .isInstanceOf(PaymentGatewayException.class)
+                .hasMessageContaining("invalid characters");
+    }
+
+    @Test
+    @DisplayName("All gateways: blank transactionId throws PaymentGatewayException")
+    void blankTransactionIdRejected() {
+        assertThatThrownBy(() -> razorpayGateway().verify(samplePayment(PaymentMethod.ONLINE), ""))
+                .isInstanceOf(PaymentGatewayException.class)
+                .hasMessageContaining("blank");
+
+        assertThatThrownBy(() -> razorpayGateway().verify(samplePayment(PaymentMethod.ONLINE), null))
+                .isInstanceOf(PaymentGatewayException.class)
+                .hasMessageContaining("blank");
+    }
+
+    // ────────────────────────────────────────────────────────────
     // Helpers
     // ────────────────────────────────────────────────────────────
 
     private RazorpayGateway razorpayGateway() {
-        PaymentGatewayProperties props = new PaymentGatewayProperties();
+        PaymentGatewayProperties props = new PaymentGatewayProperties(
+                new GatewayConfig(), new GatewayConfig(), new GatewayConfig(), new GatewayConfig());
         props.getRazorpay().setBaseUrl(wireMock.baseUrl());
         props.getRazorpay().setApiKey("rzp_key");
         props.getRazorpay().setApiSecret("rzp_secret");
@@ -178,14 +240,16 @@ class PaymentGatewayIntegrationTest {
     }
 
     private StripeGateway stripeGateway() {
-        PaymentGatewayProperties props = new PaymentGatewayProperties();
+        PaymentGatewayProperties props = new PaymentGatewayProperties(
+                new GatewayConfig(), new GatewayConfig(), new GatewayConfig(), new GatewayConfig());
         props.getStripe().setBaseUrl(wireMock.baseUrl());
         props.getStripe().setApiKey("sk_test");
         return new StripeGateway(http11Client(), objectMapper, props);
     }
 
     private PaypalGateway paypalGateway() {
-        PaymentGatewayProperties props = new PaymentGatewayProperties();
+        PaymentGatewayProperties props = new PaymentGatewayProperties(
+                new GatewayConfig(), new GatewayConfig(), new GatewayConfig(), new GatewayConfig());
         props.getPaypal().setBaseUrl(wireMock.baseUrl());
         props.getPaypal().setApiKey("client");
         props.getPaypal().setApiSecret("secret");
@@ -193,7 +257,8 @@ class PaymentGatewayIntegrationTest {
     }
 
     private UpiGateway upiGateway() {
-        PaymentGatewayProperties props = new PaymentGatewayProperties();
+        PaymentGatewayProperties props = new PaymentGatewayProperties(
+                new GatewayConfig(), new GatewayConfig(), new GatewayConfig(), new GatewayConfig());
         props.getUpi().setBaseUrl(wireMock.baseUrl());
         props.getUpi().setApiKey("upi_key");
         props.getUpi().setMerchantVpa("shoppiq@bank");

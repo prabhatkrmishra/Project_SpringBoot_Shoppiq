@@ -5,20 +5,17 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * Base exception indicating that a resource already exists.
+ * <strong>Spring Boot Concept:</strong> Mid-level category exception in
+ * the exception hierarchy — groups all "resource already exists" cases under
+ * HTTP {@code 409 Conflict}.
  *
- * <p>
- * Domain-specific duplicate exceptions should extend this class.
- * </p>
+ * <p>Domain-specific duplicate exceptions (user, category, SKU, etc.)
+ * should extend this class rather than extending
+ * {@link com.pkmprojects.shoppiq.exception.base.ShoppiqException}
+ * directly. The abstract parent pre-configures HTTP 409 so that all
+ * subclasses automatically get the correct status without repeating it.</p>
  *
- * <h2>Examples</h2>
- * <ul>
- *     <li>User already exists.</li>
- *     <li>Category already exists.</li>
- *     <li>SKU already exists.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public abstract class DuplicateResourceException extends ShoppiqException {

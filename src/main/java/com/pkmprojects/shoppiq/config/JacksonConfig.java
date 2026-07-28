@@ -1,94 +1,61 @@
 package com.pkmprojects.shoppiq.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.http.ProblemDetail;
-import org.springframework.http.converter.json.ProblemDetailJacksonMixin;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.cfg.DateTimeFeature;
+
+import java.text.SimpleDateFormat;
 
 /**
- * Jackson configuration for the Shoppiq application.
+ * <strong>Spring Boot Concept:</strong> {@code @Configuration} class that
+ * configures global Jackson 3 serialization settings.
  *
- * <p>
- * This configuration provides the application's primary
- * {@link ObjectMapper} instance used for JSON serialization and
- * deserialization throughout the application.
- * </p>
+ * <p>Provides a {@link JsonMapperBuilderCustomizer} bean to extend and
+ * fine-tune Spring Boot 4's autoconfigured Jackson 3 environment for
+ * framework-level serialization (HTTP message converters, reactive codecs,
+ * RFC 9457 {@code ProblemDetail} formatting).</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Provide a singleton {@link ObjectMapper} bean.</li>
- *     <li>Serve as the central location for future Jackson customization.</li>
- *     <li>Ensure consistent JSON serialization across the application.</li>
- * </ul>
- *
- * <h2>Current Configuration</h2>
- * <ul>
- *     <li>Registers the application's primary {@link ObjectMapper}.</li>
- *     <li>Registers {@link ProblemDetailJacksonMixin} so RFC 9457 extension
- *     properties (e.g. {@code errorCode}, {@code timestamp}) flatten to the
- *     top level of the JSON response instead of nesting under a
- *     {@code properties} object.</li>
- * </ul>
- *
- * <h2>Why this mixin must be registered explicitly</h2>
- * <p>
- * {@code Jackson2ObjectMapperBuilder} (used by Spring Boot's own
- * autoconfigured {@code ObjectMapper}) registers {@link ProblemDetailJacksonMixin}
- * automatically. This bean builds its {@link ObjectMapper} manually
- * (<code>new ObjectMapper()</code>) to keep full control over serialization,
- * which bypasses that auto-registration entirely. Without this mixin,
- * {@code GlobalExceptionHandler}/{@code ProblemDetailResponseWriter} responses
- * would still set {@code errorCode} via {@code ProblemDetail.setProperty(...)},
- * but it would serialize nested under a {@code "properties"} object rather
- * than at the top level — breaking the RFC 9457 contract this application
- * is built around.
- * </p>
- *
- * <h2>Future Scope</h2>
- * <ul>
- *     <li>Register custom Jackson modules.</li>
- *     <li>Configure serialization and deserialization features.</li>
- *     <li>Add custom serializers and deserializers.</li>
- *     <li>Configure property naming strategies.</li>
- *     <li>Configure JSON inclusion policies.</li>
- *     <li>Support application-wide JSON customization.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>This class intentionally centralizes Jackson configuration.</li>
- *     <li>All future JSON-related configuration should be added here.</li>
- *     <li>Only one {@link ObjectMapper} bean should exist within the application context.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Configuration
 public class JacksonConfig {
 
     /**
-     * Creates the application's primary {@link ObjectMapper}.
-     *
+     * The standard ISO date-time format pattern with millisecond precision and timezone offset.
      * <p>
-     * The returned mapper is managed as a singleton Spring bean and is
-     * injected wherever an {@link ObjectMapper} dependency is required,
-     * including REST controllers, Spring Security components, and
-     * application services.
+     * Example output format: {@code "2026-07-28T11:42:00.000+05:30"}
      * </p>
+     */
+    private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
+    /**
+     * Creates a customizer bean for global Jackson 3 mapper configuration.
      *
-     * @return the application's primary {@link ObjectMapper}
+     * <p>Configures lowerCamelCase property naming, ISO date-time format
+     * ({@code yyyy-MM-dd'T'HH:mm:ss.SSSXXX}), and disables writing dates
+     * as timestamps.</p>
+     *
+     * @return a configured {@link JsonMapperBuilderCustomizer} instance
      */
     @Bean
-    @Primary
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper()
-                .registerModule(new JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .addMixIn(ProblemDetail.class, ProblemDetailJacksonMixin.class);
+    public JsonMapperBuilderCustomizer jacksonCustomizer() {
+        return builder -> builder
+                /*
+                 * Force globally uniform lowerCamelCase mapping using Jackson 3 naming strategies
+                 */
+                .propertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE)
+
+                /*
+                 * Ensure modern date features are natively active (e.g. text instead of raw arrays)
+                 */
+                .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+
+                /*
+                 * Register the explicit ISO pattern fallback engine using a clone-safe formatter instance
+                 */
+                .defaultDateFormat(new SimpleDateFormat(DATETIME_FORMAT));
     }
 }

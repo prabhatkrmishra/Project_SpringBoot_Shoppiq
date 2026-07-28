@@ -10,9 +10,27 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * Repository for {@link ContactMessage} persistence operations.
+ * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link ContactMessage} persistence operations.
  *
- * @author PrabhatKrMishra
+ * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
+ * <ul>
+ *   <li><strong>Derived count queries</strong> — {@code countByStatus} generates
+ *       {@code SELECT COUNT(*) FROM contact_messages WHERE status = ?}.</li>
+ *   <li><strong>Pagination with ordering</strong> — {@code findAllByOrderByCreatedAtDesc}
+ *       accepts an optional {@link org.springframework.data.domain.Pageable} parameter;
+ *       when a {@code Pageable} is supplied, Spring Data automatically wraps the query
+ *       with a count query and applies {@code LIMIT} / {@code OFFSET}.</li>
+ * </ul>
+ *
+ * <p><strong>Method naming → SQL translation examples:</strong></p>
+ * <pre>
+ *   findAllByOrderByCreatedAtDesc
+ *       → SELECT * FROM contact_messages ORDER BY created_at DESC
+ *   countByStatus(ContactMessageStatus)
+ *       → SELECT COUNT(*) FROM contact_messages WHERE status = ?
+ * </pre>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Repository

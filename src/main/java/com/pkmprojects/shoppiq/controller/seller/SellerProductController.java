@@ -24,25 +24,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller for seller product management.
+ * <strong>Spring Boot Concept:</strong> REST controller for seller product management.
  *
- * <h2>Responsibilities</h2>
+ * <p>Exposes CRUD endpoints for the authenticated seller's own products.
+ * All endpoints require SELLER or ADMIN role. Ownership enforcement is
+ * delegated to {@link SellerProductService}.</p>
+ *
+ * <p>Key design points:
  * <ul>
- *     <li>Create a new product (DRAFT).</li>
- *     <li>List the authenticated seller's products.</li>
- *     <li>Retrieve a specific product by ID.</li>
- *     <li>Update the authenticated seller's product.</li>
- *     <li>Delete the authenticated seller's product.</li>
+ *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
+ *   <li><strong>Seller-scoped</strong> — each endpoint resolves the seller from the authenticated principal.</li>
  * </ul>
+ * </p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>All endpoints require SELLER or ADMIN role.</li>
- *     <li>The authenticated user is injected via {@link AuthenticationPrincipal}.</li>
- *     <li>Ownership is enforced at the service layer.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see SellerProductService
  * @since 1.0.0
  */
 @Validated
@@ -58,6 +54,13 @@ public class SellerProductController {
         this.pagination = pagination;
     }
 
+    /**
+     * Creates a new product in DRAFT status for the authenticated seller.
+     *
+     * @param request     the product creation payload
+     * @param currentUser the authenticated seller
+     * @return 201 Created with the created product
+     */
     @PostMapping("/create")
     public ResponseEntity<ItemResponse> createProduct(
             @Valid @RequestBody ItemRequest request,
@@ -66,6 +69,14 @@ public class SellerProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    /**
+     * Returns a paginated list of the authenticated seller's products.
+     *
+     * @param currentUser the authenticated seller
+     * @param page        zero-based page index
+     * @param size        page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of products
+     */
     @GetMapping
     public ResponseEntity<PageResponse<ItemResponse>> getMyProducts(
             @AuthenticationPrincipal(expression = "user") User currentUser,
@@ -76,6 +87,13 @@ public class SellerProductController {
         return ResponseEntity.ok(products);
     }
 
+    /**
+     * Returns a single product by ID, ensuring it belongs to the authenticated seller.
+     *
+     * @param id          the product ID (must be positive)
+     * @param currentUser the authenticated seller
+     * @return 200 OK with the product
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ItemResponse> getMyProductById(
             @PathVariable @Positive(message = "Product id must be a positive number") Long id,
@@ -84,6 +102,14 @@ public class SellerProductController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Updates an existing product owned by the authenticated seller.
+     *
+     * @param id          the product ID (must be positive)
+     * @param request     the updated product payload
+     * @param currentUser the authenticated seller
+     * @return 200 OK with the updated product
+     */
     @PutMapping("/update/{id}")
     public ResponseEntity<ItemResponse> updateProduct(
             @PathVariable @Positive(message = "Product id must be a positive number") Long id,
@@ -93,6 +119,13 @@ public class SellerProductController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Deletes a product owned by the authenticated seller.
+     *
+     * @param id          the product ID (must be positive)
+     * @param currentUser the authenticated seller
+     * @return 200 OK
+     */
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable @Positive(message = "Product id must be a positive number") Long id,

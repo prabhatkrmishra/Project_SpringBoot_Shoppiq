@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.dto.admin.response;
 
+import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.entity.address.Address;
 import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.order.OrderAddressSnapshot;
@@ -28,11 +29,16 @@ import java.util.List;
  * <h2>Design Notes</h2>
  * <ul>
  *     <li>Immutable through Java Records.</li>
- *     <li>Includes nested records for address and line items.</li>
+ *     <li>Uses the shared {@link com.pkmprojects.shoppiq.dto.address.AddressResponse}
+ *     and a nested {@link OrderItemResponse} for structured responses — a clean pattern
+ *     that avoids creating separate top-level DTO files for tightly coupled data.</li>
  *     <li>Created using {@link #fromEntity(Order)}.</li>
+ *     <li>Uses the <b>address snapshot pattern</b>: the shipping address is
+ *     frozen at order time in {@code OrderAddressSnapshot}, preserving it even
+ *     if the user's address changes later.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AdminOrderResponse(
@@ -114,58 +120,6 @@ public record AdminOrderResponse(
 ) {
 
     /**
-     * Shipping address data.
-     */
-    public record AddressResponse(
-
-            /**
-             * Address label.
-             */
-            String label,
-
-            /**
-             * Recipient full name.
-             */
-            String fullName,
-
-            /**
-             * Contact phone.
-             */
-            String phone,
-
-            /**
-             * Address line 1.
-             */
-            String line1,
-
-            /**
-             * Address line 2.
-             */
-            String line2,
-
-            /**
-             * City.
-             */
-            String city,
-
-            /**
-             * State/Province.
-             */
-            String state,
-
-            /**
-             * Postal code.
-             */
-            String postalCode,
-
-            /**
-             * Country.
-             */
-            String country
-    ) {
-    }
-
-    /**
      * Order line item data.
      */
     public record OrderItemResponse(
@@ -244,21 +198,23 @@ public record AdminOrderResponse(
                                                      Address liveAddress) {
         if (snapshot != null) {
             return new AddressResponse(
-                    null,
-                    snapshot.getFullName(), snapshot.getPhone(),
-                    snapshot.getLine1(), snapshot.getLine2(),
-                    snapshot.getCity(), snapshot.getState(),
-                    snapshot.getPostalCode(), snapshot.getCountry()
+                    null,                               // id — not present in snapshot
+                    null,                               // label — not relevant in order context
+                    snapshot.getFullName(),
+                    snapshot.getPhone(),
+                    snapshot.getLine1(),
+                    snapshot.getLine2(),
+                    snapshot.getCity(),
+                    snapshot.getState(),
+                    snapshot.getPostalCode(),
+                    snapshot.getCountry(),
+                    false,                              // isDefault — not snapshot data
+                    null,                               // createdAt — not snapshot data
+                    null                                // updatedAt — not snapshot data
             );
         }
         if (liveAddress != null) {
-            return new AddressResponse(
-                    liveAddress.getLabel(),
-                    liveAddress.getFullName(), liveAddress.getPhone(),
-                    liveAddress.getLine1(), liveAddress.getLine2(),
-                    liveAddress.getCity(), liveAddress.getState(),
-                    liveAddress.getPostalCode(), liveAddress.getCountry()
-            );
+            return AddressResponse.from(liveAddress);
         }
         return null;
     }

@@ -29,9 +29,11 @@ import java.util.List;
  *     <li>{@code @Valid} triggers cascading validation on each
  *     {@link AdminReviewItem} in the list.</li>
  *     <li>Used exclusively for admin test-data bulk creation.</li>
+ *     <li>Review data created through this DTO is automatically set to
+ *     {@code PENDING} moderation status at the service layer.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkReviewRequest(

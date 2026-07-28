@@ -5,36 +5,21 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Base exception for all application-specific exceptions in Shoppiq.
+ * <strong>Spring Boot Concept:</strong> The root abstract class for all
+ * application-specific exceptions in Shoppiq.
  *
- * <p>
- * This class provides a common structure for every business exception by
- * encapsulating the information required to generate a standardized RFC 9457
- * {@code ProblemDetail} response.
- * </p>
+ * <p>Root of the layered exception hierarchy. Every application exception
+ * extends this class and carries its own {@link ErrorCode}, HTTP status, and
+ * detail message, enabling the
+ * {@link com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler}
+ * to build a consistent RFC 9457 {@code ProblemDetail} response without
+ * inspecting exception types.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Stores the machine-readable {@link ErrorCode}.</li>
- *     <li>Stores the associated HTTP status.</li>
- *     <li>Stores the response detail message.</li>
- * </ul>
+ * <p>Three layers are used: a shared base layer ({@code ShoppiqException}),
+ * a category layer (abstract subclasses grouped by HTTP semantics), and a
+ * concrete layer (final subclasses for specific error conditions).</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>All custom exceptions should extend this class.</li>
- *     <li>Exception handlers should never contain business logic.</li>
- *     <li>This class represents business failure information only.</li>
- * </ul>
- *
- * <h2>Future Scope</h2>
- * <ul>
- *     <li>Support documentation URLs.</li>
- *     <li>Support localization.</li>
- *     <li>Support correlation identifiers.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Getter

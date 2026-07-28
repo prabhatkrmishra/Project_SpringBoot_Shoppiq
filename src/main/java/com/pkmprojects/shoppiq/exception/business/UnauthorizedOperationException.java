@@ -5,10 +5,17 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * Base exception indicating that the current user
- * is not allowed to perform the requested operation.
+ * <strong>Spring Boot Concept:</strong> Mid-level category exception that
+ * groups all "forbidden" cases under HTTP {@code 403 Forbidden}.
  *
- * @author PrabhatKrMishra
+ * <p>Base exception indicating that the current user is authenticated but
+ * lacks the required permissions — distinct from
+ * {@link com.pkmprojects.shoppiq.exception.auth.AuthenticationException}
+ * (401, not authenticated). These two statuses live in separate branches
+ * of the exception hierarchy, reflecting their different HTTP semantics
+ * and ensuring exception handlers map them to the correct HTTP response.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public abstract class UnauthorizedOperationException extends ShoppiqException {

@@ -4,20 +4,16 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Defines all machine-readable error codes used throughout the Shoppiq application.
+ * <strong>Spring Boot Concept:</strong> Enum-based error code registry that
+ * provides stable, machine-readable identifiers for every application error.
  *
- * <p>
- * Every business exception exposed through the REST API should be associated
- * with one of these error codes.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Provides stable error identifiers.</li>
- *     <li>Provides default error messages.</li>
- *     <li>Decouples API clients create Java exception class names.</li>
- *     <li>Acts as the central registry for application errors.</li>
- * </ul>
+ * <p>Every business exception exposed through the REST API is associated
+ * with one of these error codes. This enum acts as the single source of truth
+ * for error identification — providing compile-time safety, a central
+ * registry, and metadata (default message, module prefix) attached to each
+ * code. The {@code code} string serves as the public API contract for
+ * programmatic handling while {@code defaultMessage} provides a user-facing
+ * fallback.</p>
  *
  * <h2>Error Code Format</h2>
  *
@@ -31,22 +27,7 @@ import lombok.RequiredArgsConstructor;
  * AUTH-401-001
  * </pre>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Codes should never change once published.</li>
- *     <li>Enum constant names may evolve during refactoring.</li>
- *     <li>The {@code code} property is the public API contract.</li>
- * </ul>
- *
- * <h2>Future Scope</h2>
- * <ul>
- *     <li>Localization support.</li>
- *     <li>Error documentation URLs.</li>
- *     <li>Client-side analytics.</li>
- *     <li>Support reference identifiers.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Getter
@@ -77,6 +58,11 @@ public enum ErrorCode {
      */
     ACCESS_DENIED("AUTH-403-001", "Access denied."),
 
+    /**
+     * Database constraint violation (unique key, NOT NULL, foreign key).
+     */
+    DATA_INTEGRITY_VIOLATION("SYSTEM-409-001", "The request conflicts with existing data."),
+
     // =========================================================
     // Authentication Errors
     // =========================================================
@@ -87,9 +73,9 @@ public enum ErrorCode {
     UNAUTHORIZED("AUTH-401-001", "Authentication required."),
 
     /**
-     * Authentication required.
+     * Invalid credentials supplied.
      */
-    INVALID_CREDENTIALS("AUTH-401-002", "Authentication required."),
+    INVALID_CREDENTIALS("AUTH-401-002", "Invalid credentials supplied."),
 
     /**
      * Invalid JWT token.
@@ -194,7 +180,7 @@ public enum ErrorCode {
     /**
      * Requested review already exists.
      */
-    ITEM_REVIEW_ALREADY_EXISTS("ITEM_REVIEW-409-001", "Requested item review already exist."),
+    ITEM_REVIEW_ALREADY_EXISTS("ITEM_REVIEW-409-001", "Requested item review already exists."),
 
     /**
      * For attempt to modify or delete a review with no authorization.
@@ -375,6 +361,11 @@ public enum ErrorCode {
      * Requested promo code could not be found.
      */
     PROMO_CODE_NOT_FOUND("PROMO-404-001", "Requested promo code was not found."),
+
+    /**
+     * Promo code already exists.
+     */
+    PROMO_CODE_ALREADY_EXISTS("PROMO-409-001", "A promo code with this code already exists."),
 
     /**
      * Promo code has expired.

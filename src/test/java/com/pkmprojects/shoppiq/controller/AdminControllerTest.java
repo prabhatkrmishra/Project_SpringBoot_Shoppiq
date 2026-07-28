@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
@@ -32,6 +32,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -68,7 +69,7 @@ class AdminControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @MockitoBean
     private AdminDashboardService dashboardService;
@@ -294,7 +295,9 @@ class AdminControllerTest {
             when(adminUser.getId()).thenReturn(1L);
             when(adminUser.getUsername()).thenReturn("admin");
             SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(new SecurityUser(adminUser), null, List.of()));
+                    new UsernamePasswordAuthenticationToken(
+                            new SecurityUser(adminUser), null,
+                            AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
 
             AdminUserResponse response = mock(AdminUserResponse.class);
             when(userService.blockCustomer(eq(2L))).thenReturn(response);
@@ -311,7 +314,9 @@ class AdminControllerTest {
             when(adminUser.getId()).thenReturn(1L);
             when(adminUser.getUsername()).thenReturn("admin");
             SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(new SecurityUser(adminUser), null, List.of()));
+                    new UsernamePasswordAuthenticationToken(
+                            new SecurityUser(adminUser), null,
+                            AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
 
             AdminUserResponse response = mock(AdminUserResponse.class);
             when(userService.unblockCustomer(eq(2L))).thenReturn(response);
@@ -397,6 +402,139 @@ class AdminControllerTest {
         void deleteReview_returnsNoContent() throws Exception {
             mockMvc.perform(delete("/api/admin/reviews/1").with(csrf()))
                     .andExpect(status().isNoContent());
+        }
+    }
+
+    @Nested
+    @DisplayName("Report Endpoints")
+    class ReportTests {
+
+        @Test
+        @DisplayName("GET /admin/reports/sales - returns sales report")
+        @WithMockUser(roles = "ADMIN")
+        void getSalesReport_returnsReport() throws Exception {
+            AdminReportService.SalesReport report = mock(AdminReportService.SalesReport.class);
+            when(reportService.generateSalesReport(any(), any())).thenReturn(report);
+
+            mockMvc.perform(get("/api/admin/reports/sales")
+                            .param("startDate", "2024-01-01")
+                            .param("endDate", "2024-01-31"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("GET /admin/reports/revenue - returns revenue report")
+        @WithMockUser(roles = "ADMIN")
+        void getRevenueReport_returnsReport() throws Exception {
+            AdminReportService.RevenueReport report = mock(AdminReportService.RevenueReport.class);
+            when(reportService.generateRevenueReport(any(), any())).thenReturn(report);
+
+            mockMvc.perform(get("/api/admin/reports/revenue")
+                            .param("startDate", "2024-01-01")
+                            .param("endDate", "2024-01-31"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("GET /admin/reports/product - returns product report")
+        @WithMockUser(roles = "ADMIN")
+        void getProductReport_returnsReport() throws Exception {
+            AdminReportService.ProductReport report = mock(AdminReportService.ProductReport.class);
+            when(reportService.generateProductReport(any(), any())).thenReturn(report);
+
+            mockMvc.perform(get("/api/admin/reports/product")
+                            .param("startDate", "2024-01-01")
+                            .param("endDate", "2024-01-31"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("GET /admin/reports/customer - returns customer report")
+        @WithMockUser(roles = "ADMIN")
+        void getCustomerReport_returnsReport() throws Exception {
+            AdminReportService.CustomerReport report = mock(AdminReportService.CustomerReport.class);
+            when(reportService.generateCustomerReport(any(), any())).thenReturn(report);
+
+            mockMvc.perform(get("/api/admin/reports/customer")
+                            .param("startDate", "2024-01-01")
+                            .param("endDate", "2024-01-31"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("GET /admin/reports/inventory - returns inventory report")
+        @WithMockUser(roles = "ADMIN")
+        void getInventoryReport_returnsReport() throws Exception {
+            AdminReportService.InventoryReport report = mock(AdminReportService.InventoryReport.class);
+            when(reportService.generateInventoryReport()).thenReturn(report);
+
+            mockMvc.perform(get("/api/admin/reports/inventory"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("GET /admin/reports/export - returns CSV export")
+        @WithMockUser(roles = "ADMIN")
+        void exportReport_returnsCsv() throws Exception {
+            byte[] csvContent = "test,csv,content".getBytes();
+            when(reportService.exportReport(any(), eq(AdminReportService.ExportFormat.CSV), any(), any()))
+                    .thenReturn(csvContent);
+
+            mockMvc.perform(get("/api/admin/reports/export")
+                            .param("type", "SALES")
+                            .param("format", "CSV")
+                            .param("startDate", "2024-01-01")
+                            .param("endDate", "2024-01-31"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Content-Disposition", "attachment; filename=\"shoppiq-sales-report-2024-01-01-to-2024-01-31.csv\""))
+                    .andExpect(content().contentType("text/csv"));
+        }
+
+        @Test
+        @DisplayName("GET /admin/reports/export - returns PDF export")
+        @WithMockUser(roles = "ADMIN")
+        void exportReport_returnsPdf() throws Exception {
+            byte[] pdfContent = "%PDF-1.4".getBytes();
+            when(reportService.exportReport(any(), eq(AdminReportService.ExportFormat.PDF), any(), any()))
+                    .thenReturn(pdfContent);
+
+            mockMvc.perform(get("/api/admin/reports/export")
+                            .param("type", "REVENUE")
+                            .param("format", "PDF")
+                            .param("startDate", "2024-01-01")
+                            .param("endDate", "2024-01-31"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Content-Disposition", "attachment; filename=\"shoppiq-revenue-report-2024-01-01-to-2024-01-31.pdf\""))
+                    .andExpect(content().contentType("application/pdf"));
+        }
+
+        @Test
+        @DisplayName("GET /admin/reports/export - returns Excel export")
+        @WithMockUser(roles = "ADMIN")
+        void exportReport_returnsExcel() throws Exception {
+            byte[] excelContent = "PK".getBytes();
+            when(reportService.exportReport(any(), eq(AdminReportService.ExportFormat.EXCEL), any(), any()))
+                    .thenReturn(excelContent);
+
+            mockMvc.perform(get("/api/admin/reports/export")
+                            .param("type", "PRODUCT")
+                            .param("format", "EXCEL")
+                            .param("startDate", "2024-01-01")
+                            .param("endDate", "2024-01-31"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Content-Disposition", "attachment; filename=\"shoppiq-product-report-2024-01-01-to-2024-01-31.xlsx\""))
+                    .andExpect(content().contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        }
+
+        @Test
+        @DisplayName("GET /admin/reports/export - requires ADMIN role")
+        void exportReport_requiresAdminRole() throws Exception {
+            mockMvc.perform(get("/api/admin/reports/export")
+                            .param("type", "SALES")
+                            .param("format", "CSV")
+                            .param("startDate", "2024-01-01")
+                            .param("endDate", "2024-01-31"))
+                    .andExpect(status().isUnauthorized());
         }
     }
 

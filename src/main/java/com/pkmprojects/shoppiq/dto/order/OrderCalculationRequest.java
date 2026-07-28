@@ -5,7 +5,7 @@ import com.pkmprojects.shoppiq.enums.PaymentMethod;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Request payload for previewing an order summary before placing it.
+ * <strong>Spring Boot Concept:</strong> Request payload for previewing an order summary before placing it.
  *
  * <p>The server calculates all cost components (subtotal, shipping, COD surcharge,
  * discount, grand total) from the user's current cart so the frontend never

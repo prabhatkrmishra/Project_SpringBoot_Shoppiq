@@ -1,6 +1,4 @@
-package com.pkmprojects.shoppiq.auth.controller;
-
-import com.pkmprojects.shoppiq.auth.dto.CompleteGoogleRegistrationRequest;
+package com.pkmprojects.shoppiq.auth.controller;import com.pkmprojects.shoppiq.auth.dto.CompleteGoogleRegistrationRequest;
 import com.pkmprojects.shoppiq.auth.dto.JwtRequest;
 import com.pkmprojects.shoppiq.auth.dto.JwtResponse;
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
@@ -29,41 +27,61 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 /**
- * REST controller for authentication endpoints.
+ * REST controller for authentication endpoints — the main entry point for
+ * login, logout, OAuth2 registration completion, and silent token refresh.
  *
- * <p>Handles login, logout, OAuth2 profile retrieval, and OAuth2 registration
- * completion. The JWT is delivered exclusively as an HttpOnly cookie via
- * {@link JwtCookieFactory} — it never appears in response bodies.</p>
+ * <h3>Spring Security concepts demonstrated</h3>
+ * <ul>
+ *   <li><strong>Stateless authentication with JWTs delivered as HttpOnly cookies</strong> —
+ *       the JWT never appears in the response body (no {@code Authorization} header),
+ *       reducing XSS attack surface. The cookie's {@code HttpOnly} flag prevents
+ *       JavaScript access.</li>
+ *   <li><strong>Complementary OAuth2 + password authentication</strong> — users who
+ *       register via Google can subsequently log in with either OAuth2 or
+ *       username/password, demonstrating how to merge two auth strategies.</li>
+ *   <li><strong>Cookie-based OAuth2 session state</strong> — the {@code oauth2_registration}
+ *       cookie (managed by {@link OAuthRegistrationCookieService}) carries the verified
+ *       Google profile between the OAuth2 callback and the registration completion
+ *       endpoint, eliminating server-side session storage.</li>
+ *   <li><strong>Token refresh pattern</strong> — the {@code POST /auth/refresh} endpoint
+ *       validates an existing (possibly expired) JWT by checking the user's
+ *       {@code tokenVersion} in the database, then issues a new token without
+ *       requiring credentials again.</li>
+ * </ul>
  *
- * <h4>Fully stateless — no HttpSession</h4>
- * <p>OAuth2 registration state is held in the {@code oauth2_registration}
- * HttpOnly cookie managed by {@link OAuthRegistrationCookieService}. No
- * server-side session is created at any point in the authentication flow.</p>
+ * <h3>Authentication flow</h3>
+ * <ol>
+ *   <li><b>Password login:</b> {@code POST /auth/login} → {@link AuthService} validates
+ *       credentials via {@code AuthenticationManager} → generates JWT → writes HttpOnly cookie.</li>
+ *   <li><b>Logout:</b> {@code POST /auth/logout} → clears JWT cookie, OAuth2 registration
+ *       cookie, and {@code SecurityContextHolder}.</li>
+ *   <li><b>OAuth2 registration:</b> {@code GET /auth/google/get-profile} reads the
+ *       registration cookie → {@code POST /auth/google/complete-profile} validates it,
+ *       creates a local account, issues a JWT, and clears the temporary cookie.</li>
+ *   <li><b>Token refresh:</b> {@code POST /auth/refresh} extracts the JWT cookie,
+ *       validates it permissively (even if expired), and issues a fresh token if
+ *       the user's token version matches.</li>
+ * </ol>
  *
- *
- * <h4>Endpoint flow</h4>
- * <pre>
- * Google Login → OAuth2SuccessHandler stores OAuthRegistrationSession in cookie
- *       ↓
- * GET /auth/google/get-profile → reads cookie, returns name and email to frontend
- *       ↓
- * User chooses username + password → POST /auth/google/complete-profile
- *       ↓
- * Validate cookie exists and has not expired
- *       ↓
- * Create user via UserService.createGoogleUser()
- *       ↓
- * Generate JWT with userId, username, roles, tokenVersion
- *       ↓
- * Set HttpOnly JWT cookie
- *       ↓
- * Clear oauth2_registration cookie
- * </pre>
+ * <h3>Design patterns</h3>
+ * <ul>
+ *   <li><strong>Service delegation</strong> — the controller is thin; all business
+ *       logic lives in {@link AuthService} and {@code UserService}.</li>
+ *   <li><strong>Cookie-based state</strong> — OAuth2 registration state travels in a
+ *       signed, HttpOnly cookie instead of a server-side session, keeping the
+ *       application fully stateless.</li>
+ *   <li><strong>Immutable session DTO</strong> — {@link OAuthRegistrationSession} is a
+ *       Java {@code record} whose data originates from Google's OIDC claims; the
+ *       client never supplies identity data, preventing tampering.</li>
+ * </ul>
  *
  * @see OAuthRegistrationSession
  * @see OAuthRegistrationCookieService
  * @see CompleteGoogleRegistrationRequest
  * @see JwtCookieFactory
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @RestController
 @RequestMapping("/auth")
@@ -77,28 +95,28 @@ public class AuthController {
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
     private final JwtCookieFactory jwtCookieFactory;
     private final OAuthRegistrationCookieService registrationCookieService;
-
-    @Value("${jwt.expiration}")
-    private long expirationTime;
-
-    @Value("${jwt.refresh-max-age:2592000000}")
-    private long refreshMaxAge;
-
-    @Value("${oauth.registration.timeout-minutes:10}")
-    private int oauthRegistrationTimeoutMinutes;
+    private final long expirationTime;
+    private final long refreshMaxAge;
+    private final int oauthRegistrationTimeoutMinutes;
 
     public AuthController(AuthService authService,
                           UserService userService,
                           UserRepository userRepository,
                           JwtAuthenticationUtils jwtAuthenticationUtils,
                           JwtCookieFactory jwtCookieFactory,
-                          OAuthRegistrationCookieService registrationCookieService) {
+                          OAuthRegistrationCookieService registrationCookieService,
+                          @Value("${jwt.expiration}") long expirationTime,
+                          @Value("${jwt.refresh-max-age:2592000000}") long refreshMaxAge,
+                          @Value("${oauth.registration.timeout-minutes:10}") int oauthRegistrationTimeoutMinutes) {
         this.authService = authService;
         this.userService = userService;
         this.userRepository = userRepository;
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.jwtCookieFactory = jwtCookieFactory;
         this.registrationCookieService = registrationCookieService;
+        this.expirationTime = expirationTime;
+        this.refreshMaxAge = refreshMaxAge;
+        this.oauthRegistrationTimeoutMinutes = oauthRegistrationTimeoutMinutes;
     }
 
     /**
@@ -248,7 +266,7 @@ public class AuthController {
         Long userId;
         try {
             userId = jwtAuthenticationUtils.getUserIdFromToken(token);
-        } catch (Exception e) {
+        } catch (Exception _) {
             logger.debug("Refresh failed: invalid token structure");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
         }

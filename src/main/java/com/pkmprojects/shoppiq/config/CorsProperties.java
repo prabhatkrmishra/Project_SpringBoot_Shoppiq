@@ -7,30 +7,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.List;
 
 /**
- * Externalised CORS configuration properties.
+ * <strong>Spring Boot Concept:</strong> {@code @ConfigurationProperties}
+ * class bound to {@code app.cors.*} in {@code application.yaml}.
  *
- * <p>Bound to {@code app.cors.*} in {@code application.yaml}. When
- * {@link #enabled} is {@code false} (the default), no CORS filter is
- * registered in the Spring Security filter chain and the application
- * behaves exactly as it does today — all requests are treated as
- * same-origin.</p>
+ * <p>Controls CORS behavior for separate-frontend deployments. When
+ * {@link #enabled} is {@code false} (default), no CORS filter is registered
+ * and all requests are treated as same-origin. Uses
+ * {@code allowedOriginPatterns} rather than {@code allowedOrigins} to
+ * remain compatible with {@code allowCredentials=true} per the CORS spec.</p>
  *
- * <h4>Enabling for separate-frontend deployments</h4>
- * <p>Set {@code app.cors.enabled=true} and provide the list of
- * allowed origins. Origins are registered via
- * {@link org.springframework.web.cors.CorsConfiguration#setAllowedOriginPatterns(List)}
- * rather than {@code setAllowedOrigins}, which is required when
- * {@link #allowCredentials} is {@code true} — the CORS spec forbids
- * a wildcard origin with credentialed requests.</p>
- *
- * <h4>Environment variables</h4>
- * <pre>
- *   CORS_ENABLED=true
- *   CORS_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
- * </pre>
- *
- * @author PrabhatKrMishra
- * @see CorsConfig
+ * @author prabhatkrmishra
  * @since 0.5.0
  */
 @Getter

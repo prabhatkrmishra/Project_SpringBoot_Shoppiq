@@ -23,24 +23,33 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * Handles successful Google OAuth2 authentication.
+ * <strong>Spring Boot Concept:</strong> Handles successful Google OAuth2 authentication — Spring Security's
+ * {@link AuthenticationSuccessHandler} for the OAuth2 login flow.
  *
- * <p>Called by Spring Security after completing the OAuth2 login flow and
- * after {@link GrantedAuthoritiesMapper} has mapped OIDC authorities to
- * application roles.</p>
+ * <h3>OAuth2 / Spring Security concepts demonstrated</h3>
+ * <ul>
+ *   <li><strong>AuthenticationSuccessHandler contract</strong> — Spring Security
+ *       calls this after the OAuth2 authorization code exchange and token
+ *       validation succeed. It replaces the default redirect behavior with
+ *       custom post-login logic.</li>
+ *   <li><strong>OIDC principal validation</strong> — verifies the principal
+ *       is an {@link org.springframework.security.oauth2.core.oidc.user.OidcUser}
+ *       and checks Google's {@code email_verified} claim before proceeding.
+ *       This prevents account takeover using unverified Google accounts.</li>
+ *   <li><strong>Returning vs. new user branching</strong> — existing users
+ *       receive a JWT cookie and redirect to the original page; new users
+ *       are diverted to a registration-completion flow, with their verified
+ *       Google profile stored in an HttpOnly cookie.</li>
+ *   <li><strong>Stateless OAuth2 integration</strong> — the handler writes
+ *       temporary session state (for new users) into a cookie rather than
+ *       the HTTP session, maintaining full statelessness.</li>
+ *   <li><strong>Return-URL preservation</strong> — reads the
+ *       {@code oauth_return_url} cookie (set by {@link OAuthReturnUrlFilter})
+ *       so users are redirected back to the page they were on when they
+ *       clicked "Login with Google".</li>
+ * </ul>
  *
- * <h4>Fully stateless — no HttpSession</h4>
- * <p>This handler never touches {@code HttpSession}. Registration state for
- * new users is written to an HttpOnly {@code oauth2_registration} cookie via
- * {@link OAuthRegistrationCookieService}, keeping the application completely
- * sessionless even during the OAuth2 flow.</p>
- *
- * <h4>Verification step</h4>
- * <p>Verifies that Google has confirmed the user's email via the
- * {@code email_verified} OIDC claim before proceeding. Unverified emails
- * are rejected to prevent account takeover.</p>
- *
- * <h4>Branching flow</h4>
+ * <h3>Branching flow</h3>
  * <pre>
  * Google authenticates user → onAuthenticationSuccess() called
  *       ↓
@@ -51,14 +60,34 @@ import java.util.Optional;
  * Look up email in local database
  *       ↓
  * ┌─ Existing user → generate JWT cookie
- * │                  → redirect to /allitems
+ * │                  → read oauth_return_url cookie
+ * │                  → redirect to return URL (or /allitems)
  * │
  * └─ New user → write OAuthRegistrationSession to oauth2_registration cookie
- *               → redirect to /complete-profile
+ *               → redirect to /complete-profile?returnUrl=...
  * </pre>
+ *
+ * <h3>Design patterns</h3>
+ * <ul>
+ *   <li><strong>Strategy pattern</strong> — implements
+ *       {@link AuthenticationSuccessHandler} to customize post-OAuth2 behavior.</li>
+ *   <li><strong>Thin handler, thick service</strong> — the handler delegates
+ *       token generation and cookie creation to {@link JwtAuthenticationUtils}
+ *       and {@link JwtCookieFactory}, keeping its own logic focused on
+ *       OAuth2-specific branching.</li>
+ *   <li><strong>Local exception handling</strong> — since this handler runs
+ *       inside Spring Security's OAuth2 filter (upstream of
+ *       {@code ExceptionTranslationFilter}), exceptions like
+ *       {@link com.pkmprojects.shoppiq.exception.auth.InvalidOidcUserException}
+ *       are caught here and translated into a login-page redirect.</li>
+ * </ul>
  *
  * @see OAuthRegistrationCookieService
  * @see JwtCookieFactory
+ * @see OAuthReturnUrlFilter
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @Component
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {

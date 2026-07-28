@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 /**
- * Represents a single line item inside a {@link Cart}.
+ * <strong>Spring Boot Concept:</strong> Represents a single line item inside a {@link Cart}.
  *
  * <p>
  * Each {@code CartItem} links one {@link ItemDetails} to a {@link Cart}
@@ -23,7 +23,28 @@ import lombok.*;
  *     <li>Identity uses {@link GenerationType#IDENTITY}.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>Standalone {@code @Entity}</strong> — Unlike most entities,
+ *         this class does NOT extend {@code AuditableEntity}. Demonstrates that
+ *         not every entity needs auditing; lightweight join entities can manage
+ *         their own identity.</li>
+ *     <li><strong>Composite unique constraint</strong> — {@code @UniqueConstraint(
+ *         columnNames = {"cart_id", "item_details_id"})} ensures the same
+ *         product cannot be added twice to the same cart.</li>
+ *     <li><strong>Two {@code @ManyToOne} relationships</strong> — Connects
+ *         this join entity to both {@code Cart} (parent) and
+ *         {@code ItemDetails} (product). Each uses lazy fetching to avoid
+ *         loading unnecessary data.</li>
+ *     <li><strong>{@code @Min(1)}</strong> — Bean Validation ensures quantity
+ *         is always positive at the application level, complementing the
+ *         database {@code NOT NULL} constraint.</li>
+ *     <li><strong>{@code @EqualsAndHashCode(of = "id")}</strong> — Uses only
+ *         the primary key for equality, avoiding circular references in
+ *         bidirectional relationships.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity
@@ -87,5 +108,5 @@ public class CartItem {
      */
     @Min(1)
     @Column(nullable = false)
-    private Integer quantity;
+    private int quantity;
 }

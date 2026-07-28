@@ -7,7 +7,21 @@ import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import java.math.BigDecimal;
 
 /**
- * Business contract for admin payment management.
+ * <strong>Spring Boot Concept:</strong> Business contract for admin payment management.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * Defines the <strong>Service layer</strong> contract for payment administration.
+ * Architecture: {@code AdminPaymentController → AdminPaymentService → PaymentLookupService / PaymentWriteService}.
+ * </p>
+ *
+ * <h2>Business Logic Responsibilities</h2>
+ * <ul>
+ *     <li>Retrieve all payments with optional status filtering and pagination.</li>
+ *     <li>Retrieve a single payment by ID.</li>
+ *     <li>Process refunds — only {@code PAID} payments can be refunded (business rule).</li>
+ *     <li>Get payment dashboard statistics (totals, revenue, refunded amounts).</li>
+ * </ul>
  *
  * <p>
  * Defines the operations for managing payments,
@@ -29,7 +43,7 @@ import java.math.BigDecimal;
  *     <li>Implemented by {@code AdminPaymentServiceImpl}.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface AdminPaymentService {

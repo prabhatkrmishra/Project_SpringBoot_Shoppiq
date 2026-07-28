@@ -10,36 +10,19 @@ import java.net.URI;
 import java.time.Instant;
 
 /**
- * Factory responsible for creating RFC 9457 compliant {@link ProblemDetail}
- * instances for the Shoppiq application.
+ * <strong>Spring Boot Concept:</strong> Utility class responsible for
+ * creating RFC 9457 compliant {@link ProblemDetail} instances.
  *
- * <p>
- * This utility centralizes the creation of API error responses to ensure
- * a consistent error structure throughout the application.
- * </p>
+ * <p>Centralizes the creation of API error responses to ensure a consistent
+ * error structure throughout the application. Consumed by the global
+ * {@code @ControllerAdvice} exception handler and by filters
+ * (e.g. {@link com.pkmprojects.shoppiq.filter.RateLimitFilter}) that need
+ * to write error responses directly. Overloaded {@code create} methods
+ * support both {@link com.pkmprojects.shoppiq.exception.base.ShoppiqException}
+ * (self-contained status and error code) and framework-level exceptions
+ * (status and code supplied explicitly).</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Create RFC 9457 compliant {@link ProblemDetail} responses.</li>
- *     <li>Populate application-specific metadata.</li>
- *     <li>Provide reusable factory methods for application and framework exceptions.</li>
- * </ul>
- *
- * <h2>Custom Properties</h2>
- * <ul>
- *     <li>timestamp</li>
- *     <li>errorCode</li>
- * </ul>
- *
- * <h2>Future Scope</h2>
- * <ul>
- *     <li>Trace Identifier (traceId)</li>
- *     <li>Correlation Identifier (correlationId)</li>
- *     <li>Error documentation URI</li>
- *     <li>Localized error messages</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public final class ProblemDetailFactory {

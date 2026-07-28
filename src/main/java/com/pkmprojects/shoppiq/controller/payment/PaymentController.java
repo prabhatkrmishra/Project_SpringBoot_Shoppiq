@@ -15,7 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST controller exposing payment endpoints for authenticated customers and admins.
+ * <strong>Spring Boot Concept:</strong> REST controller exposing payment endpoints for authenticated customers and admins.
  *
  * <h2>Endpoints</h2>
  * <ul>
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.*;
  * via {@link com.pkmprojects.shoppiq.config.SecurityConfig}.
  * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Validated

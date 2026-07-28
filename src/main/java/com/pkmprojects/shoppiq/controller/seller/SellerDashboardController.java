@@ -13,21 +13,20 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * REST controller for the seller dashboard.
+ * <strong>Spring Boot Concept:</strong> REST controller for the seller dashboard.
  *
- * <h2>Responsibilities</h2>
+ * <p>Provides summary metrics and recent orders for the authenticated seller's
+ * storefront. All endpoints require SELLER or ADMIN role.</p>
+ *
+ * <p>Key design points:
  * <ul>
- *     <li>Provide dashboard summary metrics.</li>
- *     <li>Provide recent orders for the authenticated seller.</li>
+ *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
+ *   <li><strong>Seller-scoped</strong> — data is filtered to the authenticated seller.</li>
  * </ul>
+ * </p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>All endpoints require SELLER or ADMIN role.</li>
- *     <li>The authenticated user is injected via {@link AuthenticationPrincipal}.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see SellerDashboardService
  * @since 1.0.0
  */
 @RestController
@@ -40,6 +39,12 @@ public class SellerDashboardController {
         this.sellerDashboardService = sellerDashboardService;
     }
 
+    /**
+     * Returns dashboard summary metrics for the authenticated seller.
+     *
+     * @param currentUser the authenticated seller
+     * @return 200 OK with dashboard summary (total products, orders, revenue, etc.)
+     */
     @GetMapping("/summary")
     public ResponseEntity<SellerDashboardResponse> getSummary(
             @AuthenticationPrincipal(expression = "user") User currentUser) {
@@ -47,6 +52,12 @@ public class SellerDashboardController {
         return ResponseEntity.ok(summary);
     }
 
+    /**
+     * Returns the most recent orders containing the seller's products.
+     *
+     * @param currentUser the authenticated seller
+     * @return 200 OK with list of recent order responses
+     */
     @GetMapping("/recent-orders")
     public ResponseEntity<List<SellerOrderResponse>> getRecentOrders(
             @AuthenticationPrincipal(expression = "user") User currentUser) {

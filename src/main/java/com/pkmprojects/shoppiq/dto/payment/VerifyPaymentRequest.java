@@ -12,7 +12,12 @@ import jakarta.validation.constraints.NotNull;
  * reference that gets stamped onto the payment record and marks it {@code PAID}.
  * </p>
  *
- * @author PrabhatKrMishra
+ * <p><b>Validation:</b> {@code @NotNull} on {@code paymentId} and
+ * {@code @NotBlank} on {@code transactionId} ensure both fields are always
+ * provided — critical because missing values could lead to payment records
+ * stuck in PENDING state without a corresponding gateway transaction.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record VerifyPaymentRequest(

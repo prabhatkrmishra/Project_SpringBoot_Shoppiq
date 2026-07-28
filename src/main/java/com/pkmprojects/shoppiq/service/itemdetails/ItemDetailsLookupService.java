@@ -6,10 +6,21 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Read-only item-details query facade.
+ * <strong>Spring Boot Concept:</strong> Read-only item-details query facade.
  *
- * <p>Decouples service-layer code from {@code ItemDetailsRepository},
- * providing lookup and aggregate queries over inventory stock data.</p>
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * A <strong>ReadModel</strong> facade that decouples service-layer code from
+ * {@code ItemDetailsRepository}. Provides lookup and aggregate queries for
+ * inventory stock data.
+ * </p>
+ *
+ * <h2>What are Item Details?</h2>
+ * <p>
+ * {@code ItemDetails} holds the <strong>variant-level</strong> product data: SKU, price,
+ * stock quantity, brand, discount, category, and image. Each {@code Item} (product listing)
+ * has one set of details.
+ * </p>
  *
  * <h2>Consumers</h2>
  * <ul>
@@ -19,7 +30,7 @@ import java.util.Optional;
  *     <li>{@code AdminProductReadModelImpl} — admin product statistics.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.4.0
  * @see ItemDetailsWriteService
  */
@@ -86,6 +97,16 @@ public interface ItemDetailsLookupService {
      * @return out-of-stock item details owned by the seller
      */
     List<ItemDetails> findOutOfStockProductsBySellerId(Long sellerId);
+
+    /**
+     * Counts low-stock item-details for a specific seller (BUG-007).
+     */
+    long countLowStockProductsBySellerId(int threshold, Long sellerId);
+
+    /**
+     * Counts out-of-stock item-details for a specific seller (BUG-007).
+     */
+    long countOutOfStockProductsBySellerId(Long sellerId);
 
     /**
      * Returns all item-details records.

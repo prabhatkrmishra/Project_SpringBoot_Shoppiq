@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.aiservice.enums;
 
 /**
- * Identifies the role of a message within an AI chat conversation.
+ * <strong>Spring Boot Concept:</strong> Identifies the role of a message within an AI chat conversation.
  *
  * <p>
  * Each {@link com.pkmprojects.shoppiq.aiservice.entity.ChatMessage} is assigned

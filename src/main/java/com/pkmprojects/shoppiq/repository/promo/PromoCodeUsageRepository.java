@@ -7,9 +7,27 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
- * Repository for {@link PromoCodeUsage} persistence operations.
+ * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link PromoCodeUsage} persistence operations.
  *
- * @author PrabhatKrMishra
+ * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
+ * <ul>
+ *   <li><strong>Derived exists query by flat field</strong> — {@code existsByOrderId} checks
+ *       whether a promo code has already been applied to a specific order.</li>
+ *   <li><strong>Custom JPQL count query</strong> — {@code countByPromoCodeIdAndUserId} counts
+ *       per-user usage by joining across {@link com.pkmprojects.shoppiq.entity.promo.PromoCode}
+ *       and {@link com.pkmprojects.shoppiq.entity.user.User} associations via their IDs.</li>
+ * </ul>
+ *
+ * <p><strong>Method naming → SQL translation examples:</strong></p>
+ * <pre>
+ *   existsByOrderId(Long)
+ *       → SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END FROM promo_code_usages WHERE order_id = ?
+ *   countByPromoCodeIdAndUserId(@Query)
+ *       → SELECT COUNT(u) FROM PromoCodeUsage u WHERE u.promoCode.id = :promoCodeId AND u.user.id = :userId
+ *         → SELECT COUNT(*) FROM promo_code_usages WHERE promo_code_id = ? AND user_id = ?
+ * </pre>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Repository

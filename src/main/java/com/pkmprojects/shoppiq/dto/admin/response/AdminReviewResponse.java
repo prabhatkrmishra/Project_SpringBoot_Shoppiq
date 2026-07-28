@@ -26,9 +26,13 @@ import java.time.Instant;
  * <ul>
  *     <li>Immutable through Java Records.</li>
  *     <li>Created using {@link #fromEntity(ItemReview)}.</li>
+ *     <li><b>Information merging:</b> The {@code fromEntity()} method joins
+ *     data from {@code ItemReview}, {@code Item}, and {@code User} entities
+ *     into a single DTO — demonstrating how response DTOs often aggregate
+ *     data across multiple JPA entities.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AdminReviewResponse(

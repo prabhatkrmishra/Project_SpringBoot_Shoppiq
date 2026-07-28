@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST controller responsible for managing product categories.
+ * <strong>Spring Boot Concept:</strong> REST controller responsible for managing product categories.
  *
  * <p>
  * Exposes CRUD endpoints for category management. The controller acts purely

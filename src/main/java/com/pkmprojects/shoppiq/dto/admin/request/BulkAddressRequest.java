@@ -29,9 +29,12 @@ import java.util.List;
  *     <li>{@code @Valid} triggers cascading validation on each
  *     {@link AdminAddressItem} in the list.</li>
  *     <li>Used exclusively for admin test-data bulk creation.</li>
+ *     <li><b>Validation trick:</b> Using {@code List<@Valid AdminAddressItem>}
+ *     (type-use {@code @Valid}) is the standard way to validate collections
+ *     in Jakarta Bean Validation 3.0+ without a wrapper annotation.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkAddressRequest(

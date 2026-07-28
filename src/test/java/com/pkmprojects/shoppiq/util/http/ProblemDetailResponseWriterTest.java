@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.util.http;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
 class ProblemDetailResponseWriterTest {
 
     @Mock
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Mock
     private HttpServletResponse response;

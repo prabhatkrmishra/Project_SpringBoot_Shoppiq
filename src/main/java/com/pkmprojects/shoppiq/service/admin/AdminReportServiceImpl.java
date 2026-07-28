@@ -3,9 +3,10 @@ package com.pkmprojects.shoppiq.service.admin;
 import com.pkmprojects.shoppiq.dto.admin.report.*;
 import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
 import com.pkmprojects.shoppiq.entity.item.ItemDetails;
-import com.pkmprojects.shoppiq.entity.order.Order;
-import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.*;
+import com.pkmprojects.shoppiq.config.InventoryConstants;
+import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
+import com.pkmprojects.shoppiq.repository.order.projection.*;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminOrderReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminPaymentReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminProductReadModel;
@@ -17,29 +18,32 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Default implementation of {@link AdminReportService}.
+ * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminReportService}
+ * containing business logic for admin report generation.
  *
- * <p>
- * Provides report generation and export functionality for
- * sales, revenue, product, customer, and inventory reports.
+ * <p>Generates sales, revenue, product performance, customer, inventory, and
+ * commission reports by aggregating data through ReadModel facades. Used by
+ * {@code AdminReportController}.</p>
+ *
+ * <p>Why this design:
+ * <ul>
+ *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
+ *   <li><strong>@Transactional(readOnly = true)</strong> — All report methods are read-only, optimized for complex aggregation queries.</li>
+ *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
+ * </ul>
  * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see AdminReportService
  * @since 1.0.0
  */
 @Service
 @Transactional(readOnly = true)
 public class AdminReportServiceImpl implements AdminReportService {
-
-    private static final int LOW_STOCK_THRESHOLD = 5;
 
     private final AdminOrderReadModel orderReadModel;
     private final AdminPaymentReadModel paymentReadModel;
@@ -61,84 +65,64 @@ public class AdminReportServiceImpl implements AdminReportService {
         Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endInstant = endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        List<Order> orders = orderReadModel.findPlacedBetweenAsc(startInstant, endInstant);
+        // Lightweight query — returns [placedAt, grandTotal, status] tuples
+        // instead of loading the full Order entity graph (orderItems, itemDetails,
+        // category, item, user).
+        List<Object[]> orderData = orderReadModel.findOrderValuesAndStatusBetween(startInstant, endInstant);
 
-        long totalOrders;
-        totalOrders = orders.size();
-        BigDecimal totalRevenue = orders.stream()
-                .map(Order::getGrandTotal)
+        long totalOrders = orderData.size();
+        BigDecimal totalRevenue = orderData.stream()
+                .map(row -> (BigDecimal) row[1])
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal averageOrderValue = totalOrders > 0
                 ? totalRevenue.divide(BigDecimal.valueOf(totalOrders), 2, java.math.RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
-        Map<LocalDate, SalesReport.DailySales> dailySales = orders.stream()
+        // Daily sales — group lightweight tuples by date
+        Map<LocalDate, SalesReport.DailySales> dailySales = orderData.stream()
                 .collect(Collectors.groupingBy(
-                        order -> order.getPlacedAt().atZone(ZoneId.systemDefault()).toLocalDate(),
+                        row -> ((Instant) row[0]).atZone(ZoneId.systemDefault()).toLocalDate(),
                         LinkedHashMap::new,
                         Collectors.collectingAndThen(
                                 Collectors.toList(),
                                 list -> {
                                     long count = list.size();
                                     BigDecimal revenue = list.stream()
-                                            .map(Order::getGrandTotal)
+                                            .map(r -> (BigDecimal) r[1])
                                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                                     return new SalesReport.DailySales(count, revenue);
                                 }
                         )
                 ));
 
-        Map<OrderStatus, Long> ordersByStatus = orders.stream()
-                .collect(Collectors.groupingBy(Order::getStatus, Collectors.counting()));
-
-        List<SalesReport.TopProductSales> topProducts = orders.stream()
-                .flatMap(o -> o.getOrderItems().stream())
+        // Status distribution — group lightweight tuples by status
+        Map<OrderStatus, Long> ordersByStatus = orderData.stream()
                 .collect(Collectors.groupingBy(
-                        item -> item.getItemDetails().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                items -> {
-                                    long qty = items.stream().mapToInt(i -> i.getQuantity()).sum();
-                                    BigDecimal revenue = items.stream()
-                                            .map(i -> i.getUnitPriceSnapshot().multiply(BigDecimal.valueOf(i.getQuantity())))
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    return new SalesReport.TopProductSales(
-                                            items.get(0).getItemDetails().getId(),
-                                            items.get(0).getItemNameSnapshot(),
-                                            items.get(0).getItemDetails().getSku(),
-                                            qty, revenue
-                                    );
-                                }
-                        )
-                )).values().stream()
-                .sorted(Comparator.comparing(SalesReport.TopProductSales::quantitySold).reversed())
+                        row -> (OrderStatus) row[2],
+                        Collectors.counting()
+                ));
+
+        // Top products — DB-aggregated via GROUP BY
+        List<ProductSalesAggregate> productAggs = orderReadModel.aggregateProductSalesByDateRange(startInstant, endInstant);
+        List<SalesReport.TopProductSales> topProducts = productAggs.stream()
                 .limit(10)
+                .map(a -> new SalesReport.TopProductSales(
+                        a.getItemId(), a.getItemName(), a.getSku(),
+                        a.getQuantitySold(), a.getRevenue()))
                 .toList();
 
-        List<SalesReport.TopCategorySales> topCategories = orders.stream()
-                .flatMap(o -> o.getOrderItems().stream())
-                .collect(Collectors.groupingBy(
-                        item -> item.getItemDetails().getCategory().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                items -> {
-                                    long qty = items.stream().mapToInt(i -> i.getQuantity()).sum();
-                                    BigDecimal revenue = items.stream()
-                                            .map(i -> i.getUnitPriceSnapshot().multiply(BigDecimal.valueOf(i.getQuantity())))
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    return new SalesReport.TopCategorySales(
-                                            items.get(0).getItemDetails().getCategory().getId(),
-                                            items.get(0).getItemDetails().getCategory().getName(),
-                                            qty, revenue
-                                    );
-                                }
-                        )
-                )).values().stream()
-                .sorted(Comparator.comparing(SalesReport.TopCategorySales::revenue).reversed())
+        // Top categories — DB-aggregated via GROUP BY
+        List<CategorySalesAggregate> categoryAggs = orderReadModel.aggregateCategorySalesByDateRange(startInstant, endInstant);
+        List<SalesReport.TopCategorySales> topCategories = categoryAggs.stream()
                 .limit(10)
+                .map(a -> new SalesReport.TopCategorySales(
+                        a.getCategoryId(), a.getCategoryName(),
+                        a.getQuantitySold(), a.getRevenue()))
                 .toList();
 
+        // averageOrderValue is computed but not used in this report variant;
+        // kept for future enhancement or downstream callers
         return new SalesReport(
                 startDate, endDate, totalOrders, totalRevenue, dailySales, ordersByStatus,
                 topProducts, topCategories
@@ -150,50 +134,47 @@ public class AdminReportServiceImpl implements AdminReportService {
         Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endInstant = endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        List<Payment> payments = paymentReadModel.findByDateRangeAndStatuses(
-                startInstant, endInstant, List.of(PaymentStatus.PAID, PaymentStatus.REFUNDED));
-
-        BigDecimal totalRevenue = payments.stream()
-                .filter(p -> p.getPaymentStatus() == PaymentStatus.PAID)
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal refundedAmount = payments.stream()
-                .filter(p -> p.getPaymentStatus() == PaymentStatus.REFUNDED)
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+        // Aggregate payment amounts by status — single scalar queries instead of loading full entities
+        BigDecimal totalRevenue = paymentReadModel.sumAmountByStatusAndDateRange(
+                PaymentStatus.PAID, startInstant, endInstant);
+        BigDecimal refundedAmount = paymentReadModel.sumAmountByStatusAndDateRange(
+                PaymentStatus.REFUNDED, startInstant, endInstant);
         BigDecimal grossRevenue = totalRevenue.add(refundedAmount);
 
-        Map<LocalDate, BigDecimal> dailyRevenue = payments.stream()
-                .filter(p -> p.getPaymentStatus() == PaymentStatus.PAID)
+        // Daily revenue — DB-aggregated [paidAt, amount] tuples, grouped by date in Java
+        List<Object[]> dailyRevData = paymentReadModel.aggregateDailyRevenueBetween(startInstant, endInstant);
+        Map<LocalDate, BigDecimal> dailyRevenue = dailyRevData.stream()
                 .collect(Collectors.groupingBy(
-                        p -> p.getPaidAt() != null
-                                ? p.getPaidAt().atZone(ZoneId.systemDefault()).toLocalDate()
-                                : p.getCreatedAt().atZone(ZoneId.systemDefault()).toLocalDate(),
+                        row -> ((Instant) row[0]).atZone(ZoneId.systemDefault()).toLocalDate(),
                         LinkedHashMap::new,
-                        Collectors.reducing(BigDecimal.ZERO, Payment::getAmount, BigDecimal::add)
+                        Collectors.reducing(BigDecimal.ZERO, r -> (BigDecimal) r[1], BigDecimal::add)
                 ));
 
-        Map<PaymentStatus, BigDecimal> revenueByPaymentStatus = payments.stream()
-                .collect(Collectors.groupingBy(
-                        Payment::getPaymentStatus,
-                        Collectors.reducing(BigDecimal.ZERO, Payment::getAmount, BigDecimal::add)
-                ));
+        // Revenue by payment status — two known statuses in this context
+        Map<PaymentStatus, BigDecimal> revenueByPaymentStatus = new EnumMap<>(PaymentStatus.class);
+        revenueByPaymentStatus.put(PaymentStatus.PAID, totalRevenue);
+        revenueByPaymentStatus.put(PaymentStatus.REFUNDED, refundedAmount);
 
-        Map<String, BigDecimal> revenueByPaymentMethod = payments.stream()
-                .filter(p -> p.getPaymentStatus() == PaymentStatus.PAID)
-                .collect(Collectors.groupingBy(
-                        p -> p.getPaymentMethod().name(),
-                        Collectors.reducing(BigDecimal.ZERO, Payment::getAmount, BigDecimal::add)
-                ));
+        // Revenue by payment method — DB-aggregated [paymentMethod, amount] tuples
+        List<Object[]> methodData = paymentReadModel.aggregateRevenueByPaymentMethodBetween(startInstant, endInstant);
+        Map<String, BigDecimal> revenueByPaymentMethod = new LinkedHashMap<>();
+        for (Object[] row : methodData) {
+            revenueByPaymentMethod.put(((PaymentMethod) row[0]).name(), (BigDecimal) row[1]);
+        }
 
-        List<Order> orders = orderReadModel.findPlacedBetweenAsc(startInstant, endInstant);
-        BigDecimal discounts = orders.stream().map(Order::getDiscount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal taxes = orders.stream().map(Order::getTax).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal shipping = orders.stream()
-                .map(o -> o.getDeliveryCharge().add(o.getCodSurcharge()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Order-level aggregates (discounts, taxes, shipping) — single lightweight query
+        List<Object[]> charges = orderReadModel.aggregateOrderChargesBetween(startInstant, endInstant);
+        BigDecimal discounts = BigDecimal.ZERO;
+        BigDecimal taxes = BigDecimal.ZERO;
+        BigDecimal shipping = BigDecimal.ZERO;
+        if (!charges.isEmpty()) {
+            Object[] chargeRow = charges.getFirst();
+            discounts = (BigDecimal) chargeRow[0];
+            taxes = (BigDecimal) chargeRow[1];
+            BigDecimal deliveryCharge = (BigDecimal) chargeRow[2];
+            BigDecimal codSurcharge = (BigDecimal) chargeRow[3];
+            shipping = deliveryCharge.add(codSurcharge);
+        }
 
         return new RevenueReport(
                 startDate, endDate, totalRevenue, grossRevenue, discounts, taxes, shipping,
@@ -206,80 +187,38 @@ public class AdminReportServiceImpl implements AdminReportService {
         Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endInstant = endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        List<Order> orders = orderReadModel.findPlacedBetweenAsc(startInstant, endInstant);
+        // Product performance — DB-aggregated via GROUP BY on OrderItem
+        List<ProductPerformanceAggregate> productAggs = orderReadModel
+                .aggregateProductPerformanceByDateRange(startInstant, endInstant);
 
-        Map<Long, ProductPerformanceData> productMap = orders.stream()
-                .flatMap(order -> order.getOrderItems().stream())
-                .collect(Collectors.groupingBy(
-                        item -> item.getItemDetails().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                items -> {
-                                    long qty = items.stream().mapToInt(i -> i.getQuantity()).sum();
-                                    BigDecimal revenue = items.stream()
-                                            .map(i -> i.getUnitPriceSnapshot().multiply(BigDecimal.valueOf(i.getQuantity())))
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    BigDecimal avgPrice = qty > 0
-                                            ? revenue.divide(BigDecimal.valueOf(qty), 2, java.math.RoundingMode.HALF_UP)
-                                            : BigDecimal.ZERO;
-                                    ItemDetails details = items.get(0).getItemDetails();
-                                    return new ProductPerformanceData(
-                                            details.getId(),
-                                            details.getItem().getName(),
-                                            details.getSku(),
-                                            qty,
-                                            revenue,
-                                            avgPrice,
-                                            details.getStockQuantity()
-                                    );
-                                }
-                        )
-                ));
-
-        List<ProductReport.ProductPerformance> productPerformance = productMap.values().stream()
-                .map(data -> new ProductReport.ProductPerformance(
-                        data.itemId(), data.itemName(), data.sku(),
-                        data.quantitySold(), data.revenue(), data.averagePrice(), data.currentStock()
+        List<ProductReport.ProductPerformance> productPerformance = productAggs.stream()
+                .map(a -> new ProductReport.ProductPerformance(
+                        a.getItemId(), a.getItemName(), a.getSku(),
+                        a.getQuantitySold(), a.getRevenue(), a.getAveragePrice(), a.getCurrentStock()
                 ))
-                .sorted(Comparator.comparing(ProductReport.ProductPerformance::revenue).reversed())
                 .toList();
 
-        Map<Long, CategoryPerformanceData> categoryMap = orders.stream()
-                .flatMap(order -> order.getOrderItems().stream())
-                .collect(Collectors.groupingBy(
-                        item -> item.getItemDetails().getCategory().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                items -> {
-                                    long qty = items.stream().mapToInt(i -> i.getQuantity()).sum();
-                                    BigDecimal revenue = items.stream()
-                                            .map(i -> i.getUnitPriceSnapshot().multiply(BigDecimal.valueOf(i.getQuantity())))
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    long uniqueProducts = items.stream()
-                                            .map(i -> i.getItemDetails().getId())
-                                            .distinct()
-                                            .count();
-                                    return new CategoryPerformanceData(
-                                            items.get(0).getItemDetails().getCategory().getId(),
-                                            items.get(0).getItemDetails().getCategory().getName(),
-                                            qty, revenue, uniqueProducts
-                                    );
-                                }
-                        )
-                ));
+        // Category performance — DB-aggregated via GROUP BY including unique product count
+        List<CategorySalesAggregate> categoryAggs = orderReadModel
+                .aggregateCategorySalesByDateRange(startInstant, endInstant);
 
-        List<ProductReport.CategoryPerformance> categoryPerformance = categoryMap.values().stream()
-                .map(data -> new ProductReport.CategoryPerformance(
-                        data.categoryId(), data.categoryName(),
-                        data.quantitySold(), data.revenue(), data.uniqueProductsSold()
+        List<ProductReport.CategoryPerformance> categoryPerformance = categoryAggs.stream()
+                .map(a -> new ProductReport.CategoryPerformance(
+                        a.getCategoryId(), a.getCategoryName(),
+                        a.getQuantitySold(), a.getRevenue(), a.getUniqueProductsSold()
                 ))
                 .sorted(Comparator.comparing(ProductReport.CategoryPerformance::revenue).reversed())
                 .toList();
 
+        long totalProductsSold = productPerformance.stream()
+                .mapToLong(ProductReport.ProductPerformance::quantitySold)
+                .sum();
+        BigDecimal totalProductRevenue = productPerformance.stream()
+                .map(ProductReport.ProductPerformance::revenue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         return new ProductReport(
-                startDate, endDate,
-                productPerformance.stream().mapToLong(ProductReport.ProductPerformance::quantitySold).sum(),
-                productPerformance.stream().map(ProductReport.ProductPerformance::revenue).reduce(BigDecimal.ZERO, BigDecimal::add),
+                startDate, endDate, totalProductsSold, totalProductRevenue,
                 productPerformance, categoryPerformance
         );
     }
@@ -289,67 +228,68 @@ public class AdminReportServiceImpl implements AdminReportService {
         Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endInstant = endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        List<Order> orders = orderReadModel.findPlacedBetweenAsc(startInstant, endInstant);
+        // Customer aggregation — DB GROUP BY with MIN/MAX for first/last order dates
+        List<CustomerOrderAggregate> customerAggs = orderReadModel
+                .aggregateCustomerOrdersBetween(startInstant, endInstant);
 
-        Map<Long, CustomerAggData> customerMap = orders.stream()
-                .collect(Collectors.groupingBy(
-                        order -> order.getUser().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                orderList -> {
-                                    long count = orderList.size();
-                                    BigDecimal spent = orderList.stream()
-                                            .map(Order::getGrandTotal)
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-                                    BigDecimal avgOrder = count > 0
-                                            ? spent.divide(BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP)
-                                            : BigDecimal.ZERO;
-                                    LocalDate firstOrder = orderList.stream()
-                                            .map(o -> o.getPlacedAt().atZone(ZoneId.systemDefault()).toLocalDate())
-                                            .min(LocalDate::compareTo)
-                                            .orElse(LocalDate.now());
-                                    LocalDate lastOrder = orderList.stream()
-                                            .map(o -> o.getPlacedAt().atZone(ZoneId.systemDefault()).toLocalDate())
-                                            .max(LocalDate::compareTo)
-                                            .orElse(LocalDate.now());
-                                    return new CustomerAggData(
-                                            orderList.get(0).getUser().getId(),
-                                            orderList.get(0).getUser().getUsername(),
-                                            orderList.get(0).getUser().getEmail(),
-                                            count, spent, avgOrder, firstOrder, lastOrder
-                                    );
-                                }
-                        )
-                ));
-
-        List<CustomerReport.TopCustomer> topCustomers = customerMap.values().stream()
-                .map(data -> new CustomerReport.TopCustomer(
-                        data.userId(), data.username(), data.email(),
-                        data.orderCount(), data.totalSpent(), data.firstOrder(), data.lastOrder()
-                ))
-                .sorted(Comparator.comparing(CustomerReport.TopCustomer::totalSpent).reversed())
+        List<CustomerReport.TopCustomer> topCustomers = customerAggs.stream()
                 .limit(20)
+                .map(a -> {
+                    LocalDate firstOrder = a.getFirstOrderDate() != null
+                            ? a.getFirstOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
+                            : LocalDate.now();
+                    LocalDate lastOrder = a.getLastOrderDate() != null
+                            ? a.getLastOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
+                            : LocalDate.now();
+                    return new CustomerReport.TopCustomer(
+                            a.getUserId(), a.getUsername(), a.getEmail(),
+                            a.getOrderCount(), a.getTotalSpent(), firstOrder, lastOrder
+                    );
+                })
+                .toList();
+
+        // Customer segments — computed from aggregated data (single pass per segment)
+        List<CustomerAggData> aggDataList = customerAggs.stream()
+                .map(a -> new CustomerAggData(
+                        a.getUserId(), a.getUsername(), a.getEmail(),
+                        a.getOrderCount(), a.getTotalSpent(),
+                        a.getTotalSpent().compareTo(BigDecimal.ZERO) > 0
+                                ? a.getTotalSpent().divide(BigDecimal.valueOf(a.getOrderCount()),
+                                        2, java.math.RoundingMode.HALF_UP)
+                                : BigDecimal.ZERO,
+                        a.getFirstOrderDate() != null
+                                ? a.getFirstOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
+                                : LocalDate.now(),
+                        a.getLastOrderDate() != null
+                                ? a.getLastOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
+                                : LocalDate.now()
+                ))
                 .toList();
 
         List<CustomerReport.CustomerSegment> segments = List.of(
-                new CustomerReport.CustomerSegment("VIP", customerMap.values().stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(10000)) > 0).count(),
-                        customerMap.values().stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(10000)) > 0)
+                new CustomerReport.CustomerSegment("VIP",
+                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(10000)) > 0).count(),
+                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(10000)) > 0)
                                 .map(CustomerAggData::totalSpent).reduce(BigDecimal.ZERO, BigDecimal::add)),
-                new CustomerReport.CustomerSegment("Regular", customerMap.values().stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) > 0
-                        && d.totalSpent().compareTo(BigDecimal.valueOf(10000)) <= 0).count(),
-                        customerMap.values().stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) > 0
+                new CustomerReport.CustomerSegment("Regular",
+                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) > 0
+                                && d.totalSpent().compareTo(BigDecimal.valueOf(10000)) <= 0).count(),
+                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) > 0
                                         && d.totalSpent().compareTo(BigDecimal.valueOf(10000)) <= 0)
                                 .map(CustomerAggData::totalSpent).reduce(BigDecimal.ZERO, BigDecimal::add)),
-                new CustomerReport.CustomerSegment("New", customerMap.values().stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) <= 0).count(),
-                        customerMap.values().stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) <= 0)
+                new CustomerReport.CustomerSegment("New",
+                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) <= 0).count(),
+                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) <= 0)
                                 .map(CustomerAggData::totalSpent).reduce(BigDecimal.ZERO, BigDecimal::add))
         );
 
         long totalCustomers = userReadModel.countAll();
         long newCustomers = userReadModel.countCreatedAfter(startInstant);
-        long activeCustomers = customerMap.size();
+        long activeCustomers = customerAggs.size();
         long returningCustomers = activeCustomers - newCustomers;
-        BigDecimal totalRevenue = topCustomers.stream().map(CustomerReport.TopCustomer::totalSpent).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalRevenue = topCustomers.stream()
+                .map(CustomerReport.TopCustomer::totalSpent)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal avgOrderValue = activeCustomers > 0
                 ? totalRevenue.divide(BigDecimal.valueOf(activeCustomers), 2, java.math.RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
@@ -371,12 +311,12 @@ public class AdminReportServiceImpl implements AdminReportService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         long outOfStockCount = productReadModel.countOutOfStock();
-        long lowStockCount = productReadModel.countLowStock(LOW_STOCK_THRESHOLD);
+        long lowStockCount = productReadModel.countLowStock(InventoryConstants.LOW_STOCK_THRESHOLD);
 
         List<InventoryReport.ProductInventoryStatus> productStatuses = allDetails.stream()
                 .map(d -> {
                     String status = d.getStockQuantity() == 0 ? "OUT_OF_STOCK"
-                            : d.getStockQuantity() <= 5 ? "LOW_STOCK" : "IN_STOCK";
+                            : d.getStockQuantity() <= InventoryConstants.LOW_STOCK_THRESHOLD ? "LOW_STOCK" : "IN_STOCK";
                     return new InventoryReport.ProductInventoryStatus(
                             d.getId(), d.getItem().getName(), d.getSku(),
                             d.getCategory().getName(), d.getStockQuantity(),
@@ -396,17 +336,17 @@ public class AdminReportServiceImpl implements AdminReportService {
 
     @Override
     public List<CommissionReportResponse> generateCommissionReport() {
-        List<Object[]> results = orderReadModel.aggregateRevenueBySeller(PaymentStatus.PAID);
+        List<SellerRevenueAggregate> results = orderReadModel.aggregateRevenueBySeller(PaymentStatus.PAID);
         List<CommissionReportResponse> reports = new ArrayList<>();
 
-        for (Object[] row : results) {
-            Long sellerId = (Long) row[0];
-            String businessName = (String) row[1];
-            long totalOrders = ((Number) row[2]).longValue();
-            BigDecimal totalRevenue = (BigDecimal) row[3];
+        for (SellerRevenueAggregate row : results) {
+            Long sellerId = row.getSellerId();
+            String businessName = row.getBusinessName();
+            long totalOrders = row.getTotalOrders();
+            BigDecimal totalRevenue = row.getTotalRevenue();
 
             var seller = productReadModel.findSellerById(sellerId)
-                    .orElseThrow(() -> new RuntimeException("Seller not found: " + sellerId));
+                    .orElseThrow(() -> SellerNotFoundException.id(sellerId));
             BigDecimal commissionRate = seller.getCommissionRate() != null
                     ? seller.getCommissionRate()
                     : BigDecimal.ZERO;
@@ -421,7 +361,185 @@ public class AdminReportServiceImpl implements AdminReportService {
 
     @Override
     public byte[] exportReport(ReportType reportType, ExportFormat format, LocalDate startDate, LocalDate endDate) {
-        return "Report export not yet implemented".getBytes();
+        return switch (format) {
+            case CSV -> generateCsv(reportType, startDate, endDate);
+            case PDF, EXCEL -> throw new UnsupportedOperationException(
+                    format + " export is not yet implemented. Use CSV instead.");
+        };
+    }
+
+    // ── CSV generation ──────────────────────────────────────────────────
+
+    private byte[] generateCsv(ReportType reportType, LocalDate startDate, LocalDate endDate) {
+        String csv = switch (reportType) {
+            case SALES -> salesReportToCsv(generateSalesReport(startDate, endDate));
+            case REVENUE -> revenueReportToCsv(generateRevenueReport(startDate, endDate));
+            case PRODUCT -> productReportToCsv(generateProductReport(startDate, endDate));
+            case CUSTOMER -> customerReportToCsv(generateCustomerReport(startDate, endDate));
+            case INVENTORY -> inventoryReportToCsv(generateInventoryReport());
+        };
+        return csv.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private String salesReportToCsv(SalesReport report) {
+        StringBuilder sb = new StringBuilder();
+
+        // Summary
+        sb.append("Sales Report\n");
+        sb.append("Start Date,End Date,Total Orders,Total Revenue,Average Order Value\n");
+        sb.append("%s,%s,%d,%s,%s\n\n".formatted(
+                report.startDate(), report.endDate(), report.totalOrders(),
+                report.totalRevenue(), avgOrderValue(report.totalOrders(), report.totalRevenue())));
+
+        // Daily sales
+        sb.append("Daily Sales\n");
+        sb.append("Date,Orders,Revenue\n");
+        for (var entry : report.dailySales().entrySet()) {
+            sb.append("%s,%d,%s\n".formatted(entry.getKey(), entry.getValue().orders(), entry.getValue().revenue()));
+        }
+        sb.append("\n");
+
+        // Top products
+        sb.append("Top Products\n");
+        sb.append("Item ID,Name,SKU,Quantity Sold,Revenue\n");
+        for (var p : report.topProducts()) {
+            sb.append("%d,\"%s\",%s,%d,%s\n".formatted(
+                    p.itemId(), escapeCsv(p.itemName()), p.sku(), p.quantitySold(), p.revenue()));
+        }
+        sb.append("\n");
+
+        // Top categories
+        sb.append("Top Categories\n");
+        sb.append("Category ID,Name,Quantity Sold,Revenue\n");
+        for (var c : report.topCategories()) {
+            sb.append("%d,\"%s\",%d,%s\n".formatted(
+                    c.categoryId(), escapeCsv(c.categoryName()), c.quantitySold(), c.revenue()));
+        }
+
+        return sb.toString();
+    }
+
+    private String revenueReportToCsv(RevenueReport report) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Revenue Report\n");
+        sb.append("Start Date,End Date,Total Revenue,Gross Revenue,Discounts,Taxes,Shipping\n");
+        sb.append("%s,%s,%s,%s,%s,%s,%s\n\n".formatted(
+                report.startDate(), report.endDate(), report.totalRevenue(),
+                report.grossRevenue(), report.discounts(), report.taxes(), report.shipping()));
+
+        // Daily revenue
+        sb.append("Daily Revenue\n");
+        sb.append("Date,Revenue\n");
+        for (var entry : report.dailyRevenue().entrySet()) {
+            sb.append("%s,%s\n".formatted(entry.getKey(), entry.getValue()));
+        }
+        sb.append("\n");
+
+        // Revenue by payment method
+        sb.append("Revenue by Payment Method\n");
+        sb.append("Method,Revenue\n");
+        for (var entry : report.revenueByPaymentMethod().entrySet()) {
+            sb.append("%s,%s\n".formatted(entry.getKey(), entry.getValue()));
+        }
+
+        return sb.toString();
+    }
+
+    private String productReportToCsv(ProductReport report) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Product Report\n");
+        sb.append("Start Date,End Date,Total Products Sold,Total Revenue\n");
+        sb.append("%s,%s,%d,%s\n\n".formatted(
+                report.startDate(), report.endDate(),
+                report.totalProductsSold(), report.totalProductRevenue()));
+
+        // Product performance
+        sb.append("Product Performance\n");
+        sb.append("Item ID,Name,SKU,Quantity Sold,Revenue,Average Price,Current Stock\n");
+        for (var p : report.productPerformance()) {
+            sb.append("%d,\"%s\",%s,%d,%s,%s,%d\n".formatted(
+                    p.itemId(), escapeCsv(p.itemName()), p.sku(),
+                    p.quantitySold(), p.revenue(), p.averagePrice(), p.currentStock()));
+        }
+        sb.append("\n");
+
+        // Category performance
+        sb.append("Category Performance\n");
+        sb.append("Category ID,Name,Quantity Sold,Revenue,Unique Products Sold\n");
+        for (var c : report.categoryPerformance()) {
+            sb.append("%d,\"%s\",%d,%s,%d\n".formatted(
+                    c.categoryId(), escapeCsv(c.categoryName()),
+                    c.quantitySold(), c.revenue(), c.uniqueProductsSold()));
+        }
+
+        return sb.toString();
+    }
+
+    private String customerReportToCsv(CustomerReport report) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Customer Report\n");
+        sb.append("Start Date,End Date,Total Customers,New Customers,Returning Customers,Total Revenue,Average Order Value\n");
+        sb.append("%s,%s,%d,%d,%d,%s,%s\n\n".formatted(
+                report.startDate(), report.endDate(), report.totalCustomers(),
+                report.newCustomers(), report.returningCustomers(),
+                report.totalRevenue(), report.averageOrderValue()));
+
+        // Segments
+        sb.append("Customer Segments\n");
+        sb.append("Segment,Count,Revenue\n");
+        for (var s : report.customerSegments()) {
+            sb.append("%s,%d,%s\n".formatted(s.segment(), s.count(), s.revenue()));
+        }
+        sb.append("\n");
+
+        // Top customers
+        sb.append("Top Customers\n");
+        sb.append("User ID,Username,Email,Order Count,Total Spent,First Order,Last Order\n");
+        for (var c : report.topCustomers()) {
+            sb.append("%d,\"%s\",\"%s\",%d,%s,%s,%s\n".formatted(
+                    c.userId(), escapeCsv(c.username()), escapeCsv(c.email()),
+                    c.orderCount(), c.totalSpent(), c.firstOrderDate(), c.lastOrderDate()));
+        }
+
+        return sb.toString();
+    }
+
+    private String inventoryReportToCsv(InventoryReport report) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Inventory Report\n");
+        sb.append("Report Date,Total Products,Total Stock Units,Total Inventory Value,Low Stock,Out of Stock\n");
+        sb.append("%s,%d,%d,%s,%d,%d\n\n".formatted(
+                report.reportDate(), report.totalProducts(), report.totalStockUnits(),
+                report.totalInventoryValue(), report.lowStockProducts(), report.outOfStockProducts()));
+
+        // Product statuses
+        sb.append("Product Inventory Status\n");
+        sb.append("Item ID,Name,SKU,Category,Stock Quantity,Unit Cost,Inventory Value,Status\n");
+        for (var p : report.productStatuses()) {
+            sb.append("%d,\"%s\",%s,\"%s\",%d,%s,%s,%s\n".formatted(
+                    p.itemId(), escapeCsv(p.itemName()), p.sku(),
+                    escapeCsv(p.category()), p.stockQuantity(),
+                    p.unitCost(), p.inventoryValue(), p.stockStatus()));
+        }
+
+        return sb.toString();
+    }
+
+    // ── CSV helpers ──────────────────────────────────────────────────────
+
+    private static String escapeCsv(String value) {
+        if (value == null) return "";
+        return value.replace("\"", "\"\"");
+    }
+
+    private static BigDecimal avgOrderValue(long orders, BigDecimal revenue) {
+        return orders > 0
+                ? revenue.divide(BigDecimal.valueOf(orders), 2, java.math.RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
     }
 
 }

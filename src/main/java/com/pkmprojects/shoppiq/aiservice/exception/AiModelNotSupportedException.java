@@ -6,7 +6,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Thrown when a request references an AI model that is not in the allowed registry.
+ * <strong>Spring Boot Concept:</strong> Thrown when a request references an AI model that is not in the allowed registry.
  *
  * <p>
  * Maps to {@link ErrorCode#AI_MODEL_NOT_SUPPORTED} and produces a 400 Bad Request response.

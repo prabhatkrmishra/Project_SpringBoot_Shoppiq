@@ -1,17 +1,17 @@
 package com.pkmprojects.shoppiq.util.http;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Utility component responsible for writing RFC 9457
+ * <strong>Spring Boot Concept:</strong> Utility component responsible for writing RFC 9457
  * {@link ProblemDetail} responses.
  *
  * <p>
@@ -21,21 +21,21 @@ import java.nio.charset.StandardCharsets;
  * entire application.
  * </p>
  *
+ * <p><b>How it fits:</b> Used by filters, security handlers, and
+ * exception translators — including AI-related exceptions
+ * ({@link com.pkmprojects.shoppiq.aiservice.exception.AiAssistantException},
+ * {@link com.pkmprojects.shoppiq.aiservice.exception.AiAccessDeniedException}, etc.)
+ * to return RFC 9457 problem+json error responses.</p>
+ *
  * <h2>Responsibilities</h2>
  * <ul>
  *     <li>Write {@link ProblemDetail} responses.</li>
  *     <li>Set the HTTP status code.</li>
  *     <li>Set the response content type.</li>
- *     <li>Serialize the response using Jackson.</li>
+ *     <li>Serialize the response using Jackson 3.</li>
  * </ul>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Contains no business logic.</li>
- *     <li>Can be reused by filters, security handlers and infrastructure components.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component
@@ -43,9 +43,9 @@ import java.nio.charset.StandardCharsets;
 public class ProblemDetailResponseWriter {
 
     /**
-     * Jackson object mapper used for JSON serialization.
+     * Jackson 3 JSON mapper used for serialization.
      */
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     /**
      * Writes the supplied {@link ProblemDetail} to the HTTP response.

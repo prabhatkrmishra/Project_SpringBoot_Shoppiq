@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Admin DTO for viewing the full detail of a single AI chat conversation.
+ * <strong>Spring Boot Concept:</strong> Admin DTO for viewing the full detail of a single AI chat conversation.
  *
  * <p>
  * Returned by the {@code GET /api/admin/ai-chats/{chatId}} endpoint. Contains

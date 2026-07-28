@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.auth.service;
 
 import com.pkmprojects.shoppiq.auth.dto.JwtRequest;
 import com.pkmprojects.shoppiq.auth.dto.JwtResponse;
+import java.time.Instant;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.entity.user.User;
@@ -15,19 +16,35 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service handling authentication logic and JWT cookie creation.
+ * Service handling authentication logic and JWT cookie creation — the
+ * orchestration layer for the username/password login flow.
  *
- * <p>Orchestrates the complete login flow: credential validation via
- * {@link AuthenticationManager}, user lookup, token generation via
- * {@link JwtAuthenticationUtils}, and cookie creation via
- * {@link JwtCookieFactory}. The JWT is delivered exclusively as an
- * HttpOnly cookie, never in a response body.</p>
+ * <h3>Spring Security concepts demonstrated</h3>
+ * <ul>
+ *   <li><strong>AuthenticationManager</strong> — the central authentication
+ *       strategy. The service creates a {@link UsernamePasswordAuthenticationToken}
+ *       and passes it to {@code AuthenticationManager.authenticate()}, which
+ *       delegates to {@code DaoAuthenticationProvider} → {@link CustomUserDetailService}
+ *       → {@code PasswordEncoder} for credential verification.</li>
+ *   <li><strong>Account lockout pattern</strong> — tracks
+ *       {@code failedLoginAttempts} and locks the account after 5 failed
+ *       attempts by setting {@code lockoutTime}. This is a brute-force
+ *       protection mechanism implemented at the application layer.</li>
+ *   <li><strong>Remember-me via cookie Max-Age</strong> — instead of Spring
+ *       Security's {@code RememberMeServices} (which stores a persistent token),
+ *       this uses the JWT cookie's {@code Max-Age}: {@code -1} for session
+ *       cookie (expires on browser close) or a positive value for persistent
+ *       cookie (survives browser restart).</li>
+ *   <li><strong>Stateless logout</strong> — since there is no server-side
+ *       session, logout simply clears the JWT cookie. There is no session
+ *       to invalidate, making logout an idempotent, stateless operation.</li>
+ * </ul>
  *
- * <h4>Login flow</h4>
+ * <h3>Login flow</h3>
  * <pre>
  * POST /auth/login with username + password + rememberMe
  *       ↓
@@ -35,7 +52,7 @@ import java.time.LocalDateTime;
  *       ↓
  * authenticate() → AuthenticationManager validates credentials
  *       ↓
- * Load User create database
+ * Load User from database
  *       ↓
  * JwtAuthenticationUtils.generateToken(user, expiryMs)
  *       ↓
@@ -46,7 +63,7 @@ import java.time.LocalDateTime;
  * Cookie added to HttpServletResponse
  * </pre>
  *
- * <h4>Logout flow</h4>
+ * <h3>Logout flow</h3>
  * <pre>
  * POST /auth/logout
  *       ↓
@@ -57,8 +74,25 @@ import java.time.LocalDateTime;
  * Browser deletes the JWT cookie immediately
  * </pre>
  *
+ * <h3>Design patterns</h3>
+ * <ul>
+ *   <li><strong>Service layer pattern</strong> — encapsulates the complete login
+ *       workflow (authentication + token generation + cookie creation) behind a
+ *       single {@code login()} method called by the controller.</li>
+ *   <li><strong>Defense in depth</strong> — the service checks account lockout
+ *       <em>before</em> calling {@code AuthenticationManager.authenticate()},
+ *       providing an early rejection path that avoids unnecessary password hashing.</li>
+ *   <li><strong>Idempotent logout</strong> — clearing a cookie with {@code Max-Age=0}
+ *       is idempotent; calling {@code logout()} multiple times has no additional
+ *       effect.</li>
+ * </ul>
+ *
  * @see JwtAuthenticationUtils
  * @see JwtCookieFactory
+ * @see CustomUserDetailService
+ *
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 @Service
 public class AuthService {
@@ -66,21 +100,21 @@ public class AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
     private static final int MAX_FAILED_ATTEMPTS = 5;
 
-    @Value("${jwt.expiration}")
-    private long expirationTime;
-
-    @Value("${jwt.short-expiration}")
-    private long shortExpiration;
-
+    private final long expirationTime;
+    private final long shortExpiration;
     private final AuthenticationManager authManager;
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
     private final UserRepository userRepository;
     private final JwtCookieFactory jwtCookieFactory;
 
-    public AuthService(AuthenticationManager authManager,
+    public AuthService(@Value("${jwt.expiration}") long expirationTime,
+                       @Value("${jwt.short-expiration}") long shortExpiration,
+                       AuthenticationManager authManager,
                        JwtAuthenticationUtils jwtAuthenticationUtils,
                        UserRepository userRepository,
                        JwtCookieFactory jwtCookieFactory) {
+        this.expirationTime = expirationTime;
+        this.shortExpiration = shortExpiration;
         this.authManager = authManager;
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.userRepository = userRepository;
@@ -91,7 +125,7 @@ public class AuthService {
      * Validates credentials against Spring Security's authentication manager.
      *
      * @param username user's login name
-     * @param password plain-text password create the client
+     * @param password plain-text password from the client
      * @throws InvalidCredentialException if authentication fails
      */
     private void authenticate(String username, String password) {
@@ -104,24 +138,53 @@ public class AuthService {
         try {
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password));
-        } catch (AuthenticationException ex) {
+        } catch (AuthenticationException _) {
             if (user != null) {
-                int attempts = user.getFailedLoginAttempts() + 1;
-                user.setFailedLoginAttempts(attempts);
-                if (attempts >= MAX_FAILED_ATTEMPTS) {
-                    user.setLockoutTime(LocalDateTime.now());
-                    logger.warn("Account locked for user '{}' after {} failed attempts", username, attempts);
+                // Runs in REQUIRES_NEW so the increment commits even when the
+                // login ultimately fails (the caller's exception would roll back
+                // a REQUIRED transaction).
+                int updated = recordFailedLoginAttempt(user.getId());
+                if (updated == 0) {
+                    // Account is already locked out
+                    throw new InvalidCredentialException("Account is locked. Please try again later.");
                 }
-                userRepository.save(user);
             }
             throw new InvalidCredentialException("Invalid username or password");
         }
 
         if (user != null && user.getFailedLoginAttempts() > 0) {
+            resetFailedLoginAttempts(user.getId());
+        }
+    }
+
+    /**
+     * Atomically increments the failed login counter and locks the account
+     * when the threshold is reached.
+     *
+     * <p>Runs in a {@code REQUIRES_NEW} transaction so the increment is
+     * committed even when the surrounding login ultimately fails — without
+     * this, a thrown exception would roll back the counter.</p>
+     *
+     * @param userId the user whose attempts to record
+     * @return rows updated (0 = already locked, 1 = incremented)
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public int recordFailedLoginAttempt(Long userId) {
+        return userRepository.incrementFailedLoginAttemptsAndLockout(userId, MAX_FAILED_ATTEMPTS, Instant.now());
+    }
+
+    /**
+     * Resets the failed login counter and lockout timestamp after a successful login.
+     *
+     * @param userId the user whose counter to reset
+     */
+    @Transactional
+    public void resetFailedLoginAttempts(Long userId) {
+        userRepository.findById(userId).ifPresent(user -> {
             user.setFailedLoginAttempts(0);
             user.setLockoutTime(null);
             userRepository.save(user);
-        }
+        });
     }
 
     /**
@@ -136,12 +199,12 @@ public class AuthService {
      *                                     authenticated user cannot be re-loaded
      */
     public JwtResponse login(JwtRequest request, HttpServletResponse response) {
-        authenticate(request.getUsername(), request.getPassword());
+        authenticate(request.username(), request.password());
 
-        boolean rememberMe = Boolean.TRUE.equals(request.getRememberMe());
+        boolean rememberMe = Boolean.TRUE.equals(request.rememberMe());
         long expiryMs = rememberMe ? expirationTime : shortExpiration;
 
-        User user = userRepository.findUserByUsername(request.getUsername())
+        User user = userRepository.findUserByUsername(request.username())
                 .orElseThrow(() -> new InvalidCredentialException("Invalid username or password"));
 
         String token = jwtAuthenticationUtils.generateToken(user, expiryMs);

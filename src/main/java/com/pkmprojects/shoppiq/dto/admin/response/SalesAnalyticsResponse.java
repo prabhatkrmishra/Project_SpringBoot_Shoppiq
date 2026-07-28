@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Response DTO for admin sales analytics.
+ * <strong>Spring Boot Concept:</strong> Response DTO for admin sales analytics.
  *
  * <p>
  * This DTO provides comprehensive sales analytics data for the

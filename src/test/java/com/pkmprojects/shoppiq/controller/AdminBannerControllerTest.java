@@ -1,6 +1,6 @@
 package com.pkmprojects.shoppiq.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
@@ -61,7 +61,7 @@ class AdminBannerControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @MockitoBean
     private BannerService bannerService;
@@ -121,12 +121,13 @@ class AdminBannerControllerTest {
         }
 
         @Test
-        @DisplayName("Forwards to error page when not admin")
+        @DisplayName("Returns 403 ProblemDetail when not admin (API client)")
         @WithMockUser(roles = "CUSTOMER")
-        void findAll_forbidden() throws Exception {
+        void findAll_forbidden_returns403() throws Exception {
             mockMvc.perform(get("/api/admin/banners"))
-                    .andExpect(status().isOk())
-                    .andExpect(forwardedUrl("/error"));
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value(403))
+                    .andExpect(jsonPath("$.errorCode").value("AUTH-403-001"));
         }
     }
 

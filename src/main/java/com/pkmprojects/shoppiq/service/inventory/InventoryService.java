@@ -8,7 +8,30 @@ import com.pkmprojects.shoppiq.exception.general.inventory.StockConflictExceptio
 import java.util.List;
 
 /**
- * Contract for inventory stock operations.
+ * <strong>Spring Boot Concept:</strong> Contract for inventory stock operations.
+ *
+ * <h2>Role in Layered Architecture</h2>
+ * <p>
+ * This is a focused <strong>Service layer</strong> interface that encapsulates stock management
+ * as a reusable service. It is primarily consumed by {@code CheckoutServiceImpl} during
+ * order placement.
+ * </p>
+ *
+ * <h2>Why a Separate Inventory Service?</h2>
+ * <ul>
+ *   <li>Encapsulates the "reduce stock" side effect of placing an order.</li>
+ *   <li>Provides a single place for stock validation and optimistic locking handling.</li>
+ *   <li>Keeps the checkout service focused on orchestration, not inventory math.</li>
+ * </ul>
+ *
+ * <h2>Responsibilities</h2>
+ * <ul>
+ *     <li>Validates that requested quantity does not exceed available stock.</li>
+ *     <li>Reduces stock atomically for all items in a single transaction.</li>
+ *     <li>Restores stock when orders are cancelled or returned.</li>
+ *     <li>Wraps {@code OptimisticLockingFailureException} into a domain
+ *         {@link StockConflictException} for consistent error handling.</li>
+ * </ul>
  *
  * <p>Encapsulates stock validation and reduction so that checkout
  * and other order workflows do not reach directly into the
@@ -32,7 +55,7 @@ import java.util.List;
  *         cleared, ensuring stock is decremented in the same transaction.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.4.0
  */
 public interface InventoryService {

@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Response DTO for the admin dashboard summary cards.
+ * <strong>Spring Boot Concept:</strong> Response DTO for the admin dashboard summary cards.
  *
  * <p>
  * This DTO aggregates key metrics displayed at the top of the

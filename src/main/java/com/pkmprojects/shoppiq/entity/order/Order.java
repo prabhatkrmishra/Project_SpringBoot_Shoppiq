@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a confirmed customer order using the snapshot model.
+ * <strong>Spring Boot Concept:</strong> Represents a confirmed customer order using the snapshot model.
  *
  * <p>
  * Product name and price are snapshotted at purchase time inside
@@ -25,7 +25,40 @@ import java.util.List;
  * if products change later.
  * </p>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>Snapshot pattern</strong> — {@link OrderItem} stores
+ *         {@code itemNameSnapshot} and {@code unitPriceSnapshot} copied from
+ *         the catalog at checkout time. The shipping address is also
+ *         snapshotted via {@link OrderAddressSnapshot}. This ensures
+ *         historical orders remain valid even if products or addresses are
+ *         later edited or deleted.</li>
+ *     <li><strong>{@code @Embedded} + {@code @AttributeOverrides}</strong>
+ *         — An embeddable object ({@code OrderAddressSnapshot}) is inlined
+ *         into the {@code orders} table with custom column name prefixes
+ *         ({@code shipping_*}) via {@code @AttributeOverrides}.</li>
+ *     <li><strong>Denormalized promo code snapshot</strong> — The
+ *         {@code promoCodeSnapshot} string is stored directly on the order,
+ *         in addition to the FK to {@link PromoCode}. This provides a
+ *         human-readable value for display without requiring a JOIN on every
+ *         order history query.</li>
+ *     <li><strong>Monetary value precision</strong> — All financial fields
+ *         ({@code subtotal}, {@code grandTotal}, etc.) use
+ *         {@code BigDecimal} with explicit {@code precision} and
+ *         {@code scale} in {@code @Column} to avoid floating-point rounding
+ *         errors.</li>
+ *     <li><strong>Enums for status tracking</strong> — {@link OrderStatus},
+ *         {@link PaymentStatus}, {@link DeliveryType}, and
+ *         {@link PaymentMethod} are all stored as {@code @Enumerated(STRING)}
+ *         for readability in the database.</li>
+ *     <li><strong>{@code @OneToMany(cascade = ALL, orphanRemoval = true)}</strong>
+ *         — OrderItems are children of the Order; cascade ensures they are
+ *         persisted/removed with the parent.</li>
+ *     <li><strong>{@code addOrderItem()} helper</strong> — Maintains the
+ *         bidirectional relationship consistency.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

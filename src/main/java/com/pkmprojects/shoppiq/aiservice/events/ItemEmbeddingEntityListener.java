@@ -6,7 +6,7 @@ import jakarta.persistence.PostUpdate;
 import jakarta.persistence.PreRemove;
 
 /**
- * JPA entity listener that publishes {@link ProductEmbeddingEvent}s whenever a
+ * <strong>Spring Boot Concept:</strong> JPA entity listener that publishes {@link ProductEmbeddingEvent}s whenever a
  * product is created, updated, or deleted.
  *
  * <p>

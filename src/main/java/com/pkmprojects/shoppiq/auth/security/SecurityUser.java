@@ -12,31 +12,51 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
- * Spring Security adapter that wraps a {@link User} entity.
+ * <strong>Spring Boot Concept:</strong> Spring Security adapter that wraps a {@link User} entity as a
+ * {@link UserDetails} object.
  *
- * <p>Decouples the domain {@link User} from Spring Security's
- * {@link UserDetails} interface. The entity remains a pure JPA
- * aggregate while this adapter translates it for the security
- * infrastructure.</p>
- *
- * <h2>Design</h2>
+ * <h3>Spring Security concepts demonstrated</h3>
  * <ul>
- *     <li>Immutable wrapper — does not modify the wrapped {@link User}.</li>
- *     <li>Delegates account-status queries ({@code isAccountNonLocked},
- *         {@code isEnabled}, etc.) to the entity.</li>
- *     <li>Builds {@link GrantedAuthority} instances from the user's
- *         {@link Role} set.</li>
+ *   <li><strong>UserDetails interface</strong> — the core contract that Spring
+ *       Security uses to represent a principal. Every authenticated user is
+ *       represented as a {@code UserDetails} somewhere in the
+ *       {@link org.springframework.security.core.Authentication} object.</li>
+ *   <li><strong>Adapter / Wrapper pattern</strong> — decouples the JPA entity
+ *       ({@link User}) from the security framework. The entity remains a pure
+ *       domain object while this adapter translates it for the security
+ *       infrastructure, following the Single Responsibility Principle.</li>
+ *   <li><strong>GrantedAuthority mapping</strong> — translates the entity's
+ *       {@link com.pkmprojects.shoppiq.entity.role.Role} set into Spring
+ *       Security {@link org.springframework.security.core.GrantedAuthority}
+ *       objects (e.g., {@code "ROLE_CUSTOMER"}, {@code "ROLE_ADMIN"}).</li>
+ *   <li><strong>Account status delegation</strong> — {@link #isAccountNonLocked()}
+ *       and {@link #isEnabled()} delegate to the entity, enabling database-driven
+ *       account locking and disabling without modifying the security adapter.</li>
  * </ul>
  *
- * <h2>Usage in Controllers</h2>
- * <p>Controllers inject the domain {@link User} directly via SpEL:</p>
- * <pre>
- * &#64;GetMapping("/profile")
- * public ResponseEntity&lt;UserResponse&gt; getProfile(
- *         &#64;AuthenticationPrincipal(expression = "user") User user) { ... }
- * </pre>
+ * <h3>Authentication flow</h3>
+ * <ul>
+ *   <li><b>Password login:</b> {@link com.pkmprojects.shoppiq.auth.service.CustomUserDetailService}
+ *       creates a {@code SecurityUser} via {@code loadUserByUsername()}.
+ *       {@code DaoAuthenticationProvider} uses it to verify the password.</li>
+ *   <li><b>JWT authentication:</b> {@link com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter}
+ *       creates a {@code SecurityUser} directly from the database entity and
+ *       wraps it in a {@link org.springframework.security.authentication.UsernamePasswordAuthenticationToken}.</li>
+ *   <li><b>Controller injection:</b> controllers access the domain {@link User}
+ *       via SpEL: {@code @AuthenticationPrincipal(expression = "user") User user}.</li>
+ * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Design patterns</h3>
+ * <ul>
+ *   <li><strong>Adapter pattern</strong> — adapts {@link User} → {@link UserDetails}
+ *       without modifying either interface.</li>
+ *   <li><strong>Delegation</strong> — account-status methods delegate to the
+ *       entity, keeping the security logic in the domain layer.</li>
+ *   <li><strong>Immutable wrapper</strong> — the wrapped {@link User} is
+ *       accessible via {@code @Getter} but the adapter does not modify it.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @see com.pkmprojects.shoppiq.auth.service.CustomUserDetailService
  * @since 1.4.0
  */

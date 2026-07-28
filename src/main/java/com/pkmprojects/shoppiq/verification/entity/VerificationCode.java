@@ -6,18 +6,24 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
- * Stores verification codes for email verification and password reset.
+ * <strong>Spring Boot Concept:</strong> JPA entity storing verification codes for email verification and password reset.
+ *
+ * <p><b>How it fits:</b> Supports the user authentication workflow —
+ * users must verify their email before they can access AI chat features.
+ * Each code is single-use, 6-digit numeric, expires after
+ * {@link #CODE_VALIDITY_MINUTES} minutes, and allows a maximum of
+ * {@link #MAX_ATTEMPTS} failed attempts before invalidation.</p>
  *
  * <p>
- * Each code is single-use and expires after a configurable duration.
- * The code is linked to a user and an email type to support multiple
+ * Each code is linked to a user and an email type to support multiple
  * verification flows.
  * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity
@@ -68,7 +74,7 @@ public class VerificationCode extends AuditableEntity {
      * When the code expires.
      */
     @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
 
     /**
      * Whether the code has been used.
@@ -90,7 +96,7 @@ public class VerificationCode extends AuditableEntity {
      * @return true if valid
      */
     public boolean isValid() {
-        return !used && attempts < MAX_ATTEMPTS && LocalDateTime.now().isBefore(expiresAt);
+        return !used && attempts < MAX_ATTEMPTS && Instant.now().isBefore(expiresAt);
     }
 
     /**

@@ -6,7 +6,7 @@ import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import java.math.BigDecimal;
 
 /**
- * Admin-facing product response DTO.
+ * <strong>Spring Boot Concept:</strong> Admin-facing product response DTO.
  *
  * <p>Provides product information including seller details and
  * publishing status for admin product management.</p>

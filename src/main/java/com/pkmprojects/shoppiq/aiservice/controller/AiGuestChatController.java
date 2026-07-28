@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * REST controller for guest (unauthenticated) AI chat conversations.
+ * <strong>Spring Boot Concept:</strong> REST controller for guest (unauthenticated) AI chat conversations.
  *
  * <p>
  * Provides endpoints for guest users to interact with the AI assistant without

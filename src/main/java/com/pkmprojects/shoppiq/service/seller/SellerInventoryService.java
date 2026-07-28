@@ -5,7 +5,7 @@ import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * Business contract for seller inventory management.
+ * <strong>Spring Boot Concept:</strong> Business contract for seller inventory management.
  *
  * <p>
  * Provides inventory-specific operations for sellers, including viewing
@@ -22,7 +22,7 @@ import com.pkmprojects.shoppiq.entity.user.User;
  *     <li>Enforce seller-level preconditions (ACTIVE, not SUSPENDED).</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public interface SellerInventoryService {

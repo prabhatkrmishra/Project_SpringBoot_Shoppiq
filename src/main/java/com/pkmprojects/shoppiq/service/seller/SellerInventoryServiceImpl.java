@@ -16,13 +16,14 @@ import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException
 import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsWriteService;
+import com.pkmprojects.shoppiq.config.InventoryConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
- * Default implementation of {@link SellerInventoryService}.
+ * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerInventoryService}.
  *
  * <p>
  * Provides inventory management for sellers. Enforces seller preconditions
@@ -30,7 +31,7 @@ import java.util.List;
  * allowing stock operations.
  * </p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Service
@@ -52,6 +53,14 @@ public class SellerInventoryServiceImpl implements SellerInventoryService {
         this.itemDetailsWriteService = itemDetailsWriteService;
     }
 
+    /**
+     * Retrieves a paginated list of the seller's inventory.
+     *
+     * @param user authenticated user
+     * @param page zero-based page index
+     * @param size page size
+     * @return paginated inventory responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<SellerInventoryResponse> getInventory(User user, int page, int size) {
@@ -60,12 +69,20 @@ public class SellerInventoryServiceImpl implements SellerInventoryService {
         return PageResponse.of(itemPage, SellerInventoryResponse::from);
     }
 
+    /**
+     * Retrieves products with stock below the low-stock threshold for the seller.
+     *
+     * @param user authenticated user
+     * @param page zero-based page index (unused, all results returned as single page)
+     * @param size page size (unused)
+     * @return paginated low-stock inventory responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<SellerInventoryResponse> getLowStockProducts(User user, int page, int size) {
         Seller seller = findActiveSeller(user);
         List<SellerInventoryResponse> content = itemDetailsLookupService
-                .findLowStockProductsBySellerId(LOW_STOCK_THRESHOLD, seller.getId())
+                .findLowStockProductsBySellerId(InventoryConstants.LOW_STOCK_THRESHOLD, seller.getId())
                 .stream()
                 .map(ItemDetails::getItem)
                 .map(SellerInventoryResponse::from)
@@ -73,6 +90,14 @@ public class SellerInventoryServiceImpl implements SellerInventoryService {
         return new PageResponse<>(content, 0, content.size(), content.size(), 1, true, true);
     }
 
+    /**
+     * Retrieves products with zero stock for the seller.
+     *
+     * @param user authenticated user
+     * @param page zero-based page index (unused, all results returned as single page)
+     * @param size page size (unused)
+     * @return paginated out-of-stock inventory responses
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<SellerInventoryResponse> getOutOfStockProducts(User user, int page, int size) {
@@ -86,6 +111,20 @@ public class SellerInventoryServiceImpl implements SellerInventoryService {
         return new PageResponse<>(content, 0, content.size(), content.size(), 1, true, true);
     }
 
+    /**
+     * Adjusts the stock quantity for a seller's product with ownership verification.
+     *
+     * <p>The adjustment value can be positive (add stock) or negative (remove stock).
+     * Validates that the resulting quantity is non-negative.</p>
+     *
+     * @param itemId   item ID
+     * @param quantity quantity adjustment (positive or negative)
+     * @param reason   reason for the adjustment
+     * @param user     authenticated user
+     * @return updated inventory response
+     * @throws ItemNotFoundException         if the item does not exist or does not belong to the seller
+     * @throws ItemStockNegativeException    if the adjustment would result in negative stock
+     */
     @Override
     public SellerInventoryResponse adjustStock(Long itemId, int quantity, String reason, User user) {
         Seller seller = findActiveSeller(user);
@@ -93,10 +132,11 @@ public class SellerInventoryServiceImpl implements SellerInventoryService {
                 .orElseThrow(() -> ItemNotFoundException.id(itemId));
 
         ItemDetails details = item.getItemDetails();
-        int newQuantity = quantity;
+        int currentQuantity = details.getStockQuantity();
+        int newQuantity = currentQuantity + quantity;
 
         if (newQuantity < 0) {
-            throw ItemStockNegativeException.forAdjustment(details.getStockQuantity(), quantity);
+            throw ItemStockNegativeException.forAdjustment(currentQuantity, quantity);
         }
 
         details.setStockQuantity(newQuantity);
@@ -104,8 +144,6 @@ public class SellerInventoryServiceImpl implements SellerInventoryService {
 
         return SellerInventoryResponse.from(item);
     }
-
-    private static final int LOW_STOCK_THRESHOLD = 5;
 
     /**
      * Finds the seller associated with the given user and validates

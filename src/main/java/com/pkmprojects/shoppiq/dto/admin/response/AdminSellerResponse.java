@@ -5,12 +5,21 @@ import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
- * Admin-facing seller response DTO.
+ * <strong>Spring Boot Concept:</strong> Admin-facing seller response DTO.
  *
- * @author PrabhatKrMishra
+ * <p>Provides a comprehensive view of a seller account for the admin panel,
+ * including business details, verification status, commission rate, and
+ * associated user information.</p>
+ *
+ * <p><b>Pattern:</b> This response DTO flattens the {@code Seller → User}
+ * relationship into a single record, exposing the user's name and email
+ * alongside seller-specific fields. The static {@link #fromEntity(com.pkmprojects.shoppiq.entity.seller.Seller) fromEntity()}
+ * method handles null-safe traversal of the entity graph.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AdminSellerResponse(
@@ -41,7 +50,7 @@ public record AdminSellerResponse(
 
         BigDecimal rating,
 
-        LocalDateTime joinedAt
+        Instant joinedAt
 
 ) {
 

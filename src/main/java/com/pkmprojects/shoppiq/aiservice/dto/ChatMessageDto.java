@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.aiservice.dto;
 import java.time.Instant;
 
 /**
- * DTO representing a single message within an AI chat conversation.
+ * <strong>Spring Boot Concept:</strong> DTO representing a single message within an AI chat conversation.
  *
  * <p>
  * Used in both the conversation detail view (admin) and the user-facing

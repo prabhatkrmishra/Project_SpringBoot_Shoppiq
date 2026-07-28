@@ -9,7 +9,7 @@ import lombok.*;
 import java.time.Instant;
 
 /**
- * Records a single usage of a {@link PromoCode} by a {@link User} on an {@link Order}.
+ * <strong>Spring Boot Concept:</strong> Records a single usage of a {@link PromoCode} by a {@link User} on an {@link Order}.
  *
  * <p>This entity enables per-user usage tracking and prevents the same order
  * from applying multiple promo codes.</p>
@@ -29,7 +29,24 @@ import java.time.Instant;
  *     code per order.</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>Audit/log entity</strong> — {@code PromoCodeUsage} is a
+ *         classic join/audit entity that records a fact (a promo code was
+ *         used) with a timestamp. It connects three other entities:
+ *         {@link PromoCode}, {@link User}, and {@link Order}.</li>
+ *     <li><strong>Three {@code @ManyToOne} relationships</strong> — Each FK
+ *         links back to a different entity. All use {@code FetchType.LAZY}
+ *         and {@code optional = false} to enforce mandatory relationships.</li>
+ *     <li><strong>Unique constraint on order_id</strong> — Enforces the
+ *         business rule that at most one promo code can be applied to a
+ *         single order.</li>
+ *     <li><strong>Immutable once created</strong> — The entity has no
+ *         {@code update()} method or setter-based mutators for business
+ *         fields, making it effectively append-only for audit integrity.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity
@@ -39,6 +56,10 @@ import java.time.Instant;
                 @UniqueConstraint(
                         name = "uk_promo_usage_order",
                         columnNames = "order_id"
+                ),
+                @UniqueConstraint(
+                        name = "uk_promo_usage_user",
+                        columnNames = {"promo_code_id", "user_id"}
                 )
         }
 )

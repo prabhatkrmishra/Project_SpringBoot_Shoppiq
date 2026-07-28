@@ -9,7 +9,6 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -24,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Keeps the Qdrant product vector store synchronised with the Shoppiq catalog.
+ * <strong>Spring Boot Concept:</strong> Keeps the Qdrant product vector store synchronised with the Shoppiq catalog.
  *
  * <p>
  * On startup it performs an initial reindex when explicitly enabled or when the
@@ -38,7 +37,6 @@ import java.util.List;
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "shoppiq.ai.enabled", havingValue = "true", matchIfMissing = false)
-@RequiredArgsConstructor
 public class ProductCatalogIngester implements CommandLineRunner {
 
     private static final int PAGE_SIZE = 100;
@@ -46,12 +44,20 @@ public class ProductCatalogIngester implements CommandLineRunner {
     private final ItemLookupService itemLookupService;
     private final EmbeddingModel embeddingModel;
     private final EmbeddingStore<TextSegment> embeddingStore;
+    private final boolean reindexOnStartup;
+    private final String collectionName;
 
-    @Value("${shoppiq.ai.rag.reindex-on-startup:false}")
-    private boolean reindexOnStartup;
-
-    @Value("${langchain4j.qdrant.collection-name:shoppiq_products}")
-    private String collectionName;
+    public ProductCatalogIngester(ItemLookupService itemLookupService,
+                                  EmbeddingModel embeddingModel,
+                                  EmbeddingStore<TextSegment> embeddingStore,
+                                  @Value("${shoppiq.ai.rag.reindex-on-startup:false}") boolean reindexOnStartup,
+                                  @Value("${langchain4j.qdrant.collection-name:shoppiq_products}") String collectionName) {
+        this.itemLookupService = itemLookupService;
+        this.embeddingModel = embeddingModel;
+        this.embeddingStore = embeddingStore;
+        this.reindexOnStartup = reindexOnStartup;
+        this.collectionName = collectionName;
+    }
 
     @Override
     public void run(String... args) {
@@ -157,15 +163,15 @@ public class ProductCatalogIngester implements CommandLineRunner {
                 ? details.getStockQuantity() : 0;
         String categoryName = category != null ? category.getName() : "Uncategorized";
 
-        String text = String.format(
-                "Product: %s%nDescription: %s%nPrice: $%.2f%nCategory: %s%nBrand: %s%nStock: %d units",
-                orEmpty(item.getName()),
-                orEmpty(item.getDescription()),
-                price.doubleValue(),
-                categoryName,
-                details != null ? orEmpty(details.getBrand()) : "",
-                stock
-        );
+        String text = "Product: %s%nDescription: %s%nPrice: $%.2f%nCategory: %s%nBrand: %s%nStock: %d units"
+                .formatted(
+                        orEmpty(item.getName()),
+                        orEmpty(item.getDescription()),
+                        price.doubleValue(),
+                        categoryName,
+                        details != null ? orEmpty(details.getBrand()) : "",
+                        stock
+                );
 
         Metadata metadata = new Metadata()
                 .put("itemId", String.valueOf(item.getId()))
@@ -190,15 +196,15 @@ public class ProductCatalogIngester implements CommandLineRunner {
         int stock = event.getStockQuantity();
         String categoryName = event.getCategoryName() != null ? event.getCategoryName() : "Uncategorized";
 
-        String text = String.format(
-                "Product: %s%nDescription: %s%nPrice: $%.2f%nCategory: %s%nBrand: %s%nStock: %d units",
-                orEmpty(event.getName()),
-                orEmpty(event.getDescription()),
-                price.doubleValue(),
-                categoryName,
-                orEmpty(event.getBrand()),
-                stock
-        );
+        String text = "Product: %s%nDescription: %s%nPrice: $%.2f%nCategory: %s%nBrand: %s%nStock: %d units"
+                .formatted(
+                        orEmpty(event.getName()),
+                        orEmpty(event.getDescription()),
+                        price.doubleValue(),
+                        categoryName,
+                        orEmpty(event.getBrand()),
+                        stock
+                );
 
         Metadata metadata = new Metadata()
                 .put("itemId", String.valueOf(event.getItemId()))

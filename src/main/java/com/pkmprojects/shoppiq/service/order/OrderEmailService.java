@@ -15,9 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Service for sending order lifecycle emails.
+ * <strong>Spring Boot Concept:</strong> Service for sending order lifecycle emails.
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Slf4j
@@ -28,10 +28,14 @@ public class OrderEmailService {
     private final EmailService emailService;
 
     /**
-     * Sends an order status update email to the customer.
+     * Sends an order status update email to the customer with status-specific subject and message.
      *
-     * @param order     the order
-     * @param newStatus the new status
+     * <p>Resolves the subject line and message body based on the new status,
+     * formats shipping address for delivery notifications, and delegates to
+     * the email service using the {@code order-update} template.</p>
+     *
+     * @param order     the order entity
+     * @param newStatus the target order status for the notification
      */
     public void sendOrderStatusEmail(Order order, OrderStatus newStatus) {
         User user = order.getUser();

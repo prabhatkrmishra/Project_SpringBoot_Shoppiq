@@ -6,13 +6,31 @@ import jakarta.persistence.Embeddable;
 import lombok.*;
 
 /**
- * Immutable snapshot of shipping address fields captured at checkout time.
+ * <strong>Spring Boot Concept:</strong> Immutable snapshot of shipping address fields captured at checkout time.
  *
  * <p>Stored directly on the {@link Order} so that historical orders
  * remain accurate even if the customer later edits or deletes their
  * address book entry.</p>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @Embeddable}</strong> — JPA annotation that allows
+ *         this class to be embedded as a value object inside another entity's
+ *         table. Unlike an entity, an embeddable has no identity of its own;
+ *         its columns are part of the owning entity's row.</li>
+ *     <li><strong>Snapshot pattern</strong> — Fields are copied at order time
+ *         from a live {@link Address} entity into this embeddable. This
+ *         decouples the historical record from the current state of the
+ *         address book, a critical requirement for e-commerce auditing.</li>
+ *     <li><strong>No-arg constructor + all-args constructor + builder</strong>
+ *         — Standard Lombok setup required for JPA embeddables: JPA needs the
+ *         no-arg constructor, while application code uses the builder.</li>
+ *     <li><strong>{@code static from(Address)} factory method</strong>
+ *         — Provides a clean conversion from the live entity to the snapshot
+ *         value object, encapsulating the field-mapping logic.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Embeddable

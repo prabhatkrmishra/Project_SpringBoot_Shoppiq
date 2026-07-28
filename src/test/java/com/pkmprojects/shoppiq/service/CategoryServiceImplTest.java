@@ -316,7 +316,7 @@ class CategoryServiceImplTest {
             List<CategoryResponse> result = categoryService.getAll();
 
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).name()).isEqualTo("Electronics");
+            assertThat(result.getFirst().name()).isEqualTo("Electronics");
             assertThat(result.get(1).name()).isEqualTo("Fashion");
         }
 
@@ -357,7 +357,7 @@ class CategoryServiceImplTest {
             PageResponse<CategoryResponse> result = categoryService.getAll(0, 20);
 
             assertThat(result.content()).hasSize(2);
-            assertThat(result.content().get(0).name()).isEqualTo("Electronics");
+            assertThat(result.content().getFirst().name()).isEqualTo("Electronics");
             assertThat(result.content().get(1).name()).isEqualTo("Fashion");
             assertThat(result.page()).isEqualTo(0);
             assertThat(result.size()).isEqualTo(20);

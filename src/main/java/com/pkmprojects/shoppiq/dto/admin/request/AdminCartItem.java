@@ -4,17 +4,25 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Inner item DTO used by {@link BulkCartRequest} for bulk cart additions.
+ * <strong>Spring Boot Concept:</strong> Inner item DTO used by {@link BulkCartRequest} for bulk cart additions.
  *
  * <p>
  * Each item specifies a target user, a product variant (item details) ID,
  * and the quantity to add.
  * </p>
  *
+ * <p><b>Validation patterns:</b></p>
+ * <ul>
+ *   <li>{@code @NotNull} — ensures required IDs are always provided</li>
+ *   <li>{@code @Min(1)} — ensures quantity is at least 1</li>
+ * </ul>
+ * <p>These Jakarta Validation annotations are evaluated automatically by
+ * Spring Boot before the controller method executes.</p>
+ *
  * @param userId        ID of the existing user whose cart will receive the item
  * @param itemDetailsId ID of the item details (variant) to add
  * @param quantity      quantity to add (must be at least 1)
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AdminCartItem(

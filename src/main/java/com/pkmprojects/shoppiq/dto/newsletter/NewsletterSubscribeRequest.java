@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Request DTO for newsletter subscription.
+ * <strong>Spring Boot Concept:</strong> Request DTO for newsletter subscription.
  *
  * @author PrabhatKrMishra
  * @since 1.0.0

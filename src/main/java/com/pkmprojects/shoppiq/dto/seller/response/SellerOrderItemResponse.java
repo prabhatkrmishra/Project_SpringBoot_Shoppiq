@@ -5,7 +5,7 @@ import com.pkmprojects.shoppiq.entity.order.OrderItem;
 import java.math.BigDecimal;
 
 /**
- * Seller-facing order item response DTO.
+ * <strong>Spring Boot Concept:</strong> Seller-facing order item response DTO.
  *
  * <p>Shows only the line items that belong to the seller's products
  * within a multi-seller order.</p>

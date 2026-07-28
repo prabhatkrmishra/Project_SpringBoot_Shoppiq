@@ -5,7 +5,7 @@ import com.pkmprojects.shoppiq.entity.review.ItemReview;
 import java.util.List;
 
 /**
- * Read-only review query facade for the AI chat assistant.
+ * <strong>Spring Boot Concept:</strong> Read-only review query facade for the AI chat assistant.
  *
  * <p>Decouples {@code ShoppiqTools} from {@code ItemReviewRepository},
  * providing a narrow, AI-specific query surface that returns

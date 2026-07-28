@@ -13,12 +13,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
- * Default implementation of {@link VerificationCodeService}.
+ * <strong>Spring Boot Concept:</strong> Default implementation of {@link VerificationCodeService}.
  *
- * @author PrabhatKrMishra
+ * <p><b>How it fits:</b> Generates cryptographically random 6-digit
+ * codes for email verification and password reset. Uses an atomic
+ * mark-used query to prevent race conditions during verification.
+ * Existing unused codes are invalidated when a new code is generated
+ * for the same user and type.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Slf4j
@@ -38,7 +45,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         verificationCodeRepository.markAllUnusedCodesAsUsed(user.getId(), emailType);
 
         String code = generateNumericCode();
-        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(VerificationCode.CODE_VALIDITY_MINUTES);
+        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(VerificationCode.CODE_VALIDITY_MINUTES));
 
         VerificationCode verificationCode = VerificationCode.builder()
                 .user(user)
@@ -66,7 +73,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
                     ErrorCode.VERIFICATION_CODE_INVALID, "Verification code has already been used.");
         }
 
-        if (LocalDateTime.now().isAfter(verificationCode.getExpiresAt())) {
+        if (Instant.now().isAfter(verificationCode.getExpiresAt())) {
             throw new VerificationCodeException(
                     ErrorCode.VERIFICATION_CODE_EXPIRED, "Verification code has expired.");
         }
@@ -80,15 +87,24 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
                     ErrorCode.VERIFICATION_CODE_MAX_ATTEMPTS, "Maximum verification attempts exceeded.");
         }
 
-        verificationCode.markUsed();
-        verificationCodeRepository.save(verificationCode);
+        int updated = verificationCodeRepository.markUsedAtomically(verificationCode.getId());
+        if (updated == 0) {
+            throw new VerificationCodeException(
+                    ErrorCode.VERIFICATION_CODE_INVALID, "Verification code has already been used.");
+        }
+
         log.debug("Verification code validated successfully for user={}, type={}", userId, emailType);
 
         return true;
     }
 
+    /**
+     * Generates a cryptographically random numeric code of fixed length.
+     *
+     * @return a zero-padded numeric string
+     */
     private String generateNumericCode() {
         int code = SECURE_RANDOM.nextInt(CODE_UPPER_BOUND);
-        return String.format("%0" + CODE_LENGTH + "d", code);
+        return ("%0" + CODE_LENGTH + "d").formatted(code);
     }
 }

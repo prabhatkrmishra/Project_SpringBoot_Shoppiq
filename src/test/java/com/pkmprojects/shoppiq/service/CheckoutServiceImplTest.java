@@ -488,7 +488,7 @@ class CheckoutServiceImplTest {
             List<OrderResponse> result = checkoutService.getMyOrders(user);
 
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).id()).isEqualTo(1L);
+            assertThat(result.getFirst().id()).isEqualTo(1L);
             assertThat(result.get(1).id()).isEqualTo(2L);
         }
 

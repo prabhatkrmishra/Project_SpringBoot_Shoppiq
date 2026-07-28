@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * filter chain — including the real {@link JwtAuthenticationFilter} and
  * {@link JwtAuthenticationUtils} — rather than mocking security around the
  * edges. This specifically exercises the Milestone 1.4 fix where JWT failures
- * are written directly create the filter instead of being thrown past the
+ * are written directly from the filter instead of being thrown past the
  * point where anything could catch them (see {@link JwtAuthenticationFilter}
  * class-level documentation), and confirms that authentication/authorization
  * failures raised by Spring Security's own filters still reach
@@ -147,11 +147,13 @@ class SecurityExceptionIntegrationTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         /* GET /roles/all is restricted to ROLE_ADMIN in SecurityConfig via URL-level rules.
-         * A CUSTOMER-role user triggers AccessDeniedException -> ShoppiqAccessDeniedHandler -> /error.
+         * A CUSTOMER-role user triggers AccessDeniedException -> ShoppiqAccessDeniedHandler
+         * writes 403 ProblemDetail directly (API client without Accept: text/html).
          */
         mockMvc.perform(get("/roles/all").cookie(new Cookie("jwt", token)))
-                .andExpect(status().isOk())
-                .andExpect(forwardedUrl("/error"));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.errorCode").value("AUTH-403-001"));
     }
 
     @RestController

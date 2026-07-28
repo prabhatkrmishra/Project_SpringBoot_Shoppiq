@@ -8,7 +8,16 @@ import java.time.Instant;
 /**
  * Response DTO for a contact message.
  *
- * @author PrabhatKrMishra
+ * <p>Returned when a user submits a contact form (confirming receipt) and
+ * when admins view submitted messages. Includes a {@code status} field
+ * ({@link com.pkmprojects.shoppiq.enums.ContactMessageStatus}) for
+ * tracking the message's state (OPEN, IN_PROGRESS, RESOLVED).</p>
+ *
+ * <p><b>Mapping pattern:</b> The {@link #fromEntity(com.pkmprojects.shoppiq.entity.contact.ContactMessage) fromEntity()}
+ * method maps the JPA entity to this DTO — a simple, centralized conversion
+ * that keeps the entity layer internal.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record ContactMessageResponse(

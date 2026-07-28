@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Inner item DTO used by {@link BulkReviewRequest} for bulk review creation.
+ * <strong>Spring Boot Concept:</strong> Inner item DTO used by {@link BulkReviewRequest} for bulk review creation.
  *
  * <p>
  * Each item specifies the target user, the item being reviewed, and the

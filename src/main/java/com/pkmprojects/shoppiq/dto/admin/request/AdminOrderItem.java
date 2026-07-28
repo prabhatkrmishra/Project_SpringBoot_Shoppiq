@@ -12,6 +12,12 @@ import jakarta.validation.constraints.NotNull;
  * contents, following the same checkout flow as the customer-facing endpoint.
  * </p>
  *
+ * <p><b>Validation pattern:</b> {@code @NotNull} on the enum field
+ * {@code paymentMethod} ensures the client always provides a valid
+ * {@link com.pkmprojects.shoppiq.enums.PaymentMethod} value. Spring Boot
+ * automatically deserializes JSON strings to enums and rejects invalid
+ * values with a clear error.</p>
+ *
  * <h2>Design Notes</h2>
  * <ul>
  *     <li>Users with missing or empty carts will be skipped.</li>
@@ -21,7 +27,7 @@ import jakarta.validation.constraints.NotNull;
  * @param userId        ID of the existing user who will own the order
  * @param addressId     ID of an existing address belonging to that user
  * @param paymentMethod payment method for the order
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AdminOrderItem(

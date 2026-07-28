@@ -20,23 +20,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller for seller order management.
+ * <strong>Spring Boot Concept:</strong> REST controller for seller order management.
  *
- * <h2>Responsibilities</h2>
+ * <p>Exposes endpoints for sellers to list, view, and update the status of
+ * orders containing their products. All endpoints require SELLER or ADMIN
+ * role and resolve the seller from the authenticated principal.</p>
+ *
+ * <p>Key design points:
  * <ul>
- *     <li>List orders containing the authenticated seller's products.</li>
- *     <li>Retrieve a specific order filtered to the seller's line items.</li>
- *     <li>Update order status when all items belong to the seller.</li>
+ *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
+ *   <li><strong>Seller-scoped</strong> — orders are filtered to only those containing the seller's products.</li>
  * </ul>
+ * </p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>All endpoints require SELLER or ADMIN role.</li>
- *     <li>The authenticated user is injected via {@link AuthenticationPrincipal}.</li>
- *     <li>Ownership is enforced at the service layer.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
+ * @see SellerOrderService
  * @since 1.0.0
  */
 @Validated
@@ -52,6 +50,14 @@ public class SellerOrderController {
         this.pagination = pagination;
     }
 
+    /**
+     * Returns a paginated list of orders containing the authenticated seller's products.
+     *
+     * @param currentUser the authenticated seller
+     * @param page        zero-based page index
+     * @param size        page size (capped by {@code pagination.maxPageSize()})
+     * @return 200 OK with page of order responses
+     */
     @GetMapping
     public ResponseEntity<PageResponse<SellerOrderResponse>> getOrders(
             @AuthenticationPrincipal(expression = "user") User currentUser,
@@ -62,6 +68,13 @@ public class SellerOrderController {
         return ResponseEntity.ok(orders);
     }
 
+    /**
+     * Returns a single order by ID, filtered to the seller's line items.
+     *
+     * @param id          the order ID (must be positive)
+     * @param currentUser the authenticated seller
+     * @return 200 OK with the (filtered) order response
+     */
     @GetMapping("/{id}")
     public ResponseEntity<SellerOrderResponse> getOrder(
             @PathVariable @Positive(message = "Order id must be a positive number") Long id,
@@ -70,6 +83,14 @@ public class SellerOrderController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Updates the status of an order when all items belong to the seller.
+     *
+     * @param id          the order ID (must be positive)
+     * @param status      the new order status
+     * @param currentUser the authenticated seller
+     * @return 200 OK with the updated order response
+     */
     @PutMapping("/{id}/status")
     public ResponseEntity<SellerOrderResponse> updateOrderStatus(
             @PathVariable @Positive(message = "Order id must be a positive number") Long id,

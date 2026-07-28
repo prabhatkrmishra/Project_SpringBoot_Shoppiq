@@ -10,7 +10,7 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 
 /**
- * Service interface for the AI chat assistant.
+ * <strong>Spring Boot Concept:</strong> Service interface for the AI chat assistant.
  *
  * <p>
  * Provides both authenticated and guest chat functionality, conversation

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Read-only implementation of {@link ChatOrderService}.
+ * <strong>Spring Boot Concept:</strong> Read-only implementation of {@link ChatOrderService}.
  *
  * @author PrabhatKrMishra
  * @since 1.4.0

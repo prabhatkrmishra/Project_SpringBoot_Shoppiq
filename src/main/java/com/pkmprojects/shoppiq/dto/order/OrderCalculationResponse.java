@@ -3,7 +3,7 @@ package com.pkmprojects.shoppiq.dto.order;
 import java.math.BigDecimal;
 
 /**
- * Server-calculated order summary returned before the order is placed.
+ * <strong>Spring Boot Concept:</strong> Server-calculated order summary returned before the order is placed.
  *
  * <p>Every cost component — including delivery charge and COD surcharge — is
  * computed server-side so the frontend displays authoritative values.</p>

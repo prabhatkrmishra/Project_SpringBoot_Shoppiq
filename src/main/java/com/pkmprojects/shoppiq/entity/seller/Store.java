@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 /**
- * Represents a seller's store on the marketplace.
+ * <strong>Spring Boot Concept:</strong> Represents a seller's store on the marketplace.
  *
  * <p>
  * Each seller has exactly one store. The store is auto-created in
@@ -24,7 +24,25 @@ import lombok.*;
  *         to {@code SUSPENDED} via service-layer cascade (not a DB trigger).</li>
  * </ul>
  *
- * @author PrabhatKrMishra
+ * <h3>Spring Boot Concepts</h3>
+ * <ul>
+ *     <li><strong>{@code @OneToOne} with Seller</strong> — The FK is on this
+ *         table ({@code seller_id}), making Store the owning side. The
+ *         {@code unique = true} constraint enforces one store per seller.</li>
+ *     <li><strong>Store as a profile entity</strong> — Store extends Seller
+ *         with storefront-specific fields (name, slug, description, logo,
+ *         banner) while the Seller entity handles identity, verification,
+ *         and financials. This separation of concerns is a common
+ *         architecture pattern.</li>
+ *     <li><strong>{@link StoreStatus} enum</strong> — Three states
+ *         (DRAFT/PUBLISHED/SUSPENDED) model the store's lifecycle. DRAFT
+ *         allows sellers to set up before going live.</li>
+ *     <li><strong>Slug for URL-friendly routing</strong> — The {@code slug}
+ *         is unique and can be used in RESTful URLs (e.g.,
+ *         {@code /store/my-store-name}) for SEO-friendly navigation.</li>
+ * </ul>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Entity

@@ -1,7 +1,7 @@
 package com.pkmprojects.shoppiq.controller;
 import com.pkmprojects.shoppiq.controller.cart.CartController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
@@ -91,7 +91,7 @@ class CartControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @MockitoBean
     private CartService cartService;
@@ -246,8 +246,7 @@ class CartControllerTest {
             AddCartItemRequest request = new AddCartItemRequest(999L, 1);
 
             when(cartService.create(any(User.class), any(AddCartItemRequest.class)))
-                    .thenThrow(new ItemDetailsNotFoundException(
-                            "Item details with id '999' were not found."));
+                    .thenThrow(ItemDetailsNotFoundException.id(999L));
 
             mockMvc.perform(post("/user/cart/create").with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
