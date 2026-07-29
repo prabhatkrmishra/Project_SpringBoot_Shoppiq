@@ -184,12 +184,20 @@ public interface ItemRepository
      * @param pageable pagination parameters
      * @return list of latest items
      */
-    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
-           "WHERE i.publishingStatus = :status ORDER BY i.createdAt DESC")
+    @Query("""
+            SELECT DISTINCT i FROM Item i
+            LEFT JOIN FETCH i.itemDetails id
+            LEFT JOIN FETCH id.category
+            WHERE i.publishingStatus = :status
+            ORDER BY i.createdAt DESC""")
     List<Item> findNewArrivals(@Param("status") ProductPublishingStatus status, org.springframework.data.domain.Pageable pageable);
 
-    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
-           "WHERE i.publishingStatus = :status ORDER BY i.createdAt DESC")
+    @Query("""
+            SELECT DISTINCT i FROM Item i
+            LEFT JOIN FETCH i.itemDetails id
+            LEFT JOIN FETCH id.category
+            WHERE i.publishingStatus = :status
+            ORDER BY i.createdAt DESC""")
     Page<Item> findNewArrivalsPage(@Param("status") ProductPublishingStatus status, Pageable pageable);
 
     /**
@@ -197,16 +205,27 @@ public interface ItemRepository
      *
      * @return list of on-sale items
      */
-    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
-           "WHERE i.publishingStatus = 'PUBLISHED' AND id.onSale = true ORDER BY i.createdAt DESC")
+    @Query("""
+            SELECT DISTINCT i FROM Item i
+            LEFT JOIN FETCH i.itemDetails id
+            LEFT JOIN FETCH id.category
+            WHERE i.publishingStatus = 'PUBLISHED' AND id.onSale = true
+            ORDER BY i.createdAt DESC""")
     List<Item> findOnSaleItems();
 
-    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
-           "WHERE i.publishingStatus = 'PUBLISHED' AND id.onSale = true ORDER BY i.createdAt DESC")
+    @Query("""
+            SELECT DISTINCT i FROM Item i
+            LEFT JOIN FETCH i.itemDetails id
+            LEFT JOIN FETCH id.category
+            WHERE i.publishingStatus = 'PUBLISHED' AND id.onSale = true
+            ORDER BY i.createdAt DESC""")
     Page<Item> findOnSaleItemsPage(Pageable pageable);
 
-    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category " +
-           "WHERE id.category.slug = :slug")
+    @Query("""
+            SELECT DISTINCT i FROM Item i
+            LEFT JOIN FETCH i.itemDetails id
+            LEFT JOIN FETCH id.category
+            WHERE id.category.slug = :slug""")
     Page<Item> findByCategorySlug(@Param("slug") String slug, Pageable pageable);
 
     /**
@@ -217,14 +236,15 @@ public interface ItemRepository
      * @param limit  max number of results
      * @return typed projections with itemId
      */
-    @Query(value = "SELECT i.id AS item_id, SUM(oi.quantity) AS total_qty " +
-           "FROM items i " +
-           "JOIN order_items oi ON oi.item_details_id = i.item_details_id " +
-           "JOIN orders o ON o.id = oi.order_id " +
-           "WHERE o.status = 'DELIVERED' AND o.placed_at >= :since " +
-           "GROUP BY i.id " +
-           "ORDER BY total_qty DESC " +
-           "LIMIT :limit",
+    @Query(value = """
+            SELECT i.id AS item_id, SUM(oi.quantity) AS total_qty
+            FROM items i
+            JOIN order_items oi ON oi.item_details_id = i.item_details_id
+            JOIN orders o ON o.id = oi.order_id
+            WHERE o.status = 'DELIVERED' AND o.placed_at >= :since
+            GROUP BY i.id
+            ORDER BY total_qty DESC
+            LIMIT :limit""",
            nativeQuery = true)
     List<ItemSalesRanking> findTopSellingItemIds(
             @Param("since") java.time.Instant since,

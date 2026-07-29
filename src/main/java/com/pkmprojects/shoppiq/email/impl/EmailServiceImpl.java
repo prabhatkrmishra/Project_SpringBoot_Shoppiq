@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Instant;
 
 /**
@@ -61,6 +62,7 @@ public class EmailServiceImpl implements EmailService {
     private final EmailProviderRegistry providerRegistry;
     private final EmailLogRepository emailLogRepository;
     private final NotificationPreferenceRepository preferenceRepository;
+    private final Clock clock;
 
     @Override
     public void sendEmail(EmailMessage message) {
@@ -85,7 +87,7 @@ public class EmailServiceImpl implements EmailService {
         try {
             provider.send(message);
             emailLog.setStatus(EmailStatus.SENT);
-            emailLog.setSentAt(Instant.now());
+            emailLog.setSentAt(Instant.now(clock));
             log.debug("Email sent: type={}, to={}, provider={}", message.getEmailType(), message.getTo(), provider.getProviderName());
         } catch (EmailSendException e) {
             emailLog.setStatus(EmailStatus.FAILED);

@@ -216,9 +216,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param end   end of date range (exclusive, with +1 day added by caller)
      * @return [totalDiscount, totalTax, totalDeliveryCharge, totalCodSurcharge] or nulls if no orders
      */
-    @Query("SELECT COALESCE(SUM(o.discount), 0), COALESCE(SUM(o.tax), 0), " +
-            "COALESCE(SUM(o.deliveryCharge), 0), COALESCE(SUM(o.codSurcharge), 0) " +
-            "FROM Order o WHERE o.placedAt BETWEEN :start AND :end")
+    @Query("""
+            SELECT COALESCE(SUM(o.discount), 0), COALESCE(SUM(o.tax), 0),
+            COALESCE(SUM(o.deliveryCharge), 0), COALESCE(SUM(o.codSurcharge), 0)
+            FROM Order o WHERE o.placedAt BETWEEN :start AND :end""")
     List<Object[]> aggregateOrderChargesBetween(@Param("start") Instant start, @Param("end") Instant end);
 
     /**
@@ -229,12 +230,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param end   end of date range (exclusive, with +1 day added by caller)
      * @return projections with userId, username, email, orderCount, totalSpent, firstOrderDate, lastOrderDate
      */
-    @Query("SELECT o.user.id AS userId, o.user.username AS username, o.user.email AS email, " +
-            "COUNT(o) AS orderCount, COALESCE(SUM(o.grandTotal), 0) AS totalSpent, " +
-            "MIN(o.placedAt) AS firstOrderDate, MAX(o.placedAt) AS lastOrderDate " +
-            "FROM Order o WHERE o.placedAt BETWEEN :start AND :end " +
-            "GROUP BY o.user.id, o.user.username, o.user.email " +
-            "ORDER BY totalSpent DESC")
+    @Query("""
+            SELECT o.user.id AS userId, o.user.username AS username, o.user.email AS email,
+            COUNT(o) AS orderCount, COALESCE(SUM(o.grandTotal), 0) AS totalSpent,
+            MIN(o.placedAt) AS firstOrderDate, MAX(o.placedAt) AS lastOrderDate
+            FROM Order o WHERE o.placedAt BETWEEN :start AND :end
+            GROUP BY o.user.id, o.user.username, o.user.email
+            ORDER BY totalSpent DESC""")
     List<CustomerOrderAggregate> aggregateCustomerOrdersBetween(@Param("start") Instant start,
-                                                                @Param("end") Instant end);
+                                                                 @Param("end") Instant end);
 }

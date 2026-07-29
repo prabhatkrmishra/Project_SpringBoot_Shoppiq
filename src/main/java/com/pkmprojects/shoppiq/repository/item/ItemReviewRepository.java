@@ -117,10 +117,12 @@ public interface ItemReviewRepository
      * @param userId current user identifier (may be null for anonymous)
      * @return ordered review list
      */
-    @Query("SELECT r FROM ItemReview r WHERE r.item.id = :itemId AND (" +
-            "r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.APPROVED" +
-            " OR (r.user.id = :userId AND r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.PENDING))" +
-            " ORDER BY r.createdAt DESC")
+    @Query("""
+            SELECT r FROM ItemReview r
+            WHERE r.item.id = :itemId
+            AND (r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.APPROVED
+                 OR (r.user.id = :userId AND r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.PENDING))
+            ORDER BY r.createdAt DESC""")
     List<ItemReview> findVisibleReviewsForUser(
             @Param("itemId") Long itemId,
             @Param("userId") Long userId
@@ -140,10 +142,12 @@ public interface ItemReviewRepository
     /**
      * Paginated version of {@link #findVisibleReviewsForUser} (BUG-005).
      */
-    @Query("SELECT r FROM ItemReview r WHERE r.item.id = :itemId AND (" +
-            "r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.APPROVED" +
-            " OR (r.user.id = :userId AND r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.PENDING))" +
-            " ORDER BY r.createdAt DESC")
+    @Query("""
+            SELECT r FROM ItemReview r
+            WHERE r.item.id = :itemId
+            AND (r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.APPROVED
+                 OR (r.user.id = :userId AND r.status = com.pkmprojects.shoppiq.enums.ReviewStatus.PENDING))
+            ORDER BY r.createdAt DESC""")
     Page<ItemReview> findVisibleReviewsForUser(
             @Param("itemId") Long itemId,
             @Param("userId") Long userId,

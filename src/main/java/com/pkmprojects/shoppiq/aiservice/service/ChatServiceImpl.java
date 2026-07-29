@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Flux;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.YearMonth;
@@ -93,6 +94,7 @@ public class ChatServiceImpl implements ChatService {
     }
 
     private final int resolveThreshold;
+    private final Clock clock;
 
     /**
      * Constructs a new {@code ChatServiceImpl} with all required dependencies.
@@ -107,6 +109,7 @@ public class ChatServiceImpl implements ChatService {
      * @param modelResolutionService central service for resolving model names to model instances
      * @param authenticatedPrompt    system prompt for logged-in users
      * @param guestPrompt            system prompt for guest sessions
+     * @param clock                  clock for deterministic time
      */
     public ChatServiceImpl(ChatMemoryProvider chatMemoryProvider,
                            ChatMemoryConfig chatMemoryConfig,
@@ -118,7 +121,8 @@ public class ChatServiceImpl implements ChatService {
                            ModelResolutionService modelResolutionService,
                            @Qualifier("authenticatedSystemPrompt") SystemPromptProvider authenticatedPrompt,
                            @Qualifier("guestSystemPrompt") SystemPromptProvider guestPrompt,
-                           int resolveThreshold) {
+                           int resolveThreshold,
+                           Clock clock) {
         this.chatMemoryProvider = chatMemoryProvider;
         this.chatMemoryConfig = chatMemoryConfig;
         this.shoppiqTools = shoppiqTools;
@@ -130,6 +134,7 @@ public class ChatServiceImpl implements ChatService {
         this.authenticatedPrompt = authenticatedPrompt;
         this.guestPrompt = guestPrompt;
         this.resolveThreshold = resolveThreshold;
+        this.clock = clock;
     }
 
     // ========================= Authenticated Chat =========================
@@ -324,7 +329,7 @@ public class ChatServiceImpl implements ChatService {
         }
 
         conv.setStatus(ConversationStatus.RESOLVED);
-        conv.setResolvedAt(Instant.now());
+        conv.setResolvedAt(Instant.now(clock));
         conversationRepository.save(conv);
 
         saveMessage(conv, ChatMessageRole.SYSTEM, "Conversation resolved.");
@@ -561,7 +566,7 @@ public class ChatServiceImpl implements ChatService {
      * @return a unique chat ID string
      */
     private String generateChatId() {
-        String prefix = "CHAT-" + YearMonth.now()
+        String prefix = "CHAT-" + YearMonth.now(clock)
                 .format(DateTimeFormatter.ofPattern("yyyy-MM"));
         String suffix;
         do {
@@ -616,7 +621,7 @@ public class ChatServiceImpl implements ChatService {
      */
     @Scheduled(fixedRate = 300_000, initialDelay = 60_000)
     public void autoResolveInactiveConversations() {
-        Instant cutoff = Instant.now().minus(Duration.ofMinutes(30));
+        Instant cutoff = Instant.now(clock).minus(Duration.ofMinutes(30));
         List<ChatConversation> inactive = conversationRepository
                 .findByStatusAndUpdatedAtBefore(ConversationStatus.ACTIVE, cutoff);
 
@@ -629,7 +634,7 @@ public class ChatServiceImpl implements ChatService {
         for (ChatConversation conv : inactive) {
             try {
                 conv.setStatus(ConversationStatus.RESOLVED);
-                conv.setResolvedAt(Instant.now());
+                conv.setResolvedAt(Instant.now(clock));
                 conversationRepository.save(conv);
 
                 saveMessage(conv, ChatMessageRole.SYSTEM, "Conversation auto-resolved due to inactivity.");
@@ -645,6 +650,6 @@ public class ChatServiceImpl implements ChatService {
 
     private void saveGuestMessage(String sessionId, String role, String content) {
         guestMessageStore.computeIfAbsent(sessionId, k -> java.util.Collections.synchronizedList(new ArrayList<>()))
-                .add(new GuestMessage(role, content, Instant.now()));
+                .add(new GuestMessage(role, content, Instant.now(clock)));
     }
 }

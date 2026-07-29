@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -41,11 +42,14 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
 
     private final PaymentLookupService paymentLookupService;
     private final PaymentWriteService paymentWriteService;
+    private final Clock clock;
 
     public AdminPaymentServiceImpl(PaymentLookupService paymentLookupService,
-                                   PaymentWriteService paymentWriteService) {
+                                   PaymentWriteService paymentWriteService,
+                                   Clock clock) {
         this.paymentLookupService = paymentLookupService;
         this.paymentWriteService = paymentWriteService;
+        this.clock = clock;
     }
 
     /**
@@ -99,7 +103,7 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
         }
 
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
-        payment.setRefundedAt(Instant.now());
+        payment.setRefundedAt(Instant.now(clock));
         paymentWriteService.save(payment);
 
         return AdminPaymentResponse.fromEntity(payment);

@@ -150,11 +150,12 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @param end   end of date range (exclusive with +1 day added by caller)
      * @return list of [paymentDate, dailyTotal] tuples
      */
-    @Query("SELECT COALESCE(p.paidAt, p.createdAt), COALESCE(SUM(p.amount), 0) " +
-            "FROM Payment p WHERE p.paymentStatus = 'PAID' " +
-            "AND COALESCE(p.paidAt, p.createdAt) BETWEEN :start AND :end " +
-            "GROUP BY COALESCE(p.paidAt, p.createdAt) " +
-            "ORDER BY COALESCE(p.paidAt, p.createdAt) ASC")
+    @Query("""
+            SELECT COALESCE(p.paidAt, p.createdAt), COALESCE(SUM(p.amount), 0)
+            FROM Payment p WHERE p.paymentStatus = 'PAID'
+            AND COALESCE(p.paidAt, p.createdAt) BETWEEN :start AND :end
+            GROUP BY COALESCE(p.paidAt, p.createdAt)
+            ORDER BY COALESCE(p.paidAt, p.createdAt) ASC""")
     List<Object[]> aggregateDailyRevenueBetween(@Param("start") Instant start, @Param("end") Instant end);
 
     /**
@@ -164,9 +165,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @param end   end of date range (exclusive with +1 day added by caller)
      * @return list of [paymentMethod, totalAmount] tuples
      */
-    @Query("SELECT p.paymentMethod, COALESCE(SUM(p.amount), 0) " +
-            "FROM Payment p WHERE p.paymentStatus = 'PAID' " +
-            "AND COALESCE(p.paidAt, p.createdAt) BETWEEN :start AND :end " +
-            "GROUP BY p.paymentMethod")
+    @Query("""
+            SELECT p.paymentMethod, COALESCE(SUM(p.amount), 0)
+            FROM Payment p WHERE p.paymentStatus = 'PAID'
+            AND COALESCE(p.paidAt, p.createdAt) BETWEEN :start AND :end
+            GROUP BY p.paymentMethod""")
     List<Object[]> aggregateRevenueByPaymentMethodBetween(@Param("start") Instant start, @Param("end") Instant end);
 }

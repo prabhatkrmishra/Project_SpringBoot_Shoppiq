@@ -50,9 +50,10 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
      * @param conversationIds the list of conversation IDs to count for
      * @return a list of [conversationId, count] pairs
      */
-    @Query("SELECT m.conversation.id, COUNT(m) FROM ChatMessage m " +
-            "WHERE m.conversation.id IN :ids AND m.role = :role " +
-            "GROUP BY m.conversation.id")
+    @Query("""
+            SELECT m.conversation.id, COUNT(m) FROM ChatMessage m
+            WHERE m.conversation.id IN :ids AND m.role = :role
+            GROUP BY m.conversation.id""")
     List<Object[]> countByConversationIdsAndRoleBatch(@Param("ids") List<Long> conversationIds,
                                                       @Param("role") ChatMessageRole role);
 

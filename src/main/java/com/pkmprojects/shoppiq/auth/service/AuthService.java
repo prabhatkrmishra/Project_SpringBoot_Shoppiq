@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.auth.service;
 
 import com.pkmprojects.shoppiq.auth.dto.JwtRequest;
 import com.pkmprojects.shoppiq.auth.dto.JwtResponse;
+import java.time.Clock;
 import java.time.Instant;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
@@ -106,19 +107,22 @@ public class AuthService {
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
     private final UserRepository userRepository;
     private final JwtCookieFactory jwtCookieFactory;
+    private final Clock clock;
 
     public AuthService(@Value("${jwt.expiration}") long expirationTime,
                        @Value("${jwt.short-expiration}") long shortExpiration,
                        AuthenticationManager authManager,
                        JwtAuthenticationUtils jwtAuthenticationUtils,
                        UserRepository userRepository,
-                       JwtCookieFactory jwtCookieFactory) {
+                       JwtCookieFactory jwtCookieFactory,
+                       Clock clock) {
         this.expirationTime = expirationTime;
         this.shortExpiration = shortExpiration;
         this.authManager = authManager;
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.userRepository = userRepository;
         this.jwtCookieFactory = jwtCookieFactory;
+        this.clock = clock;
     }
 
     /**
@@ -170,7 +174,7 @@ public class AuthService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int recordFailedLoginAttempt(Long userId) {
-        return userRepository.incrementFailedLoginAttemptsAndLockout(userId, MAX_FAILED_ATTEMPTS, Instant.now());
+        return userRepository.incrementFailedLoginAttemptsAndLockout(userId, MAX_FAILED_ATTEMPTS, Instant.now(clock));
     }
 
     /**

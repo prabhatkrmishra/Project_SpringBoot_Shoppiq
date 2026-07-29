@@ -63,10 +63,11 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param paymentStatus the payment status to filter by
      * @return typed projections with sellerId, businessName, totalOrders, totalRevenue
      */
-    @Query("SELECT s.id AS sellerId, s.businessName AS businessName, " +
-            "COUNT(DISTINCT o.id) AS totalOrders, COALESCE(SUM(oi.subtotal), 0) AS totalRevenue " +
-            "FROM OrderItem oi JOIN oi.itemDetails id JOIN id.item i JOIN i.seller s JOIN oi.order o " +
-            "WHERE o.paymentStatus = :paymentStatus GROUP BY s.id, s.businessName")
+    @Query("""
+            SELECT s.id AS sellerId, s.businessName AS businessName,
+            COUNT(DISTINCT o.id) AS totalOrders, COALESCE(SUM(oi.subtotal), 0) AS totalRevenue
+            FROM OrderItem oi JOIN oi.itemDetails id JOIN id.item i JOIN i.seller s JOIN oi.order o
+            WHERE o.paymentStatus = :paymentStatus GROUP BY s.id, s.businessName""")
     List<SellerRevenueAggregate> aggregateRevenueBySeller(@Param("paymentStatus") PaymentStatus paymentStatus);
 
     // =========================================================
@@ -80,16 +81,17 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param end   end of date range (exclusive with +1 day added by caller)
      * @return projections with itemId, itemName, sku, quantitySold, revenue
      */
-    @Query("SELECT oi.itemDetails.id AS itemId, oi.itemNameSnapshot AS itemName, " +
-            "oi.itemDetails.sku AS sku, " +
-            "COALESCE(SUM(oi.quantity), 0) AS quantitySold, " +
-            "COALESCE(SUM(oi.subtotal), 0) AS revenue " +
-            "FROM OrderItem oi JOIN oi.order o " +
-            "WHERE o.placedAt BETWEEN :start AND :end AND oi.itemDetails IS NOT NULL " +
-            "GROUP BY oi.itemDetails.id, oi.itemNameSnapshot, oi.itemDetails.sku " +
-            "ORDER BY revenue DESC")
+    @Query("""
+            SELECT oi.itemDetails.id AS itemId, oi.itemNameSnapshot AS itemName,
+            oi.itemDetails.sku AS sku,
+            COALESCE(SUM(oi.quantity), 0) AS quantitySold,
+            COALESCE(SUM(oi.subtotal), 0) AS revenue
+            FROM OrderItem oi JOIN oi.order o
+            WHERE o.placedAt BETWEEN :start AND :end AND oi.itemDetails IS NOT NULL
+            GROUP BY oi.itemDetails.id, oi.itemNameSnapshot, oi.itemDetails.sku
+            ORDER BY revenue DESC""")
     List<ProductSalesAggregate> aggregateProductSalesByDateRange(@Param("start") Instant start,
-                                                                 @Param("end") Instant end);
+                                                                  @Param("end") Instant end);
 
     /**
      * Aggregates sales per category within a date range, ordered by revenue descending.
@@ -98,16 +100,17 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param end   end of date range (exclusive with +1 day added by caller)
      * @return projections with categoryId, categoryName, quantitySold, revenue
      */
-    @Query("SELECT c.id AS categoryId, c.name AS categoryName, " +
-            "COALESCE(SUM(oi.quantity), 0) AS quantitySold, " +
-            "COALESCE(SUM(oi.subtotal), 0) AS revenue, " +
-            "COUNT(DISTINCT oi.itemDetails.id) AS uniqueProductsSold " +
-            "FROM OrderItem oi JOIN oi.order o JOIN oi.itemDetails id JOIN id.category c " +
-            "WHERE o.placedAt BETWEEN :start AND :end AND oi.itemDetails IS NOT NULL " +
-            "GROUP BY c.id, c.name " +
-            "ORDER BY revenue DESC")
+    @Query("""
+            SELECT c.id AS categoryId, c.name AS categoryName,
+            COALESCE(SUM(oi.quantity), 0) AS quantitySold,
+            COALESCE(SUM(oi.subtotal), 0) AS revenue,
+            COUNT(DISTINCT oi.itemDetails.id) AS uniqueProductsSold
+            FROM OrderItem oi JOIN oi.order o JOIN oi.itemDetails id JOIN id.category c
+            WHERE o.placedAt BETWEEN :start AND :end AND oi.itemDetails IS NOT NULL
+            GROUP BY c.id, c.name
+            ORDER BY revenue DESC""")
     List<CategorySalesAggregate> aggregateCategorySalesByDateRange(@Param("start") Instant start,
-                                                                   @Param("end") Instant end);
+                                                                    @Param("end") Instant end);
 
     /**
      * Aggregates product performance (quantity, revenue, average price) within a date range,
@@ -117,16 +120,17 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @param end   end of date range (exclusive with +1 day added by caller)
      * @return projections with itemId, itemName, sku, quantitySold, revenue, averagePrice, currentStock
      */
-    @Query("SELECT oi.itemDetails.id AS itemId, oi.itemNameSnapshot AS itemName, " +
-            "oi.itemDetails.sku AS sku, " +
-            "COALESCE(SUM(oi.quantity), 0) AS quantitySold, " +
-            "COALESCE(SUM(oi.subtotal), 0) AS revenue, " +
-            "COALESCE(AVG(oi.unitPriceSnapshot), 0) AS averagePrice, " +
-            "id.stockQuantity AS currentStock " +
-            "FROM OrderItem oi JOIN oi.order o JOIN oi.itemDetails id " +
-            "WHERE o.placedAt BETWEEN :start AND :end AND oi.itemDetails IS NOT NULL " +
-            "GROUP BY oi.itemDetails.id, oi.itemNameSnapshot, oi.itemDetails.sku, id.stockQuantity " +
-            "ORDER BY revenue DESC")
+    @Query("""
+            SELECT oi.itemDetails.id AS itemId, oi.itemNameSnapshot AS itemName,
+            oi.itemDetails.sku AS sku,
+            COALESCE(SUM(oi.quantity), 0) AS quantitySold,
+            COALESCE(SUM(oi.subtotal), 0) AS revenue,
+            COALESCE(AVG(oi.unitPriceSnapshot), 0) AS averagePrice,
+            id.stockQuantity AS currentStock
+            FROM OrderItem oi JOIN oi.order o JOIN oi.itemDetails id
+            WHERE o.placedAt BETWEEN :start AND :end AND oi.itemDetails IS NOT NULL
+            GROUP BY oi.itemDetails.id, oi.itemNameSnapshot, oi.itemDetails.sku, id.stockQuantity
+            ORDER BY revenue DESC""")
     List<ProductPerformanceAggregate> aggregateProductPerformanceByDateRange(@Param("start") Instant start,
-                                                                             @Param("end") Instant end);
+                                                                              @Param("end") Instant end);
 }

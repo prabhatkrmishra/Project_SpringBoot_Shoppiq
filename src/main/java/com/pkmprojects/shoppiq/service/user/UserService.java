@@ -34,6 +34,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -100,10 +101,12 @@ public class UserService {
     private final AddressRepository addressRepository;
     private final EmailService emailService;
     private final VerificationCodeService verificationCodeService;
+    private final Clock clock;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleService rolesService,
                        SellerWriteService sellerWriteService, AddressRepository addressRepository,
-                       EmailService emailService, VerificationCodeService verificationCodeService) {
+                       EmailService emailService, VerificationCodeService verificationCodeService,
+                       Clock clock) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.rolesService = rolesService;
@@ -111,6 +114,7 @@ public class UserService {
         this.addressRepository = addressRepository;
         this.emailService = emailService;
         this.verificationCodeService = verificationCodeService;
+        this.clock = clock;
     }
 
     /**
@@ -149,7 +153,7 @@ public class UserService {
                         .panNumber(newUserRequest.getPanNumber())
                         .verificationStatus(VerificationStatus.PENDING)
                         .sellerStatus(SellerStatus.INACTIVE)
-                        .joinedAt(Instant.now())
+                        .joinedAt(Instant.now(clock))
                         .build();
                 sellerWriteService.save(seller);
                 logger.debug("Seller registration created for username: {}", newUserRequest.getUsername());
@@ -205,7 +209,7 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(password));
             user.setRoles(Set.of(rolesService.getCustomerRole()));
             user.setEmailVerified(true);
-            user.setEmailVerifiedAt(java.time.Instant.now());
+            user.setEmailVerifiedAt(Instant.now(clock));
 
             User savedUser = userRepository.save(user);
 
@@ -337,7 +341,7 @@ public class UserService {
                             "alertTitle", alertTitle,
                             "alertMessage", alertMessage,
                             "alertType", alertType,
-                            "alertTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' hh:mm a")),
+                            "alertTime", LocalDateTime.now(clock).format(DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' hh:mm a")),
                             "ipAddress", ipAddress
                     ))
                     .build());

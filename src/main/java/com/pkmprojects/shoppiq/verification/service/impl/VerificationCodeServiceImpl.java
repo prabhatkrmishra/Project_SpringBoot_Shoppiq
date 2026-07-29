@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -38,6 +39,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
     private static final int CODE_UPPER_BOUND = (int) Math.pow(10, CODE_LENGTH);
 
     private final VerificationCodeRepository verificationCodeRepository;
+    private final Clock clock;
 
     @Override
     @Transactional
@@ -45,7 +47,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         verificationCodeRepository.markAllUnusedCodesAsUsed(user.getId(), emailType);
 
         String code = generateNumericCode();
-        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(VerificationCode.CODE_VALIDITY_MINUTES));
+        Instant expiresAt = Instant.now(clock).plus(Duration.ofMinutes(VerificationCode.CODE_VALIDITY_MINUTES));
 
         VerificationCode verificationCode = VerificationCode.builder()
                 .user(user)
@@ -73,7 +75,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
                     ErrorCode.VERIFICATION_CODE_INVALID, "Verification code has already been used.");
         }
 
-        if (Instant.now().isAfter(verificationCode.getExpiresAt())) {
+        if (Instant.now(clock).isAfter(verificationCode.getExpiresAt())) {
             throw new VerificationCodeException(
                     ErrorCode.VERIFICATION_CODE_EXPIRED, "Verification code has expired.");
         }

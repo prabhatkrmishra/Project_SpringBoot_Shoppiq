@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+import java.time.Clock;
 import java.time.Duration;
 
 /**
@@ -106,7 +107,8 @@ public class ChatServiceConfig {
             UserRepository userRepository,
             ModelResolutionService modelResolutionService,
             @Qualifier("authenticatedSystemPrompt") SystemPromptProvider authenticatedPrompt,
-            @Qualifier("guestSystemPrompt") SystemPromptProvider guestPrompt) {
+            @Qualifier("guestSystemPrompt") SystemPromptProvider guestPrompt,
+            Clock clock) {
 
         log.info("[AI-INIT] ChatServiceImpl created — modelResolutionService={}, contentRetriever={}",
                 modelResolutionService.getClass().getSimpleName(),
@@ -115,6 +117,6 @@ public class ChatServiceConfig {
         return new ChatServiceImpl(
                 chatMemoryProvider, chatMemoryConfig,
                 shoppiqTools, contentRetriever, conversationRepository, messageRepository, userRepository,
-                modelResolutionService, authenticatedPrompt, guestPrompt, resolveThreshold);
+                modelResolutionService, authenticatedPrompt, guestPrompt, resolveThreshold, clock);
     }
 }

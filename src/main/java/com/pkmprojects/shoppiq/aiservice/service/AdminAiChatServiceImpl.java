@@ -18,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -45,17 +46,21 @@ class AdminAiChatServiceImpl implements AdminAiChatService {
 
     private final ChatConversationRepository conversationRepository;
     private final ChatMessageRepository messageRepository;
+    private final Clock clock;
 
     /**
      * Constructs the admin service with required repositories.
      *
      * @param conversationRepository conversation data access
      * @param messageRepository      message data access
+     * @param clock                  clock for deterministic time
      */
     AdminAiChatServiceImpl(ChatConversationRepository conversationRepository,
-                           ChatMessageRepository messageRepository) {
+                           ChatMessageRepository messageRepository,
+                           Clock clock) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
+        this.clock = clock;
     }
 
     /**
@@ -172,7 +177,7 @@ class AdminAiChatServiceImpl implements AdminAiChatService {
                 .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
 
         conv.setStatus(ConversationStatus.RESOLVED);
-        conv.setResolvedAt(Instant.now());
+        conv.setResolvedAt(Instant.now(clock));
         conversationRepository.save(conv);
 
         ChatMessage systemMsg = ChatMessage.builder()

@@ -99,15 +99,16 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Page<Category> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
             String name, String description, Pageable pageable);
 
-    @Query(value = "SELECT c.id, c.name, c.slug, c.description, SUM(oi.quantity) AS total_qty " +
-            "FROM categories c " +
-            "JOIN item_details idt ON idt.category_id = c.id " +
-            "JOIN order_items oi ON oi.item_details_id = idt.id " +
-            "JOIN orders o ON o.id = oi.order_id " +
-            "WHERE o.status = 'DELIVERED' AND o.placed_at >= :since " +
-            "GROUP BY c.id, c.name, c.slug, c.description " +
-            "ORDER BY total_qty DESC " +
-            "LIMIT :limit",
+    @Query(value = """
+            SELECT c.id, c.name, c.slug, c.description, SUM(oi.quantity) AS total_qty
+            FROM categories c
+            JOIN item_details idt ON idt.category_id = c.id
+            JOIN order_items oi ON oi.item_details_id = idt.id
+            JOIN orders o ON o.id = oi.order_id
+            WHERE o.status = 'DELIVERED' AND o.placed_at >= :since
+            GROUP BY c.id, c.name, c.slug, c.description
+            ORDER BY total_qty DESC
+            LIMIT :limit""",
             nativeQuery = true)
     List<CategorySalesRanking> findTopSellingCategoryIds(
             @Param("since") java.time.Instant since,

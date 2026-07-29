@@ -53,8 +53,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -97,6 +97,7 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
     private final OrderRepository orderRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
+    private final Clock clock;
 
     public AdminTestDataServiceImpl(
             UserRepository userRepository,
@@ -112,7 +113,8 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
             CategoryLookupService categoryLookupService,
             OrderRepository orderRepository,
             PasswordEncoder passwordEncoder,
-            RoleService roleService
+            RoleService roleService,
+            Clock clock
     ) {
         this.userRepository = userRepository;
         this.addressRepository = addressRepository;
@@ -128,6 +130,7 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         this.orderRepository = orderRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleService = roleService;
+        this.clock = clock;
     }
 
     /**
@@ -306,7 +309,7 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
                     .panNumber(item.seller().panNumber())
                     .verificationStatus(VerificationStatus.PENDING)
                     .sellerStatus(SellerStatus.INACTIVE)
-                    .joinedAt(Instant.now())
+                    .joinedAt(Instant.now(clock))
                     .build();
 
             Seller saved = sellerWriteService.save(seller);
@@ -422,7 +425,7 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
                     .tax(tax)
                     .discount(discount)
                     .grandTotal(grandTotal)
-                    .placedAt(Instant.now())
+                    .placedAt(Instant.now(clock))
                     .build();
 
             orderRepository.save(order);

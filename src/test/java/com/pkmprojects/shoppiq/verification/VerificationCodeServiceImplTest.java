@@ -11,13 +11,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,16 +30,19 @@ import static org.mockito.Mockito.*;
 @DisplayName("VerificationCodeServiceImpl")
 class VerificationCodeServiceImplTest {
 
+    private static final Instant FIXED_NOW = Instant.parse("2026-07-29T10:00:00Z");
+    private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
+
     @Mock
     private VerificationCodeRepository verificationCodeRepository;
 
-    @InjectMocks
     private VerificationCodeServiceImpl verificationCodeService;
 
     private User testUser;
 
     @BeforeEach
     void setUp() throws Exception {
+        verificationCodeService = new VerificationCodeServiceImpl(verificationCodeRepository, FIXED_CLOCK);
         testUser = User.builder()
                 .name("Test User")
                 .email("test@example.com")
@@ -93,7 +97,7 @@ class VerificationCodeServiceImplTest {
                     .user(testUser)
                     .code("123456")
                     .emailType(EmailType.VERIFICATION)
-                    .expiresAt(Instant.now().plus(Duration.ofMinutes(5)))
+                    .expiresAt(Instant.now(FIXED_CLOCK).plus(Duration.ofMinutes(5)))
                     .used(false)
                     .attempts(0)
                     .build();
@@ -116,7 +120,7 @@ class VerificationCodeServiceImplTest {
                     .user(testUser)
                     .code("123456")
                     .emailType(EmailType.VERIFICATION)
-                    .expiresAt(Instant.now().minus(Duration.ofMinutes(1)))
+                    .expiresAt(Instant.now(FIXED_CLOCK).minus(Duration.ofMinutes(1)))
                     .used(false)
                     .attempts(0)
                     .build();
@@ -138,7 +142,7 @@ class VerificationCodeServiceImplTest {
                     .user(testUser)
                     .code("123456")
                     .emailType(EmailType.VERIFICATION)
-                    .expiresAt(Instant.now().plus(Duration.ofMinutes(5)))
+                    .expiresAt(Instant.now(FIXED_CLOCK).plus(Duration.ofMinutes(5)))
                     .used(true)
                     .attempts(0)
                     .build();
@@ -160,7 +164,7 @@ class VerificationCodeServiceImplTest {
                     .user(testUser)
                     .code("123456")
                     .emailType(EmailType.PASSWORD_RESET)
-                    .expiresAt(Instant.now().plus(Duration.ofMinutes(5)))
+                    .expiresAt(Instant.now(FIXED_CLOCK).plus(Duration.ofMinutes(5)))
                     .used(false)
                     .attempts(2)
                     .build();
