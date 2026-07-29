@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.*;
  * <h2>Endpoints</h2>
  * <ul>
  *   <li>{@code POST /user/order/checkout}       — place an order</li>
- *   <li>{@code GET  /user/order/get/all}        — list all orders</li>
- *   <li>{@code GET  /user/order/get/{id}}       — get a single order</li>
+ *   <li>{@code GET  /user/order}              — list all orders</li>
+ *   <li>{@code GET  /user/order/{id}}          — get a single order</li>
  *   <li>{@code PUT  /user/order/cancel/{id}}    — request cancellation (PLACED only)</li>
  *   <li>{@code PUT  /user/order/return/{id}}    — request return (DELIVERED only)</li>
  *   <li>{@code PUT  /user/order/refund/{id}}    — request refund (DELIVERED only)</li>
@@ -101,7 +101,7 @@ public class OrderController {
      * @param user authenticated customer
      * @return 200 OK with list of order responses
      */
-    @GetMapping("/get/all")
+    @GetMapping("")
     public ResponseEntity<PageResponse<OrderResponse>> getMyOrders(
             @AuthenticationPrincipal(expression = "user") User user,
             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -117,7 +117,7 @@ public class OrderController {
      * @param orderId order id (must be positive)
      * @return 200 OK with full order response
      */
-    @GetMapping("/get/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<OrderResponse> getMyOrder(
             @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable("id") @Positive(message = "Order id must be a positive number.") Long orderId) {

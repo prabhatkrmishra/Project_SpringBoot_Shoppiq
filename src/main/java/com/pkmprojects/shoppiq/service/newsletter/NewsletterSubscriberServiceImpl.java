@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -54,7 +55,16 @@ public class NewsletterSubscriberServiceImpl implements NewsletterSubscriberServ
     @Override
     @Transactional
     public void subscribe(NewsletterSubscribeRequest request) {
+        Objects.requireNonNull(request, "Newsletter subscribe request must not be null.");
+
         String email = request.email().trim().toLowerCase();
+
+        if (email.isBlank()) {
+            throw new IllegalArgumentException("Email must not be blank.");
+        }
+        if (!email.contains("@") || !email.contains(".")) {
+            throw new IllegalArgumentException("Email format is invalid.");
+        }
 
         var existing = subscriberRepository.findByEmailIgnoreCase(email);
 

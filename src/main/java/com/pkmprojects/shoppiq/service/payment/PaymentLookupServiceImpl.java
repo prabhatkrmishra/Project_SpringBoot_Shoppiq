@@ -112,7 +112,7 @@ class PaymentLookupServiceImpl implements PaymentLookupService {
     @Override
     public Page<Payment> findByStatus(PaymentStatus status, int page, int size) {
         return paymentRepository.findByPaymentStatus(status,
-                PageRequest.of(page, size, Sort.by("id").descending()));
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")));
     }
 
     /**

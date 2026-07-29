@@ -41,6 +41,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -482,8 +486,9 @@ class CheckoutServiceImplTest {
             Order o1 = buildOrder(1L, user, addr, OrderStatus.PLACED);
             Order o2 = buildOrder(2L, user, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findAllByUserOrderByPlacedAtDesc(user))
-                    .thenReturn(List.of(o1, o2));
+            Pageable pageable = PageRequest.of(0, 1000, Sort.by(Sort.Direction.DESC, "placedAt"));
+            when(orderRepository.findAllByUserOrderByPlacedAtDesc(user, pageable))
+                    .thenReturn(new PageImpl<>(List.of(o1, o2), pageable, 2));
 
             List<OrderResponse> result = checkoutService.getMyOrders(user);
 
@@ -496,8 +501,9 @@ class CheckoutServiceImplTest {
         @DisplayName("Returns empty list when user has no orders")
         void getMyOrders_empty() throws Exception {
             User user = buildUser(1L);
-            when(orderRepository.findAllByUserOrderByPlacedAtDesc(user))
-                    .thenReturn(List.of());
+            Pageable pageable = PageRequest.of(0, 1000, Sort.by(Sort.Direction.DESC, "placedAt"));
+            when(orderRepository.findAllByUserOrderByPlacedAtDesc(user, pageable))
+                    .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
             assertThat(checkoutService.getMyOrders(user)).isEmpty();
         }

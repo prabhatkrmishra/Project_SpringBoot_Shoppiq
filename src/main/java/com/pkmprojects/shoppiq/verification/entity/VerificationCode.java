@@ -6,6 +6,7 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -91,12 +92,22 @@ public class VerificationCode extends AuditableEntity {
     private int attempts = 0;
 
     /**
-     * Checks if the code is still valid (not expired, not used, attempts not exceeded).
+     * Checks if the code is still valid using the system clock.
      *
      * @return true if valid
      */
     public boolean isValid() {
-        return !used && attempts < MAX_ATTEMPTS && Instant.now().isBefore(expiresAt);
+        return isValid(Clock.systemDefaultZone());
+    }
+
+    /**
+     * Checks if the code is still valid (not expired, not used, attempts not exceeded).
+     *
+     * @param clock clock for deterministic time
+     * @return true if valid
+     */
+    public boolean isValid(Clock clock) {
+        return !used && attempts < MAX_ATTEMPTS && Instant.now(clock).isBefore(expiresAt);
     }
 
     /**

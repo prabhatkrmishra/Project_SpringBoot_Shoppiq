@@ -68,4 +68,18 @@ public interface AdminProductReadModel {
      * Finds a seller by ID.
      */
     Optional<Seller> findSellerById(Long sellerId);
+
+    /**
+     * Returns the total stock quantity across all item details.
+     *
+     * @return sum of all stock quantities
+     */
+    long sumStockQuantity();
+
+    /**
+     * Returns the total inventory value (price * stock quantity) across all item details.
+     *
+     * @return total inventory value
+     */
+    java.math.BigDecimal sumInventoryValue();
 }

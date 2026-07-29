@@ -338,7 +338,9 @@ public class CheckoutServiceImpl implements CheckoutService {
      */
     @Transactional(readOnly = true)
     public List<OrderResponse> getMyOrders(User user) {
-        return orderRepository.findAllByUserOrderByPlacedAtDesc(user)
+        Pageable pageable = PageRequest.of(0, 1000, Sort.by(Sort.Direction.DESC, "placedAt"));
+        return orderRepository.findAllByUserOrderByPlacedAtDesc(user, pageable)
+                .getContent()
                 .stream()
                 .map(OrderResponse::from)
                 .toList();

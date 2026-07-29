@@ -67,9 +67,6 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @EntityGraph(attributePaths = {"orderItems", "orderItems.itemDetails", "orderItems.itemDetails.item"})
-    List<Order> findAllByUserOrderByPlacedAtDesc(User user);
-
-    @EntityGraph(attributePaths = {"orderItems", "orderItems.itemDetails", "orderItems.itemDetails.item"})
     Page<Order> findAllByUserOrderByPlacedAtDesc(User user, Pageable pageable);
 
     Page<Order> findAll(Pageable pageable);
@@ -106,8 +103,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * Counts orders placed within a date range with a specific status.
      */
     long countByPlacedAtBetweenAndStatus(Instant start, Instant end, OrderStatus status);
-
-    Page<Order> findByPlacedAtBetween(Instant start, Instant end, Pageable pageable);
 
     @EntityGraph(attributePaths = {
             "orderItems",

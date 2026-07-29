@@ -139,7 +139,7 @@ class CategoryLookupServiceImpl implements CategoryLookupService {
     @Override
     public Page<Category> findByNameOrDescriptionContaining(String search, int page, int size) {
         return categoryRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
-                search, search, PageRequest.of(page, size, Sort.by("name").ascending()));
+                search, search, PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name")));
     }
 
     /**

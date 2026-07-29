@@ -152,4 +152,24 @@ class ItemDetailsLookupServiceImpl implements ItemDetailsLookupService {
     public List<ItemDetails> findAll() {
         return itemDetailsRepository.findAll();
     }
+
+    /**
+     * Returns the total stock quantity across all item details.
+     *
+     * @return sum of all stock quantities
+     */
+    @Override
+    public long sumStockQuantity() {
+        return itemDetailsRepository.sumStockQuantity();
+    }
+
+    /**
+     * Returns the total inventory value (price * stock quantity) across all item details.
+     *
+     * @return total inventory value
+     */
+    @Override
+    public java.math.BigDecimal sumInventoryValue() {
+        return itemDetailsRepository.sumInventoryValue();
+    }
 }

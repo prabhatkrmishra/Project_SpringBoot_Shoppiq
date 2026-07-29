@@ -142,7 +142,7 @@ class ItemLookupServiceImpl implements ItemLookupService {
     @Override
     public Page<Item> findBySellerId(Long sellerId, int page, int size) {
         return itemRepository.findBySellerId(sellerId,
-                PageRequest.of(page, size, Sort.by("id").descending()));
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")));
     }
 
     /**
@@ -156,7 +156,7 @@ class ItemLookupServiceImpl implements ItemLookupService {
     @Override
     public Page<Item> findByPublishingStatus(ProductPublishingStatus status, int page, int size) {
         return itemRepository.findByPublishingStatus(status,
-                PageRequest.of(page, size, Sort.by("id").descending()));
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")));
     }
 
     /**

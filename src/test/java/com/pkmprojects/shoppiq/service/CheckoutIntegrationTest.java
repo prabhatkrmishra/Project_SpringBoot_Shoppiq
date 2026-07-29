@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -374,7 +375,8 @@ class CheckoutIntegrationTest {
                     .getStockQuantity()).isEqualTo(10);
 
             // No order should have been created
-            assertThat(orderRepository.findAllByUserOrderByPlacedAtDesc(user)).isEmpty();
+            assertThat(orderRepository.findAllByUserOrderByPlacedAtDesc(user,
+                    PageRequest.of(0, 100))).isEmpty();
         }
     }
 

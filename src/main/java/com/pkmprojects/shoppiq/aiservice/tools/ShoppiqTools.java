@@ -182,7 +182,7 @@ public class ShoppiqTools {
                             return sb.toString();
                         })
                         .orElse("No order found with number '" + orderNumber + "'.");
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 return "Invalid order number '" + orderNumber + "'. Please provide a numeric order ID.";
             }
         }

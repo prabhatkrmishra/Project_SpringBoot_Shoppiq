@@ -83,7 +83,7 @@ class SellerLookupServiceImpl implements SellerLookupService {
     @Override
     public Page<Seller> findByVerificationStatus(VerificationStatus status, int page, int size) {
         return sellerRepository.findByVerificationStatus(status,
-                PageRequest.of(page, size, Sort.by("id").descending()));
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")));
     }
 
     /**
@@ -95,7 +95,7 @@ class SellerLookupServiceImpl implements SellerLookupService {
      */
     @Override
     public Page<Seller> findAll(int page, int size) {
-        return sellerRepository.findAll(PageRequest.of(page, size, Sort.by("id").descending()));
+        return sellerRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")));
     }
 
     /**

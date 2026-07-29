@@ -4,6 +4,8 @@ import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.repository.order.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,8 @@ class ChatOrderServiceImpl implements ChatOrderService {
 
     @Override
     public List<Order> findByUserNewestFirst(User user) {
-        return orderRepository.findAllByUserOrderByPlacedAtDesc(user);
+        return orderRepository.findAllByUserOrderByPlacedAtDesc(user,
+                PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "placedAt")))
+                .getContent();
     }
 }

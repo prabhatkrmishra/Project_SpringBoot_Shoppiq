@@ -113,4 +113,20 @@ public interface ItemDetailsRepository extends JpaRepository<ItemDetails, Long> 
      */
     @Query("SELECT COUNT(d) FROM ItemDetails d JOIN Item i ON i.itemDetails = d WHERE d.stockQuantity = 0 AND i.seller.id = :sellerId")
     long countOutOfStockProductsBySellerId(@Param("sellerId") Long sellerId);
+
+    /**
+     * Returns the total stock quantity across all item details.
+     *
+     * @return sum of all stock quantities
+     */
+    @Query("SELECT COALESCE(SUM(d.stockQuantity), 0) FROM ItemDetails d")
+    long sumStockQuantity();
+
+    /**
+     * Returns the total inventory value (price * stock quantity) across all item details.
+     *
+     * @return total inventory value
+     */
+    @Query("SELECT COALESCE(SUM(d.price * d.stockQuantity), 0) FROM ItemDetails d")
+    java.math.BigDecimal sumInventoryValue();
 }

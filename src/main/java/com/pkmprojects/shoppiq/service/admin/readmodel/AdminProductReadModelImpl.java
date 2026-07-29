@@ -115,4 +115,24 @@ class AdminProductReadModelImpl implements AdminProductReadModel {
     public Optional<Seller> findSellerById(Long sellerId) {
         return sellerLookupService.findById(sellerId);
     }
+
+    /**
+     * Returns the total stock quantity across all item details.
+     *
+     * @return sum of all stock quantities
+     */
+    @Override
+    public long sumStockQuantity() {
+        return itemDetailsLookupService.sumStockQuantity();
+    }
+
+    /**
+     * Returns the total inventory value (price * stock quantity) across all item details.
+     *
+     * @return total inventory value
+     */
+    @Override
+    public java.math.BigDecimal sumInventoryValue() {
+        return itemDetailsLookupService.sumInventoryValue();
+    }
 }

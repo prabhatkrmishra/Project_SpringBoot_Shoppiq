@@ -114,4 +114,18 @@ public interface ItemDetailsLookupService {
      * @return all item details
      */
     List<ItemDetails> findAll();
+
+    /**
+     * Returns the total stock quantity across all item details.
+     *
+     * @return sum of all stock quantities
+     */
+    long sumStockQuantity();
+
+    /**
+     * Returns the total inventory value (price * stock quantity) across all item details.
+     *
+     * @return total inventory value
+     */
+    java.math.BigDecimal sumInventoryValue();
 }

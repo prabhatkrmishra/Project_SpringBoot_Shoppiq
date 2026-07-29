@@ -318,10 +318,8 @@ public class AdminReportServiceImpl implements AdminReportService {
         List<ItemDetails> allDetails = productReadModel.findAllItemDetails();
 
         long totalProducts = productReadModel.countItemDetails();
-        int totalStockUnits = allDetails.stream().mapToInt(ItemDetails::getStockQuantity).sum();
-        BigDecimal totalInventoryValue = allDetails.stream()
-                .map(d -> d.getPrice().multiply(BigDecimal.valueOf(d.getStockQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        int totalStockUnits = (int) productReadModel.sumStockQuantity();
+        BigDecimal totalInventoryValue = productReadModel.sumInventoryValue();
 
         long outOfStockCount = productReadModel.countOutOfStock();
         long lowStockCount = productReadModel.countLowStock(InventoryConstants.LOW_STOCK_THRESHOLD);

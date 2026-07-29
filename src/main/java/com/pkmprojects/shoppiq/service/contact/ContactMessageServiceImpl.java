@@ -13,6 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 /**
  * <strong>Spring Boot Concept:</strong> Implementation of {@link ContactMessageService}
  * containing business logic for contact message management.
@@ -51,11 +53,22 @@ public class ContactMessageServiceImpl implements ContactMessageService {
      */
     @Override
     public ContactMessageResponse create(ContactMessageRequest request) {
+        Objects.requireNonNull(request, "Contact message request must not be null.");
+        if (request.name() == null || request.name().isBlank()) {
+            throw new IllegalArgumentException("Name must not be blank.");
+        }
+        if (request.email() == null || request.email().isBlank()) {
+            throw new IllegalArgumentException("Email must not be blank.");
+        }
+        if (request.message() == null || request.message().isBlank()) {
+            throw new IllegalArgumentException("Message must not be blank.");
+        }
+
         ContactMessage message = ContactMessage.builder()
-                .name(request.name())
-                .email(request.email())
-                .subject(request.subject())
-                .message(request.message())
+                .name(request.name().trim())
+                .email(request.email().trim().toLowerCase())
+                .subject(request.subject() != null ? request.subject().trim() : null)
+                .message(request.message().trim())
                 .build();
 
         message = contactMessageRepository.save(message);

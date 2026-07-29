@@ -72,7 +72,7 @@ public class BannerServiceImpl implements BannerService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<BannerResponse> findAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("displayOrder").ascending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "displayOrder"));
         var bannerPage = bannerRepository.findAll(pageable);
         return PageResponse.of(bannerPage, BannerResponse::from);
     }
