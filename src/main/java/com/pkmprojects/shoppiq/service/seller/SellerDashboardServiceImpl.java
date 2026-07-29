@@ -15,6 +15,9 @@ import com.pkmprojects.shoppiq.repository.order.OrderRepository;
 import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import com.pkmprojects.shoppiq.config.InventoryConstants;
+import com.pkmprojects.shoppiq.entity.order.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,9 +94,9 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
     @Override
     public List<SellerOrderResponse> getRecentOrders(User user) {
         Seller seller = findActiveSeller(user);
-        return orderRepository.findDistinctBySellerIdOrderByPlacedAtDesc(seller.getId())
-                .stream()
-                .limit(10)
+        Page<Order> orderPage = orderRepository.findDistinctBySellerId(
+                seller.getId(), PageRequest.of(0, 10));
+        return orderPage.getContent().stream()
                 .map(order -> SellerOrderResponse.from(order, seller.getId()))
                 .toList();
     }

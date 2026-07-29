@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -49,15 +50,18 @@ public class AdminReportServiceImpl implements AdminReportService {
     private final AdminPaymentReadModel paymentReadModel;
     private final AdminProductReadModel productReadModel;
     private final AdminUserReadModel userReadModel;
+    private final Clock clock;
 
     public AdminReportServiceImpl(AdminOrderReadModel orderReadModel,
                                   AdminPaymentReadModel paymentReadModel,
                                   AdminProductReadModel productReadModel,
-                                  AdminUserReadModel userReadModel) {
+                                  AdminUserReadModel userReadModel,
+                                  Clock clock) {
         this.orderReadModel = orderReadModel;
         this.paymentReadModel = paymentReadModel;
         this.productReadModel = productReadModel;
         this.userReadModel = userReadModel;
+        this.clock = clock;
     }
 
     @Override
@@ -237,10 +241,10 @@ public class AdminReportServiceImpl implements AdminReportService {
                 .map(a -> {
                     LocalDate firstOrder = a.getFirstOrderDate() != null
                             ? a.getFirstOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
-                            : LocalDate.now();
+                            : LocalDate.now(clock);
                     LocalDate lastOrder = a.getLastOrderDate() != null
                             ? a.getLastOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
-                            : LocalDate.now();
+                            : LocalDate.now(clock);
                     return new CustomerReport.TopCustomer(
                             a.getUserId(), a.getUsername(), a.getEmail(),
                             a.getOrderCount(), a.getTotalSpent(), firstOrder, lastOrder
@@ -248,7 +252,7 @@ public class AdminReportServiceImpl implements AdminReportService {
                 })
                 .toList();
 
-        // Customer segments — computed from aggregated data (single pass per segment)
+        // Customer segments — single pass to avoid 6x streaming
         List<CustomerAggData> aggDataList = customerAggs.stream()
                 .map(a -> new CustomerAggData(
                         a.getUserId(), a.getUsername(), a.getEmail(),
@@ -259,29 +263,38 @@ public class AdminReportServiceImpl implements AdminReportService {
                                 : BigDecimal.ZERO,
                         a.getFirstOrderDate() != null
                                 ? a.getFirstOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
-                                : LocalDate.now(),
+                                 : LocalDate.now(clock),
                         a.getLastOrderDate() != null
                                 ? a.getLastOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
-                                : LocalDate.now()
+                                : LocalDate.now(clock)
                 ))
                 .toList();
 
-        List<CustomerReport.CustomerSegment> segments = List.of(
-                new CustomerReport.CustomerSegment("VIP",
-                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(10000)) > 0).count(),
-                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(10000)) > 0)
-                                .map(CustomerAggData::totalSpent).reduce(BigDecimal.ZERO, BigDecimal::add)),
-                new CustomerReport.CustomerSegment("Regular",
-                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) > 0
-                                && d.totalSpent().compareTo(BigDecimal.valueOf(10000)) <= 0).count(),
-                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) > 0
-                                        && d.totalSpent().compareTo(BigDecimal.valueOf(10000)) <= 0)
-                                .map(CustomerAggData::totalSpent).reduce(BigDecimal.ZERO, BigDecimal::add)),
-                new CustomerReport.CustomerSegment("New",
-                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) <= 0).count(),
-                        aggDataList.stream().filter(d -> d.totalSpent().compareTo(BigDecimal.valueOf(1000)) <= 0)
-                                .map(CustomerAggData::totalSpent).reduce(BigDecimal.ZERO, BigDecimal::add))
-        );
+        // Single pass: classify each customer into a segment bucket
+        Map<String, List<CustomerAggData>> segmentBuckets = new LinkedHashMap<>();
+        segmentBuckets.put("VIP", new ArrayList<>());
+        segmentBuckets.put("Regular", new ArrayList<>());
+        segmentBuckets.put("New", new ArrayList<>());
+
+        for (CustomerAggData d : aggDataList) {
+            if (d.totalSpent().compareTo(BigDecimal.valueOf(10000)) > 0) {
+                segmentBuckets.get("VIP").add(d);
+            } else if (d.totalSpent().compareTo(BigDecimal.valueOf(1000)) > 0) {
+                segmentBuckets.get("Regular").add(d);
+            } else {
+                segmentBuckets.get("New").add(d);
+            }
+        }
+
+        List<CustomerReport.CustomerSegment> segments = segmentBuckets.entrySet().stream()
+                .map(e -> new CustomerReport.CustomerSegment(
+                        e.getKey(),
+                        e.getValue().size(),
+                        e.getValue().stream()
+                                .map(CustomerAggData::totalSpent)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                ))
+                .toList();
 
         long totalCustomers = userReadModel.countAll();
         long newCustomers = userReadModel.countCreatedAfter(startInstant);
@@ -329,7 +342,7 @@ public class AdminReportServiceImpl implements AdminReportService {
                 .toList();
 
         return new InventoryReport(
-                LocalDate.now(), totalProducts, totalStockUnits, totalInventoryValue,
+                 LocalDate.now(clock), totalProducts, totalStockUnits, totalInventoryValue,
                 lowStockCount, outOfStockCount, productStatuses
         );
     }

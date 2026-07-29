@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -98,6 +99,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
     private final JwtCookieFactory jwtCookieFactory;
     private final OAuthRegistrationCookieService registrationCookieService;
+    private final Clock clock;
 
     @Value("${jwt.expiration}")
     private long expirationTime;
@@ -108,11 +110,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     public OAuth2SuccessHandler(UserRepository userRepository,
                                 JwtAuthenticationUtils jwtAuthenticationUtils,
                                 JwtCookieFactory jwtCookieFactory,
-                                OAuthRegistrationCookieService registrationCookieService) {
+                                OAuthRegistrationCookieService registrationCookieService,
+                                Clock clock) {
         this.userRepository = userRepository;
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.jwtCookieFactory = jwtCookieFactory;
         this.registrationCookieService = registrationCookieService;
+        this.clock = clock;
     }
 
     /**
@@ -192,7 +196,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         }
 
         // New user — store registration data in a cookie, redirect to complete-profile
-        OAuthRegistrationSession registrationSession = new OAuthRegistrationSession(email, name, Instant.now());
+        OAuthRegistrationSession registrationSession = new OAuthRegistrationSession(email, name, Instant.now(clock));
         registrationCookieService.save(registrationSession, response);
 
         String returnTo = extractOAuthReturnUrl(request, response);

@@ -482,7 +482,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     // =========================================================
 
     private Order findOrderOrThrow(Long orderId) {
-        return orderRepository.findById(orderId)
+        return orderRepository.findByIdWithItems(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(
                         "Order with id '%d' was not found.".formatted(orderId)));
     }

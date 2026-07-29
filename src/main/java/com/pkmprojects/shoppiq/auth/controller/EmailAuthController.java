@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 
@@ -82,6 +83,7 @@ public class EmailAuthController {
     private final VerificationCodeService verificationCodeService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Clock clock;
 
     /**
      * Sends a password reset code to the user's email.
@@ -185,7 +187,7 @@ public class EmailAuthController {
         verificationCodeService.validateCode(user.getId(), request.code(), EmailType.VERIFICATION);
 
         user.setEmailVerified(true);
-        user.setEmailVerifiedAt(Instant.now());
+        user.setEmailVerifiedAt(Instant.now(clock));
         userRepository.save(user);
 
         return ResponseEntity.ok(Map.of(

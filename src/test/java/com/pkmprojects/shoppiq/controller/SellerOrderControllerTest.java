@@ -8,6 +8,7 @@ import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestR
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
+import com.pkmprojects.shoppiq.config.ClockConfig;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.controller.seller.SellerOrderController;
@@ -58,6 +59,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 @WebMvcTest(SellerOrderController.class)
 @Import({
+        ClockConfig.class,
         SecurityConfig.class,
         JacksonConfig.class,
         GlobalExceptionHandler.class,

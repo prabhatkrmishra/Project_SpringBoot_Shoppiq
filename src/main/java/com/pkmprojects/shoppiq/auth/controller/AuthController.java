@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -98,6 +99,7 @@ public class AuthController {
     private final long expirationTime;
     private final long refreshMaxAge;
     private final int oauthRegistrationTimeoutMinutes;
+    private final Clock clock;
 
     public AuthController(AuthService authService,
                           UserService userService,
@@ -107,7 +109,8 @@ public class AuthController {
                           OAuthRegistrationCookieService registrationCookieService,
                           @Value("${jwt.expiration}") long expirationTime,
                           @Value("${jwt.refresh-max-age:2592000000}") long refreshMaxAge,
-                          @Value("${oauth.registration.timeout-minutes:10}") int oauthRegistrationTimeoutMinutes) {
+                          @Value("${oauth.registration.timeout-minutes:10}") int oauthRegistrationTimeoutMinutes,
+                          Clock clock) {
         this.authService = authService;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -117,6 +120,7 @@ public class AuthController {
         this.expirationTime = expirationTime;
         this.refreshMaxAge = refreshMaxAge;
         this.oauthRegistrationTimeoutMinutes = oauthRegistrationTimeoutMinutes;
+        this.clock = clock;
     }
 
     /**
@@ -211,7 +215,7 @@ public class AuthController {
             throw new InvalidOidcUserException("OIDC user does not contain a valid email claim.");
         }
 
-        if (Instant.now().isAfter(oauthSession.authenticatedAt()
+        if (Instant.now(clock).isAfter(oauthSession.authenticatedAt()
                 .plus(oauthRegistrationTimeoutMinutes, ChronoUnit.MINUTES))) {
             registrationCookieService.clear(response);
             logger.debug("OAuth registration cookie expired for email: {}", oauthSession.email());

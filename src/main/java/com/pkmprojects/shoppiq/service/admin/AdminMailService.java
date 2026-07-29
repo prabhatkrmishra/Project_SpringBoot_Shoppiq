@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -277,12 +278,13 @@ public class AdminMailService {
                     .map(List::of)
                     .orElse(List.of());
         }
-        List<User> byName = userRepository.findByNameContainingIgnoreCase(query);
-        List<User> byEmail = userRepository.findByEmailContainingIgnoreCase(query);
-        List<User> byUsername = userRepository.findByUsernameContainingIgnoreCase(query);
+        var pageable = Pageable.ofSize(100);
+        var byName = userRepository.findByNameContainingIgnoreCase(query, pageable);
+        var byEmail = userRepository.findByEmailContainingIgnoreCase(query, pageable);
+        var byUsername = userRepository.findByUsernameContainingIgnoreCase(query, pageable);
 
         return Stream.of(byName, byEmail, byUsername)
-                .flatMap(List::stream)
+                .flatMap(page -> page.getContent().stream())
                 .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a))
                 .values()
                 .stream()

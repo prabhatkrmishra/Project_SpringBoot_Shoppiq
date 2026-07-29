@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
+import java.time.Clock;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,6 +43,9 @@ class EmailServiceImplTest {
 
     @Mock
     private EmailProvider emailProvider;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private EmailServiceImpl emailService;

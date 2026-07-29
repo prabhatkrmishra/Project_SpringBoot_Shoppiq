@@ -207,7 +207,7 @@ public class AdminSellerServiceImpl implements AdminSellerService {
         String slug = baseSlug;
 
         int suffix = 1;
-        while (storeRepository.findBySlug(slug).isPresent()) {
+        while (storeRepository.existsBySlug(slug)) {
             slug = baseSlug + "-" + suffix++;
         }
 

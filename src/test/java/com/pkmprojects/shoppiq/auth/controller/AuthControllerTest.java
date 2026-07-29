@@ -12,6 +12,8 @@ import com.pkmprojects.shoppiq.service.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.time.Clock;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,7 +56,8 @@ class AuthControllerTest {
     void setUp() {
         authController = new AuthController(authService, userService, userRepository,
                 jwtAuthenticationUtils, jwtCookieFactory, registrationCookieService,
-                3600000L, 2592000000L, 10);
+                3600000L, 2592000000L, 10,
+                Clock.systemDefaultZone());
     }
 
     private void setupMockMvc() {

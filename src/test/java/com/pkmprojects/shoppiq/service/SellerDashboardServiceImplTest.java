@@ -30,6 +30,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -159,8 +163,8 @@ class SellerDashboardServiceImplTest {
             stubActiveSeller();
             Order order = mock(Order.class);
             when(order.getOrderItems()).thenReturn(List.of());
-            when(orderRepository.findDistinctBySellerIdOrderByPlacedAtDesc(testSeller.getId()))
-                    .thenReturn(List.of(order));
+            when(orderRepository.findDistinctBySellerId(eq(testSeller.getId()), any(PageRequest.class)))
+                    .thenReturn(new PageImpl<>(List.of(order)));
 
             List<SellerOrderResponse> result = sellerDashboardService.getRecentOrders(testUser);
 
@@ -171,8 +175,8 @@ class SellerDashboardServiceImplTest {
         @DisplayName("returns empty list when no orders")
         void returnsEmptyListWhenNoOrders() {
             stubActiveSeller();
-            when(orderRepository.findDistinctBySellerIdOrderByPlacedAtDesc(testSeller.getId()))
-                    .thenReturn(List.of());
+            when(orderRepository.findDistinctBySellerId(eq(testSeller.getId()), any(PageRequest.class)))
+                    .thenReturn(Page.empty());
 
             List<SellerOrderResponse> result = sellerDashboardService.getRecentOrders(testUser);
 

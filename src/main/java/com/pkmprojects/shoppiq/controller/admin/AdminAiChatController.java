@@ -23,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -57,6 +59,7 @@ public class AdminAiChatController {
     private final ChatConversationRepository conversationRepository;
     private final ChatMessageRepository messageRepository;
     private final PaginationProperties pagination;
+    private final Clock clock;
 
     /**
      * Constructs a new {@code AdminAiChatController} with the required dependencies.
@@ -64,13 +67,16 @@ public class AdminAiChatController {
      * @param conversationRepository repository for conversation queries
      * @param messageRepository      repository for message counting
      * @param pagination             page size configuration
+     * @param clock                  clock for time-related operations
      */
     public AdminAiChatController(ChatConversationRepository conversationRepository,
                                   ChatMessageRepository messageRepository,
-                                  PaginationProperties pagination) {
+                                  PaginationProperties pagination,
+                                  Clock clock) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.pagination = pagination;
+        this.clock = clock;
     }
 
     /**
@@ -169,7 +175,7 @@ public class AdminAiChatController {
             .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
 
         conv.setStatus(ConversationStatus.RESOLVED);
-        conv.setResolvedAt(java.time.Instant.now());
+        conv.setResolvedAt(Instant.now(clock));
         conversationRepository.save(conv);
 
         ChatMessage systemMsg = ChatMessage.builder()

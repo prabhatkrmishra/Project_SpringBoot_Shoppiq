@@ -518,7 +518,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             OrderResponse response = checkoutService.getMyOrder(user, 10L);
 
@@ -530,7 +530,7 @@ class CheckoutServiceImplTest {
         @DisplayName("Throws OrderNotFoundException when order doesn't exist")
         void getMyOrder_notFound() throws Exception {
             User user = buildUser(1L);
-            when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+            when(orderRepository.findByIdWithItems(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> checkoutService.getMyOrder(user, 99L))
                     .isInstanceOf(OrderNotFoundException.class);
@@ -544,7 +544,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, bob);
             Order order = buildOrder(10L, bob, addr, OrderStatus.PLACED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.getMyOrder(alice, 10L))
                     .isInstanceOf(OrderAccessDeniedException.class);
@@ -566,7 +566,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             checkoutService.cancelOrder(user, 10L);
 
@@ -578,7 +578,7 @@ class CheckoutServiceImplTest {
         @DisplayName("Fails — order not found (OrderNotFoundException)")
         void cancelOrder_notFound() throws Exception {
             User user = buildUser(1L);
-            when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+            when(orderRepository.findByIdWithItems(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 99L))
                     .isInstanceOf(OrderNotFoundException.class);
@@ -592,7 +592,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, bob);
             Order order = buildOrder(10L, bob, addr, OrderStatus.PLACED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(alice, 10L))
                     .isInstanceOf(OrderAccessDeniedException.class);
@@ -605,7 +605,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.SHIPPED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
                     .isInstanceOf(OrderCannotBeCancelledException.class);
@@ -618,7 +618,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
                     .isInstanceOf(OrderCannotBeCancelledException.class);
@@ -631,7 +631,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.CANCELLED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
                     .isInstanceOf(OrderCannotBeCancelledException.class);
@@ -644,7 +644,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.CONFIRMED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
                     .isInstanceOf(OrderCannotBeCancelledException.class);
@@ -657,7 +657,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.OUT_FOR_DELIVERY);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
                     .isInstanceOf(OrderCannotBeCancelledException.class);
@@ -670,7 +670,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.RETURN_REQUEST);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
                     .isInstanceOf(OrderCannotBeCancelledException.class);
@@ -683,7 +683,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.REFUND_REQUEST);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
                     .isInstanceOf(OrderCannotBeCancelledException.class);
@@ -696,7 +696,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.CANCEL_REQUEST);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.cancelOrder(user, 10L))
                     .isInstanceOf(OrderCannotBeCancelledException.class);
@@ -709,7 +709,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             checkoutService.cancelOrder(user, 10L);
 
@@ -732,7 +732,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             checkoutService.requestReturn(user, 10L);
 
@@ -747,7 +747,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -757,7 +757,7 @@ class CheckoutServiceImplTest {
         @DisplayName("Fails — order not found")
         void requestReturn_notFound() throws Exception {
             User user = buildUser(1L);
-            when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+            when(orderRepository.findByIdWithItems(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> checkoutService.requestReturn(user, 99L))
                     .isInstanceOf(OrderNotFoundException.class);
@@ -771,7 +771,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, bob);
             Order order = buildOrder(10L, bob, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReturn(alice, 10L))
                     .isInstanceOf(OrderAccessDeniedException.class);
@@ -784,7 +784,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.SHIPPED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -797,7 +797,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.CANCELLED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -810,7 +810,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.CONFIRMED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -823,7 +823,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.RETURNED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -836,7 +836,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.RETURN_REQUEST);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReturn(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -849,7 +849,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             checkoutService.requestReturn(user, 10L);
 
@@ -872,7 +872,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             checkoutService.requestRefund(user, 10L);
 
@@ -887,7 +887,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.SHIPPED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -897,7 +897,7 @@ class CheckoutServiceImplTest {
         @DisplayName("Fails — order not found")
         void requestRefund_notFound() throws Exception {
             User user = buildUser(1L);
-            when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+            when(orderRepository.findByIdWithItems(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> checkoutService.requestRefund(user, 99L))
                     .isInstanceOf(OrderNotFoundException.class);
@@ -911,7 +911,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, bob);
             Order order = buildOrder(10L, bob, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestRefund(alice, 10L))
                     .isInstanceOf(OrderAccessDeniedException.class);
@@ -924,7 +924,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -937,7 +937,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.CANCELLED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -950,7 +950,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.CONFIRMED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -963,7 +963,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.REFUNDED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -976,7 +976,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.REFUND_REQUEST);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestRefund(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -989,7 +989,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             checkoutService.requestRefund(user, 10L);
 
@@ -1012,7 +1012,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             checkoutService.requestReplacement(user, 10L);
 
@@ -1027,7 +1027,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.CANCELLED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -1037,7 +1037,7 @@ class CheckoutServiceImplTest {
         @DisplayName("Fails — order not found")
         void requestReplacement_notFound() throws Exception {
             User user = buildUser(1L);
-            when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+            when(orderRepository.findByIdWithItems(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> checkoutService.requestReplacement(user, 99L))
                     .isInstanceOf(OrderNotFoundException.class);
@@ -1051,7 +1051,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, bob);
             Order order = buildOrder(10L, bob, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReplacement(alice, 10L))
                     .isInstanceOf(OrderAccessDeniedException.class);
@@ -1064,7 +1064,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.PLACED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -1077,7 +1077,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.SHIPPED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -1090,7 +1090,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.CONFIRMED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -1103,7 +1103,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.REPLACED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -1116,7 +1116,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.REPLACE_REQUEST);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -1129,7 +1129,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.RETURNED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             assertThatThrownBy(() -> checkoutService.requestReplacement(user, 10L))
                     .isInstanceOf(OrderInvalidStatusTransitionException.class);
@@ -1142,7 +1142,7 @@ class CheckoutServiceImplTest {
             Address addr = buildAddress(1L, user);
             Order order = buildOrder(10L, user, addr, OrderStatus.DELIVERED);
 
-            when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
 
             checkoutService.requestReplacement(user, 10L);
 

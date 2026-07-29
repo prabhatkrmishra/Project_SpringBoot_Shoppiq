@@ -18,6 +18,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -119,8 +120,10 @@ public class JwtAuthenticationUtils {
     private static final String JWT_COOKIE_NAME = "jwt";
 
     private final SecretKey key;
+    private final Clock clock;
 
-    public JwtAuthenticationUtils(@Value("${jwt.secret}") String secret) {
+    public JwtAuthenticationUtils(@Value("${jwt.secret}") String secret, Clock clock) {
+        this.clock = clock;
         try {
             this.key = Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         } catch (Exception e) {
@@ -195,7 +198,7 @@ public class JwtAuthenticationUtils {
      * @return {@code true} if the token is expired
      */
     public boolean isTokenExpired(String token) {
-        return getClaimsFromToken(token).getExpiration().toInstant().isBefore(Instant.now());
+        return getClaimsFromToken(token).getExpiration().toInstant().isBefore(Instant.now(clock));
     }
 
     /**
@@ -264,8 +267,8 @@ public class JwtAuthenticationUtils {
                             .map(GrantedAuthority::getAuthority)
                             .toList())
                     .claim("tokenVersion", user.getTokenVersion())
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plusMillis(expiration)))
+                    .issuedAt(Date.from(Instant.now(clock)))
+                    .expiration(Date.from(Instant.now(clock).plusMillis(expiration)))
                     .signWith(key)
                     .compact();
         } catch (Exception e) {
@@ -315,7 +318,7 @@ public class JwtAuthenticationUtils {
             boolean userEnabled = user.isEnabled();
 
             Instant issuedAt = claims.getIssuedAt().toInstant();
-            long ageMillis = Instant.now().toEpochMilli() - issuedAt.toEpochMilli();
+            long ageMillis = Instant.now(clock).toEpochMilli() - issuedAt.toEpochMilli();
             boolean ageOk = ageMillis <= maxAgeMillis;
             if (!ageOk) {
                 logger.debug("Token age {}ms exceeds max allowed {}ms", ageMillis, maxAgeMillis);

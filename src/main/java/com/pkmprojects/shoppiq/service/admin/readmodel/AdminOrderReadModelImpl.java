@@ -11,6 +11,7 @@ import com.pkmprojects.shoppiq.repository.order.projection.ProductPerformanceAgg
 import com.pkmprojects.shoppiq.repository.order.projection.ProductSalesAggregate;
 import com.pkmprojects.shoppiq.repository.order.projection.SellerRevenueAggregate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,8 +99,8 @@ class AdminOrderReadModelImpl implements AdminOrderReadModel {
      * @return list of orders in ascending order
      */
     @Override
-    public List<Order> findPlacedBetweenAsc(Instant start, Instant end) {
-        return orderRepository.findByPlacedAtBetweenOrderByPlacedAtAsc(start, end);
+    public List<Order> findPlacedBetweenAsc(Instant start, Instant end, Pageable pageable) {
+        return orderRepository.findByPlacedAtBetweenOrderByPlacedAtAsc(start, end, pageable).getContent();
     }
 
     /**
@@ -111,8 +112,8 @@ class AdminOrderReadModelImpl implements AdminOrderReadModel {
      * @return list of matching orders in ascending order
      */
     @Override
-    public List<Order> findPlacedBetweenAsc(Instant start, Instant end, OrderStatus status) {
-        return orderRepository.findByPlacedAtBetweenAndStatusOrderByPlacedAtAsc(start, end, status);
+    public List<Order> findPlacedBetweenAsc(Instant start, Instant end, OrderStatus status, Pageable pageable) {
+        return orderRepository.findByPlacedAtBetweenAndStatusOrderByPlacedAtAsc(start, end, status, pageable).getContent();
     }
 
     /**

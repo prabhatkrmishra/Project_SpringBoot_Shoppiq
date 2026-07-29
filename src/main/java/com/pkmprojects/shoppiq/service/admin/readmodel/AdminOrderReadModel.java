@@ -8,6 +8,8 @@ import com.pkmprojects.shoppiq.repository.order.projection.CustomerOrderAggregat
 import com.pkmprojects.shoppiq.repository.order.projection.ProductPerformanceAggregate;
 import com.pkmprojects.shoppiq.repository.order.projection.ProductSalesAggregate;
 import com.pkmprojects.shoppiq.repository.order.projection.SellerRevenueAggregate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
@@ -63,13 +65,17 @@ public interface AdminOrderReadModel {
 
     /**
      * Returns orders placed within the given time range, ordered oldest first.
+     *
+     * @param pageable pagination information
      */
-    List<Order> findPlacedBetweenAsc(Instant start, Instant end);
+    List<Order> findPlacedBetweenAsc(Instant start, Instant end, Pageable pageable);
 
     /**
      * Returns orders placed within the given time range with the given status, ordered oldest first.
+     *
+     * @param pageable pagination information
      */
-    List<Order> findPlacedBetweenAsc(Instant start, Instant end, OrderStatus status);
+    List<Order> findPlacedBetweenAsc(Instant start, Instant end, OrderStatus status, Pageable pageable);
 
     /**
      * Returns the 10 most recently placed orders.

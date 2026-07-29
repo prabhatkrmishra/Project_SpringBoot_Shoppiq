@@ -7,8 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 /**
  * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link ContactMessage} persistence operations.
  *
@@ -35,8 +33,6 @@ import java.util.List;
  */
 @Repository
 public interface ContactMessageRepository extends JpaRepository<ContactMessage, Long> {
-
-    List<ContactMessage> findAllByOrderByCreatedAtDesc();
 
     Page<ContactMessage> findAllByOrderByCreatedAtDesc(Pageable pageable);
 

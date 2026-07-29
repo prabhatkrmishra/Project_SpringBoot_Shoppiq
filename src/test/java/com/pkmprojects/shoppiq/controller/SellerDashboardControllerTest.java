@@ -7,6 +7,7 @@ import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestR
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
+import com.pkmprojects.shoppiq.config.ClockConfig;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.controller.seller.SellerDashboardController;
@@ -52,6 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(SellerDashboardController.class)
 @Import({
+        ClockConfig.class,
         SecurityConfig.class,
         JacksonConfig.class,
         GlobalExceptionHandler.class,

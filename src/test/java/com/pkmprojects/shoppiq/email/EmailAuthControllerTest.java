@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.lang.reflect.Field;
+import java.time.Clock;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,6 +46,9 @@ class EmailAuthControllerTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private EmailAuthController controller;

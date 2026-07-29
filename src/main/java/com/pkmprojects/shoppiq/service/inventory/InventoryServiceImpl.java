@@ -13,6 +13,8 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -43,11 +45,14 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final ItemDetailsWriteService itemDetailsWriteService;
     private final ApplicationEventPublisher eventPublisher;
+    private final Clock clock;
 
     public InventoryServiceImpl(ItemDetailsWriteService itemDetailsWriteService,
-                                ApplicationEventPublisher eventPublisher) {
+                                ApplicationEventPublisher eventPublisher,
+                                Clock clock) {
         this.itemDetailsWriteService = itemDetailsWriteService;
         this.eventPublisher = eventPublisher;
+        this.clock = clock;
     }
 
     /**
@@ -126,7 +131,8 @@ public class InventoryServiceImpl implements InventoryService {
                     skus,
                     null,
                     toUpdate.size(),
-                    message
+                    message,
+                    Instant.now(clock)
             ));
             throw StockConflictException.forOptimisticLock(message);
         }

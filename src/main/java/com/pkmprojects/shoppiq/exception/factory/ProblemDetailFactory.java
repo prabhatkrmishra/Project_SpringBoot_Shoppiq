@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 
 import java.net.URI;
+import java.time.Clock;
 import java.time.Instant;
 
 /**
@@ -26,6 +27,17 @@ import java.time.Instant;
  * @since 1.0.0
  */
 public final class ProblemDetailFactory {
+
+    private static Clock clock = Clock.systemUTC();
+
+    /**
+     * Sets the clock used for timestamps. Intended for test use to provide a fixed clock.
+     *
+     * @param clock the clock to use
+     */
+    static void setClock(Clock clock) {
+        ProblemDetailFactory.clock = clock;
+    }
 
     /**
      * Prevents instantiation.
@@ -73,7 +85,7 @@ public final class ProblemDetailFactory {
 
         problemDetail.setTitle(status.getReasonPhrase());
         problemDetail.setInstance(instance);
-        problemDetail.setProperty(ProblemDetailProperties.TIMESTAMP, Instant.now());
+        problemDetail.setProperty(ProblemDetailProperties.TIMESTAMP, Instant.now(clock));
         problemDetail.setProperty(ProblemDetailProperties.ERROR_CODE, errorCode.getCode());
 
         return problemDetail;

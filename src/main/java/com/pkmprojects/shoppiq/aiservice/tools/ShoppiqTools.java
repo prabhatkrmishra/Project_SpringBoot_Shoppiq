@@ -37,6 +37,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -85,6 +87,7 @@ public class ShoppiqTools {
     private final ChatReviewService chatReviewService;
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final EmbeddingModel embeddingModel;
+    private final Clock clock;
 
     @PostConstruct
     void logInit() {
@@ -299,7 +302,7 @@ public class ShoppiqTools {
         }
 
         conv.setStatus(ConversationStatus.RESOLVED);
-        conv.setResolvedAt(java.time.Instant.now());
+        conv.setResolvedAt(Instant.now(clock));
         conversationRepository.save(conv);
 
         ChatMessage msg = ChatMessage.builder()

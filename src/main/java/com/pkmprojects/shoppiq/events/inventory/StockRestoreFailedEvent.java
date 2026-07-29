@@ -24,19 +24,20 @@ public class StockRestoreFailedEvent extends ApplicationEvent {
     /**
      * Create a new StockRestoreFailedEvent.
      *
-     * @param source the object on which the event initially occurred (typically the InventoryService)
-     * @param sku the SKU of the item that failed to restore
-     * @param orderId the order ID associated with the failed restoration
-     * @param quantity the quantity that failed to restore
+     * @param source       the object on which the event initially occurred (typically the InventoryService)
+     * @param sku          the SKU of the item that failed to restore
+     * @param orderId      the order ID associated with the failed restoration
+     * @param quantity     the quantity that failed to restore
      * @param errorMessage the error message from the optimistic locking failure
+     * @param timestamp    the timestamp of the failure
      */
-    public StockRestoreFailedEvent(Object source, String sku, Long orderId, Integer quantity, String errorMessage) {
+    public StockRestoreFailedEvent(Object source, String sku, Long orderId, Integer quantity, String errorMessage, Instant timestamp) {
         super(source);
         this.sku = sku;
         this.orderId = orderId;
         this.quantity = quantity;
         this.errorMessage = errorMessage;
-        this.timestamp = Instant.now();
+        this.timestamp = timestamp;
     }
 
     /**

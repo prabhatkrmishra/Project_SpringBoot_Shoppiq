@@ -109,26 +109,29 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * Finds users whose name contains the given string (case-insensitive).
      *
-     * @param name the name to search for
-     * @return list of matching users
+     * @param name     the name to search for
+     * @param pageable pagination information
+     * @return page of matching users
      */
-    List<User> findByNameContainingIgnoreCase(String name);
+    Page<User> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
     /**
      * Finds users whose email contains the given string (case-insensitive).
      *
-     * @param email the email to search for
-     * @return list of matching users
+     * @param email    the email to search for
+     * @param pageable pagination information
+     * @return page of matching users
      */
-    List<User> findByEmailContainingIgnoreCase(String email);
+    Page<User> findByEmailContainingIgnoreCase(String email, Pageable pageable);
 
     /**
      * Finds users whose username contains the given string (case-insensitive).
      *
      * @param username the username to search for
-     * @return list of matching users
+     * @param pageable pagination information
+     * @return page of matching users
      */
-    List<User> findByUsernameContainingIgnoreCase(String username);
+    Page<User> findByUsernameContainingIgnoreCase(String username, Pageable pageable);
 
 /**
      * Atomically increments failed login attempts and locks the account if threshold is reached.

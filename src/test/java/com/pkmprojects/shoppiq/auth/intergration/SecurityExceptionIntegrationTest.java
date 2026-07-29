@@ -7,6 +7,7 @@ import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
+import com.pkmprojects.shoppiq.config.ClockConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.controller.role.RoleController;
@@ -73,6 +74,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(controllers = {SecurityExceptionIntegrationTest.SecuredTestController.class, RoleController.class})
 @Import({
+        ClockConfig.class,
         SecurityConfig.class,
         JacksonConfig.class,
         JwtAuthenticationFilter.class,

@@ -66,8 +66,10 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+    @EntityGraph(attributePaths = {"orderItems", "orderItems.itemDetails", "orderItems.itemDetails.item"})
     List<Order> findAllByUserOrderByPlacedAtDesc(User user);
 
+    @EntityGraph(attributePaths = {"orderItems", "orderItems.itemDetails", "orderItems.itemDetails.item"})
     Page<Order> findAllByUserOrderByPlacedAtDesc(User user, Pageable pageable);
 
     Page<Order> findAll(Pageable pageable);
@@ -105,14 +107,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     long countByPlacedAtBetweenAndStatus(Instant start, Instant end, OrderStatus status);
 
-    List<Order> findByPlacedAtBetween(Instant start, Instant end);
+    Page<Order> findByPlacedAtBetween(Instant start, Instant end, Pageable pageable);
 
     @EntityGraph(attributePaths = {
             "orderItems",
             "orderItems.itemDetails",
             "orderItems.itemDetails.category"
     })
-    List<Order> findByPlacedAtBetweenAndStatusOrderByPlacedAtAsc(Instant start, Instant end, OrderStatus status);
+    Page<Order> findByPlacedAtBetweenAndStatusOrderByPlacedAtAsc(Instant start, Instant end, OrderStatus status, Pageable pageable);
 
     @EntityGraph(attributePaths = {
             "orderItems",
@@ -121,7 +123,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "orderItems.itemDetails.item",
             "user"
     })
-    List<Order> findByPlacedAtBetweenOrderByPlacedAtAsc(Instant start, Instant end);
+    Page<Order> findByPlacedAtBetweenOrderByPlacedAtAsc(Instant start, Instant end, Pageable pageable);
 
     long countByUser(User user);
 

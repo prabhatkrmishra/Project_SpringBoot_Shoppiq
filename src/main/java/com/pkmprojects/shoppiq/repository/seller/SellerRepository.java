@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -69,13 +68,12 @@ public interface SellerRepository extends JpaRepository<Seller, Long> {
     boolean existsByBusinessEmail(String businessEmail);
 
     /**
-     * Finds all sellers with the given verification status.
+     * Finds all sellers with the given verification status, with pagination support.
      *
      * @param status the verification status
-     * @return list of matching sellers
+     * @param pageable pagination information
+     * @return page of matching sellers
      */
-    List<Seller> findByVerificationStatus(VerificationStatus status);
-
     Page<Seller> findByVerificationStatus(VerificationStatus status, Pageable pageable);
 
     /**

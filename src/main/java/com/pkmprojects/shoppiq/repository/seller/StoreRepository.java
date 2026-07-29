@@ -47,4 +47,12 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
      * @return matching store if present
      */
     Optional<Store> findBySellerId(Long sellerId);
+
+    /**
+     * Checks whether a store exists with the given slug (lightweight count query).
+     *
+     * @param slug the store slug
+     * @return true if a store with that slug exists
+     */
+    boolean existsBySlug(String slug);
 }

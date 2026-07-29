@@ -13,6 +13,7 @@ import com.pkmprojects.shoppiq.service.admin.readmodel.AdminPaymentReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminProductReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminUserReadModel;
 import com.pkmprojects.shoppiq.config.InventoryConstants;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,7 +123,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endInstant = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        List<Order> orders = orderReadModel.findPlacedBetweenAsc(startInstant, endInstant, OrderStatus.DELIVERED);
+        List<Order> orders = orderReadModel.findPlacedBetweenAsc(startInstant, endInstant, OrderStatus.DELIVERED, Pageable.unpaged());
 
         Map<LocalDate, List<Order>> ordersByDate = orders.stream()
                 .collect(Collectors.groupingBy(
