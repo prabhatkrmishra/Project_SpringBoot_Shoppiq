@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 
@@ -58,11 +59,13 @@ public final class StripeGateway extends AbstractRestGateway {
      */
     public StripeGateway(RestClient.Builder restClientBuilder,
                          JsonMapper objectMapper,
-                         PaymentGatewayProperties properties) {
+                         PaymentGatewayProperties properties,
+                         Clock clock) {
         super(restClientBuilder, objectMapper,
                 properties.getStripe().getBaseUrl(),
                 properties.getStripe().getApiKey(),
-                properties.getStripe().getApiSecret());
+                properties.getStripe().getApiSecret(),
+                clock);
     }
 
     /**
@@ -137,7 +140,7 @@ public final class StripeGateway extends AbstractRestGateway {
         if ("succeeded".equals(status)) {
             payment.setTransactionId(transactionId);
             payment.setPaymentStatus(PaymentStatus.PAID);
-            payment.setPaidAt(Instant.now());
+            payment.setPaidAt(Instant.now(clock));
             payment.setGatewayResponse(response);
         } else {
             throw new PaymentGatewayException(

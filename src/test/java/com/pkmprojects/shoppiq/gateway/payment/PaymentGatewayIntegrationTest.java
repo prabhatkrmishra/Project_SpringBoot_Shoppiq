@@ -15,6 +15,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.*;
@@ -236,7 +237,7 @@ class PaymentGatewayIntegrationTest {
         props.getRazorpay().setBaseUrl(wireMock.baseUrl());
         props.getRazorpay().setApiKey("rzp_key");
         props.getRazorpay().setApiSecret("rzp_secret");
-        return new RazorpayGateway(http11Client(), objectMapper, props);
+        return new RazorpayGateway(http11Client(), objectMapper, props, Clock.systemDefaultZone());
     }
 
     private StripeGateway stripeGateway() {
@@ -244,7 +245,7 @@ class PaymentGatewayIntegrationTest {
                 new GatewayConfig(), new GatewayConfig(), new GatewayConfig(), new GatewayConfig());
         props.getStripe().setBaseUrl(wireMock.baseUrl());
         props.getStripe().setApiKey("sk_test");
-        return new StripeGateway(http11Client(), objectMapper, props);
+        return new StripeGateway(http11Client(), objectMapper, props, Clock.systemDefaultZone());
     }
 
     private PaypalGateway paypalGateway() {
@@ -253,7 +254,7 @@ class PaymentGatewayIntegrationTest {
         props.getPaypal().setBaseUrl(wireMock.baseUrl());
         props.getPaypal().setApiKey("client");
         props.getPaypal().setApiSecret("secret");
-        return new PaypalGateway(http11Client(), objectMapper, props);
+        return new PaypalGateway(http11Client(), objectMapper, props, Clock.systemDefaultZone());
     }
 
     private UpiGateway upiGateway() {
@@ -262,7 +263,7 @@ class PaymentGatewayIntegrationTest {
         props.getUpi().setBaseUrl(wireMock.baseUrl());
         props.getUpi().setApiKey("upi_key");
         props.getUpi().setMerchantVpa("shoppiq@bank");
-        return new UpiGateway(http11Client(), objectMapper, props);
+        return new UpiGateway(http11Client(), objectMapper, props, Clock.systemDefaultZone());
     }
 
     private static RestClient.Builder http11Client() {

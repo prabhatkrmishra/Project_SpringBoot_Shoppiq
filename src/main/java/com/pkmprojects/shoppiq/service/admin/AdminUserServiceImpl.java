@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -50,13 +51,16 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final PaymentLookupService paymentLookupService;
+    private final Clock clock;
 
     public AdminUserServiceImpl(UserRepository userRepository,
                                 OrderRepository orderRepository,
-                                PaymentLookupService paymentLookupService) {
+                                PaymentLookupService paymentLookupService,
+                                Clock clock) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.paymentLookupService = paymentLookupService;
+        this.clock = clock;
     }
 
     /**
@@ -172,7 +176,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         long activeCustomers = userRepository.countByEnabled(true);
         long blockedCustomers = userRepository.countByEnabled(false);
 
-        LocalDate startOfMonth = LocalDate.now(ZoneId.systemDefault()).withDayOfMonth(1);
+        LocalDate startOfMonth = LocalDate.now(clock).withDayOfMonth(1);
         Instant startInstant = startOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant();
         long newCustomersThisMonth = userRepository.countByCreatedAtAfter(startInstant);
 

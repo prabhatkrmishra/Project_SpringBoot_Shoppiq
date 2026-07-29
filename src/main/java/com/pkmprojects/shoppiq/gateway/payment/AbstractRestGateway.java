@@ -9,6 +9,7 @@ import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.util.function.Consumer;
 
 /**
@@ -58,27 +59,31 @@ abstract non-sealed class AbstractRestGateway implements PaymentGatewayStrategy 
     protected final String baseUrl;
     protected final String apiKey;
     protected final String apiSecret;
+    protected final Clock clock;
 
     /**
      * Constructs the base gateway with a shared REST client, JSON mapper,
-     * and provider-specific credentials.
+     * provider-specific credentials, and a clock for deterministic time.
      *
      * @param restClientBuilder builder for {@link RestClient}
      * @param objectMapper      Jackson 3 {@link JsonMapper}
      * @param baseUrl           the gateway's base URL
      * @param apiKey            the API key / client ID
      * @param apiSecret         the API secret / client secret
+     * @param clock             clock for deterministic timestamps
      */
     protected AbstractRestGateway(RestClient.Builder restClientBuilder,
                                   JsonMapper objectMapper,
                                   String baseUrl,
                                   String apiKey,
-                                  String apiSecret) {
+                                  String apiSecret,
+                                  Clock clock) {
         this.restClient = restClientBuilder.build();
         this.objectMapper = objectMapper;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
+        this.clock = clock;
     }
 
     /**

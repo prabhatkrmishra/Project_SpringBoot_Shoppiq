@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.lang.reflect.Field;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,6 +51,9 @@ class CategoryServiceImplTest {
 
     @Mock
     private CategoryWriteService categoryWriteService;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private CategoryServiceImpl categoryService;

@@ -7,6 +7,7 @@ import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.Instant;
 
 /**
@@ -49,6 +50,12 @@ public final class OnlinePaymentGateway implements PaymentGatewayStrategy {
 
     private static final String PLACEHOLDER_PAYMENT_URL =
             "https://pay.shoppiq.dev/simulate?ref=%s";
+
+    private final Clock clock;
+
+    public OnlinePaymentGateway(Clock clock) {
+        this.clock = clock;
+    }
 
     /**
      * This placeholder uses {@code NONE} so it acts as the fallback for
@@ -116,7 +123,7 @@ public final class OnlinePaymentGateway implements PaymentGatewayStrategy {
         }
         payment.setTransactionId(transactionId);
         payment.setPaymentStatus(PaymentStatus.PAID);
-        payment.setPaidAt(Instant.now());
+        payment.setPaidAt(Instant.now(clock));
         payment.setGatewayResponse(
                 "{\"status\":\"SUCCESS\",\"transactionId\":\"%s\"}".formatted(transactionId)
         );

@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 
@@ -67,11 +68,13 @@ public final class UpiGateway extends AbstractRestGateway {
      */
     public UpiGateway(RestClient.Builder restClientBuilder,
                       JsonMapper objectMapper,
-                      PaymentGatewayProperties properties) {
+                      PaymentGatewayProperties properties,
+                      Clock clock) {
         super(restClientBuilder, objectMapper,
                 properties.getUpi().getBaseUrl(),
                 properties.getUpi().getApiKey(),
-                properties.getUpi().getApiSecret() != null ? properties.getUpi().getApiSecret() : "");
+                properties.getUpi().getApiSecret() != null ? properties.getUpi().getApiSecret() : "",
+                clock);
         this.merchantVpa = properties.getUpi().getMerchantVpa();
         if (properties.getUpi().getApiSecret() == null) {
             log.warn("UPI gateway 'api-secret' is not configured. UPI verification may fail.");
@@ -148,7 +151,7 @@ public final class UpiGateway extends AbstractRestGateway {
         if ("SUCCESS".equals(status) || "CREDITED".equals(status)) {
             payment.setTransactionId(transactionId);
             payment.setPaymentStatus(PaymentStatus.PAID);
-            payment.setPaidAt(Instant.now());
+            payment.setPaidAt(Instant.now(clock));
             payment.setGatewayResponse(response);
         } else {
             throw new PaymentGatewayException(

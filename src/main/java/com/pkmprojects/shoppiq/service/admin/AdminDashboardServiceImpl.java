@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -55,15 +56,18 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     private final AdminOrderReadModel orderReadModel;
     private final AdminPaymentReadModel paymentReadModel;
     private final AdminProductReadModel productReadModel;
+    private final Clock clock;
 
     public AdminDashboardServiceImpl(AdminUserReadModel userReadModel,
                                      AdminOrderReadModel orderReadModel,
                                      AdminPaymentReadModel paymentReadModel,
-                                     AdminProductReadModel productReadModel) {
+                                     AdminProductReadModel productReadModel,
+                                     Clock clock) {
         this.userReadModel = userReadModel;
         this.orderReadModel = orderReadModel;
         this.paymentReadModel = paymentReadModel;
         this.productReadModel = productReadModel;
+        this.clock = clock;
     }
 
     /**
@@ -77,7 +81,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         long totalProducts = productReadModel.countItems();
         long totalOrders = orderReadModel.countAll();
 
-        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        LocalDate today = LocalDate.now(clock);
         Instant startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endOfDay = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
@@ -116,7 +120,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
      */
     @Override
     public SalesAnalyticsResponse getSalesAnalytics() {
-        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        LocalDate today = LocalDate.now(clock);
         Instant startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endOfDay = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
         LocalDate startDate = today.minusDays(30);

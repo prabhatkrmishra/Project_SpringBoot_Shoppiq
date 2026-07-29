@@ -11,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -63,11 +64,13 @@ public final class PaypalGateway extends AbstractRestGateway {
      */
     public PaypalGateway(RestClient.Builder restClientBuilder,
                          JsonMapper objectMapper,
-                         PaymentGatewayProperties properties) {
+                         PaymentGatewayProperties properties,
+                         Clock clock) {
         super(restClientBuilder, objectMapper,
                 properties.getPaypal().getBaseUrl(),
                 properties.getPaypal().getApiKey(),
-                properties.getPaypal().getApiSecret());
+                properties.getPaypal().getApiSecret(),
+                clock);
     }
 
     /**
@@ -140,7 +143,7 @@ public final class PaypalGateway extends AbstractRestGateway {
         if ("COMPLETED".equals(status)) {
             payment.setTransactionId(transactionId);
             payment.setPaymentStatus(PaymentStatus.PAID);
-            payment.setPaidAt(Instant.now());
+            payment.setPaidAt(Instant.now(clock));
             payment.setGatewayResponse(response);
         } else {
             throw new PaymentGatewayException(
@@ -156,12 +159,12 @@ public final class PaypalGateway extends AbstractRestGateway {
      */
     private String token() {
         Token token = cachedToken.get();
-        if (token != null && !token.isExpired()) {
+        if (token != null && !token.isExpired(clock)) {
             return token.accessToken;
         }
         synchronized (this) {
             token = cachedToken.get();
-            if (token != null && !token.isExpired()) {
+            if (token != null && !token.isExpired(clock)) {
                 return token.accessToken;
             }
             String response = exchangeForm(HttpMethod.POST, "/v1/oauth2/token",
@@ -169,7 +172,7 @@ public final class PaypalGateway extends AbstractRestGateway {
             JsonNode node = parse(response);
             String accessToken = node.get("access_token").asText();
             long expiresIn = node.has("expires_in") ? node.get("expires_in").asLong() : 3600L;
-            Token fresh = new Token(accessToken, Instant.now().plusSeconds(expiresIn - 60));
+            Token fresh = new Token(accessToken, Instant.now(clock).plusSeconds(expiresIn - 60));
             cachedToken.set(fresh);
             return accessToken;
         }
@@ -182,8 +185,8 @@ public final class PaypalGateway extends AbstractRestGateway {
      * @param expiresAt   instant after which the token must be refreshed
      */
     private record Token(String accessToken, Instant expiresAt) {
-        boolean isExpired() {
-            return Instant.now().isAfter(expiresAt);
+        boolean isExpired(Clock clock) {
+            return Instant.now(clock).isAfter(expiresAt);
         }
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 
@@ -60,11 +61,13 @@ public final class RazorpayGateway extends AbstractRestGateway {
      */
     public RazorpayGateway(RestClient.Builder restClientBuilder,
                            JsonMapper objectMapper,
-                           PaymentGatewayProperties properties) {
+                           PaymentGatewayProperties properties,
+                           Clock clock) {
         super(restClientBuilder, objectMapper,
                 properties.getRazorpay().getBaseUrl(),
                 properties.getRazorpay().getApiKey(),
-                properties.getRazorpay().getApiSecret());
+                properties.getRazorpay().getApiSecret(),
+                clock);
     }
 
     /**
@@ -139,7 +142,7 @@ public final class RazorpayGateway extends AbstractRestGateway {
         if ("captured".equals(status) || "authorized".equals(status)) {
             payment.setTransactionId(transactionId);
             payment.setPaymentStatus(PaymentStatus.PAID);
-            payment.setPaidAt(Instant.now());
+            payment.setPaidAt(Instant.now(clock));
             payment.setGatewayResponse(response);
         } else {
             throw new PaymentGatewayException(

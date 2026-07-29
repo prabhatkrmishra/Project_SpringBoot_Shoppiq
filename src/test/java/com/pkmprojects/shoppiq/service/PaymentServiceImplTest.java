@@ -63,7 +63,7 @@ class PaymentServiceImplTest {
 
     // Use real gateway implementations — they are stateless and safe to use directly
     private final CodPaymentGateway codGateway = new CodPaymentGateway();
-    private final OnlinePaymentGateway onlineGateway = new OnlinePaymentGateway();
+    private final OnlinePaymentGateway onlineGateway = new OnlinePaymentGateway(Clock.systemDefaultZone());
 
     private PaymentGatewayRegistry gatewayRegistry;
     private PaymentServiceImpl paymentService;
