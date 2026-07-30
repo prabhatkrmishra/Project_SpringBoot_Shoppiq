@@ -147,7 +147,7 @@ public class ItemDetails extends AuditableEntity {
      * products.</p>
      */
     @Builder.Default
-    @Column(name = "on_sale", nullable = false)
+    @Column(name = "on_sale", nullable = false, columnDefinition = "tinyint")
     private boolean onSale = false;
 
     /**
