@@ -53,7 +53,8 @@
                     </div>
                     <div sec:authorize="isAuthenticated()" class="flex items-center gap-xs">
                         <a th:href="@{/profile}" class="btn btn-sm btn-header-ghost"
-                           sec:authentication="name">Account</a>
+                           id="header-user-name"
+                           sec:authentication="principal.user.name">Account</a>
                         <a href="#" class="btn btn-sm btn-header-muted" onclick="window.handleLogout(event)"><i
                                 data-lucide="log-out"
                                 class="icon-sm"></i> Logout</a>

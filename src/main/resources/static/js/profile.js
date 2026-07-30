@@ -78,6 +78,12 @@
             try {
                 await API.put('/user/profile', {name});
                 document.getElementById('display-name').textContent = name;
+                const navName = document.getElementById('header-user-name');
+                if (navName) navName.textContent = name;
+                const cardName = document.getElementById('profile-header-name');
+                if (cardName) cardName.textContent = name;
+                const avatar = document.getElementById('profile-header-avatar');
+                if (avatar) avatar.textContent = name.substring(0, 2).toUpperCase();
                 showSuccess('Profile updated successfully');
                 closeModal();
             } catch (err) {

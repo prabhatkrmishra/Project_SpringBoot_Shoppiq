@@ -17,10 +17,11 @@
                 <header class="profile-header-card">
                     <div class="profile-header-inner">
                          <div class="profile-avatar-large"
+                             id="profile-header-avatar"
                              th:text="${#strings.substring(#authentication.principal.user.name, 0, 2).toUpperCase()}">US
                         </div>
                         <div class="profile-header-info">
-                            <h2 th:text="${#authentication.principal.user.name}">User Name</h2>
+                            <h2 id="profile-header-name" th:text="${#authentication.principal.user.name}">User Name</h2>
                             <p class="profile-meta">
                                 <span th:text="${#authentication.principal.user.email}">email@example.com</span>
                             </p>
