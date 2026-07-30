@@ -15,8 +15,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -39,6 +41,15 @@ import java.time.Instant;
  * for token operations and {@link com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory}
  * for cookie management.</p>
  *
+ * <p>Transactional boundaries for the failed-login counter are managed via
+ * a {@link org.springframework.transaction.support.TransactionTemplate}
+ * instead of a declarative {@code @Transactional} annotation. This design
+ * avoids the Spring AOP self-invocation pitfall — the counter increment
+ * is called from the private {@link #authenticate} method, which is not
+ * intercepted by the AOP proxy. The {@code TransactionTemplate} runs in
+ * a {@code REQUIRES_NEW} transaction so that each failed attempt is
+ * persisted regardless of whether the login flow succeeds or fails.</p>
+ *
  * @author prabhatkrmishra
  * @see JwtAuthenticationUtils
  * @see JwtCookieFactory
@@ -57,6 +68,7 @@ public class AuthService {
     private final JwtAuthenticationUtils jwtAuthenticationUtils;
     private final UserRepository userRepository;
     private final JwtCookieFactory jwtCookieFactory;
+    private final TransactionTemplate requiresNewTemplate;
     private final Clock clock;
 
     public AuthService(@Value("${jwt.expiration}") long expirationTime,
@@ -65,6 +77,7 @@ public class AuthService {
                        JwtAuthenticationUtils jwtAuthenticationUtils,
                        UserRepository userRepository,
                        JwtCookieFactory jwtCookieFactory,
+                       PlatformTransactionManager transactionManager,
                        Clock clock) {
         this.expirationTime = expirationTime;
         this.shortExpiration = shortExpiration;
@@ -72,6 +85,9 @@ public class AuthService {
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.userRepository = userRepository;
         this.jwtCookieFactory = jwtCookieFactory;
+        this.requiresNewTemplate = new TransactionTemplate(transactionManager);
+        this.requiresNewTemplate.setPropagationBehavior(
+                TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.clock = clock;
     }
 
@@ -115,16 +131,20 @@ public class AuthService {
      * Atomically increments the failed login counter and locks the account
      * when the threshold is reached.
      *
-     * <p>Runs in a {@code REQUIRES_NEW} transaction so the increment is
-     * committed even when the surrounding login ultimately fails — without
-     * this, a thrown exception would roll back the counter.</p>
+     * <p>Uses {@link TransactionTemplate} directly rather than a declarative
+     * {@code @Transactional} annotation so that the transaction boundary is
+     * respected even when this method is called via self-invocation (from
+     * the private {@link #authenticate} method). Each invocation runs in
+     * a new transaction so the increment is committed regardless of whether
+     * the login flow ultimately succeeds or fails.</p>
      *
      * @param userId the user whose attempts to record
      * @return rows updated (0 = already locked, 1 = incremented)
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int recordFailedLoginAttempt(Long userId) {
-        return userRepository.incrementFailedLoginAttemptsAndLockout(userId, MAX_FAILED_ATTEMPTS, Instant.now(clock));
+        return requiresNewTemplate.execute(status ->
+                userRepository.incrementFailedLoginAttemptsAndLockout(
+                        userId, MAX_FAILED_ATTEMPTS, Instant.now(clock)));
     }
 
     /**
@@ -152,6 +172,7 @@ public class AuthService {
      * @throws InvalidCredentialException if credentials are invalid, or the
      *                                    authenticated user cannot be re-loaded
      */
+    @Transactional
     public JwtResponse login(JwtRequest request, HttpServletResponse response) {
         authenticate(request.username(), request.password());
 

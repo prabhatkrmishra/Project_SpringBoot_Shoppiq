@@ -12,8 +12,10 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.boot.http.client.FilteredHostException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -45,10 +47,18 @@ import java.net.URI;
  * ensures that both SPA frontends and traditional browser users see
  * appropriate error pages.</p>
  *
+ * <p>Database connectivity errors are handled separately by
+ * {@link #handleJpaSystemException} and
+ * {@link #handleDataAccessResourceFailureException}, both returning HTTP
+ * 503 Service Unavailable with error code {@link ErrorCode#DATABASE_UNAVAILABLE}.
+ * This distinguishes transient infrastructure failures from application
+ * bugs, which continue to return HTTP 500.</p>
+ *
  * @author prabhatkrmishra
  * @see ProblemDetailFactory
  * @see ValidationErrorFormatter
  * @see ShoppiqException
+ * @see ErrorCode#DATABASE_UNAVAILABLE
  * @since 1.0.0
  */
 @Slf4j
@@ -314,6 +324,67 @@ public class GlobalExceptionHandler {
         return ProblemDetailFactory.create(HttpStatus.CONFLICT,
                 "The request conflicts with existing data. Please check for duplicates or missing required fields.",
                 ErrorCode.DATA_INTEGRITY_VIOLATION, createInstance(request));
+    }
+
+    /**
+     * Handles JPA-level system exceptions including database commit failures
+     * and connection loss.
+     *
+     * <p>This handler catches exceptions thrown when the JPA provider (Hibernate)
+     * cannot commit a transaction due to a lost or broken database connection.
+     * The underlying cause is often a MySQL binary-log write failure, a server
+     * abort, or a network interruption. These errors are transient and the
+     * client should retry after a delay.</p>
+     *
+     * <p>A single failure is logged at WARN level. Repeated failures from the
+     * same process indicate a persistent database outage that should trigger
+     * infrastructure alerts.</p>
+     *
+     * @param exception the JPA system exception wrapping the database failure
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 503 status
+     */
+    @ExceptionHandler(JpaSystemException.class)
+    public ProblemDetail handleJpaSystemException(
+            JpaSystemException exception, HttpServletRequest request) {
+
+        String cause = exception.getMostSpecificCause() != null
+                ? exception.getMostSpecificCause().getMessage()
+                : exception.getMessage();
+
+        log.warn("Database operation failed [{}]: {}", request.getRequestURI(), cause);
+
+        return ProblemDetailFactory.create(HttpStatus.SERVICE_UNAVAILABLE,
+                "Database is temporarily unavailable. Please try again later.",
+                ErrorCode.DATABASE_UNAVAILABLE, createInstance(request));
+    }
+
+    /**
+     * Handles exceptions when a data-access resource (connection pool,
+     * database server) is unreachable.
+     *
+     * <p>This handler catches failures to acquire a database connection
+     * from the HikariCP pool, which occurs when MySQL has not yet
+     * recovered from a restart or the network is interrupted. It is
+     * distinct from {@link JpaSystemException} which fires when an
+     * existing connection fails during a transaction.</p>
+     *
+     * @param exception the data-access resource failure exception
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 503 status
+     */
+    @ExceptionHandler(DataAccessResourceFailureException.class)
+    public ProblemDetail handleDataAccessResourceFailureException(
+            DataAccessResourceFailureException exception, HttpServletRequest request) {
+
+        log.warn("Database connection failed [{}]: {}", request.getRequestURI(),
+                exception.getMostSpecificCause() != null
+                        ? exception.getMostSpecificCause().getMessage()
+                        : exception.getMessage());
+
+        return ProblemDetailFactory.create(HttpStatus.SERVICE_UNAVAILABLE,
+                "Database is temporarily unavailable. Please try again later.",
+                ErrorCode.DATABASE_UNAVAILABLE, createInstance(request));
     }
 
     /**

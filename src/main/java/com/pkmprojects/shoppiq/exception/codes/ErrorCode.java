@@ -825,6 +825,17 @@ public enum ErrorCode {
      */
     AI_SERVICE_UNAVAILABLE("AI_CHAT-503-001", "AI service is not available. Please try again later."),
 
+    /**
+     * The database connection or commit has failed.
+     *
+     * <p>Returned when a database operation fails due to a connection
+     * issue, a binary-log write failure, or a server-side abort. The
+     * client should retry after a delay. This is typically a
+     * transient infrastructure error, often caused by disk-space
+     * exhaustion or a MySQL server restart.</p>
+     */
+    DATABASE_UNAVAILABLE("DB-503-001", "Database is temporarily unavailable. Please try again later."),
+
     // =========================================================
     // Infrastructure Errors
     // =========================================================
