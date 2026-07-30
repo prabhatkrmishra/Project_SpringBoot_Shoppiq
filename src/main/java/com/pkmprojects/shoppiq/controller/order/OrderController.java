@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.*;
  * <pre>
  * POST   /user/order/checkout       — place an order from the cart
  * POST   /user/order/calculate      — calculate order cost without placing
- * GET    /user/order                — list all orders (paginated)
+ * GET    /user/order/all            — list all orders (paginated)
  * GET    /user/order/{id}           — get a single order by ID
  * PUT    /user/order/cancel/{id}    — request cancellation (PLACED only)
  * PUT    /user/order/return/{id}    — request return (DELIVERED only)
@@ -114,7 +114,7 @@ public class OrderController {
      * @param user the authenticated customer
      * @return 200 OK with page of order responses
      */
-    @GetMapping("")
+    @GetMapping("/all")
     public ResponseEntity<PageResponse<OrderResponse>> getMyOrders(
             @AuthenticationPrincipal(expression = "user") User user,
             @RequestParam(defaultValue = "0") @Min(0) int page,

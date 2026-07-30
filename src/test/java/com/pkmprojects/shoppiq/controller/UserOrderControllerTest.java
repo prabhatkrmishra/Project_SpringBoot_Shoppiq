@@ -260,11 +260,11 @@ class OrderControllerTest {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // GET /user/order
+    // GET /user/order/all
     // ═══════════════════════════════════════════════════════════════════════
 
     @Nested
-    @DisplayName("GET /user/order")
+    @DisplayName("GET /user/order/all")
     class GetMyOrdersTests {
 
         @Test
@@ -274,7 +274,7 @@ class OrderControllerTest {
             when(checkoutService.getMyOrders(eq(customer), anyInt(), anyInt()))
                     .thenReturn(new PageResponse<>(List.of(orderResponse(1L), orderResponse(2L)), 0, 20, 2, 1, true, false));
 
-            mockMvc.perform(get("/user/order?page=0&size=20"))
+            mockMvc.perform(get("/user/order/all?page=0&size=20"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content.length()").value(2))
                     .andExpect(jsonPath("$.content[0].id").value(1))
@@ -288,7 +288,7 @@ class OrderControllerTest {
             when(checkoutService.getMyOrders(eq(customer), anyInt(), anyInt()))
                     .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 1, true, true));
 
-            mockMvc.perform(get("/user/order?page=0&size=20"))
+            mockMvc.perform(get("/user/order/all?page=0&size=20"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content.length()").value(0));
         }
@@ -554,9 +554,9 @@ class OrderControllerTest {
     class UnauthenticatedTests {
 
         @Test
-        @DisplayName("401 Unauthorized — GET /user/order")
+        @DisplayName("401 Unauthorized — GET /user/order/all")
         void getMyOrders_unauthenticated() throws Exception {
-            mockMvc.perform(get("/user/order?page=0&size=20"))
+            mockMvc.perform(get("/user/order/all?page=0&size=20"))
                     .andExpect(status().isUnauthorized());
         }
 
