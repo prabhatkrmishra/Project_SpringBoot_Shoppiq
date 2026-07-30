@@ -226,7 +226,7 @@
                     document.getElementById('cancel-order-btn').style.display = 'none';
                     document.getElementById('order-actions-dropdown').style.display = 'none';
                 }
-                API.get('/user/order/get/' + id).then(renderOrder).catch(function (err) {
+                API.get('/user/order/' + id).then(renderOrder).catch(function (err) {
                     document.getElementById('order-loading').style.display = 'none';
                     showToast(err.message || 'Failed to load order', 'error');
                 });

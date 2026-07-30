@@ -85,7 +85,7 @@
                 document.getElementById('orders-empty').style.display = 'none';
                 document.getElementById('orders-list').style.display = 'none';
 
-                API.get('/user/order/get/all?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
+                API.get('/user/order?page=' + currentPage + '&size=' + PAGE_SIZE).then(function (data) {
                     var orders = data && data.content ? data.content : (Array.isArray(data) ? data : []);
                     renderOrders(orders);
                     Pagination.render('orders-pagination', data, loadOrders, {
