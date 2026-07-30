@@ -1,6 +1,5 @@
 package com.pkmprojects.shoppiq.gateway.payment;
 
-import tools.jackson.databind.json.JsonMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.pkmprojects.shoppiq.config.GatewayConfig;
@@ -13,12 +12,14 @@ import com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayException
 import org.junit.jupiter.api.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.Clock;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Integration tests for the REST-backed payment gateway strategies.
@@ -37,6 +38,10 @@ class PaymentGatewayIntegrationTest {
     private WireMockServer wireMock;
     private JsonMapper objectMapper;
 
+    private static RestClient.Builder http11Client() {
+        return RestClient.builder().requestFactory(new SimpleClientHttpRequestFactory());
+    }
+
     @BeforeAll
     void startWireMock() {
         wireMock = new WireMockServer(WireMockConfiguration.options().dynamicPort());
@@ -51,14 +56,14 @@ class PaymentGatewayIntegrationTest {
         }
     }
 
+    // ────────────────────────────────────────────────────────────
+    // Razorpay
+    // ────────────────────────────────────────────────────────────
+
     @BeforeEach
     void reset() {
         wireMock.resetAll();
     }
-
-    // ────────────────────────────────────────────────────────────
-    // Razorpay
-    // ────────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("Razorpay: process creates order, verify marks PAID on capture")
@@ -82,6 +87,10 @@ class PaymentGatewayIntegrationTest {
         assertThat(payment.getPaidAt()).isNotNull();
     }
 
+    // ────────────────────────────────────────────────────────────
+    // Stripe
+    // ────────────────────────────────────────────────────────────
+
     @Test
     @DisplayName("Razorpay: upstream 5xx throws PaymentGatewayException")
     void razorpay_upstreamError() {
@@ -94,7 +103,7 @@ class PaymentGatewayIntegrationTest {
     }
 
     // ────────────────────────────────────────────────────────────
-    // Stripe
+    // PayPal
     // ────────────────────────────────────────────────────────────
 
     @Test
@@ -118,7 +127,7 @@ class PaymentGatewayIntegrationTest {
     }
 
     // ────────────────────────────────────────────────────────────
-    // PayPal
+    // UPI
     // ────────────────────────────────────────────────────────────
 
     @Test
@@ -144,7 +153,7 @@ class PaymentGatewayIntegrationTest {
     }
 
     // ────────────────────────────────────────────────────────────
-    // UPI
+    // Transaction ID Validation (Path Traversal Prevention)
     // ────────────────────────────────────────────────────────────
 
     @Test
@@ -166,10 +175,6 @@ class PaymentGatewayIntegrationTest {
         gateway.verify(payment, "UPI_1");
         assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PAID);
     }
-
-    // ────────────────────────────────────────────────────────────
-    // Transaction ID Validation (Path Traversal Prevention)
-    // ────────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("Razorpay: path traversal in transactionId throws PaymentGatewayException")
@@ -215,6 +220,10 @@ class PaymentGatewayIntegrationTest {
                 .hasMessageContaining("invalid characters");
     }
 
+    // ────────────────────────────────────────────────────────────
+    // Helpers
+    // ────────────────────────────────────────────────────────────
+
     @Test
     @DisplayName("All gateways: blank transactionId throws PaymentGatewayException")
     void blankTransactionIdRejected() {
@@ -226,10 +235,6 @@ class PaymentGatewayIntegrationTest {
                 .isInstanceOf(PaymentGatewayException.class)
                 .hasMessageContaining("blank");
     }
-
-    // ────────────────────────────────────────────────────────────
-    // Helpers
-    // ────────────────────────────────────────────────────────────
 
     private RazorpayGateway razorpayGateway() {
         PaymentGatewayProperties props = new PaymentGatewayProperties(
@@ -264,10 +269,6 @@ class PaymentGatewayIntegrationTest {
         props.getUpi().setApiKey("upi_key");
         props.getUpi().setMerchantVpa("shoppiq@bank");
         return new UpiGateway(http11Client(), objectMapper, props, Clock.systemDefaultZone());
-    }
-
-    private static RestClient.Builder http11Client() {
-        return RestClient.builder().requestFactory(new SimpleClientHttpRequestFactory());
     }
 
     private Payment samplePayment(PaymentMethod method) {

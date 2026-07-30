@@ -1,24 +1,18 @@
 package com.pkmprojects.shoppiq.enums;
 
-import com.pkmprojects.shoppiq.service.checkout.CheckoutServiceImpl;
-
 /**
- * <strong>Spring Boot Concept:</strong> Delivery speed options available at checkout.
+ * Delivery speed options available at checkout.
  *
- * <p>Each type maps to a fixed shipping fee calculated in
- * {@link CheckoutServiceImpl}.</p>
+ * <p>This enum defines the delivery speed choices presented to customers
+ * during the checkout flow. {@link #NORMAL} provides free standard
+ * shipping with a typical delivery window of 3-7 business days.
+ * {@link #EXPRESS_1DAY} incurs an additional shipping charge (configured
+ * in {@link com.pkmprojects.shoppiq.config.CheckoutProperties}) and
+ * guarantees delivery within one business day.</p>
  *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Enum-driven rate calculation</strong> — The checkout
- *         service uses this enum to determine shipping fees (free for
- *         NORMAL, chargeable for EXPRESS_1DAY). This keeps the rate
- *         logic in the service layer while the enum provides type-safe
- *         option selection.</li>
- *     <li><strong>Stored as STRING in the database</strong> — Used with
- *         {@code @Enumerated(EnumType.STRING)} in the {@link Order} entity
- *         for readable database values.</li>
- * </ul>
+ * <p>The delivery type affects the order total calculation and the
+ * shipping logistics. Express orders are prioritized in the fulfillment
+ * pipeline and routed through expedited shipping carriers.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

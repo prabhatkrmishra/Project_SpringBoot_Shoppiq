@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.gateway.payment;
 
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
 import com.pkmprojects.shoppiq.enums.PaymentMethod;
+import com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;
@@ -9,33 +10,25 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <strong>Spring Boot Concept:</strong> Registry that collects all
- * {@link PaymentGatewayStrategy} beans at startup via constructor injection
- * and resolves the correct implementation for a given {@link PaymentMethod}.
+ * Registry that collects all {@link PaymentGatewayStrategy} beans and resolves
+ * the correct implementation for a given {@link PaymentMethod}.
  *
- * <p>All {@link PaymentGatewayStrategy} beans are collected at startup and
- * indexed by the gateway they {@link PaymentGatewayStrategy#supports() support}.
- * Mapping a payment method to its gateway keeps the service decoupled from
- * concrete implementations — adding a new gateway only requires a new strategy
- * bean plus a single entry in {@link #resolve(PaymentMethod)}.</p>
+ * <p>This component acts as a factory that maps payment methods to their
+ * corresponding gateway strategies. It is initialized at startup by
+ * collecting all Spring-managed {@link PaymentGatewayStrategy} beans and
+ * indexing them by their {@link PaymentGatewayStrategy#supports() supported}
+ * gateway type. The {@link #resolve(PaymentMethod)} method performs the
+ * lookup, translating the customer's payment method choice into the
+ * appropriate gateway strategy.</p>
  *
- * <p><strong>Educational value:</strong> This class demonstrates Spring's
- * <strong>Bean aggregation / Registry</strong> pattern:
- * <ul>
- *   <li>Spring auto-injects all beans implementing {@code PaymentGatewayStrategy}
- *       into the constructor as a {@code List}.</li>
- *   <li>The registry indexes them by their {@code supports()} return value
- *       into an {@link java.util.EnumMap} for O(1) lookup.</li>
- *   <li>The checkout service only depends on {@code PaymentGatewayRegistry}
- *       (not on individual gateway beans), so adding a new payment provider
- *       is purely additive — no existing code changes.</li>
- *   <li>This is the <strong>Strategy + Registry</strong> pattern: the Strategy
- *       interface defines the contract, and the Registry acts as a
- *       <em>context</em> that selects the right strategy at runtime.</li>
- * </ul>
- * </p>
+ * <p>The registry includes a fallback mechanism: if the primary gateway
+ * for a payment method is not available, it falls back to the generic
+ * ONLINE placeholder strategy. If no fallback is available, it throws a
+ * {@link PaymentGatewayNotFoundException}. This ensures that the checkout
+ * flow can always proceed as long as at least one gateway is configured.</p>
  *
  * @author prabhatkrmishra
+ * @see PaymentGatewayStrategy
  * @since 1.0.0
  */
 @Component
@@ -91,6 +84,6 @@ public class PaymentGatewayRegistry {
         if (onlineFallback != null) {
             return onlineFallback;
         }
-        throw new IllegalStateException("No payment gateway configured for method: " + method);
+        throw PaymentGatewayNotFoundException.forMethod(method.name());
     }
 }

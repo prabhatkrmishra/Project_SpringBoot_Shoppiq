@@ -6,12 +6,16 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> Thrown when a request references an AI model that is not in the allowed registry.
+ * Thrown when a request references an AI model that is not in the allowed registry.
  *
- * <p>
- * Maps to {@link ErrorCode#AI_MODEL_NOT_SUPPORTED} and produces a 400 Bad Request response.
+ * <p>This exception is raised when the frontend specifies a model identifier
+ * that does not match any entry in the {@code ModelResolutionService}
+ * registry. It maps to {@link ErrorCode#AI_MODEL_NOT_SUPPORTED} and
+ * produces an HTTP 400 Bad Request response, allowing the client to
+ * correct the model selection. The exception message includes the
+ * unsupported model ID for debugging purposes.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Getter
@@ -22,7 +26,11 @@ public class AiModelNotSupportedException extends ShoppiqException {
     }
 
     /**
-     * Creates an exception for an unsupported model ID.
+     * Creates an exception for a model ID that is not in the allowed registry.
+     *
+     * <p>The returned exception includes the unsupported model ID in its
+     * detail message, enabling the frontend to display a specific error
+     * and suggest valid alternatives.</p>
      *
      * @param modelId the model identifier that was requested
      * @return a new {@code AiModelNotSupportedException}

@@ -11,54 +11,24 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Represents a promotional code (coupon) that can be applied during checkout.
+ * Represents a promotional code (coupon) that can be applied during checkout.
  *
- * <p>A {@code PromoCode} defines a discount rule that customers can apply
- * to their order subtotal. It supports both percentage-based and fixed-amount
- * discounts, with optional minimum order requirements and usage limits.</p>
+ * <p>Defines a discount rule that customers can apply to their order subtotal.
+ * Supports both percentage-based and fixed-amount discounts, with optional
+ * minimum order requirements, global and per-user usage limits, and cart
+ * composition rules via {@link CouponType}. Each promo code has a defined
+ * validity window and can be independently activated or deactivated by
+ * administrators.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Stores the code string and display description.</li>
- *     <li>Defines discount type and value.</li>
- *     <li>Enforces validity window, global usage limit, and per-user usage limit.</li>
- *     <li>Enforces minimum order amount.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Extends {@link AuditableEntity} to inherit persistence identity,
- *     optimistic locking and auditing support.</li>
- *     <li>Code is stored uppercase and must be globally unique.</li>
- *     <li>{@code usedCount} is incremented atomically at checkout time.</li>
- * </ul>
- *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Rich domain constraints</strong> — Demonstrates multiple
- *         business rules encoded in entity fields: validity window
- *         ({@code validFrom}, {@code validUntil}), global usage cap
- *         ({@code usageLimit}), per-user cap ({@code userUsageLimit}),
- *         minimum order ({@code minOrderAmount}), and cart composition rules
- *         ({@link CouponType}, {@code minItemQuantity}).</li>
- *     <li><strong>{@code @Enumerated(EnumType.STRING)}</strong> — Both
- *         {@link DiscountType} and {@link CouponType} are stored as strings,
- *         making queries and schema inspection human-readable.</li>
- *     <li><strong>{@code @PositiveOrZero}</strong> — Bean Validation on
- *         {@code usedCount} ensures the counter never goes negative.</li>
- *     <li><strong>{@code active} boolean flag</strong> — Soft enable/disable
- *         without deleting the record. An inactive code cannot be applied
- *         even if within its validity window.</li>
- *     <li><strong>{@code incrementUsedCount()} method</strong> — Domain
- *         method to atomically bump the usage counter. Called by the service
- *         layer at checkout to enforce usage limits.</li>
- *     <li><strong>Nullable constraints</strong> — Several fields are null
- *         when optional ({@code minOrderAmount}, {@code maxDiscountAmount},
- *         {@code couponType}, {@code minItemQuantity}, {@code usageLimit},
- *         {@code userUsageLimit}), demonstrating null-as-unlimited patterns.</li>
- * </ul>
+ * <p>The code string is stored uppercase and must be globally unique.
+ * The {@code usedCount} is incremented atomically at checkout time to
+ * prevent race conditions under concurrent usage. Per-user usage tracking
+ * is maintained through the {@link PromoCodeUsage} join entity, which
+ * also prevents the same order from applying multiple promo codes.</p>
  *
  * @author prabhatkrmishra
+ * @see PromoCodeUsage
+ * @see com.pkmprojects.shoppiq.entity.order.Order
  * @since 1.0.0
  */
 @Entity
@@ -72,9 +42,12 @@ import java.time.Instant;
 public class PromoCode extends AuditableEntity {
 
     /**
-     * The promo code string entered by the customer.
+     * The promo code string entered by the customer at checkout.
      *
-     * <p>Stored uppercase; uniqueness is enforced at the database level.</p>
+     * <p>Stored uppercase; uniqueness is enforced at the database level.
+     * Required field with a maximum length of 50 characters. The code
+     * is case-insensitive for customer convenience but normalized to
+     * uppercase for consistent storage and lookup.</p>
      */
     @NotBlank(message = "Promo code is required.")
     @Size(max = 50, message = "Promo code cannot exceed 50 characters.")
@@ -82,14 +55,26 @@ public class PromoCode extends AuditableEntity {
     private String code;
 
     /**
-     * Human-readable description shown to the customer.
+     * Human-readable description explaining the promo code's offer,
+     * terms, and applicable products or categories.
+     *
+     * <p>Maximum length of 255 characters. Displayed to customers in
+     * the checkout flow and in promotional materials. May be {@code null}
+     * for codes where the discount type and value are self-explanatory.</p>
      */
     @Size(max = 255, message = "Description cannot exceed 255 characters.")
     @Column(length = 255)
     private String description;
 
     /**
-     * How the discount value is interpreted.
+     * How the discount value is interpreted: either as a percentage
+     * of the subtotal or as a fixed monetary amount.
+     *
+     * <p>Required field stored as a string enum with a maximum length
+     * of 20 characters. {@link DiscountType#PERCENTAGE} applies the
+     * discount value as a percentage off the subtotal, while
+     * {@link DiscountType#FIXED_AMOUNT} subtracts the discount value
+     * directly from the subtotal.</p>
      */
     @NotNull(message = "Discount type is required.")
     @Enumerated(EnumType.STRING)
@@ -97,12 +82,14 @@ public class PromoCode extends AuditableEntity {
     private DiscountType discountType;
 
     /**
-     * The discount value.
+     * The discount value whose interpretation depends on the
+     * {@link #discountType}.
      *
-     * <p>For {@link DiscountType#PERCENTAGE}: a value between 0.01 and 100.00
-     * representing the percentage off.</p>
-     * <p>For {@link DiscountType#FIXED_AMOUNT}: a positive monetary amount
-     * subtracted directly from the subtotal.</p>
+     * <p>For {@link DiscountType#PERCENTAGE}: a value between 0.01 and
+     * 100.00 representing the percentage off the subtotal. For
+     * {@link DiscountType#FIXED_AMOUNT}: a positive monetary amount
+     * subtracted directly from the subtotal. Required field with a
+     * precision of 10 digits total and 2 decimal places.</p>
      */
     @NotNull(message = "Discount value is required.")
     @DecimalMin(value = "0.01", message = "Discount value must be at least 0.01.")
@@ -114,7 +101,11 @@ public class PromoCode extends AuditableEntity {
     /**
      * Minimum order subtotal required to apply this promo code.
      *
-     * <p>When {@code null}, no minimum is enforced.</p>
+     * <p>When set, the customer's cart subtotal must meet or exceed
+     * this value before the promo code can be applied. When {@code null},
+     * no minimum order amount is enforced. Useful for running promotions
+     * that require a minimum spend threshold (e.g. "Spend $50, save 10%").
+     * Precision is 10 digits total with 2 decimal places.</p>
      */
     @DecimalMin(value = "0.00", message = "Minimum order amount cannot be negative.")
     @Digits(integer = 8, fraction = 2)
@@ -122,11 +113,15 @@ public class PromoCode extends AuditableEntity {
     private BigDecimal minOrderAmount;
 
     /**
-     * Maximum discount amount cap (applicable to percentage discounts only).
+     * Maximum discount amount cap applicable only to percentage-based
+     * discounts.
      *
-     * <p>When set, a percentage discount will not exceed this amount.
-     * For {@link DiscountType#FIXED_AMOUNT}, this field is ignored.</p>
-     * <p>When {@code null}, no cap is applied.</p>
+     * <p>When set, a percentage discount will not exceed this monetary
+     * amount regardless of the subtotal. For {@link DiscountType#FIXED_AMOUNT},
+     * this field is ignored. When {@code null}, no cap is applied and the
+     * full percentage discount is calculated against the subtotal. Useful
+     * for limiting exposure on high-value orders (e.g. "10% off, max $20").
+     * Precision is 10 digits total with 2 decimal places.</p>
      */
     @DecimalMin(value = "0.00", message = "Max discount amount cannot be negative.")
     @Digits(integer = 8, fraction = 2)
@@ -134,45 +129,56 @@ public class PromoCode extends AuditableEntity {
     private BigDecimal maxDiscountAmount;
 
     /**
-     * Cart composition constraint for this promo code.
+     * Cart composition constraint for this promo code, controlling which
+     * cart configurations are eligible for the discount.
      *
-     * <ul>
-     *     <li>{@link CouponType#SINGLE} — only valid when every cart item has
-     *         quantity equal to 1 (single-unit purchase).</li>
-     *     <li>{@link CouponType#BULK} — only valid when at least one cart item has
-     *         quantity greater than 1 (multi-unit / bulk purchase).</li>
-     * </ul>
-     *
-     * <p>When {@code null}, the coupon type constraint is not enforced.</p>
+     * <p>When set to {@link CouponType#SINGLE}, the code is only valid
+     * when every cart item has quantity equal to 1 (single-unit purchase).
+     * When set to {@link CouponType#BULK}, the code is only valid when
+     * at least one cart item has quantity greater than 1 (multi-unit or
+     * bulk purchase). When {@code null}, no composition constraint is
+     * enforced and the code applies to any cart configuration.</p>
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "coupon_type", length = 10)
     private CouponType couponType;
 
     /**
-     * Minimum unit quantity required for any single SKU in the cart.
+     * Minimum unit quantity required for any single SKU in the cart
+     * to qualify for this promo code.
      *
-     * <p>When set, at least one cart item must have quantity greater than or
-     * equal to this value. Useful for tiered promotions (e.g. "buy 3, get 20% off")
-     * or BOGO codes ("buy 2, get 1 free").</p>
-     *
-     * <p>When {@code null}, no minimum quantity check is performed.</p>
+     * <p>When set, at least one cart item must have quantity greater
+     * than or equal to this value. Useful for tiered promotions (e.g.
+     * "buy 3, get 20% off") or BOGO codes ("buy 2, get 1 free").
+     * When {@code null}, no minimum quantity check is performed on
+     * individual cart items.</p>
      */
     @PositiveOrZero(message = "Minimum item quantity cannot be negative.")
     @Column(name = "min_item_quantity")
     private Integer minItemQuantity;
 
     /**
-     * Maximum total number of times this code can be used across all users.
+     * Maximum total number of times this code can be used across all
+     * users combined.
      *
-     * <p>When {@code null}, usage is unlimited.</p>
+     * <p>When set, the code becomes invalid once the {@code usedCount}
+     * reaches this limit. When {@code null}, usage is unlimited and
+     * the code remains valid for as many redemptions as desired. The
+     * counter is incremented atomically at checkout time to prevent
+     * race conditions under concurrent usage.</p>
      */
     @PositiveOrZero(message = "Usage limit cannot be negative.")
     @Column(name = "usage_limit")
     private Integer usageLimit;
 
     /**
-     * Current number of times this code has been used.
+     * Current number of times this promo code has been redeemed across
+     * all users.
+     *
+     * <p>Incremented atomically at checkout time via the
+     * {@link #incrementUsedCount()} method. Defaults to 0 for newly
+     * created codes. Compared against {@link #usageLimit} to determine
+     * whether the code has reached its global redemption cap.</p>
      */
     @PositiveOrZero(message = "Used count cannot be negative.")
     @Builder.Default
@@ -180,32 +186,53 @@ public class PromoCode extends AuditableEntity {
     private Integer usedCount = 0;
 
     /**
-     * Maximum number of times a single user can use this code.
+     * Maximum number of times a single user can use this promo code.
      *
-     * <p>When {@code null}, per-user usage is unlimited.</p>
+     * <p>When set, a user cannot apply this code more than the specified
+     * number of times. Per-user usage is tracked through the
+     * {@link PromoCodeUsage} join entity. When {@code null}, per-user
+     * usage is unlimited and a user can apply the code on every order
+     * as long as global limits are not exceeded.</p>
      */
     @PositiveOrZero(message = "User usage limit cannot be negative.")
     @Column(name = "user_usage_limit")
     private Integer userUsageLimit;
 
     /**
-     * Timestamp when this promo code becomes valid.
+     * Timestamp when this promo code becomes valid and can be applied
+     * at checkout.
+     *
+     * <p>Required field. The code is not valid for application before
+     * this timestamp. Used in conjunction with {@link #validUntil} to
+     * define the promotional window. Stored as an {@link Instant} for
+     * timezone-independent validity checking.</p>
      */
     @NotNull(message = "Valid-from date is required.")
     @Column(name = "valid_from", nullable = false)
     private Instant validFrom;
 
     /**
-     * Timestamp when this promo code expires.
+     * Timestamp when this promo code expires and can no longer be
+     * applied at checkout.
+     *
+     * <p>Required field. The code is not valid for application after
+     * this timestamp. Used in conjunction with {@link #validFrom} to
+     * define the promotional window. Stored as an {@link Instant} for
+     * timezone-independent expiry checking.</p>
      */
     @NotNull(message = "Valid-until date is required.")
     @Column(name = "valid_until", nullable = false)
     private Instant validUntil;
 
     /**
-     * Whether this promo code is currently active.
+     * Whether this promo code is currently active and eligible for
+     * application at checkout.
      *
-     * <p>Inactive codes cannot be applied even if within the validity window.</p>
+     * <p>Inactive codes cannot be applied even if they fall within the
+     * validity window defined by {@link #validFrom} and {@link #validUntil}.
+     * Defaults to {@code true} for newly created codes. Administrators
+     * can toggle this flag to pause or resume promotions without
+     * deleting the code record.</p>
      */
     @Builder.Default
     @Column(nullable = false)

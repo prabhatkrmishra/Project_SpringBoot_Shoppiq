@@ -12,12 +12,11 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Repository for {@link VerificationCode} persistence.
+ * Persistence operations for the {@link VerificationCode} aggregate.
  *
- * <p><b>How it fits:</b> Provides atomic mark-used operations and
- * batch invalidation of stale codes. The {@code findTopByUserIdAndEmailTypeAndUsedFalseAndExpiresAtAfter}
- * derived query efficiently retrieves the latest valid (unused,
- * non-expired) code for a user.</p>
+ * <p>Provides methods to query verification codes by user and type, perform atomic mark-used
+ * operations, and clean up expired codes. The repository supports optimistic locking through
+ * atomic update queries to prevent race conditions during concurrent verification attempts.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

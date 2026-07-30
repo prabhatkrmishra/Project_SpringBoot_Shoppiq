@@ -1,6 +1,5 @@
 package com.pkmprojects.shoppiq.gateway.payment;
 
-import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.config.PaymentGatewayProperties;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
@@ -9,41 +8,27 @@ import com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayException
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 
 /**
- * <strong>Spring Boot Concept:</strong> Concrete payment gateway strategy
- * for Razorpay (India, INR), extending {@link AbstractRestGateway}.
+ * Concrete payment gateway strategy for Razorpay (India, INR).
  *
- * <p>Flow: {@link #process(Payment)} creates a Razorpay <em>order</em>
- * ({@code POST /v1/orders}); {@link #verify(Payment, String)} fetches the
- * payment by its gateway id ({@code GET /v1/payments/{id}}) and marks the
- * payment {@code PAID} once it is {@code captured} (or {@code authorized}).</p>
+ * <p>This gateway implements the Razorpay payment flow using the server-side
+ * API. On {@link #process(Payment)}, it creates a Razorpay order with the
+ * specified amount and currency. On {@link #verify(Payment, String)}, it
+ * fetches the payment details from Razorpay to confirm the capture status.
+ * Authentication uses HTTP Basic with the API key as username and API
+ * secret as password.</p>
  *
- * <p>Verification is performed server-to-server via the Razorpay API using
- * the configured API key and secret in every environment. This approach
- * confirms the payment capture status directly with the gateway and does
- * not rely on webhook signature verification, which applies only when
- * accepting asynchronous webhook callbacks.</p>
- *
- * <p><strong>Educational value:</strong> Contrast with the other gateway
- * implementations:
- * <ul>
- *   <li><strong>Basic auth vs bearer</strong> — Razorpay uses HTTP Basic
- *       auth (API key:secret) unlike PayPal and Stripe which use bearer
- *       tokens. This is configured by passing {@code basicAuth(apiKey, apiSecret)}
- *       to the exchange method.</li>
- *   <li><strong>Server-to-server verification</strong> — unlike webhook-based
- *       approaches, Razorpay verification happens via a direct GET request
- *       to the gateway after the client completes payment on the frontend.</li>
- *   <li><strong>Minor unit conversion</strong> — uses
- *       {@link AbstractRestGateway#toMinorUnits} to convert the amount to
- *       paise (Razorpay's expected format).</li>
- * </ul>
- * </p>
+ * <p>Razorpay is the default online gateway for credit card payments in
+ * India. The gateway converts amounts from major units (rupees) to minor
+ * units (paise) before sending to the API. Error responses from Razorpay
+ * are translated into {@link PaymentGatewayException} instances with
+ * descriptive messages.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

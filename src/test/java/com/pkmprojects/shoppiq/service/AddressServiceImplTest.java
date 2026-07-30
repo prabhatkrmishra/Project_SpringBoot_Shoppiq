@@ -59,6 +59,8 @@ class AddressServiceImplTest {
     // ---------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------
+    private User alice;
+    private User bob;
 
     /**
      * Reflectively sets the private {@code id} field declared in
@@ -102,6 +104,10 @@ class AddressServiceImplTest {
         return addr;
     }
 
+    // ---------------------------------------------------------------
+    // Shared fixtures
+    // ---------------------------------------------------------------
+
     private CreateAddressRequest createRequest(boolean isDefault) {
         return new CreateAddressRequest(
                 "Home", "Alice Smith", "9876543210",
@@ -117,13 +123,6 @@ class AddressServiceImplTest {
                 "Delhi", "Delhi", "110001", "India", isDefault
         );
     }
-
-    // ---------------------------------------------------------------
-    // Shared fixtures
-    // ---------------------------------------------------------------
-
-    private User alice;
-    private User bob;
 
     @BeforeEach
     void setUp() throws Exception {

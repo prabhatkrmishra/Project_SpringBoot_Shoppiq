@@ -1,7 +1,5 @@
 package com.pkmprojects.shoppiq.gateway.payment;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.config.PaymentGatewayProperties;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
@@ -10,41 +8,28 @@ import com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayException
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * <strong>Spring Boot Concept:</strong> Concrete payment gateway strategy
- * for PayPal, extending {@link AbstractRestGateway} and implementing the
- * {@link PaymentGatewayStrategy} contract.
+ * Concrete payment gateway strategy for PayPal.
  *
- * <p>Flow: {@link #process(Payment)} creates a checkout order
- * ({@code POST /v2/checkout/orders}, intent {@code CAPTURE});
- * {@link #verify(Payment, String)} captures the order
- * ({@code POST /v2/checkout/orders/{id}/capture}) and marks the payment
- * {@code PAID} when the capture status is {@code COMPLETED}.</p>
+ * <p>This gateway implements the PayPal checkout flow using the Orders API.
+ * On {@link #process(Payment)}, it creates a checkout order with intent
+ * CAPTURE and returns the approval URL for the customer. On
+ * {@link #verify(Payment, String)}, it captures the approved order to
+ * finalize the payment. Authentication uses OAuth2 bearer tokens that are
+ * obtained via client credentials and cached for reuse.</p>
  *
- * <p>PayPal's REST API requires a bearer token obtained from the OAuth2
- * token endpoint; the token is cached until shortly before expiry.</p>
- *
- * <p><strong>Educational value:</strong> This class demonstrates:
- * <ul>
- *   <li><strong>Template Method</strong> — reuses the HTTP infrastructure
- *       from {@code AbstractRestGateway} (exchange, error handling, JSON
- *       parsing) and implements only PayPal-specific logic.</li>
- *   <li><strong>Token caching with double-checked locking</strong> — the
- *       OAuth2 bearer token is cached in an {@link java.util.concurrent.atomic.AtomicReference}
- *       with a synchronized fallback for thread-safe lazy initialisation.</li>
- *   <li><strong>Spring constructor injection</strong> — receives
- *       {@code RestClient.Builder}, {@code JsonMapper}, and typed
- *       configuration via {@code PaymentGatewayProperties}.</li>
- *   <li><strong>Idempotent processing</strong> — if a gateway order ID
- *       already exists, the process method skips the API call.</li>
- * </ul>
- * </p>
+ * <p>PayPal handles card processing internally, so the application never
+ * sees the customer's payment details. The gateway supports multiple
+ * currencies and is the primary gateway for PayPal wallet payments.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -110,9 +95,9 @@ public final class PaypalGateway extends AbstractRestGateway {
 
         Map<String, Object> body = Map.of(
                 "intent", "CAPTURE",
-                "purchase_units", Map.of("amount", Map.of(
+                "purchase_units", List.of(Map.of("amount", Map.of(
                         "currency_code", payment.getCurrency(),
-                        "value", payment.getAmount().toString()))
+                        "value", payment.getAmount().toPlainString())))
         );
 
         String response = exchange(HttpMethod.POST, "/v2/checkout/orders", body, bearer(token()));

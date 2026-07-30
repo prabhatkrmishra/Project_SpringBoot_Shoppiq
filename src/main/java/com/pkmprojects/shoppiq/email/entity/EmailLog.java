@@ -7,36 +7,16 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> JPA entity that records every email
- * sent by the application for auditing and debugging purposes. This is an
- * example of the <strong>Audit Log</strong> pattern in a layered Spring Boot
- * application.
+ * JPA entity that records every email sent by the application for auditing and debugging.
  *
- * <p>
- * Each row captures the recipient, email type, delivery status, and
- * the provider used to send the email. Failed sends include the error message.
- * </p>
+ * <p>Captures recipient, email type, delivery status, provider, and error details for each email attempt.
+ * This entity provides a complete audit trail of all email communications, including successful
+ * deliveries, failed attempts, and skipped emails due to user preferences. The log is used for
+ * debugging email delivery issues and monitoring email service health.</p>
  *
- * <p><strong>Educational value:</strong> This entity demonstrates:
- * <ul>
- *   <li><strong>JPA entity mapping</strong> — {@code @Entity}, {@code @Table},
- *       {@code @Column}, {@code @Enumerated}, and {@code @ManyToOne}
- *       annotations for relational mapping.</li>
- *   <li><strong>AuditableEntity inheritance</strong> — extends a base entity
- *       that provides created-at, updated-at, and other audit fields
- *       (common Spring Data JPA pattern using {@code @EntityListeners} or
- *       {@code AuditingEntityListener}).</li>
- *   <li><strong>Lazy fetching</strong> — the {@code User} relationship uses
- *       {@code FetchType.LAZY} for performance, with a foreign key constraint
- *       named explicitly via {@code @ForeignKey}.</li>
- *   <li><strong>Nested enum</strong> — {@code EmailStatus} is defined as a
- *       nested enum for cohesive domain modeling (PENDING → SENT / FAILED).</li>
- *   <li><strong>Lombok boilerplate reduction</strong> — uses {@code @Getter},
- *       {@code @Setter}, {@code @Builder}, {@code @NoArgsConstructor},
- *       {@code @AllArgsConstructor}, and
- *       {@code @EqualsAndHashCode(callSuper = true)}.</li>
- * </ul>
- * </p>
+ * <p>Each email log entry includes the recipient address, email type, subject, delivery status,
+ * provider name, error message (if any), and timestamp. The entity extends AuditableEntity to
+ * include creation and modification timestamps for comprehensive audit tracking.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -109,8 +89,17 @@ public class EmailLog extends AuditableEntity {
      * Email delivery status.
      */
     public enum EmailStatus {
+        /**
+         * Email is queued but not yet sent.
+         */
         PENDING,
+        /**
+         * Email was successfully delivered.
+         */
         SENT,
+        /**
+         * Email delivery failed.
+         */
         FAILED
     }
 }

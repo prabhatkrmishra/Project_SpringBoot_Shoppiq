@@ -10,79 +10,25 @@ import lombok.*;
 import java.math.BigDecimal;
 
 /**
- * <strong>Spring Boot Concept:</strong> Represents the commercial and inventory information associated with an
- * {@link Item}.
+ * Represents the commercial and inventory information associated with
+ * an {@link Item}.
  *
- * <p>
- * This entity stores business information that changes more frequently than
- * the core product information contained in {@link Item}. It encapsulates
- * pricing, inventory, SKU management, manufacturer details and category
- * classification while allowing the parent entity to focus on catalog
- * information.
- * </p>
+ * <p>Encapsulates pricing, inventory, SKU management, manufacturer details
+ * and category classification. Separates commerce-level data that changes
+ * more frequently from the core catalog information in {@link Item}. This
+ * separation allows catalog browsing queries to avoid loading heavyweight
+ * commercial data until the customer reaches the product detail page.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Stores manufacturer information.</li>
- *     <li>Stores pricing information.</li>
- *     <li>Stores inventory information.</li>
- *     <li>Stores the unique Stock Keeping Unit (SKU).</li>
- *     <li>Associates a product with a {@link Category}.</li>
- * </ul>
- *
- * <h2>Relationships</h2>
- * <ul>
- *     <li>Belongs to exactly one {@link Category}.</li>
- *     <li>Is owned by exactly one {@link Item}.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Extends {@link AuditableEntity} to inherit persistence identity,
- *     optimistic locking and auditing support.</li>
- *     <li>Represents commercial information only.</li>
- *     <li>Category normalization is enforced through a foreign-key
- *     relationship rather than storing raw text.</li>
- *     <li>SKU uniqueness is enforced at both the application and database
- *     levels.</li>
- * </ul>
- *
- * <h2>Database Mapping</h2>
- * <ul>
- *     <li>Mapped to the {@code item_details} table.</li>
- *     <li>SKU is globally unique.</li>
- *     <li>Category is referenced using a foreign key.</li>
- * </ul>
- *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Composition pattern (Item + ItemDetails)</strong> — Separates
- *         catalog-level data (name, description) from commerce-level data
- *         (price, stock, SKU). This is a common JPA design choice when fields
- *         change at different frequencies or are managed by different
- *         services.</li>
- *     <li><strong>{@code @OneToOne(mappedBy = "itemDetails")}</strong> — The
- *         inverse side of the one-to-one relationship with Item. The
- *         {@code mappedBy} attribute indicates that Item owns the FK.</li>
- *     <li><strong>{@code @ManyToOne} to {@link Category}</strong> — Category
- *         is a reference entity; ItemDetails holds the FK. Uses
- *         {@code FetchType.LAZY} to avoid unnecessary joins.</li>
- *     <li><strong>Precision and scale on {@code BigDecimal}</strong> — {@code
- *         @Column(precision = 10, scale = 2)} defines exact numeric storage
- *         for monetary values, essential for financial accuracy.</li>
- *     <li><strong>{@code @DecimalMin}, {@code @DecimalMax},
- *         {@code @Digits}</strong> — Bean Validation constraints ensure
- *         prices, discounts, and stock levels are within acceptable ranges
- *         before persisting.</li>
- *     <li><strong>{@code @JsonIgnore}</strong> on the owning Item reference
- *         — Prevents infinite JSON serialization when the parent Item is
- *         serialized with its ItemDetails.</li>
- *     <li><strong>{@code update()} method</strong> — Preserves identity and
- *         version while allowing all mutable commercial fields to be replaced
- *         atomically.</li>
- * </ul>
+ * <p>SKU uniqueness is enforced at both the application and database levels
+ * via a unique constraint on the {@code sku} column. Category is normalized
+ * via a foreign key rather than stored as raw text, ensuring referential
+ * integrity and enabling category-based filtering without string matching.
+ * The entity is the inverse side of a one-to-one relationship with
+ * {@link Item}, which owns the mapping.</p>
  *
  * @author prabhatkrmishra
+ * @see Item
+ * @see com.pkmprojects.shoppiq.entity.category.Category
  * @since 1.0.0
  */
 @Entity
@@ -104,7 +50,13 @@ import java.math.BigDecimal;
 public class ItemDetails extends AuditableEntity {
 
     /**
-     * Manufacturer or brand of the product.
+     * Manufacturer or brand name of the product (e.g. "Samsung",
+     * "Nike", "Apple").
+     *
+     * <p>Required field with a maximum length of 100 characters. Used
+     * for brand-based filtering and display on product detail pages.
+     * This field is not validated for uniqueness since multiple products
+     * from the same brand are expected.</p>
      */
     @NotBlank(message = "Brand is required.")
     @Size(max = 100, message = "Brand cannot exceed 100 characters.")
@@ -112,12 +64,13 @@ public class ItemDetails extends AuditableEntity {
     private String brand;
 
     /**
-     * Stock Keeping Unit (SKU).
+     * Stock Keeping Unit (SKU) used to uniquely identify a sellable
+     * product across inventory, warehouse, and order management systems.
      *
-     * <p>
-     * The SKU uniquely identifies a sellable product and is primarily used
-     * by inventory, warehouse and order management systems.
-     * </p>
+     * <p>Required field with a maximum length of 100 characters. Must be
+     * globally unique across the entire catalog, enforced by a database
+     * unique constraint. The SKU is the primary identifier used in
+     * fulfillment workflows, stock reconciliation, and reporting.</p>
      */
     @NotBlank(message = "SKU is required.")
     @Size(max = 100, message = "SKU cannot exceed 100 characters.")
@@ -125,7 +78,13 @@ public class ItemDetails extends AuditableEntity {
     private String sku;
 
     /**
-     * Current selling price.
+     * Current selling price of the product in the store's base currency.
+     *
+     * <p>Required field with a precision of 10 digits total and 2
+     * decimal places. Must be non-negative (zero is allowed for free
+     * promotional items). This price is snapshotted into
+     * {@link com.pkmprojects.shoppiq.entity.order.OrderItem} at
+     * checkout time to preserve historical accuracy.</p>
      */
     @NotNull(message = "Price is required.")
     @DecimalMin(value = "0.00")
@@ -134,7 +93,12 @@ public class ItemDetails extends AuditableEntity {
     private BigDecimal price;
 
     /**
-     * Current available inventory.
+     * Current available inventory count for this product.
+     *
+     * <p>Must be zero or positive. Decremented atomically when an order
+     * is placed and restored if the order is cancelled. Products with
+     * zero stock may still appear in the catalog but are marked as
+     * out of stock. Defaults to 0 for newly created products.</p>
      */
     @NotNull(message = "Stock quantity is required.")
     @PositiveOrZero(message = "Stock quantity cannot be negative.")
@@ -143,11 +107,14 @@ public class ItemDetails extends AuditableEntity {
     private Integer stockQuantity = 0;
 
     /**
-     * Discount percentage applied to the product.
+     * Discount percentage applied to the product's base price.
      *
-     * <p>
-     * Valid values range from {@code 0.00} to {@code 100.00}.
-     * </p>
+     * <p>Valid values range from {@code 0.00} (no discount) to
+     * {@code 100.00} (completely free). The effective price is
+     * calculated as {@code price * (1 - discountPercentage / 100)}.
+     * Defaults to {@code 0.00} for new products. This field is
+     * distinct from the {@code onSale} flag, which controls
+     * promotional visibility rather than pricing.</p>
      */
     @NotNull(message = "Discount percentage is required.")
     @PositiveOrZero(message = "Discount percentage cannot be negative.")
@@ -158,28 +125,40 @@ public class ItemDetails extends AuditableEntity {
     private BigDecimal discountPercentage = BigDecimal.ZERO;
 
     /**
-     * URL to the product image.
+     * URL or storage key pointing to the product's primary image asset.
      *
-     * <p>Optional — when absent, the frontend displays a default placeholder.</p>
+     * <p>Optional field with a maximum length of 500 characters. When
+     * absent, the frontend displays a default placeholder image. The
+     * URL may point to an external CDN, cloud storage bucket, or a
+     * relative path within the application's asset pipeline.</p>
      */
     @Size(max = 500, message = "Image URL cannot exceed 500 characters.")
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
     /**
-     * Whether this product is currently on sale.
+     * Whether this product is currently featured in promotional sale
+     * events and appears on the Sale page.
      *
-     * <p>
-     * Admin-controlled flag used to mark products for promotional
-     * sale events. When true, the product appears on the Sale page.
-     * </p>
+     * <p>Admin-controlled flag used to mark products for promotional
+     * visibility. When {@code true}, the product is included in sale
+     * listings and may receive special visual treatment (e.g. sale
+     * badges, highlighted cards). Defaults to {@code false} for new
+     * products.</p>
      */
     @Builder.Default
     @Column(name = "on_sale", nullable = false)
     private boolean onSale = false;
 
     /**
-     * Product category.
+     * Product category that this item belongs to, used for catalog
+     * navigation, filtering, and SEO-friendly category pages.
+     *
+     * <p>Required relationship. Each product must belong to exactly one
+     * category. The category is lazily loaded and joined via a foreign
+     * key with an explicit constraint name. Changing a product's
+     * category is supported but should be done judiciously as it
+     * affects URL routing and search indexing.</p>
      */
     @NotNull(message = "Category is required.")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -195,10 +174,11 @@ public class ItemDetails extends AuditableEntity {
     /**
      * Product that owns this commercial information.
      *
-     * <p>
-     * This is the inverse side of the one-to-one relationship.
-     * Relationship ownership is maintained by {@link Item}.
-     * </p>
+     * <p>This is the inverse side of the one-to-one relationship with
+     * {@link Item}. Relationship ownership and cascade behavior are
+     * maintained by the owning {@link Item} entity. This reference is
+     * excluded from JSON serialization via {@code @JsonIgnore} to
+     * prevent circular reference issues during API responses.</p>
      */
     @JsonIgnore
     @OneToOne(mappedBy = "itemDetails", fetch = FetchType.LAZY)

@@ -1,7 +1,9 @@
 package com.pkmprojects.shoppiq.service.seller;
 
+import com.pkmprojects.shoppiq.config.InventoryConstants;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerDashboardResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
+import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.seller.Seller;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
@@ -14,8 +16,6 @@ import com.pkmprojects.shoppiq.repository.order.OrderItemRepository;
 import com.pkmprojects.shoppiq.repository.order.OrderRepository;
 import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
-import com.pkmprojects.shoppiq.config.InventoryConstants;
-import com.pkmprojects.shoppiq.entity.order.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,14 +25,11 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerDashboardService}.
- *
- * <p>
- * Computes seller dashboard metrics including product count, order count,
- * revenue, and stock alerts using dedicated repository queries.
- * </p>
+ * {@link SellerDashboardService} implementation computing seller dashboard metrics
+ * including product count, order count, revenue, and stock alerts.
  *
  * @author prabhatkrmishra
+ * @see SellerDashboardService
  * @since 1.0.0
  */
 @Service

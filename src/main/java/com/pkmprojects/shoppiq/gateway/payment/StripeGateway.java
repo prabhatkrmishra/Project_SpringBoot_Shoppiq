@@ -1,6 +1,5 @@
 package com.pkmprojects.shoppiq.gateway.payment;
 
-import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.config.PaymentGatewayProperties;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
@@ -9,39 +8,26 @@ import com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayException
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 
 /**
- * <strong>Spring Boot Concept:</strong> Concrete payment gateway strategy
- * for Stripe (global), extending {@link AbstractRestGateway}.
+ * Concrete payment gateway strategy for Stripe (global).
  *
- * <p>Flow: {@link #process(Payment)} creates a PaymentIntent
- * ({@code POST /v1/payment_intents}); {@link #verify(Payment, String)} fetches
- * the intent by id ({@code GET /v1/payment_intents/{id}}) and marks the payment
- * {@code PAID} once its status is {@code succeeded}.</p>
+ * <p>This gateway implements the Stripe payment flow using the PaymentIntents
+ * API. On {@link #process(Payment)}, it creates a PaymentIntent with the
+ * specified amount and currency. On {@link #verify(Payment, String)}, it
+ * retrieves the PaymentIntent to confirm its status. Authentication uses
+ * Bearer token with the Stripe secret key.</p>
  *
- * <p><strong>Educational value:</strong> Stripe differs from Razorpay and
- * PayPal in several interesting ways:
- * <ul>
- *   <li><strong>Bearer auth</strong> — Stripe uses the API key directly as
- *       a bearer token (no separate OAuth token endpoint).</li>
- *   <li><strong>Idempotent process</strong> — on re-processing, Stripe checks
- *       if a gateway ID already exists and skips the API call, just like the
- *       other gateways.</li>
- *   <li><strong>Immediate status check</strong> — the initial
- *       {@code createPaymentIntent} response already contains the status;
- *       if it's already {@code succeeded}, the payment is marked PAID
- *       immediately instead of going to PROCESSING.</li>
- *   <li><strong>Lowercase currency</strong> — Stripe expects the currency
- *       code in lowercase (e.g. {@code usd}), unlike Razorpay which expects
- *       uppercase (e.g. {@code INR}).</li>
- * </ul>
- * These differences illustrate how the Strategy pattern accommodates
- * provider-specific nuances behind a uniform interface.
- * </p>
+ * <p>Stripe supports multiple currencies and is the primary gateway for
+ * international payments. The gateway converts amounts from major units
+ * to minor units (cents) before sending to the API. Error responses from
+ * Stripe are translated into {@link PaymentGatewayException} instances
+ * with descriptive messages.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

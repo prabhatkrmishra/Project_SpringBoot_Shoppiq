@@ -12,53 +12,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link Order} persistence.
+ * Persistence operations for the {@link Order} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived queries with chained ordering</strong> — {@code findAllByUserOrderByPlacedAtDesc}
- *       produces {@code SELECT * FROM orders WHERE user_id = ? ORDER BY placed_at DESC}.</li>
- *   <li><strong>Pagination with derived queries</strong> — Overloaded methods accepting
- *       {@link org.springframework.data.domain.Pageable} automatically add count queries
- *       and {@code LIMIT}/{@code OFFSET}.</li>
- *   <li><strong>Enum filtering</strong> — {@code findByStatus(OrderStatus, Pageable)} filters
- *       by enum field.</li>
- *   <li><strong>JPQL with JOIN FETCH for eager loading</strong> — {@code findByIdWithItems}
- *       and {@code findByIdWithUser} eagerly fetch associations to prevent
- *       {@code LazyInitializationException} outside the persistence context.</li>
- *   <li><strong>{@code @EntityGraph}</strong> — An alternative to {@code JOIN FETCH} for
- *       declarative eager fetching. Used on {@code findTop10ByOrderByPlacedAtDesc},
- *       {@code findByPlacedAtBetweenAndStatusOrderByPlacedAtAsc}, and
- *       {@code findByPlacedAtBetweenOrderByPlacedAtAsc}.</li>
- *   <li><strong>Derived count and range queries</strong> — {@code countByStatus},
- *       {@code countByPlacedAtBetween}, {@code findByPlacedAtBetween}.</li>
- *   <li><strong>Complex JPQL with DISTINCT and multiple joins</strong> — {@code findDistinctBySellerIdOrderByPlacedAtDesc}
- *       joins across five tables ({@code Order → OrderItem → ItemDetails → Item → Seller}) to
- *       find all orders containing a seller's products.</li>
- *   <li><strong>Custom COUNT queries</strong> — {@code countDistinctBySellerId},
- *       {@code countSellerItemsInOrder}, {@code countTotalItemsInOrder} use JPQL for
- *       precise aggregation that derived method names cannot express.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findAllByUserOrderByPlacedAtDesc(User)
- *       → SELECT * FROM orders WHERE user_id = ? ORDER BY placed_at DESC
- *   findByStatus(OrderStatus, Pageable)
- *       → SELECT * FROM orders WHERE status = ? ORDER BY ? LIMIT ? OFFSET ?
- *   countByStatus(OrderStatus)
- *       → SELECT COUNT(*) FROM orders WHERE status = ?
- *   countByPlacedAtBetween(Instant, Instant)
- *       → SELECT COUNT(*) FROM orders WHERE placed_at BETWEEN ? AND ?
- *   findTop10ByOrderByPlacedAtDesc
- *       → SELECT * FROM orders ORDER BY placed_at DESC LIMIT 10
- * </pre>
+ * <p>Provides methods to query orders by user, status, date range, and seller for order management
+ * and reporting. The repository supports paginated queries for order listing, eager fetching of
+ * order items and associations, and aggregate queries for sales analytics and customer reporting.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -66,15 +29,47 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+    /**
+     * Returns a paginated view of orders for a user, with order items and product details eagerly fetched.
+     *
+     * @param user     the order owner
+     * @param pageable pagination parameters
+     * @return paginated list of orders
+     */
     @EntityGraph(attributePaths = {"orderItems", "orderItems.itemDetails", "orderItems.itemDetails.item"})
     Page<Order> findAllByUserOrderByPlacedAtDesc(User user, Pageable pageable);
 
+    /**
+     * Returns a paginated view of all orders.
+     *
+     * @param pageable pagination parameters
+     * @return paginated list of orders
+     */
     Page<Order> findAll(Pageable pageable);
 
+    /**
+     * Returns a paginated view of orders filtered by status.
+     *
+     * @param status   the order status
+     * @param pageable pagination parameters
+     * @return paginated list of matching orders
+     */
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
+    /**
+     * Finds an order by its identifier.
+     *
+     * @param id the order identifier
+     * @return optional order
+     */
     Optional<Order> findById(Long id);
 
+    /**
+     * Finds an order by ID with order items and item details eagerly fetched.
+     *
+     * @param id the order identifier
+     * @return the order with items loaded, or empty if not found
+     */
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.itemDetails WHERE o.id = :id")
     Optional<Order> findByIdWithItems(@Param("id") Long id);
 
@@ -92,11 +87,29 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.user WHERE o.id = :id")
     Optional<Order> findByIdWithUser(@Param("id") Long id);
 
+    /**
+     * Returns the 10 most recently placed orders with user eagerly fetched.
+     *
+     * @return list of recent orders
+     */
     @EntityGraph(attributePaths = "user")
     List<Order> findTop10ByOrderByPlacedAtDesc();
 
+    /**
+     * Counts orders by status.
+     *
+     * @param status the order status
+     * @return count of orders with the given status
+     */
     long countByStatus(OrderStatus status);
 
+    /**
+     * Counts orders placed within a date range.
+     *
+     * @param start start of date range (inclusive)
+     * @param end   end of date range (exclusive)
+     * @return count of orders
+     */
     long countByPlacedAtBetween(Instant start, Instant end);
 
     /**
@@ -104,6 +117,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     long countByPlacedAtBetweenAndStatus(Instant start, Instant end, OrderStatus status);
 
+    /**
+     * Returns a paginated view of orders within a date range and status, with order items eagerly fetched.
+     *
+     * @param start    start of date range (inclusive)
+     * @param end      end of date range (exclusive)
+     * @param status   the order status
+     * @param pageable pagination parameters
+     * @return paginated list of matching orders
+     */
     @EntityGraph(attributePaths = {
             "orderItems",
             "orderItems.itemDetails",
@@ -111,6 +133,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     })
     Page<Order> findByPlacedAtBetweenAndStatusOrderByPlacedAtAsc(Instant start, Instant end, OrderStatus status, Pageable pageable);
 
+    /**
+     * Returns a paginated view of orders within a date range, with full entity graph eagerly fetched.
+     *
+     * @param start    start of date range (inclusive)
+     * @param end      end of date range (exclusive)
+     * @param pageable pagination parameters
+     * @return paginated list of matching orders
+     */
     @EntityGraph(attributePaths = {
             "orderItems",
             "orderItems.itemDetails",
@@ -120,6 +150,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     })
     Page<Order> findByPlacedAtBetweenOrderByPlacedAtAsc(Instant start, Instant end, Pageable pageable);
 
+    /**
+     * Counts orders for a given user.
+     *
+     * @param user the order owner
+     * @return count of orders
+     */
     long countByUser(User user);
 
     /**
@@ -147,6 +183,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     })
     List<Order> findDistinctBySellerIdOrderByPlacedAtDesc(@Param("sellerId") Long sellerId);
 
+    /**
+     * Returns a paginated view of distinct orders containing items belonging to a specific seller.
+     *
+     * @param sellerId the seller identifier
+     * @param pageable pagination parameters
+     * @return paginated list of orders containing the seller's products
+     */
     @Query("SELECT DISTINCT o FROM Order o JOIN o.orderItems oi JOIN oi.itemDetails id JOIN id.item i JOIN i.seller s WHERE s.id = :sellerId ORDER BY o.placedAt DESC")
     Page<Order> findDistinctBySellerId(@Param("sellerId") Long sellerId, Pageable pageable);
 
@@ -235,5 +278,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             GROUP BY o.user.id, o.user.username, o.user.email
             ORDER BY totalSpent DESC""")
     List<CustomerOrderAggregate> aggregateCustomerOrdersBetween(@Param("start") Instant start,
-                                                                 @Param("end") Instant end);
+                                                                @Param("end") Instant end);
 }

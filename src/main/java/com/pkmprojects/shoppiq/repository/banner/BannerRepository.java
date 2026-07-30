@@ -10,27 +10,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link Banner} persistence operations.
+ * Persistence operations for the {@link Banner} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived query methods with ordering</strong> — {@code OrderByDisplayOrderAsc}
- *       appends {@code ORDER BY display_order ASC} to the generated SQL.</li>
- *   <li><strong>Property path expressions</strong> — {@code findAllByActiveTrue} resolves
- *       {@code active} as a boolean field and generates
- *       {@code SELECT * FROM banners WHERE active = TRUE}.</li>
- *   <li><strong>{@code @Modifying} + {@code @Query}</strong> — {@code toggleActive} shows
- *       an atomic {@code UPDATE} with expression in JPQL that cannot be expressed via
- *       method naming alone.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findAllByActiveTrueOrderByDisplayOrderAsc
- *       → SELECT * FROM banners WHERE active = TRUE ORDER BY display_order ASC
- *   toggleActive(@Query)
- *       → UPDATE banners SET active = NOT active WHERE id = ?
- * </pre>
+ * <p>Provides methods to query active banners for homepage display and perform atomic
+ * active status toggles for banner management. The repository supports ordered queries
+ * for display order and atomic toggle operations for admin workflows.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

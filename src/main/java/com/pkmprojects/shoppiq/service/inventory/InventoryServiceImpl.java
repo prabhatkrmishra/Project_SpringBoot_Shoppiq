@@ -18,21 +18,9 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link InventoryService}
- * containing stock adjustment business logic.
- *
- * <p>Reduces stock during checkout and restores stock on cancellation or return.
- * Runs inside the caller's transaction via Spring's REQUIRED propagation,
- * ensuring stock changes are atomic with order operations. Handles
- * {@code OptimisticLockingFailureException} for concurrent access.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Designed to participate in the outer checkout transaction via REQUIRED propagation.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link InventoryService} implementation that reduces stock during checkout and
+ * restores stock on cancellation or return. Handles
+ * {@code OptimisticLockingFailureException} for concurrent access.
  *
  * @author prabhatkrmishra
  * @see InventoryService

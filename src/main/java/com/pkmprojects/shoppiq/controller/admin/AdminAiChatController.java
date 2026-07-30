@@ -29,24 +29,32 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <strong>Spring Boot Concept:</strong> Admin REST controller for managing and reviewing AI chat conversations.
+ * Admin REST controller for managing and reviewing AI chat conversations.
  *
- * <p>
- * Provides paginated listing with search/filter capabilities, a detail view for
- * individual conversations, and mutation endpoints for deleting messages,
- * deleting conversations, and marking conversations as resolved. All endpoints
- * require {@code ROLE_ADMIN}.
+ * <p>Provides paginated listing with search/filter, conversation detail, message
+ * deletion, conversation deletion, and resolve marking. This controller enables
+ * admins to monitor and manage AI-powered support conversations from the admin
+ * dashboard. It is conditionally enabled via the shoppiq.ai.enabled property.</p>
  *
- * <h2>Endpoints</h2>
- * <ul>
- *   <li>{@code GET /api/admin/ai-chats} — paginated conversation list with search and status filter</li>
- *   <li>{@code GET /api/admin/ai-chats/{chatId}} — full conversation detail with all messages</li>
- *   <li>{@code DELETE /api/admin/ai-chats/{chatId}} — delete a conversation and all its messages</li>
- *   <li>{@code DELETE /api/admin/ai-chats/messages/{messageId}} — delete a single message</li>
- *   <li>{@code PATCH /api/admin/ai-chats/{chatId}/resolve} — mark a conversation as resolved</li>
- * </ul>
+ * <p>This controller acts as the HTTP boundary for AI chat administration. It
+ * directly uses repository classes for query operations and conversation
+ * lifecycle management, bypassing a dedicated service layer for these admin-specific
+ * operations.</p>
  *
- * @author PrabhatKrMishra
+ * <p>All endpoints require ADMIN role and are conditionally mounted under
+ * /api/admin/ai-chats when the AI feature is enabled.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET    /api/admin/ai-chats                     — paginated list with search/status filter
+ * GET    /api/admin/ai-chats/{chatId}            — full conversation detail with messages
+ * DELETE /api/admin/ai-chats/{chatId}            — delete a conversation and its messages
+ * DELETE /api/admin/ai-chats/messages/{messageId} — delete a single message
+ * PATCH  /api/admin/ai-chats/{chatId}/resolve    — mark a conversation as resolved
+ * </pre>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Validated
@@ -70,9 +78,9 @@ public class AdminAiChatController {
      * @param clock                  clock for time-related operations
      */
     public AdminAiChatController(ChatConversationRepository conversationRepository,
-                                  ChatMessageRepository messageRepository,
-                                  PaginationProperties pagination,
-                                  Clock clock) {
+                                 ChatMessageRepository messageRepository,
+                                 PaginationProperties pagination,
+                                 Clock clock) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.pagination = pagination;
@@ -80,18 +88,18 @@ public class AdminAiChatController {
     }
 
     /**
-     * Returns a paginated list of all AI conversations with optional search and status filter.
+     * Returns a paginated list of all AI conversations with optional search
+     * and status filter.
      *
-     * <p>
-     * When a {@code query} parameter is provided, searches across chat ID, title,
-     * and username. When a {@code status} parameter is provided, filters by
-     * conversation status. Both can be combined.
+     * <p>When a query parameter is provided, searches across chat ID, title,
+     * and username. When a status parameter is provided, filters by conversation
+     * status. Both filters can be combined.</p>
      *
      * @param query  optional search term (case-insensitive partial match)
-     * @param status optional status filter ({@code ACTIVE} or {@code RESOLVED})
+     * @param status optional status filter (ACTIVE or RESOLVED)
      * @param page   zero-based page index (default 0)
-     * @param size   page size (default 20, capped by {@link PaginationProperties})
-     * @return paginated list of conversation summaries
+     * @param size   page size (default 20, capped by the configured maximum)
+     * @return 200 OK with paginated list of conversation summaries
      */
     @GetMapping
     public ResponseEntity<PageResponse<AiChatLogDto>> getConversations(
@@ -132,8 +140,11 @@ public class AdminAiChatController {
     /**
      * Deletes a single chat message by ID.
      *
+     * <p>The message is permanently removed from the conversation. If the
+     * message does not exist, a 404 Not Found is returned.</p>
+     *
      * @param messageId the message's database ID
-     * @return 204 No Content on success
+     * @return 204 No Content on success, 404 Not Found if not found
      */
     @Transactional
     @DeleteMapping("/messages/{messageId}")
@@ -148,14 +159,19 @@ public class AdminAiChatController {
     /**
      * Deletes an entire conversation and all its messages.
      *
+     * <p>This is a cascading delete that removes the conversation record
+     * and all associated messages. If the conversation does not exist,
+     * an AiConversationNotFoundException is thrown.</p>
+     *
      * @param chatId the public conversation identifier
      * @return 204 No Content on success
+     * @throws AiConversationNotFoundException if no conversation matches the chat ID
      */
     @Transactional
     @DeleteMapping("/{chatId}")
     public ResponseEntity<Void> deleteConversation(@PathVariable String chatId) {
         ChatConversation conv = conversationRepository.findByChatId(chatId)
-            .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
+                .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
 
         messageRepository.deleteByConversationId(conv.getId());
         conversationRepository.delete(conv);
@@ -165,64 +181,72 @@ public class AdminAiChatController {
     /**
      * Marks a conversation as resolved.
      *
+     * <p>Sets the conversation status to RESOLVED, records the resolution
+     * timestamp, and appends a system message to the conversation history.</p>
+     *
      * @param chatId the public conversation identifier
      * @return 204 No Content on success
+     * @throws AiConversationNotFoundException if no conversation matches the chat ID
      */
     @Transactional
     @PatchMapping("/{chatId}/resolve")
     public ResponseEntity<Void> resolveConversation(@PathVariable String chatId) {
         ChatConversation conv = conversationRepository.findByChatId(chatId)
-            .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
+                .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
 
         conv.setStatus(ConversationStatus.RESOLVED);
         conv.setResolvedAt(Instant.now(clock));
         conversationRepository.save(conv);
 
         ChatMessage systemMsg = ChatMessage.builder()
-            .conversation(conv)
-            .role(ChatMessageRole.SYSTEM)
-            .content("Conversation resolved.")
-            .build();
+                .conversation(conv)
+                .role(ChatMessageRole.SYSTEM)
+                .content("Conversation resolved.")
+                .build();
         messageRepository.save(systemMsg);
 
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * Returns the full detail of a single AI conversation, including all messages.
+     * Returns the full detail of a single AI conversation, including all
+     * messages in chronological order.
+     *
+     * <p>The response includes conversation metadata (title, status,
+     * timestamps) and the complete message history with role and content.</p>
      *
      * @param chatId the public conversation identifier
-     * @return the conversation detail with messages in chronological order
-     * @throws AiConversationNotFoundException if no conversation matches the given chat ID
+     * @return 200 OK with the conversation detail with messages
+     * @throws AiConversationNotFoundException if no conversation matches the chat ID
      */
     @GetMapping("/{chatId}")
     public ResponseEntity<AiChatLogDetailDto> getConversationDetail(
             @PathVariable String chatId) {
 
         ChatConversation conv = conversationRepository.findByChatId(chatId)
-            .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
+                .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
 
         var messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(conv.getId())
-            .stream()
-            .map(msg -> new ChatMessageDto(
-                msg.getId(),
-                msg.getRole().name(),
-                msg.getContent(),
-                msg.getToolName(),
-                msg.getCreatedAt()
-            ))
-            .toList();
+                .stream()
+                .map(msg -> new ChatMessageDto(
+                        msg.getId(),
+                        msg.getRole().name(),
+                        msg.getContent(),
+                        msg.getToolName(),
+                        msg.getCreatedAt()
+                ))
+                .toList();
 
         AiChatLogDetailDto detail = new AiChatLogDetailDto(
-            conv.getChatId(),
-            conv.getUser() != null ? conv.getUser().getId() : null,
-            conv.getUser() != null ? conv.getUser().getUsername() : "Guest",
-            conv.getUser() != null ? conv.getUser().getEmail() : null,
-            conv.getTitle(),
-            conv.getStatus().name(),
-            conv.getCreatedAt(),
-            conv.getResolvedAt(),
-            messages
+                conv.getChatId(),
+                conv.getUser() != null ? conv.getUser().getId() : null,
+                conv.getUser() != null ? conv.getUser().getUsername() : "Guest",
+                conv.getUser() != null ? conv.getUser().getEmail() : null,
+                conv.getTitle(),
+                conv.getStatus().name(),
+                conv.getCreatedAt(),
+                conv.getResolvedAt(),
+                messages
         );
 
         return ResponseEntity.ok(detail);
@@ -239,15 +263,15 @@ public class AdminAiChatController {
         long msgCount = msgCounts.getOrDefault(conv.getId(), 0L);
 
         return new AiChatLogDto(
-            conv.getChatId(),
-            conv.getUser() != null ? conv.getUser().getId() : null,
-            conv.getUser() != null ? conv.getUser().getUsername() : "Guest",
-            conv.getUser() != null ? conv.getUser().getEmail() : null,
-            conv.getTitle(),
-            conv.getStatus().name(),
-            (int) msgCount,
-            conv.getCreatedAt(),
-            conv.getUpdatedAt()
+                conv.getChatId(),
+                conv.getUser() != null ? conv.getUser().getId() : null,
+                conv.getUser() != null ? conv.getUser().getUsername() : "Guest",
+                conv.getUser() != null ? conv.getUser().getEmail() : null,
+                conv.getTitle(),
+                conv.getStatus().name(),
+                (int) msgCount,
+                conv.getCreatedAt(),
+                conv.getUpdatedAt()
         );
     }
 }

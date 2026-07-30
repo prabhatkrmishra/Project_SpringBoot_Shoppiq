@@ -13,12 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerLookupService}.
- *
- * <p>All queries run in a read-only transaction. Delegates directly
- * to {@code SellerRepository} with appropriate sort ordering.</p>
+ * {@link SellerLookupService} implementation providing read-only seller queries.
  *
  * @author prabhatkrmishra
+ * @see SellerLookupService
  * @since 1.4.0
  */
 @Service

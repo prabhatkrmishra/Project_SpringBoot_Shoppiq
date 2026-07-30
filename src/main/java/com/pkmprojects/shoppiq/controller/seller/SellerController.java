@@ -9,27 +9,34 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for seller profile management.
+ * REST controller for seller profile management.
  *
  * <p>Handles seller registration, profile retrieval, profile updates, account
- * deactivation, and store publication. Most endpoints resolve the seller from
- * the authenticated principal.</p>
+ * deactivation, and storefront publication. New sellers register through this
+ * controller and are placed in PENDING status until approved by an admin.
+ * Once approved, sellers can manage their products and storefront.</p>
  *
- * <p>Key design points:
- * <ul>
- *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
- *   <li><strong>Self-service</strong> — all operations act on the authenticated user's own seller profile only.</li>
- * </ul>
- * </p>
+ * <p>This controller acts as the HTTP boundary for seller profile operations.
+ * It delegates all business logic — registration, profile CRUD, account
+ * deactivation, and store publication — to {@link SellerService}. The controller
+ * handles no business logic beyond extracting the authenticated principal.</p>
+ *
+ * <p>All endpoints resolve the seller from the authenticated principal. Most
+ * endpoints require SELLER role. Registration is available to any authenticated
+ * user.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * POST   /seller/register        — register as a new seller
+ * GET    /seller/profile         — get the authenticated seller's profile
+ * PUT    /seller/update          — update seller profile information
+ * DELETE /seller/delete          — deactivate the seller account
+ * PUT    /seller/store/publish   — publish the seller's storefront
+ * </pre>
  *
  * @author prabhatkrmishra
  * @see SellerService
@@ -48,9 +55,12 @@ public class SellerController {
     /**
      * Registers a new seller application for the authenticated user.
      *
-     * @param request     the seller registration payload
+     * <p>The seller is placed in PENDING status until approved by an admin.
+     * The authenticated user's existing roles are preserved.</p>
+     *
+     * @param request     the seller registration payload (validated via @Valid)
      * @param currentUser the authenticated user requesting seller status
-     * @return 201 Created with the created seller profile
+     * @return 201 Created with the created seller profile response
      */
     @PostMapping("/register")
     public ResponseEntity<SellerResponse> register(
@@ -64,7 +74,7 @@ public class SellerController {
      * Returns the authenticated seller's profile.
      *
      * @param currentUser the authenticated seller
-     * @return 200 OK with the seller profile
+     * @return 200 OK with the seller profile response
      */
     @GetMapping("/profile")
     public ResponseEntity<SellerResponse> getProfile(
@@ -76,9 +86,9 @@ public class SellerController {
     /**
      * Updates the authenticated seller's profile information.
      *
-     * @param request     the updated profile data
+     * @param request     the updated profile data (validated via @Valid)
      * @param currentUser the authenticated seller
-     * @return 200 OK with the updated seller profile
+     * @return 200 OK with the updated seller profile response
      */
     @PutMapping("/update")
     public ResponseEntity<SellerResponse> updateProfile(
@@ -90,6 +100,9 @@ public class SellerController {
 
     /**
      * Deactivates (soft-deletes) the authenticated seller's account.
+     *
+     * <p>The seller's products are hidden from the storefront but the data
+     * is retained for historical order records.</p>
      *
      * @param currentUser the authenticated seller
      * @return 200 OK
@@ -103,6 +116,8 @@ public class SellerController {
 
     /**
      * Publishes the seller's storefront, making it visible to customers.
+     *
+     * <p>The seller must be in APPROVED status to publish their store.</p>
      *
      * @param currentUser the authenticated seller
      * @return 200 OK

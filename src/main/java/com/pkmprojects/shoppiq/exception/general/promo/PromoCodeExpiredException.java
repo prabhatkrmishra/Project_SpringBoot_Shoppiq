@@ -6,14 +6,20 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a promo code
- * has expired.
+ * Thrown when a promo code has passed its expiration date.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) for temporal validation (validUntil check).</p>
+ * <p>This exception is thrown when a customer applies a promo code that
+ * is past its valid end date. It uses the
+ * {@link ErrorCode#PROMO_CODE_EXPIRED} code and HTTP 400 Bad Request
+ * status. The code can no longer be used for any orders.</p>
+ *
+ * <p>The detail message includes the promo code and expiry timestamp
+ * (e.g., "Promo code 'SUMMER2026' expired on 2026-08-31T23:59:59Z.")
+ * to help the client understand when the code became invalid. The client
+ * should look for a different active promo code.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PROMO_CODE_EXPIRED
  * @since 1.0.0
  */
 public final class PromoCodeExpiredException extends InvalidOperationException {

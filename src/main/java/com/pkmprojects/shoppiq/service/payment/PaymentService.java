@@ -7,21 +7,10 @@ import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * <strong>Spring Boot Concept:</strong> Contract for payment lifecycle operations in Shoppiq.
+ * Business contract for payment lifecycle operations.
  *
- * <p><strong>What the Service layer demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Interface-first design</strong> — Defines the full payment lifecycle contract:
- *       create, pay, verify, cancel, refund, and retrieve.</li>
- *   <li><strong>State machine design</strong> — Each method documents its allowed input states
- *       (e.g., only {@code PAID} payments can be refunded), teaching state-machine thinking
- *       in payment processing.</li>
- *   <li><strong>Ownership enforcement</strong> — Customer-facing methods ({@link #pay},
- *       {@link #verifyPayment}, {@link #cancelPayment}, {@link #getPayment}) validate that the
- *       payment belongs to the requesting user.</li>
- *   <li><strong>Admin-only operations</strong> — {@link #refund} is explicitly documented as
- *       admin-only and intentionally skips ownership checks.</li>
- * </ul>
+ * <p>Defines operations for creating, paying, verifying, cancelling, and
+ * refunding payments with state machine enforcement and ownership validation.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

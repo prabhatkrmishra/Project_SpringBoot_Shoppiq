@@ -7,8 +7,16 @@ import java.time.Instant;
 /**
  * Event published when stock restoration fails due to optimistic locking conflicts.
  *
- * <p>This event allows other systems to react to stock restoration failures
- * and implement retry mechanisms or manual intervention.</p>
+ * <p>Allows other systems to react to stock restoration failures
+ * and implement retry mechanisms or manual intervention. This event
+ * is published when an inventory service encounters an optimistic
+ * locking conflict while attempting to restore stock for a cancelled,
+ * returned, or refunded order.</p>
+ *
+ * <p>The event carries the SKU, order ID, quantity, error message, and
+ * timestamp of the failure. Listeners can use this information to
+ * implement retry logic, send alerts, or create manual intervention
+ * tickets.</p>
  *
  * @author prabhatkrmishra
  * @since 1.4.0

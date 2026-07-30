@@ -5,6 +5,7 @@ import com.pkmprojects.shoppiq.dto.contact.ContactMessageRequest;
 import com.pkmprojects.shoppiq.dto.contact.ContactMessageResponse;
 import com.pkmprojects.shoppiq.entity.contact.ContactMessage;
 import com.pkmprojects.shoppiq.enums.ContactMessageStatus;
+import com.pkmprojects.shoppiq.exception.business.InvalidRequestException;
 import com.pkmprojects.shoppiq.exception.general.contact.ContactMessageNotFoundException;
 import com.pkmprojects.shoppiq.repository.contact.ContactMessageRepository;
 import org.springframework.data.domain.PageRequest;
@@ -16,20 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link ContactMessageService}
- * containing business logic for contact message management.
- *
- * <p>Handles public contact form submissions, admin paginated retrieval, auto-marking
- * messages as READ on view, manual read/unread toggling, and unread message counting.
- * Used by {@code ContactMessageController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Status changes are atomic; reads use {@code readOnly = true}.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link ContactMessageService} implementation handling public contact form submissions,
+ * admin paginated retrieval, auto-marking messages as READ on view, and manual
+ * read/unread toggling.
  *
  * @author prabhatkrmishra
  * @see ContactMessageService
@@ -55,13 +45,13 @@ public class ContactMessageServiceImpl implements ContactMessageService {
     public ContactMessageResponse create(ContactMessageRequest request) {
         Objects.requireNonNull(request, "Contact message request must not be null.");
         if (request.name() == null || request.name().isBlank()) {
-            throw new IllegalArgumentException("Name must not be blank.");
+            throw InvalidRequestException.detail("Name must not be blank.");
         }
         if (request.email() == null || request.email().isBlank()) {
-            throw new IllegalArgumentException("Email must not be blank.");
+            throw InvalidRequestException.detail("Email must not be blank.");
         }
         if (request.message() == null || request.message().isBlank()) {
-            throw new IllegalArgumentException("Message must not be blank.");
+            throw InvalidRequestException.detail("Message must not be blank.");
         }
 
         ContactMessage message = ContactMessage.builder()

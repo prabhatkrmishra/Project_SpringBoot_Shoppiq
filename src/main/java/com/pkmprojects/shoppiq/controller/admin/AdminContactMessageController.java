@@ -12,18 +12,29 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for admin contact message management.
+ * REST controller for admin contact message management.
  *
- * <p>Exposes endpoints to list, read, mark as read/unread, and delete
- * contact-form submissions submitted by site visitors. All endpoints require
- * {@code ADMIN} role and are mounted under {@code /api/admin/messages}.</p>
+ * <p>Exposes endpoints to list, read, mark as read/unread, and delete contact-form
+ * submissions received from the public contact form. Provides an unread-count
+ * endpoint that powers the admin dashboard notification badge.</p>
  *
- * <p>Key design points:
- * <ul>
- *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
- *   <li><strong>Unread count endpoint</strong> — provides a lightweight count for dashboard badges.</li>
- * </ul>
- * </p>
+ * <p>This controller acts as the HTTP boundary for contact message administration.
+ * It delegates all business logic — persistence, read-state management, and deletion
+ * — to {@link ContactMessageService}. The controller handles no business logic
+ * beyond page-size capping.</p>
+ *
+ * <p>All endpoints require ADMIN role and are mounted under /api/admin/messages.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET    /api/admin/messages/unread-count  — get unread message count
+ * GET    /api/admin/messages               — list all messages (paginated)
+ * GET    /api/admin/messages/{id}          — get a single message by ID
+ * DELETE /api/admin/messages/{id}          — delete a message permanently
+ * PUT    /api/admin/messages/{id}/read     — mark a message as read
+ * PUT    /api/admin/messages/{id}/unread   — mark a message as unread
+ * </pre>
  *
  * @author prabhatkrmishra
  * @see ContactMessageService
@@ -42,6 +53,9 @@ public class AdminContactMessageController {
     /**
      * Returns the count of unread contact messages.
      *
+     * <p>Used by the admin dashboard to display a notification badge
+     * indicating new messages requiring attention.</p>
+     *
      * @return 200 OK with a map containing the unread count
      */
     @GetMapping("/unread-count")
@@ -53,8 +67,8 @@ public class AdminContactMessageController {
      * Returns a paginated list of all contact messages.
      *
      * @param page zero-based page index
-     * @param size page size (capped by {@code pagination.maxPageSize()})
-     * @return 200 OK with page of messages
+     * @param size page size (capped by the configured maximum)
+     * @return 200 OK with page of message responses
      */
     @GetMapping
     public ResponseEntity<PageResponse<ContactMessageResponse>> getAllMessages(
@@ -67,8 +81,8 @@ public class AdminContactMessageController {
     /**
      * Returns a single contact message by ID.
      *
-     * @param id the message ID
-     * @return 200 OK with the message
+     * @param id the message ID to retrieve
+     * @return 200 OK with the message response
      */
     @GetMapping("/{id}")
     public ResponseEntity<ContactMessageResponse> getMessageById(@PathVariable Long id) {
@@ -76,9 +90,11 @@ public class AdminContactMessageController {
     }
 
     /**
-     * Deletes a contact message.
+     * Deletes a contact message permanently.
      *
-     * @param id the message ID
+     * <p>This action cannot be undone.</p>
+     *
+     * @param id the message ID to delete
      * @return 204 No Content
      */
     @DeleteMapping("/{id}")
@@ -90,8 +106,10 @@ public class AdminContactMessageController {
     /**
      * Marks a contact message as read.
      *
-     * @param id the message ID
-     * @return 200 OK with the updated message
+     * <p>Updates the read timestamp and adjusts the unread count.</p>
+     *
+     * @param id the message ID to mark as read
+     * @return 200 OK with the updated message response
      */
     @PutMapping("/{id}/read")
     public ResponseEntity<ContactMessageResponse> markAsRead(@PathVariable Long id) {
@@ -101,8 +119,10 @@ public class AdminContactMessageController {
     /**
      * Marks a contact message as unread.
      *
-     * @param id the message ID
-     * @return 200 OK with the updated message
+     * <p>Clears the read timestamp and increments the unread count.</p>
+     *
+     * @param id the message ID to mark as unread
+     * @return 200 OK with the updated message response
      */
     @PutMapping("/{id}/unread")
     public ResponseEntity<ContactMessageResponse> markAsUnread(@PathVariable Long id) {

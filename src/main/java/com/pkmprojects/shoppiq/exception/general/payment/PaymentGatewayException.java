@@ -5,17 +5,21 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when communication
- * with an external payment gateway fails.
+ * Thrown when communication with an external payment gateway fails.
  *
- * <p>Extends {@link com.pkmprojects.shoppiq.exception.base.ShoppiqException}
- * directly (not a business exception) because gateway errors are integration
- * failures. Uses HTTP 502 (Bad Gateway) to attribute the failure to the
- * upstream provider. Provides factory methods for wrapping a
- * {@link Throwable} with cause chaining, and for capturing the gateway's
- * HTTP status code and response body for diagnostics.</p>
+ * <p>This exception is thrown when the application cannot reach the
+ * payment provider's API, or the provider returns an unexpected error.
+ * It uses the {@link ErrorCode#PAYMENT_GATEWAY_ERROR} code and HTTP 502
+ * Bad Gateway status. The client should retry the payment or choose a
+ * different payment method.</p>
+ *
+ * <p>The detail message includes the gateway name and error description
+ * (e.g., "Payment gateway 'razorpay' request failed: Connection timeout.")
+ * to help diagnose the integration issue. The actual error is logged at
+ * WARN level for debugging.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PAYMENT_GATEWAY_ERROR
  * @since 1.0.0
  */
 public final class PaymentGatewayException extends ShoppiqException {

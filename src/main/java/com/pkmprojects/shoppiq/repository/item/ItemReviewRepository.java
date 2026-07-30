@@ -13,41 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository responsible for {@link ItemReview} persistence.
+ * Persistence operations for the {@link ItemReview} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived ordering by nested property</strong> — {@code findAllByItemIdOrderByCreatedAtDesc}
- *       generates {@code SELECT * FROM item_reviews WHERE item_id = ? ORDER BY created_at DESC}.</li>
- *   <li><strong>Combined field query for uniqueness</strong> — {@code findByUserIdAndItemId}
- *       and {@code existsByUserIdAndItemId} enforce the one-review-per-user-per-item business rule.</li>
- *   <li><strong>{@code Top} / {@code Limit}</strong> — {@code findTop10ByOrderByCreatedAtDesc}
- *       generates {@code SELECT * FROM item_reviews ORDER BY created_at DESC LIMIT 10}.</li>
- *   <li><strong>{@code @EntityGraph}</strong> — Eagerly fetches {@code item} and {@code user}
- *       associations to prevent N+1 queries for the recent reviews listing.</li>
- *   <li><strong>Complex JPQL with OR conditions</strong> — {@code findVisibleReviewsForUser}
- *       uses a custom {@code @Query} with boolean logic:
- *       {@code WHERE item.id = ? AND (status = 'APPROVED' OR (user.id = ? AND status = 'PENDING'))}.</li>
- *   <li><strong>Derived query with enum parameter</strong> — {@code findAllByItemIdAndStatusOrderByCreatedAtDesc}
- *       demonstrates filtering by both foreign key and enum field.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findAllByItemIdOrderByCreatedAtDesc(Long)
- *       → SELECT * FROM item_reviews WHERE item_id = ? ORDER BY created_at DESC
- *   findAllByUserIdOrderByCreatedAtDesc(Long)
- *       → SELECT * FROM item_reviews WHERE user_id = ? ORDER BY created_at DESC
- *   findByUserIdAndItemId(Long, Long)
- *       → SELECT * FROM item_reviews WHERE user_id = ? AND item_id = ?
- *   existsByUserIdAndItemId(Long, Long)
- *       → SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
- *         FROM item_reviews WHERE user_id = ? AND item_id = ?
- *   findTop10ByOrderByCreatedAtDesc
- *       → SELECT * FROM item_reviews ORDER BY created_at DESC LIMIT 10
- *   findAllByItemIdAndStatusOrderByCreatedAtDesc(Long, ReviewStatus)
- *       → SELECT * FROM item_reviews WHERE item_id = ? AND status = ? ORDER BY created_at DESC
- * </pre>
+ * <p>Provides methods to query reviews by item, user, and status for review management and
+ * moderation. The repository supports visibility-based queries that show approved reviews
+ * to all users and pending reviews to their authors, enabling the review moderation workflow.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -73,6 +43,13 @@ public interface ItemReviewRepository
      */
     List<ItemReview> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 
+    /**
+     * Returns a paginated view of reviews written by a user ordered by newest first.
+     *
+     * @param userId   reviewer identifier
+     * @param pageable pagination parameters
+     * @return paginated list of reviews
+     */
     Page<ItemReview> findAllByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     /**
@@ -140,7 +117,12 @@ public interface ItemReviewRepository
     );
 
     /**
-     * Paginated version of {@link #findVisibleReviewsForUser} (BUG-005).
+     * Paginated version of {@link #findVisibleReviewsForUser(Long, Long)}.
+     *
+     * @param itemId   item identifier
+     * @param userId   current user identifier
+     * @param pageable pagination parameters
+     * @return paginated list of visible reviews
      */
     @Query("""
             SELECT r FROM ItemReview r
@@ -155,7 +137,12 @@ public interface ItemReviewRepository
     );
 
     /**
-     * Paginated version of {@link #findAllByItemIdAndStatusOrderByCreatedAtDesc} (BUG-005).
+     * Paginated version of {@link #findAllByItemIdAndStatusOrderByCreatedAtDesc(Long, ReviewStatus)}.
+     *
+     * @param itemId   item identifier
+     * @param status   review status
+     * @param pageable pagination parameters
+     * @return paginated list of matching reviews
      */
     Page<ItemReview> findAllByItemIdAndStatusOrderByCreatedAtDesc(
             Long itemId,

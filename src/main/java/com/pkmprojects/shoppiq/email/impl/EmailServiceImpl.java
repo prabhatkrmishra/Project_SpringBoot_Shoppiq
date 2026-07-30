@@ -19,37 +19,17 @@ import java.time.Clock;
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Service-layer implementation
- * ({@code @Service}) of {@link EmailService} that orchestrates email
- * delivery with preference checking, audit logging, and error handling.
+ * Service-layer implementation of {@link EmailService} with preference checking, audit logging, and error handling.
  *
- * <p>
- * Handles email delivery with preference checking, logging, and error handling.
- * Critical emails (security alerts, verification, password reset) bypass
- * user notification preferences.
- * </p>
+ * <p>Orchestrates email delivery through provider registry with critical emails bypassing user preferences.
+ * This implementation checks user notification preferences before sending standard emails, logs all
+ * email attempts to the email_logs table, and handles delivery failures gracefully. Critical emails
+ * (password reset, verification) bypass preference checking to ensure security-sensitive messages
+ * are always delivered.</p>
  *
- * <p><strong>Educational value:</strong> This class demonstrates the
- * <strong>Service layer</strong> in a clean layered architecture:
- * <ul>
- *   <li><strong>Dependency injection via constructor</strong> — uses
- *       Lombok {@code @RequiredArgsConstructor} (which generates a constructor
- *       for all final fields) and Spring resolves the three dependencies:
- *       {@link com.pkmprojects.shoppiq.email.provider.EmailProviderRegistry},
- *       {@link com.pkmprojects.shoppiq.email.repository.EmailLogRepository}, and
- *       {@link com.pkmprojects.shoppiq.repository.notification.NotificationPreferenceRepository}.</li>
- *   <li><strong>Repository pattern</strong> — persistence concerns are
- *       delegated to repositories, keeping the service focused on
- *       orchestration and business rules.</li>
- *   <li><strong>Strategy delegation</strong> — the actual email sending is
- *       delegated to the active {@link com.pkmprojects.shoppiq.email.provider.EmailProvider}
- *       resolved from the registry. The service doesn't know whether it's
- *       using SMTP or Console — it just calls {@code provider.send(message)}.</li>
- *   <li><strong>Defensive error handling</strong> — both {@code EmailSendException}
- *       and generic {@code Exception} are caught separately, with different
- *       log levels, ensuring that email failures never propagate to the caller.</li>
- * </ul>
- * </p>
+ * <p>The service delegates actual email delivery to the active EmailProvider obtained from the
+ * EmailProviderRegistry. All delivery attempts are logged regardless of success or failure,
+ * providing a complete audit trail for debugging and monitoring email service health.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

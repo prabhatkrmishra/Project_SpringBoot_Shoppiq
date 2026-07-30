@@ -1,28 +1,43 @@
 package com.pkmprojects.shoppiq.enums;
 
 /**
- * <strong>Spring Boot Concept:</strong> Status of a contact message.
+ * Lifecycle status of a contact message submitted via the contact form.
  *
- * <p>Defines the lifecycle of a customer inquiry submitted via the
- * contact form. Messages start as {@link #PENDING}, transition to
- * {@link #READ} when an admin views them, and {@link #REPLIED} when
- * the admin responds.</p>
+ * <p>This enum tracks the processing state of customer support messages.
+ * Messages progress through PENDING to READ to REPLIED as admins view
+ * and respond to them. The status helps administrators prioritize
+ * unresolved messages and track response times.</p>
  *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Enum-backed status tracking</strong> — Used with
- *         {@code @Enumerated(EnumType.STRING)} in the JPA entity to
- *         store human-readable values in the database.</li>
- *     <li><strong>State machine pattern</strong> — The three values
- *         define a simple workflow (PENDING → READ → REPLIED) that is
- *         enforced at the service layer.</li>
- * </ul>
+ * <p>PENDING messages are displayed prominently in the admin dashboard
+ * to indicate unread messages. READ messages have been viewed but not
+ * yet responded to. REPLIED messages are fully processed and archived.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
  */
 public enum ContactMessageStatus {
+    /**
+     * Message has been submitted but not yet viewed by an admin.
+     *
+     * <p>This is the initial state for all contact form submissions.
+     * Admins should prioritize PENDING messages to ensure timely
+     * customer support.</p>
+     */
     PENDING,
+    /**
+     * Message has been viewed by an admin but not yet responded to.
+     *
+     * <p>The admin has acknowledged the message but has not yet
+     * composed or sent a response. This status helps track messages
+     * that are in progress.</p>
+     */
     READ,
+    /**
+     * Admin has responded to the message.
+     *
+     * <p>This is the terminal state for contact messages. The
+     * customer has received a response and the conversation is
+     * considered closed.</p>
+     */
     REPLIED
 }

@@ -9,43 +9,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Represents a persistent shopping cart owned by a single {@link User}.
+ * Represents a persistent shopping cart owned by a single {@link User}.
  *
- * <p>
- * Each user has at most one cart. The cart acts as a staging area for
- * items before checkout. Cart items are stored in a separate
- * {@link CartItem} entity to support quantity tracking and unique
- * product constraints.
- * </p>
+ * <p>Each user has at most one cart, enforced by a unique constraint on
+ * the {@code user_id} foreign key. The cart acts as a staging area for
+ * items before checkout, with cart items stored in a separate
+ * {@link CartItem} entity to support quantity tracking and unique product
+ * constraints. The cart is created lazily when the user first adds an
+ * item and persists across sessions.</p>
  *
- * <h2>Relationships</h2>
- * <ul>
- *     <li>One-to-One with {@link User} (owns the cart).</li>
- *     <li>One-to-Many with {@link CartItem}.</li>
- * </ul>
- *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>{@code @OneToOne}</strong> — Enforces that each user has
- *         exactly one cart. The {@code optional = false} and {@code unique = true}
- *         on the join column make this a strict 1:1 constraint at the DB level.</li>
- *     <li><strong>{@code @OneToMany(cascade = ALL, orphanRemoval = true)}</strong>
- *         — When the cart is deleted, all its items are automatically deleted
- *         (cascade). If an item is removed from the list, it is also deleted
- *         (orphan removal).</li>
- *     <li><strong>Bidirectional relationship maintenance</strong> — The
- *         {@code addItem()} and {@code removeItem()} helper methods set both
- *         sides of the relationship, keeping the in-memory model consistent
- *         with the database.</li>
- *     <li><strong>{@code @UniqueConstraint} on {@code user_id}</strong> —
- *         Database-level uniqueness enforcement via the {@code @Table}
- *         annotation, independent of JPA provider behavior.</li>
- *     <li><strong>Lazy loading</strong> — Both relationships use
- *         {@code FetchType.LAZY} to defer loading until accessed, preventing
- *         unnecessary JOIN queries.</li>
- * </ul>
+ * <p>The cart lifecycle is tied to the owning user: deleting a user
+ * cascade-removes their cart and all associated cart items. The cart
+ * is excluded from JSON serialization in user-centric API responses to
+ * prevent unnecessary data transfer.</p>
  *
  * @author prabhatkrmishra
+ * @see CartItem
+ * @see User
  * @since 1.0.0
  */
 @Entity
@@ -68,6 +48,12 @@ public class Cart extends AuditableEntity {
 
     /**
      * User who owns this cart.
+     *
+     * <p>One-to-one relationship: each user has exactly one cart. The
+     * {@code user_id} column carries a unique constraint to enforce
+     * this invariant at the database level. The user reference is
+     * lazily loaded to avoid unnecessary joins when manipulating
+     * cart items.</p>
      */
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -79,11 +65,14 @@ public class Cart extends AuditableEntity {
     private User user;
 
     /**
-     * Items currently in the cart.
+     * Items currently in the cart, each linking a product to a
+     * quantity for potential purchase.
      *
-     * <p>
-     * Cart items are removed automatically when the cart is deleted.
-     * </p>
+     * <p>Managed via a one-to-many relationship with cascade all and
+     * orphan removal. Adding or removing items should be done through
+     * the {@link #addItem(CartItem)} or {@link #removeItem(CartItem)}
+     * helper methods to maintain bidirectional consistency. The
+     * collection defaults to an empty list for newly created carts.</p>
      */
     @Builder.Default
     @OneToMany(

@@ -1,5 +1,4 @@
 package com.pkmprojects.shoppiq.controller;
-import com.pkmprojects.shoppiq.controller.banner.BannerController;
 
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
@@ -9,7 +8,9 @@ import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.ClockConfig;
-import com.pkmprojects.shoppiq.config.*;
+import com.pkmprojects.shoppiq.config.JacksonConfig;
+import com.pkmprojects.shoppiq.config.SecurityConfig;
+import com.pkmprojects.shoppiq.controller.banner.BannerController;
 import com.pkmprojects.shoppiq.dto.banner.BannerResponse;
 import com.pkmprojects.shoppiq.entity.enums.BannerType;
 import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
@@ -31,7 +32,8 @@ import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BannerController.class)
 @Import({

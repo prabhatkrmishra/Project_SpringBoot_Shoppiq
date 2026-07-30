@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerWriteService}.
+ * {@link SellerWriteService} implementation providing transactional persistence
+ * for seller entities.
  *
  * @author prabhatkrmishra
+ * @see SellerWriteService
  * @since 1.4.0
  */
 @Service

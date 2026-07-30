@@ -1,42 +1,39 @@
 package com.pkmprojects.shoppiq.dto.admin.request;
 
-import com.pkmprojects.shoppiq.entity.review.ItemReview;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
 /**
- * Request DTO used for bulk creation of {@link ItemReview reviews}
- * by an admin user for test-data population.
+ * Request DTO for bulk creation of product reviews by an administrator.
  *
- * <p>
- * Wraps a list of {@link AdminReviewItem} to enable proper Bean Validation
- * on collection contents.
- * </p>
+ * <p>This record wraps a list of {@link AdminReviewItem} entries and is
+ * submitted to the admin bulk review endpoint for creating multiple
+ * product reviews in a single API call. It is primarily used for
+ * test-data population during development and staging, enabling
+ * administrators to populate the review system with sample data
+ * at scale.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Accept admin-supplied review information in bulk.</li>
- *     <li>Perform request validation on the collection and its contents.</li>
- *     <li>Remain independent of persistence entities.</li>
- * </ul>
+ * <p>Each element in the list undergoes cascading validation via
+ * {@link jakarta.validation.Valid @Valid}, ensuring that user
+ * references, item references, and rating values meet their
+ * respective constraints. Reviews created through this endpoint
+ * are automatically set to PENDING moderation status at the service
+ * layer and must be approved before appearing on product pages.
+ * The list must not be empty.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Marked as {@code final} through Java record semantics.</li>
- *     <li>{@code @NotEmpty} ensures the client supplies at least one review.</li>
- *     <li>{@code @Valid} triggers cascading validation on each
- *     {@link AdminReviewItem} in the list.</li>
- *     <li>Used exclusively for admin test-data bulk creation.</li>
- *     <li>Review data created through this DTO is automatically set to
- *     {@code PENDING} moderation status at the service layer.</li>
- * </ul>
- *
+ * @param reviews list of review creation requests, each specifying
+ *                a target user, product, rating, and optional review
+ *                text; must not be empty; each element is validated
+ *                recursively via {@link AdminReviewItem}
  * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkReviewRequest(
+        /**
+         * List of review creation requests. Must not be empty.
+         */
         @NotEmpty(message = "At least one review is required.")
         List<@Valid AdminReviewItem> reviews
 ) {

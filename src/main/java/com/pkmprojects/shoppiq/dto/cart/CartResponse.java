@@ -4,28 +4,52 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Response payload for the authenticated user's full cart.
+ * Response payload for the authenticated user's full shopping cart.
  *
- * <p>This Java record wraps a list of {@link CartItemResponse} together with
- * summary fields ({@code totalItems}, {@code subtotal}). The {@code subtotal}
- * is computed server-side from the line items, ensuring the frontend always
- * displays authoritative pricing.</p>
+ * <p>This record wraps a list of {@link CartItemResponse} entries
+ * together with summary fields that provide aggregate cart metrics.
+ * It is returned by {@code GET /api/cart} and is the primary data
+ * structure the frontend uses to render the cart page. The
+ * {@code subtotal} is computed server-side from all line totals,
+ * ensuring the frontend always displays authoritative pricing
+ * regardless of client-side calculation errors.</p>
  *
- * <p><b>Frontend contract:</b> GET /api/cart returns this structure. The
- * frontend iterates {@code items} to render the cart UI and displays
- * {@code subtotal} as the order total before fees.</p>
+ * <p>The {@code totalItems} count represents the total number of
+ * distinct line items (not the total quantity of all products). The
+ * {@code subtotal} is the sum of all {@code lineTotal} values before
+ * any delivery charges, taxes, or promo discounts are applied at
+ * checkout.</p>
  *
- * @param cartId     ID of the {@code Cart} record
- * @param totalItems total number of line items
- * @param subtotal   sum of all line totals
- * @param items      individual cart item responses
- *
+ * @param cartId     unique identifier of the cart entity; each user has
+ *                   exactly one active cart
+ * @param totalItems total number of distinct line items in the cart;
+ *                   determines the cart badge count in the navigation
+ * @param subtotal   sum of all line totals before fees, taxes, or discounts;
+ *                   computed server-side for pricing accuracy
+ * @param items      list of individual cart item responses, each containing
+ *                   product details, pricing, and quantity information
  * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record CartResponse(
+        /**
+         * Unique identifier of the cart.
+         */
         Long cartId,
+
+        /**
+         * Total number of line items in the cart.
+         */
         Integer totalItems,
+
+        /**
+         * Sum of all line totals before fees or discounts.
+         */
         BigDecimal subtotal,
+
+        /**
+         * Individual cart item responses.
+         */
         List<CartItemResponse> items
-) {}
+) {
+}

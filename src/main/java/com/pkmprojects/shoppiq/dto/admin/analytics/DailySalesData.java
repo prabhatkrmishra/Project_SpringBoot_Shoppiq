@@ -4,22 +4,44 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * Daily sales data point for analytics.
+ * Daily sales data point for the admin analytics dashboard.
  *
- * <p>This <b>Java record</b> represents one row of daily sales data used in
- * the admin dashboard charts. It is designed for use with JPQL constructor
- * expressions ({@code SELECT NEW DailySalesData(...)}), which require a
- * matching constructor — automatically provided by the record.</p>
+ * <p>This record represents a single day's aggregated sales figures,
+ * including the total number of orders placed and the cumulative
+ * revenue generated on that calendar date. It is consumed by the
+ * sales analytics endpoint to render daily trend charts and sparkline
+ * visualizations on the administrator dashboard.</p>
  *
- * <p><b>Role:</b> Nested inside {@link com.pkmprojects.shoppiq.dto.admin.response.SalesAnalyticsResponse
- * SalesAnalyticsResponse}. This is a <i>response projection</i>, not a request DTO.</p>
+ * <p>This DTO is designed for JPQL constructor expressions, meaning
+ * the fields map directly to a {@code SELECT new ...} clause in the
+ * repository query. It is a read-only projection with no validation
+ * constraints and is never used as a request body. Instances are
+ * created exclusively by the data access layer.</p>
  *
+ * @param date        the calendar date this data point represents,
+ *                    stored as a {@link java.time.LocalDate} without time zone
+ * @param ordersCount total number of orders placed and confirmed on this date;
+ *                    orders in PLACED or CANCELLED status may be excluded
+ *                    depending on the query definition
+ * @param revenue     total monetary revenue generated from all qualifying orders
+ *                    on this date, expressed in the platform's base currency
  * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record DailySalesData(
+        /**
+         * Calendar date.
+         */
         LocalDate date,
+
+        /**
+         * Number of orders placed on this date.
+         */
         Long ordersCount,
+
+        /**
+         * Total revenue generated on this date.
+         */
         BigDecimal revenue
 ) {
 }

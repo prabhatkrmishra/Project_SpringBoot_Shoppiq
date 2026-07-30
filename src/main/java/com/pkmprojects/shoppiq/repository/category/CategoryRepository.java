@@ -13,39 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link Category} persistence operations.
+ * Persistence operations for the {@link Category} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived exists queries</strong> — {@code existsByNameIgnoreCase} translates to
- *       {@code SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END FROM categories WHERE LOWER(name) = LOWER(?)}.</li>
- *   <li><strong>Negated property path</strong> — {@code existsByNameIgnoreCaseAndIdNot} shows
- *       {@code IdNot} maps to {@code id <> ?}, useful for "unique except myself" checks during updates.</li>
- *   <li><strong>Pagination</strong> — Accepting {@link org.springframework.data.domain.Pageable}
- *       parameters enables automatic {@code LIMIT} / {@code OFFSET} and count queries.</li>
- *   <li><strong>{@code ContainingIgnoreCase}</strong> — {@code findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase}
- *       generates {@code WHERE LOWER(name) LIKE LOWER(CONCAT('%', ?, '%')) OR LOWER(description) LIKE ...}.</li>
- *   <li><strong>Native queries</strong> — {@code findTopSellingCategoryIds} uses a raw SQL
- *       query with joins, aggregation, {@code GROUP BY}, {@code ORDER BY}, and {@code LIMIT}
- *       to compute sales rankings.</li>
- *   <li><strong>Interface-based projections</strong> — The native query maps results to
- *       {@link com.pkmprojects.shoppiq.repository.category.projection.CategorySalesRanking}
- *       via column alias matching.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findBySlug(String)
- *       → SELECT * FROM categories WHERE slug = ?
- *   existsByNameIgnoreCase(String)
- *       → SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END FROM categories WHERE LOWER(name) = LOWER(?)
- *   existsByNameIgnoreCaseAndIdNot(String, Long)
- *       → ...WHERE LOWER(name) = LOWER(?) AND id &lt;&gt; ?
- *   findAllByOrderByNameAsc
- *       → SELECT * FROM categories ORDER BY name ASC
- *   findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase
- *       → ...WHERE LOWER(name) LIKE LOWER(CONCAT('%', ?, '%')) OR LOWER(description) LIKE LOWER(CONCAT('%', ?, '%'))
- * </pre>
+ * <p>Provides methods to query categories by slug, name, and various filters for catalog management.
+ * The repository supports paginated queries for category listing, search by name/description,
+ * and aggregate queries for sales analytics and reporting.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

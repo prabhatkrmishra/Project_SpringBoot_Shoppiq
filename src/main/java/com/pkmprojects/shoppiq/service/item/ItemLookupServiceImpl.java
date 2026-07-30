@@ -17,19 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link ItemLookupService}
- * providing read-only product/item queries.
- *
- * <p>Delegates to {@code ItemRepository} for find, exists, count, search,
- * pagination, and top-selling queries. All queries run in a read-only transaction.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional(readOnly = true)</strong> — All queries are read-only, optimized for database performance.</li>
- *   <li><strong>@RequiredArgsConstructor</strong> — Lombok-generated constructor injection for final fields.</li>
- * </ul>
- * </p>
+ * {@link ItemLookupService} implementation providing read-only product queries.
  *
  * @author prabhatkrmishra
  * @see ItemLookupService

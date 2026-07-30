@@ -5,17 +5,22 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when an email fails
- * to send.
+ * Thrown when an email fails to send through the configured provider.
  *
- * <p>Extends {@link com.pkmprojects.shoppiq.exception.base.ShoppiqException}
- * directly (not a business exception subclass) because email failures are
- * integration errors, not business logic violations. Uses HTTP 502
- * (Bad Gateway) to indicate the failure originates from an upstream service.
- * The constructor accepting {@link Throwable} preserves the root cause
- * (e.g., network timeout, SMTP auth failure) for debugging.</p>
+ * <p>This exception is thrown when the email service encounters an error
+ * while attempting to deliver a message. This may be due to SMTP
+ * connectivity issues, invalid recipient addresses, or provider rate
+ * limits. It uses the {@link ErrorCode#EMAIL_SEND_FAILED} code and
+ * HTTP 502 Bad Gateway status. The actual error is logged for
+ * diagnostics.</p>
+ *
+ * <p>The detail message should explain the failure reason (e.g.,
+ * "Failed to send email: Connection refused") to help diagnose the
+ * email delivery issue. The client should retry the operation or
+ * contact support if the issue persists.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#EMAIL_SEND_FAILED
  * @since 1.0.0
  */
 public class EmailSendException extends ShoppiqException {

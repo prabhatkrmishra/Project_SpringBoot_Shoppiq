@@ -3,83 +3,25 @@ package com.pkmprojects.shoppiq.aiservice.events;
 import java.math.BigDecimal;
 
 /**
- * <strong>Spring Boot Concept:</strong> Carries the minimal product information needed to (re)build a vector-store
- * embedding. Published by {@link ItemEmbeddingEntityListener} on JPA lifecycle
- * events and consumed by {@code ProductCatalogIngester} after transaction commit.
+ * Carries minimal product information needed to build vector-store embeddings.
  *
- * <p>
- * Using a flat DTO (rather than the {@code Item} entity) avoids lazy-loading
- * the {@code itemDetails}/{@code category} associations once the transaction has
- * closed in the after-commit handler.
+ * <p>This event class is published by {@link ItemEmbeddingEntityListener}
+ * on JPA lifecycle events (post-persist, post-update, pre-remove) and
+ * consumed after transaction commit by {@code ProductCatalogIngester}.
+ * It decouples the product persistence layer from the RAG infrastructure,
+ * ensuring that vector store updates never block or fail the primary
+ * product save transaction.</p>
  *
- * @author PrabhatKrMishra
+ * <p>The event contains all product fields needed to construct a text
+ * segment and metadata for embedding. For deletion events, only the
+ * {@code itemId} and {@code deleted} flag are populated; all other
+ * fields are null or zero.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
-public class ProductEmbeddingEvent {
+public record ProductEmbeddingEvent(Long itemId, String name, String description, String slug, BigDecimal price,
+                                    String categorySlug, String categoryName, String brand, int stockQuantity,
+                                    boolean deleted) {
 
-    private final Long itemId;
-    private final String name;
-    private final String description;
-    private final String slug;
-    private final BigDecimal price;
-    private final String categorySlug;
-    private final String categoryName;
-    private final String brand;
-    private final int stockQuantity;
-    private final boolean deleted;
-
-    public ProductEmbeddingEvent(Long itemId, String name, String description, String slug,
-                                 BigDecimal price, String categorySlug, String categoryName,
-                                 String brand, int stockQuantity, boolean deleted) {
-        this.itemId = itemId;
-        this.name = name;
-        this.description = description;
-        this.slug = slug;
-        this.price = price;
-        this.categorySlug = categorySlug;
-        this.categoryName = categoryName;
-        this.brand = brand;
-        this.stockQuantity = stockQuantity;
-        this.deleted = deleted;
-    }
-
-    public Long getItemId() {
-        return itemId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public String getCategorySlug() {
-        return categorySlug;
-    }
-
-    public String getCategoryName() {
-        return categoryName;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public int getStockQuantity() {
-        return stockQuantity;
-    }
-
-    public boolean isDeleted() {
-        return deleted;
-    }
 }

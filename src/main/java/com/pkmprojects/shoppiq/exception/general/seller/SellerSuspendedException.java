@@ -4,14 +4,22 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a seller
- * operation is attempted while the seller account is suspended.
+ * Thrown when a seller operation is attempted while the seller account is suspended.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) to prevent operations on suspended sellers.</p>
+ * <p>This exception is thrown when a suspended seller attempts to perform
+ * actions that require an active account. Suspended sellers cannot list
+ * products, receive orders, or access restricted functionality until
+ * reactivated by an administrator. It uses the
+ * {@link ErrorCode#SELLER_SUSPENDED} code and HTTP 400 Bad Request
+ * status.</p>
+ *
+ * <p>The detail message includes the seller ID and the attempted action
+ * (e.g., "Seller '42' is suspended. Cannot perform action: list_product.")
+ * to help the client understand what operation was blocked. The seller
+ * should contact an administrator to resolve the suspension.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#SELLER_SUSPENDED
  * @since 1.0.0
  */
 public final class SellerSuspendedException extends InvalidOperationException {

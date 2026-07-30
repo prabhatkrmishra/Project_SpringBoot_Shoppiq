@@ -5,15 +5,22 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when an operation
- * cannot be performed because the payment is in an incompatible state.
+ * Thrown when an operation cannot be performed because the payment is in an incompatible state.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) to enforce the payment lifecycle state machine. Each factory
- * method documents a specific illegal transition.</p>
+ * <p>This exception is thrown when an operation is attempted on a payment
+ * that is not in the correct state. For example, attempting to capture a
+ * payment that is still in PENDING status, or attempting to refund a
+ * payment that has not been paid. It uses the
+ * {@link ErrorCode#PAYMENT_INVALID_STATE} code and HTTP 400 Bad Request
+ * status.</p>
+ *
+ * <p>The detail message includes the payment ID and current status (e.g.,
+ * "Payment '42' cannot be processed — current status: 'PENDING'.") to
+ * help the client understand which state transition was invalid. The
+ * client should verify the payment status before retrying.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PAYMENT_INVALID_STATE
  * @since 1.0.0
  */
 public final class PaymentInvalidStateException extends InvalidOperationException {

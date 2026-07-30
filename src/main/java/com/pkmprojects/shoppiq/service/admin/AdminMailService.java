@@ -6,6 +6,7 @@ import com.pkmprojects.shoppiq.email.EmailType;
 import com.pkmprojects.shoppiq.email.dto.EmailMessage;
 import com.pkmprojects.shoppiq.entity.newsletter.NewsletterSubscriber;
 import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.exception.business.InvalidRequestException;
 import com.pkmprojects.shoppiq.repository.newsletter.NewsletterSubscriberRepository;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -21,57 +22,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * <strong>Spring Boot Concept:</strong> Service for admin mail functionality.
+ * Service for sending single or bulk admin emails to users and newsletter subscribers.
  *
- * <h2>What is {@code @Service}?</h2>
- * <p>
- * {@code @Service} is a Spring Stereotype annotation. It registers this class as a Spring bean,
- * making it available for injection into controllers (e.g., {@code AdminMailController}).
- * It semantically marks this class as part of the <strong>Service layer</strong> in the
- * layered architecture.
- * </p>
- *
- * <h2>Why no {@code @Transactional} here?</h2>
- * <p>
- * This service does not directly interact with a single logical database transaction for its
- * primary operations. Email sending is an external side effect (SMTP), and the data reads
- * (user/subscriber lookups) are simple lookups. The {@code @Transactional} annotation is
- * omitted because:
- * <ul>
- *   <li>Sending emails involves external I/O, not database writes.</li>
- *   <li>Batch processing uses {@code @Async} for non-blocking execution.</li>
- *   <li>Transactional boundaries are managed by the calling service or controller.</li>
- * </ul>
- * This is a valid exception to the "always use {@code @Transactional}" guideline because
- * the service's primary responsibility is <strong>sending emails</strong>, not coordinating
- * database writes.
- * </p>
- *
- * <h2>Constructor Injection (Dependency Injection Pattern)</h2>
- * <p>
- * Dependencies ({@code EmailService}, {@code UserRepository}, etc.) are injected via the
- * constructor. The {@code @Lazy} annotation on the self-reference prevents circular dependency
- * issues when calling the {@code @Async} method internally.
- * </p>
- *
- * <h2>Role in Layered Architecture</h2>
- * <pre>
- * AdminMailController → AdminMailService → EmailService (SMTP)
- *     (HTTP/REST)          (mail logic)         (email delivery)
- *                            ↕
- *                     UserRepository
- *                     NewsletterSubscriberRepository
- * </pre>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *   <li>Send single or bulk emails from admin to users/subscribers.</li>
- *   <li>Deduplicate registered users vs newsletter subscribers to avoid double-sending.</li>
- *   <li>Use {@code @Async} for bulk sending so the HTTP response returns immediately.</li>
- *   <li>Batch processing with delays to avoid overwhelming the SMTP server.</li>
- *   <li>Respect notification preferences (critical admin mails bypass preferences).</li>
- *   <li>Search users by name, email, username, or ID for recipient selection.</li>
- * </ul>
+ * <p>Handles recipient deduplication, async batch processing with delays,
+ * and notification preference bypass for critical admin mails.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -82,7 +36,7 @@ public class AdminMailService {
 
     private static final int BATCH_SIZE = 50;
     private static final long BATCH_DELAY_MS = 2000;
-
+    private static final int PAGE_SIZE = 200;
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final NewsletterSubscriberRepository subscriberRepository;
@@ -108,6 +62,11 @@ public class AdminMailService {
      * @param request the mail request containing recipient, subject, body, and email type
      */
     public void sendMail(AdminMailRequest request, String adminEmail) {
+        if (!Boolean.TRUE.equals(request.sendToAll()) && (request.toEmail() == null || request.toEmail().isBlank())) {
+            throw InvalidRequestException.detail(
+                    "Recipient email is required when not sending to all users.");
+        }
+
         EmailType emailType = resolveEmailType(request.emailType());
         String templateName = emailType.getTemplateName();
 
@@ -119,8 +78,6 @@ public class AdminMailService {
             sendSingleEmail(request.toEmail(), request.subject(), request.body(), emailType, templateName, userId, "/profile");
         }
     }
-
-    private static final int PAGE_SIZE = 200;
 
     @Async
     public void sendToAllUsersAsync(AdminMailRequest request, EmailType emailType, String templateName, String adminEmail) {

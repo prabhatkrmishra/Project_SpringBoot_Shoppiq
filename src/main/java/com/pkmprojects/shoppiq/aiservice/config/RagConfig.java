@@ -19,20 +19,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * <strong>Spring Boot Concept:</strong> Configuration for Retrieval-Augmented Generation (RAG).
+ * Configures the Retrieval-Augmented Generation (RAG) pipeline with local
+ * embeddings and a Qdrant vector store.
  *
- * <p>
- * Wires together the local embedding model (BGE-small-en, 384-dim), the Qdrant
- * vector store (running as a docker-compose service), and a {@link ContentRetriever}
- * that injects the top-k most relevant product chunks into the LLM prompt before
- * each response.
+ * <p>This configuration class assembles the complete RAG infrastructure
+ * for the Shoppiq AI assistant. It initializes the BGE-small-en quantized
+ * embedding model (384-dimensional), establishes a gRPC connection to the
+ * Qdrant vector database, and creates an {@link EmbeddingStore} backed by
+ * the configured collection. The content retriever applies an in-stock
+ * filter so that only currently available products are surfaced to the
+ * AI model during conversations.</p>
  *
- * <p>
- * The {@link QdrantEmbeddingStore} from LangChain4j does <em>not</em> auto-create
- * its collection, so this config explicitly creates the collection (cosine
- * distance, dimension matching the embedding model) on startup if it is absent.
+ * <p>The configuration also ensures that the Qdrant collection exists on
+ * startup, creating it with cosine distance metrics if it is missing.
+ * All connection parameters (host, port, collection name, max results,
+ * and minimum similarity score) are externalized to application properties
+ * for flexible deployment across environments.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Configuration
@@ -59,12 +63,31 @@ public class RagConfig {
         this.minScore = minScore;
     }
 
+    /**
+     * Creates the local BGE-small-en quantized embedding model bean.
+     *
+     * <p>This model produces 384-dimensional vector embeddings from text input.
+     * It runs entirely on the local JVM without external API calls, providing
+     * low-latency embedding computation for both ingestion and query-time
+     * vector operations.</p>
+     *
+     * @return the embedding model instance
+     */
     @Bean
     public EmbeddingModel embeddingModel() {
         log.debug("[RAG] Creating local BGE-small-en embedding model (384-dim)");
         return new BgeSmallEnV15QuantizedEmbeddingModel();
     }
 
+    /**
+     * Creates the Qdrant gRPC client for vector store communication.
+     *
+     * <p>Establishes a non-TLS gRPC connection to the Qdrant server using the
+     * configured host and port. This client is shared across the embedding store
+     * and collection management operations.</p>
+     *
+     * @return the Qdrant client instance
+     */
     @Bean
     public QdrantClient qdrantClient() {
         return new QdrantClient(
@@ -72,6 +95,19 @@ public class RagConfig {
         );
     }
 
+    /**
+     * Creates the Qdrant-backed embedding store bean.
+     *
+     * <p>This method ensures that the target Qdrant collection exists before
+     * building the store. If the collection is missing, it is created with
+     * the embedding model's dimensionality and cosine distance metric. The
+     * resulting store is used for both vector ingestion (product catalog
+     * indexing) and retrieval (semantic search during conversations).</p>
+     *
+     * @param qdrantClient   the Qdrant gRPC client
+     * @param embeddingModel the local embedding model
+     * @return the embedding store instance
+     */
     @Bean
     public EmbeddingStore<dev.langchain4j.data.segment.TextSegment> embeddingStore(
             QdrantClient qdrantClient,
@@ -87,6 +123,18 @@ public class RagConfig {
                 .build();
     }
 
+    /**
+     * Creates the content retriever used by the AI model for product-aware responses.
+     *
+     * <p>The retriever is configured with an in-stock filter that ensures only
+     * currently available products are returned during semantic search. It uses
+     * the configured maximum results and minimum similarity score thresholds
+     * to balance relevance with response quality.</p>
+     *
+     * @param embeddingStore the vector store containing product embeddings
+     * @param embeddingModel the embedding model for query-time vectorization
+     * @return the content retriever instance
+     */
     @Bean
     public ContentRetriever contentRetriever(
             EmbeddingStore<dev.langchain4j.data.segment.TextSegment> embeddingStore,
@@ -106,6 +154,19 @@ public class RagConfig {
                 .build();
     }
 
+    /**
+     * Ensures that the target Qdrant collection exists, creating it if necessary.
+     *
+     * <p>Checks the Qdrant server for the configured collection name. If the
+     * collection does not exist, it is created with the specified vector
+     * dimensionality and cosine distance metric. Throws an
+     * {@link IllegalStateException} if the collection cannot be created,
+     * preventing the application from starting with a non-functional RAG
+     * pipeline.</p>
+     *
+     * @param client    the Qdrant client
+     * @param dimension the embedding vector dimensionality
+     */
     private void ensureCollectionExists(QdrantClient client, int dimension) {
         try {
             if (client.listCollectionsAsync().get().contains(collectionName)) {

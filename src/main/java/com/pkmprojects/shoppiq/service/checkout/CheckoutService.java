@@ -1,32 +1,14 @@
 package com.pkmprojects.shoppiq.service.checkout;
 
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
-import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
-import com.pkmprojects.shoppiq.dto.order.OrderCalculationRequest;
-import com.pkmprojects.shoppiq.dto.order.OrderCalculationResponse;
-import com.pkmprojects.shoppiq.dto.order.OrderResponse;
+import com.pkmprojects.shoppiq.dto.order.*;
 import com.pkmprojects.shoppiq.entity.user.User;
 
-import java.util.List;
-
 /**
- * <strong>Spring Boot Concept:</strong> Service interface for checkout and order operations.
+ * Business contract for checkout and order operations.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * Defines the <strong>Service layer</strong> contract for the checkout workflow.
- * Architecture: {@code CheckoutController → CheckoutService → multiple repositories/services}.
- * </p>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *   <li>Execute the full checkout flow: validate cart + address + stock → create order →
- *       reduce inventory → clear cart → create payment → publish domain event.</li>
- *   <li>Calculate order cost previews without persistence (for the payment page).</li>
- *   <li>Retrieve the authenticated user's orders (paginated).</li>
- *   <li>Handle order lifecycle actions: cancel, return, refund, replacement requests.</li>
- * </ul>
+ * <p>Defines operations for the full checkout flow, order cost previews,
+ * order history, and order lifecycle actions (cancel, return, refund, replacement).</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

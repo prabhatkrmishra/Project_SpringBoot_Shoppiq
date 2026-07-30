@@ -4,14 +4,20 @@ import com.pkmprojects.shoppiq.exception.business.DuplicateResourceException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when attempting to
- * create a review for a product that the user has already reviewed.
+ * Thrown when attempting to create a review for a product that the user has already reviewed.
  *
- * <p>Leaf exception in the duplicate-resource hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.DuplicateResourceException}
- * (HTTP 409) to enforce the one-review-per-user-per-item business rule.</p>
+ * <p>This exception is thrown during review creation when the authenticated
+ * user already has a review for the specified item. Only one review per
+ * user per item is allowed. It uses the
+ * {@link ErrorCode#ITEM_REVIEW_ALREADY_EXISTS} code and HTTP 409 Conflict
+ * status.</p>
+ *
+ * <p>The detail message should explain that the user has already reviewed
+ * this product and suggest editing the existing review instead. The client
+ * should use the update endpoint to modify the existing review.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#ITEM_REVIEW_ALREADY_EXISTS
  * @since 1.0.0
  */
 public final class DuplicateItemReviewException

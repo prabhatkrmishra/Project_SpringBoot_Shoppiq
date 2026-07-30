@@ -1,9 +1,7 @@
 package com.pkmprojects.shoppiq.auth.security;
 
+import com.pkmprojects.shoppiq.auth.service.CustomUserDetailService;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.entity.role.Role;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,62 +10,27 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Security adapter that wraps a {@link User} entity as a
- * {@link UserDetails} object.
+ * Adapter that wraps a {@link User} entity as a Spring Security {@link UserDetails} object.
  *
- * <h3>Spring Security concepts demonstrated</h3>
- * <ul>
- *   <li><strong>UserDetails interface</strong> — the core contract that Spring
- *       Security uses to represent a principal. Every authenticated user is
- *       represented as a {@code UserDetails} somewhere in the
- *       {@link org.springframework.security.core.Authentication} object.</li>
- *   <li><strong>Adapter / Wrapper pattern</strong> — decouples the JPA entity
- *       ({@link User}) from the security framework. The entity remains a pure
- *       domain object while this adapter translates it for the security
- *       infrastructure, following the Single Responsibility Principle.</li>
- *   <li><strong>GrantedAuthority mapping</strong> — translates the entity's
- *       {@link com.pkmprojects.shoppiq.entity.role.Role} set into Spring
- *       Security {@link org.springframework.security.core.GrantedAuthority}
- *       objects (e.g., {@code "ROLE_CUSTOMER"}, {@code "ROLE_ADMIN"}).</li>
- *   <li><strong>Account status delegation</strong> — {@link #isAccountNonLocked()}
- *       and {@link #isEnabled()} delegate to the entity, enabling database-driven
- *       account locking and disabling without modifying the security adapter.</li>
- * </ul>
+ * <p>This class bridges the gap between the application's domain model and
+ * Spring Security's authentication contract. It wraps the {@link User}
+ * entity and delegates account status checks (enabled, locked, expired)
+ * to the underlying entity's fields. The {@link #getAuthorities()} method
+ * converts the user's roles into {@link SimpleGrantedAuthority} instances
+ * that Spring Security uses for authorization decisions.</p>
  *
- * <h3>Authentication flow</h3>
- * <ul>
- *   <li><b>Password login:</b> {@link com.pkmprojects.shoppiq.auth.service.CustomUserDetailService}
- *       creates a {@code SecurityUser} via {@code loadUserByUsername()}.
- *       {@code DaoAuthenticationProvider} uses it to verify the password.</li>
- *   <li><b>JWT authentication:</b> {@link com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter}
- *       creates a {@code SecurityUser} directly from the database entity and
- *       wraps it in a {@link org.springframework.security.authentication.UsernamePasswordAuthenticationToken}.</li>
- *   <li><b>Controller injection:</b> controllers access the domain {@link User}
- *       via SpEL: {@code @AuthenticationPrincipal(expression = "user") User user}.</li>
- * </ul>
+ * <p>The adapter pattern keeps the domain model clean of Spring Security
+ * dependencies while allowing seamless integration with the security
+ * framework. The wrapped {@link User} entity is accessible through the
+ * {@link #user ()} method for cases where the full domain object is
+ * needed (e.g., audit logging, profile updates).</p>
  *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Adapter pattern</strong> — adapts {@link User} → {@link UserDetails}
- *       without modifying either interface.</li>
- *   <li><strong>Delegation</strong> — account-status methods delegate to the
- *       entity, keeping the security logic in the domain layer.</li>
- *   <li><strong>Immutable wrapper</strong> — the wrapped {@link User} is
- *       accessible via {@code @Getter} but the adapter does not modify it.</li>
- * </ul>
- *
+ * @param user The wrapped domain user.
  * @author prabhatkrmishra
- * @see com.pkmprojects.shoppiq.auth.service.CustomUserDetailService
+ * @see CustomUserDetailService
  * @since 1.4.0
  */
-@RequiredArgsConstructor
-public class SecurityUser implements UserDetails {
-
-    /**
-     * The wrapped domain user.
-     */
-    @Getter
-    private final User user;
+public record SecurityUser(User user) implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

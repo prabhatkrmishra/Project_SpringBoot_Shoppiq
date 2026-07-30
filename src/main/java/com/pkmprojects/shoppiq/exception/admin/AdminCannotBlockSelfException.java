@@ -5,18 +5,30 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> Concrete exception in the
- * {@code admin} domain using the static factory method pattern with
- * a private constructor.
+ * Thrown when an administrator attempts to block or unblock their own account.
  *
- * <p>Thrown when an administrator attempts to block or unblock their own
- * account. Prevents administrators from disabling their own access, which
- * would create an unrecoverable lockout scenario.</p>
+ * <p>This exception prevents administrators from accidentally locking
+ * themselves out of the system. When an admin tries to disable their own
+ * account, the {@link #block()} factory method creates an exception with
+ * the {@link ErrorCode#AUTH_BLOCK_SELF} code. When an admin tries to
+ * enable their own account (which is redundant if already active), the
+ * {@link #unblock()} factory method creates an exception with the
+ * {@link ErrorCode#AUTH_UNBLOCK_SELF} code.</p>
+ *
+ * <p>Both cases use HTTP 403 Forbidden status. The detail messages are
+ * fixed strings to avoid information leakage. Another administrator
+ * must perform the block/unblock operation if it is genuinely needed.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#AUTH_BLOCK_SELF
+ * @see ErrorCode#AUTH_UNBLOCK_SELF
  * @since 1.0.0
  */
 public final class AdminCannotBlockSelfException extends ShoppiqException {
+
+    private AdminCannotBlockSelfException(ErrorCode errorCode, String detail) {
+        super(errorCode, HttpStatus.FORBIDDEN, detail);
+    }
 
     /**
      * Creates an exception for an admin attempting to block their own account.
@@ -40,9 +52,5 @@ public final class AdminCannotBlockSelfException extends ShoppiqException {
                 ErrorCode.AUTH_UNBLOCK_SELF,
                 "Administrators cannot enable their own account."
         );
-    }
-
-    private AdminCannotBlockSelfException(ErrorCode errorCode, String detail) {
-        super(errorCode, HttpStatus.FORBIDDEN, detail);
     }
 }

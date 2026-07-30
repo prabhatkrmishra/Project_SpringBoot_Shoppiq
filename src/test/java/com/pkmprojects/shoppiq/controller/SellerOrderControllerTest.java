@@ -3,9 +3,10 @@ package com.pkmprojects.shoppiq.controller;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
-import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.ClockConfig;
@@ -15,7 +16,6 @@ import com.pkmprojects.shoppiq.controller.seller.SellerOrderController;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderItemResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerOrderResponse;
-import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.DeliveryType;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
@@ -49,13 +49,14 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.eq;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SellerOrderController.class)
 @Import({
@@ -92,6 +93,7 @@ class SellerOrderControllerTest {
 
     @MockitoBean
     private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+    private User authenticatedUser;
 
     private static SellerOrderResponse stubResponse(Long id, OrderStatus status) {
         return new SellerOrderResponse(
@@ -103,8 +105,6 @@ class SellerOrderControllerTest {
                 List.of(new SellerOrderItemResponse(1L, "Product", BigDecimal.TEN, 2, BigDecimal.valueOf(20)))
         );
     }
-
-    private User authenticatedUser;
 
     private void authenticateSeller() {
         if (authenticatedUser == null) {

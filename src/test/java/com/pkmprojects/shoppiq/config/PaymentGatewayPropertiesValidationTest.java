@@ -1,10 +1,13 @@
 package com.pkmprojects.shoppiq.config;
 
-import org.junit.jupiter.api.*;
+import com.pkmprojects.shoppiq.exception.general.payment.InvalidPaymentGatewayConfigException;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for the startup-time payment gateway URL validation in
@@ -44,7 +47,7 @@ class PaymentGatewayPropertiesValidationTest {
         props.getRazorpay().setApiSecret("test-secret");
 
         assertThatThrownBy(props::validateGatewayUrls)
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvalidPaymentGatewayConfigException.class)
                 .hasMessageContaining("razorpay")
                 .hasMessageContaining("internal address");
     }
@@ -67,7 +70,7 @@ class PaymentGatewayPropertiesValidationTest {
         props.getStripe().setApiSecret("secret");
 
         assertThatThrownBy(props::validateGatewayUrls)
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvalidPaymentGatewayConfigException.class)
                 .hasMessageContaining("razorpay");
     }
 
@@ -81,7 +84,7 @@ class PaymentGatewayPropertiesValidationTest {
         props.getRazorpay().setApiSecret("secret");
 
         assertThatThrownBy(props::validateGatewayUrls)
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvalidPaymentGatewayConfigException.class)
                 .hasMessageContaining("no valid host");
     }
 

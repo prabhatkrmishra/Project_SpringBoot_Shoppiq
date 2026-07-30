@@ -7,44 +7,23 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> Represents a single line item inside a {@link Cart}.
+ * Represents a single line item inside a {@link Cart}.
  *
- * <p>
- * Each {@code CartItem} links one {@link ItemDetails} to a {@link Cart}
- * with a specified quantity. A unique constraint on {@code (cart_id,
- * item_details_id)} prevents the same product from appearing twice;
- * the service layer merges duplicate adds by increasing the quantity.
- * </p>
+ * <p>Links one {@link ItemDetails} to a {@link Cart} with a specified
+ * quantity. A unique constraint on {@code (cart_id, item_details_id)}
+ * prevents the same product from appearing twice in the same cart; the
+ * service layer merges duplicate adds by increasing the quantity of the
+ * existing line item rather than creating a new row.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Does not extend {@link com.pkmprojects.shoppiq.audit.AuditableEntity}
- *     because audit timestamps are tracked at the cart level.</li>
- *     <li>Identity uses {@link GenerationType#IDENTITY}.</li>
- * </ul>
- *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Standalone {@code @Entity}</strong> — Unlike most entities,
- *         this class does NOT extend {@code AuditableEntity}. Demonstrates that
- *         not every entity needs auditing; lightweight join entities can manage
- *         their own identity.</li>
- *     <li><strong>Composite unique constraint</strong> — {@code @UniqueConstraint(
- *         columnNames = {"cart_id", "item_details_id"})} ensures the same
- *         product cannot be added twice to the same cart.</li>
- *     <li><strong>Two {@code @ManyToOne} relationships</strong> — Connects
- *         this join entity to both {@code Cart} (parent) and
- *         {@code ItemDetails} (product). Each uses lazy fetching to avoid
- *         loading unnecessary data.</li>
- *     <li><strong>{@code @Min(1)}</strong> — Bean Validation ensures quantity
- *         is always positive at the application level, complementing the
- *         database {@code NOT NULL} constraint.</li>
- *     <li><strong>{@code @EqualsAndHashCode(of = "id")}</strong> — Uses only
- *         the primary key for equality, avoiding circular references in
- *         bidirectional relationships.</li>
- * </ul>
+ * <p>The {@link ItemDetails} reference is used directly (rather than the
+ * parent {@code Item}) because it holds the pricing and stock information
+ * required during cart operations and checkout calculations. This entity
+ * is not auditable since cart contents are transient and frequently
+ * mutated.</p>
  *
  * @author prabhatkrmishra
+ * @see Cart
+ * @see ItemDetails
  * @since 1.0.0
  */
 @Entity
@@ -66,7 +45,12 @@ import lombok.*;
 public class CartItem {
 
     /**
-     * Primary key.
+     * Unique identifier for this cart line item.
+     *
+     * <p>Generated automatically by the database using the IDENTITY
+     * strategy. This primary key uniquely identifies each line item
+     * within the cart and is used for item-level operations such as
+     * quantity updates or removal.</p>
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,6 +58,11 @@ public class CartItem {
 
     /**
      * Cart that owns this line item.
+     *
+     * <p>Required relationship. Each cart item belongs to exactly one
+     * cart. The cart reference is lazily loaded and maintained via the
+     * {@code Cart.addItem()} helper to ensure bidirectional consistency.
+     * Cascade behavior is managed by the owning {@link Cart} entity.</p>
      */
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -87,10 +76,11 @@ public class CartItem {
     /**
      * Product (via {@link ItemDetails}) added to the cart.
      *
-     * <p>
-     * {@link ItemDetails} is used directly because it holds pricing and
-     * stock information required during cart operations and checkout.
-     * </p>
+     * <p>{@link ItemDetails} is used directly because it holds the
+     * pricing, stock, and SKU information required during cart
+     * operations, stock validation, and checkout calculations. The
+     * reference is lazily loaded to avoid unnecessary joins when
+     * displaying cart summaries.</p>
      */
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -102,9 +92,13 @@ public class CartItem {
     private ItemDetails itemDetails;
 
     /**
-     * Number of units of the product.
+     * Number of units of the product in the cart.
      *
-     * <p>Must be at least 1.</p>
+     * <p>Must be at least 1, enforced by the {@code @Min(1)}
+     * validation constraint. When a customer attempts to add a product
+     * that already exists in the cart, the service layer increments
+     * this quantity rather than creating a duplicate line item. The
+     * quantity is validated against available stock at checkout time.</p>
      */
     @Min(1)
     @Column(nullable = false)

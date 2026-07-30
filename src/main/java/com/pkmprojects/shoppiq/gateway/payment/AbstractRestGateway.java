@@ -1,11 +1,11 @@
 package com.pkmprojects.shoppiq.gateway.payment;
 
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayException;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -13,43 +13,24 @@ import java.time.Clock;
 import java.util.function.Consumer;
 
 /**
- * <strong>Spring Boot Concept:</strong> Abstract base class in the
- * {@code gateway.payment} package that implements the
- * {@link PaymentGatewayStrategy} interface using a <em>Template Method</em>
- * pattern for REST-based payment integrations.
+ * Abstract base class for REST-based payment gateway integrations.
  *
- * <p>Provides common HTTP exchange infrastructure shared by concrete
- * gateway implementations (Razorpay, Stripe, PayPal, UPI). Handles
- * request construction, authentication header injection, response
- * parsing, and error translation into {@link PaymentGatewayException}.</p>
+ * <p>This class provides common HTTP exchange infrastructure shared by
+ * concrete gateway implementations (Stripe, Razorpay, PayPal, UPI). It
+ * handles request construction, authentication header injection, response
+ * parsing, error translation, and input sanitization. Subclasses only
+ * need to implement the {@link PaymentGatewayStrategy} methods and use
+ * the provided exchange utilities.</p>
  *
- * <p><strong>Educational value:</strong> This class demonstrates several
- * patterns and Spring Boot concepts:
- * <ul>
- *   <li><strong>Template Method</strong> — the {@link #exchange} and
- *       {@link #exchangeForm} methods define the skeleton of an HTTP call
- *       (URL expansion, auth headers, error handling), while subclasses
- *       provide the specific authentication via {@code Consumer<HttpHeaders>}
- *       lambdas passed to these methods.</li>
- *   <li><strong>Strategy + Abstract Base Class</strong> — {@code PaymentGatewayStrategy}
- *       defines the contract; this abstract class provides reusable REST
- *       infrastructure; concrete subclasses ({@link RazorpayGateway},
- *       {@link StripeGateway}, etc.) implement only the gateway-specific
- *       logic (endpoints, payload, auth scheme).</li>
- *   <li><strong>Spring {@link RestClient}</strong> — the idiomatic Spring
- *       HTTP client replacing the older {@code RestTemplate}. Note the
- *       fluent builder API and the use of
- *       {@code onStatus} for custom error handling.</li>
- *   <li><strong>Utility methods</strong> — {@link #toMinorUnits} converts
- *       {@link java.math.BigDecimal} amounts to the minor-unit format
- *       (paise/cents) expected by most payment gateways.</li>
- * </ul>
- * </p>
- *
- * <p>Subclasses implement {@link #gatewayName()} and define their
- * specific authentication and signature schemes.</p>
+ * <p>The base class enforces security by sanitizing transaction IDs to
+ * prevent URL path traversal attacks. It also provides utility methods
+ * for currency conversion (major to minor units), HTTP Basic and Bearer
+ * authentication, and JSON response parsing. All HTTP errors from the
+ * gateway are translated into {@link PaymentGatewayException} instances
+ * with descriptive error messages.</p>
  *
  * @author prabhatkrmishra
+ * @see PaymentGatewayStrategy
  * @since 1.0.0
  */
 abstract non-sealed class AbstractRestGateway implements PaymentGatewayStrategy {
@@ -207,11 +188,17 @@ abstract non-sealed class AbstractRestGateway implements PaymentGatewayStrategy 
     /**
      * Converts a {@link BigDecimal} amount to minor units (e.g. paise, cents).
      *
+     * <p>Most payment gateways use 100 as the minor-unit factor
+     * (1 major unit = 100 minor units). Override or extend for currencies
+     * with different scales.</p>
+     *
      * @param amount the amount in major units
      * @return the amount in minor units
      */
     protected long toMinorUnits(BigDecimal amount) {
-        return amount.multiply(BigDecimal.valueOf(100)).setScale(0, java.math.RoundingMode.HALF_UP).longValue();
+        return amount.multiply(BigDecimal.valueOf(100))
+                .setScale(0, java.math.RoundingMode.HALF_UP)
+                .longValue();
     }
 
     /**

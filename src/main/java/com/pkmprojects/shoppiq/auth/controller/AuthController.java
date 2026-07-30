@@ -1,4 +1,6 @@
-package com.pkmprojects.shoppiq.auth.controller;import com.pkmprojects.shoppiq.auth.dto.CompleteGoogleRegistrationRequest;
+package com.pkmprojects.shoppiq.auth.controller;
+
+import com.pkmprojects.shoppiq.auth.dto.CompleteGoogleRegistrationRequest;
 import com.pkmprojects.shoppiq.auth.dto.JwtRequest;
 import com.pkmprojects.shoppiq.auth.dto.JwtResponse;
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
@@ -7,9 +9,9 @@ import com.pkmprojects.shoppiq.auth.service.AuthService;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.exception.general.user.DuplicateUserException;
 import com.pkmprojects.shoppiq.exception.auth.InvalidOidcUserException;
 import com.pkmprojects.shoppiq.exception.auth.OAuthSessionException;
+import com.pkmprojects.shoppiq.exception.general.user.DuplicateUserException;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,60 +30,17 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 /**
- * REST controller for authentication endpoints — the main entry point for
- * login, logout, OAuth2 registration completion, and silent token refresh.
+ * REST controller for authentication endpoints — login, logout, OAuth2 registration completion,
+ * and silent token refresh.
  *
- * <h3>Spring Security concepts demonstrated</h3>
- * <ul>
- *   <li><strong>Stateless authentication with JWTs delivered as HttpOnly cookies</strong> —
- *       the JWT never appears in the response body (no {@code Authorization} header),
- *       reducing XSS attack surface. The cookie's {@code HttpOnly} flag prevents
- *       JavaScript access.</li>
- *   <li><strong>Complementary OAuth2 + password authentication</strong> — users who
- *       register via Google can subsequently log in with either OAuth2 or
- *       username/password, demonstrating how to merge two auth strategies.</li>
- *   <li><strong>Cookie-based OAuth2 session state</strong> — the {@code oauth2_registration}
- *       cookie (managed by {@link OAuthRegistrationCookieService}) carries the verified
- *       Google profile between the OAuth2 callback and the registration completion
- *       endpoint, eliminating server-side session storage.</li>
- *   <li><strong>Token refresh pattern</strong> — the {@code POST /auth/refresh} endpoint
- *       validates an existing (possibly expired) JWT by checking the user's
- *       {@code tokenVersion} in the database, then issues a new token without
- *       requiring credentials again.</li>
- * </ul>
+ * <p>Uses stateless JWT authentication delivered as HttpOnly cookies. Supports complementary
+ * OAuth2 and password authentication with cookie-based session state.</p>
  *
- * <h3>Authentication flow</h3>
- * <ol>
- *   <li><b>Password login:</b> {@code POST /auth/login} → {@link AuthService} validates
- *       credentials via {@code AuthenticationManager} → generates JWT → writes HttpOnly cookie.</li>
- *   <li><b>Logout:</b> {@code POST /auth/logout} → clears JWT cookie, OAuth2 registration
- *       cookie, and {@code SecurityContextHolder}.</li>
- *   <li><b>OAuth2 registration:</b> {@code GET /auth/google/get-profile} reads the
- *       registration cookie → {@code POST /auth/google/complete-profile} validates it,
- *       creates a local account, issues a JWT, and clears the temporary cookie.</li>
- *   <li><b>Token refresh:</b> {@code POST /auth/refresh} extracts the JWT cookie,
- *       validates it permissively (even if expired), and issues a fresh token if
- *       the user's token version matches.</li>
- * </ol>
- *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Service delegation</strong> — the controller is thin; all business
- *       logic lives in {@link AuthService} and {@code UserService}.</li>
- *   <li><strong>Cookie-based state</strong> — OAuth2 registration state travels in a
- *       signed, HttpOnly cookie instead of a server-side session, keeping the
- *       application fully stateless.</li>
- *   <li><strong>Immutable session DTO</strong> — {@link OAuthRegistrationSession} is a
- *       Java {@code record} whose data originates from Google's OIDC claims; the
- *       client never supplies identity data, preventing tampering.</li>
- * </ul>
- *
+ * @author prabhatkrmishra
  * @see OAuthRegistrationSession
  * @see OAuthRegistrationCookieService
  * @see CompleteGoogleRegistrationRequest
  * @see JwtCookieFactory
- *
- * @author prabhatkrmishra
  * @since 1.0.0
  */
 @RestController

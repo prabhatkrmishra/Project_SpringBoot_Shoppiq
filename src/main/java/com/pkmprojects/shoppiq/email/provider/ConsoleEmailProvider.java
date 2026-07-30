@@ -12,33 +12,17 @@ import org.thymeleaf.context.Context;
 import java.util.Map;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link EmailProvider}
- * that logs email content to the console instead of sending actual emails.
- * Activated via the {@code shoppiq.email.provider=console} configuration property.
+ * Console-based email provider that logs email content instead of sending actual emails.
  *
- * <p>
- * Logs email content to the console instead of sending actual emails.
- * Useful for local development and integration tests.
- * </p>
+ * <p>Activated via the {@code shoppiq.email.provider=console} property for local development and testing.
+ * This provider renders the email template and logs the content to the application logger instead
+ * of sending actual emails. It is useful for development environments where no SMTP server is
+ * available and for integration testing where email delivery should be verified without actually
+ * sending messages.</p>
  *
- * <p><strong>Educational value:</strong> This class demonstrates several
- * Spring Boot patterns:
- * <ul>
- *   <li><strong>Conditional bean registration</strong> — {@code @ConditionalOnProperty}
- *       ensures this bean is only created when {@code shoppiq.email.provider=console}.
- *       When the property is set to {@code smtp}, this bean is not loaded and
- *       {@link SmtpEmailProvider} takes over.</li>
- *   <li><strong>@Value injection</strong> — the {@code fromAddress} is injected
- *       from application properties with a default value, showing how to
- *       externalise configuration.</li>
- *   <li><strong>Strategy + @Qualifier</strong> — the {@code emailTemplateEngine}
- *       is injected with {@code @Qualifier("emailTemplateEngine")} to
- *       distinguish it from the main web template engine (if any).</li>
- *   <li><strong>Thymeleaf template rendering</strong> — the provider renders
- *       the HTML content using a dedicated {@link org.thymeleaf.TemplateEngine}
- *       with a {@link org.thymeleaf.context.Context} populated with variables.</li>
- * </ul>
- * </p>
+ * <p>The provider uses the same Thymeleaf template engine as the SMTP provider to ensure that
+ * template rendering is consistent across environments. Any template errors will be caught during
+ * rendering, providing early feedback during development.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

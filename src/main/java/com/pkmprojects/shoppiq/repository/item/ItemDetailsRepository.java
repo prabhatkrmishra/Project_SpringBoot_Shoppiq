@@ -10,24 +10,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link ItemDetails} persistence operations.
+ * Persistence operations for the {@link ItemDetails} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Custom JPQL queries</strong> — Methods like {@code findLowStockProducts}
- *       and {@code findOutOfStockProducts} use {@code @Query} with JPQL to express
- *       conditions ({@code stockQuantity > 0 AND stockQuantity <= :threshold}) that
- *       derived method names cannot cleanly represent.</li>
- *   <li><strong>Custom JPQL count queries</strong> — {@code countLowStockProducts} and
- *       {@code countOutOfStockProducts} use {@code SELECT COUNT(d)} for efficient
- *       aggregation.</li>
- *   <li><strong>{@code @EntityGraph}</strong> — The overridden {@link #findAll()} method
- *       uses {@code @EntityGraph(attributePaths = {"item", "category"})} to eagerly fetch
- *       associations via a SQL {@code LEFT OUTER JOIN}, preventing N+1 queries.</li>
- *   <li><strong>JPQL with manual JOIN</strong> — {@code findLowStockProductsBySellerId}
- *       joins {@code ItemDetails} to {@code Item} via {@code JOIN Item i ON i.itemDetails = d}
- *       to filter by seller ownership.</li>
- * </ul>
+ * <p>Provides methods to query inventory levels, stock quantities, and low-stock alerts for
+ * inventory management. The repository supports aggregate queries for inventory reporting,
+ * seller-specific stock queries, and existence checks for category dependency validation.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -87,7 +74,7 @@ public interface ItemDetailsRepository extends JpaRepository<ItemDetails, Long> 
      * Finds low stock products belonging to a specific seller.
      *
      * @param threshold low stock threshold
-     * @param sellerId the seller identifier
+     * @param sellerId  the seller identifier
      * @return list of low stock item details for the seller
      */
     @Query("SELECT d FROM ItemDetails d JOIN Item i ON i.itemDetails = d WHERE d.stockQuantity > 0 AND d.stockQuantity <= :threshold AND i.seller.id = :sellerId")
@@ -129,4 +116,12 @@ public interface ItemDetailsRepository extends JpaRepository<ItemDetails, Long> 
      */
     @Query("SELECT COALESCE(SUM(d.price * d.stockQuantity), 0) FROM ItemDetails d")
     java.math.BigDecimal sumInventoryValue();
+
+    /**
+     * Checks if any item details reference the given category.
+     *
+     * @param categoryId the category ID to check
+     * @return true if items reference this category
+     */
+    boolean existsByCategoryId(Long categoryId);
 }

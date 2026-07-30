@@ -6,16 +6,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * <strong>Spring Boot Concept:</strong> Controller for server-side rendered Thymeleaf page routes.
+ * Server-side rendered Thymeleaf page routes for the storefront, customer account pages, and admin panels.
  *
- * <p>Maps URL paths to Thymeleaf view templates for the public-facing
- * storefront, customer account pages, and admin panels. Each method
- * returns a view name resolved by Spring MVC's {@code ThymeleafViewResolver}.
- * Controllers that require model data (e.g. the home page with banners)
- * populate the {@link Model} before delegating to the view.</p>
- *
- * <p>This controller handles NO JSON responses — all REST API endpoints
- * live under {@code /api/**} in their respective dedicated controllers.</p>
+ * <p>Maps URL paths to view templates resolved by Spring MVC's {@code ThymeleafViewResolver}.
+ * Populates model data where needed (e.g. banners on the home page) before delegating to the view.
+ * All REST API endpoints live under {@code /api/**} in their respective dedicated controllers.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

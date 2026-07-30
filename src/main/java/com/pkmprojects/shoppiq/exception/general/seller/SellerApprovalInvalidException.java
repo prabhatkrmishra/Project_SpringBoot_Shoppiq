@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when an approval
- * or rejection action is attempted on a seller not in the expected status.
+ * Thrown when an approval or rejection action is attempted on a seller not in the expected status.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) for seller lifecycle state machine enforcement
- * (approve, reject, suspend, unsuspend).</p>
+ * <p>This exception is thrown when an administrator attempts to approve,
+ * reject, suspend, or unsuspend a seller whose current status does not
+ * permit the requested operation. It uses the {@link ErrorCode#INVALID_OPERATION}
+ * code and HTTP 400 Bad Request status. The exception provides specific
+ * factory methods for each invalid status transition scenario.</p>
+ *
+ * <p>The detail message includes the seller ID and the expected status
+ * (e.g., "Seller '42' is not in PENDING status.") to help the client
+ * understand which status transition was invalid. The administrator
+ * should verify the seller's current status before retrying.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#INVALID_OPERATION
  * @since 1.0.0
  */
 public final class SellerApprovalInvalidException extends InvalidOperationException {

@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a requested
- * user cannot be found.
+ * Thrown when a requested user cannot be found by ID, email, or username.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) with factory methods for lookup by ID, email, username, and
- * a generic fallback for partial information lookups.</p>
+ * <p>This exception is thrown by user service methods when a database
+ * lookup for a user fails. It uses the {@link ErrorCode#USER_NOT_FOUND}
+ * code and HTTP 404 Not Found status. The exception provides multiple
+ * static factory methods to create instances for different lookup
+ * scenarios, each with a descriptive detail message.</p>
+ *
+ * <p>The detail message includes the lookup identifier and type (e.g.,
+ * "User with id '42' was not found.") to help clients understand which
+ * identifier was invalid. The client should verify the identifier and
+ * retry the request.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#USER_NOT_FOUND
  * @since 1.0.0
  */
 public final class UserNotFoundException extends ResourceNotFoundException {
@@ -66,14 +72,12 @@ public final class UserNotFoundException extends ResourceNotFoundException {
     }
 
     /**
-     * Creates an exception indicating that user does not exist
-     * with additional info.
-     *
-     * @param info additional info
-     * @return user not found exception
-     */
-    /**
      * Creates a generic user not found exception with additional context.
+     *
+     * <p>This factory method is used when the specific lookup type
+     * (ID, email, or username) is not known or when additional context
+     * needs to be included in the error message. The detail message
+     * includes the provided information for diagnostics.</p>
      *
      * @param info additional context about the lookup
      * @return a new exception instance

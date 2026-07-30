@@ -13,29 +13,34 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for seller product management.
+ * REST controller for seller product management.
  *
- * <p>Exposes CRUD endpoints for the authenticated seller's own products.
- * All endpoints require SELLER or ADMIN role. Ownership enforcement is
- * delegated to {@link SellerProductService}.</p>
+ * <p>Exposes CRUD endpoints for the authenticated seller's own products. Sellers
+ * can create products in DRAFT status, list their products, view individual
+ * products, update product details, and delete products. Ownership enforcement
+ * ensures sellers can only access their own products.</p>
  *
- * <p>Key design points:
- * <ul>
- *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
- *   <li><strong>Seller-scoped</strong> — each endpoint resolves the seller from the authenticated principal.</li>
- * </ul>
- * </p>
+ * <p>This controller acts as the HTTP boundary for seller product operations. It
+ * delegates all business logic — product creation, retrieval with ownership
+ * checks, updates, deletion, and paginated listing — to {@link SellerProductService}.
+ * The controller handles no business logic beyond page-size capping and request
+ * validation.</p>
+ *
+ * <p>All endpoints require SELLER or ADMIN role and are mounted under
+ * /seller/products.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * POST   /seller/products/create        — create a new product (DRAFT status)
+ * GET    /seller/products               — paginated list of seller's products
+ * GET    /seller/products/{id}          — get a single product by ID
+ * PUT    /seller/products/update/{id}   — update an existing product
+ * DELETE /seller/products/delete/{id}   — delete a product
+ * </pre>
  *
  * @author prabhatkrmishra
  * @see SellerProductService
@@ -57,9 +62,12 @@ public class SellerProductController {
     /**
      * Creates a new product in DRAFT status for the authenticated seller.
      *
-     * @param request     the product creation payload
+     * <p>The product is not visible on the storefront until an admin
+     * publishes it.</p>
+     *
+     * @param request     the product creation payload (validated via @Valid)
      * @param currentUser the authenticated seller
-     * @return 201 Created with the created product
+     * @return 201 Created with the created product response
      */
     @PostMapping("/create")
     public ResponseEntity<ItemResponse> createProduct(
@@ -74,8 +82,8 @@ public class SellerProductController {
      *
      * @param currentUser the authenticated seller
      * @param page        zero-based page index
-     * @param size        page size (capped by {@code pagination.maxPageSize()})
-     * @return 200 OK with page of products
+     * @param size        page size (capped by the configured maximum)
+     * @return 200 OK with page of product responses
      */
     @GetMapping
     public ResponseEntity<PageResponse<ItemResponse>> getMyProducts(
@@ -88,11 +96,12 @@ public class SellerProductController {
     }
 
     /**
-     * Returns a single product by ID, ensuring it belongs to the authenticated seller.
+     * Returns a single product by ID, ensuring it belongs to the authenticated
+     * seller.
      *
      * @param id          the product ID (must be positive)
      * @param currentUser the authenticated seller
-     * @return 200 OK with the product
+     * @return 200 OK with the product response
      */
     @GetMapping("/{id}")
     public ResponseEntity<ItemResponse> getMyProductById(
@@ -106,9 +115,9 @@ public class SellerProductController {
      * Updates an existing product owned by the authenticated seller.
      *
      * @param id          the product ID (must be positive)
-     * @param request     the updated product payload
+     * @param request     the updated product payload (validated via @Valid)
      * @param currentUser the authenticated seller
-     * @return 200 OK with the updated product
+     * @return 200 OK with the updated product response
      */
     @PutMapping("/update/{id}")
     public ResponseEntity<ItemResponse> updateProduct(
@@ -121,6 +130,9 @@ public class SellerProductController {
 
     /**
      * Deletes a product owned by the authenticated seller.
+     *
+     * <p>This action permanently removes the product. Consider the impact
+     * on existing orders before deleting.</p>
      *
      * @param id          the product ID (must be positive)
      * @param currentUser the authenticated seller

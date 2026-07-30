@@ -3,19 +3,24 @@ package com.pkmprojects.shoppiq.exception.auth;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Concrete leaf exception in the
- * {@code auth} branch for JWT-specific authentication failures.
+ * Thrown when JWT authentication fails due to an expired, malformed, or
+ * invalid-signature token.
  *
- * <p>Thrown when JWT authentication fails. Typical causes include expired
- * JWT, malformed JWT, invalid signature, or unsupported JWT.</p>
+ * <p>This exception is thrown by the JWT filter when it encounters a token
+ * that cannot be processed. Common causes include: the token has expired
+ * (use {@link ErrorCode#JWT_EXPIRED}), the token is malformed or cannot
+ * be parsed (use {@link ErrorCode#INVALID_JWT}), or the token signature
+ * does not match the signing key. The detail message should explain the
+ * specific failure reason.</p>
  *
- * <p>Unlike most leaf exceptions that hard-code a single error code,
- * this class accepts any {@link ErrorCode} at construction time, making
- * it reusable for multiple JWT failure scenarios
- * ({@code INVALID_JWT}, {@code JWT_EXPIRED}) without creating a
- * separate class for each.</p>
+ * <p>When this exception is thrown, the JWT filter rejects the request
+ * before it reaches the controller layer. The client should obtain a new
+ * token through the login or refresh endpoint. The global exception
+ * handler maps this to a 401 Problem Detail response.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#INVALID_JWT
+ * @see ErrorCode#JWT_EXPIRED
  * @since 1.0.0
  */
 public class JwtAuthenticationException extends AuthenticationException {

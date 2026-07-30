@@ -4,33 +4,16 @@ import com.pkmprojects.shoppiq.email.dto.EmailMessage;
 import com.pkmprojects.shoppiq.exception.general.email.EmailSendException;
 
 /**
- * <strong>Spring Boot Concept:</strong> Strategy interface for email provider
- * integrations. This is the contract that allows the email subsystem to
- * support multiple providers interchangeably.
+ * Strategy interface for email provider integrations.
  *
- * <p>
- * Each implementation handles email delivery for a specific provider
- * (SMTP, Console). New providers can be added without modifying the email
- * service — implementation of the <strong>Open/Closed Principle</strong>
- * via the <strong>Strategy pattern</strong>.
- * </p>
+ * <p>Allows the email subsystem to support multiple providers interchangeably using the Strategy pattern.
+ * Each provider implementation handles the actual email delivery mechanism (SMTP, console, etc.)
+ * while the interface provides a uniform API for the email service layer. This abstraction
+ * enables seamless switching between email providers based on environment configuration.</p>
  *
- * <p><strong>Educational value:</strong> This interface mirrors the
- * {@link com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayStrategy}
- * pattern — both use the Strategy pattern to abstract away infrastructure
- * details:
- * <ul>
- *   <li><strong>getProviderName()</strong> — acts as a discriminator key,
- *       used by {@link EmailProviderRegistry} to index and select the active
- *       provider, similar to how {@code PaymentGatewayStrategy.supports()}
- *       works.</li>
- *   <li><strong>send()</strong> — the core operation; implementations may
- *       be synchronous or {@code @Async} (see {@link SmtpEmailProvider}),
- *       but the contract remains the same.</li>
- *   <li><strong>isEnabled()</strong> — allows providers to self-report
- *       their availability, enabling graceful fallback in the registry.</li>
- * </ul>
- * </p>
+ * <p>The registry collects all provider beans at startup and resolves the active one based on
+ * configuration. Providers can be enabled or disabled via configuration properties, allowing
+ * different email backends for development, testing, and production environments.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

@@ -5,47 +5,72 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> The root abstract class for all
- * application-specific exceptions in Shoppiq.
+ * Root abstract class for all application-specific exceptions in Shoppiq.
  *
- * <p>Root of the layered exception hierarchy. Every application exception
- * extends this class and carries its own {@link ErrorCode}, HTTP status, and
- * detail message, enabling the
- * {@link com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler}
- * to build a consistent RFC 9457 {@code ProblemDetail} response without
- * inspecting exception types.</p>
+ * <p>This class serves as the base of the exception hierarchy and carries
+ * three critical pieces of information: a stable {@link ErrorCode} for
+ * machine-readable identification, an {@link HttpStatus} for HTTP response
+ * mapping, and a human-readable detail message for client consumption.
+ * Every exception in the application extends this class, ensuring that
+ * the global exception handler can uniformly convert any application error
+ * into an RFC 9457 Problem Detail response.</p>
  *
- * <p>Three layers are used: a shared base layer ({@code ShoppiqException}),
- * a category layer (abstract subclasses grouped by HTTP semantics), and a
- * concrete layer (final subclasses for specific error conditions).</p>
+ * <p>Architecturally, this class decouples the error detection site from
+ * the error presentation layer. Service methods throw subclasses of this
+ * exception without worrying about HTTP status codes or response formats.
+ * The {@link com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler}
+ * reads the exception properties and constructs the appropriate response.
+ * This separation of concerns makes it easy to change error presentation
+ * without modifying business logic.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode
+ * @see com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler
  * @since 1.0.0
  */
 @Getter
 public abstract class ShoppiqException extends RuntimeException {
 
     /**
-     * Stable machine-readable error code.
+     * Stable machine-readable error code that uniquely identifies this error type.
+     *
+     * <p>Error codes follow the pattern {@code MODULE-HTTP_STATUS-SEQUENCE}
+     * and are defined in the {@link ErrorCode} enum. They form part of the
+     * public API contract and must never change once released, as clients
+     * may rely on them for automated error handling.</p>
      */
     private final ErrorCode errorCode;
 
     /**
-     * HTTP status associated with the exception.
+     * HTTP status associated with this exception.
+     *
+     * <p>This status is used by the global exception handler to set the
+     * HTTP response status code. It must match the semantics of the
+     * {@link ErrorCode} to ensure consistent behavior across the API.</p>
      */
     private final HttpStatus httpStatus;
 
     /**
-     * Detailed description of the error.
+     * Detailed human-readable description of the error.
+     *
+     * <p>This message is included in the Problem Detail response's
+     * {@code detail} field and should provide enough information for the
+     * client to understand what went wrong and how to fix it. Unlike the
+     * error code, this message may change between versions.</p>
      */
     private final String detail;
 
     /**
-     * Creates a new Shoppiq exception.
+     * Creates a new Shoppiq exception with the specified error code, HTTP
+     * status, and detail message.
      *
-     * @param errorCode  stable application error code
-     * @param httpStatus HTTP status associated with the error
-     * @param detail     detailed error description
+     * <p>The detail message is also passed to the {@link RuntimeException}
+     * superclass constructor, making it available through the standard
+     * {@link #getMessage()} method for logging and debugging purposes.</p>
+     *
+     * @param errorCode  the stable application error code
+     * @param httpStatus the HTTP status to return in the response
+     * @param detail     the human-readable error description
      */
     protected ShoppiqException(ErrorCode errorCode, HttpStatus httpStatus, String detail) {
         super(detail);

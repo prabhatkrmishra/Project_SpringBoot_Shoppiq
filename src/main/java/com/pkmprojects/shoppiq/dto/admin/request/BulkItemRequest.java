@@ -1,49 +1,38 @@
 package com.pkmprojects.shoppiq.dto.admin.request;
 
 import com.pkmprojects.shoppiq.dto.item.ItemRequest;
-import com.pkmprojects.shoppiq.entity.item.Item;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Request DTO used for bulk creation of {@link Item}.
+ * Request DTO for bulk creation of products by a seller.
  *
- * <p>
- * Wraps a list of {@link ItemRequest} to enable proper Bean Validation
- * on collection contents. Using this wrapper instead of a raw
- * {@code List<ItemRequest>} eliminates the Hibernate Validator warning
- * about {@code @Valid} directly on container types.
- * </p>
+ * <p>This record wraps a list of {@link com.pkmprojects.shoppiq.dto.item.ItemRequest}
+ * entries and is submitted to the bulk item creation endpoint for
+ * creating multiple catalog products in a single API call. Unlike
+ * {@link BulkAdminItemRequest}, this DTO does not include a
+ * {@code sellerId} field because the seller identity is derived from
+ * the authenticated user's security context.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Accept client supplied product information in bulk.</li>
- *     <li>Perform request validation on the collection and its contents.</li>
- *     <li>Remain independent of persistence entities.</li>
- * </ul>
+ * <p>Each element in the list undergoes cascading validation via
+ * {@link jakarta.validation.Valid @Valid}, ensuring that all product
+ * fields meet their respective constraints. The list must not be
+ * empty. Updates to existing products are handled individually
+ * through the standard item update endpoint.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Marked as {@code final} through Java record semantics.</li>
- *     <li>{@code @NotEmpty} ensures the client supplies at least one item.</li>
- *     <li>{@code @Valid} triggers cascading validation on each
- *     {@link ItemRequest} in the list.</li>
- *     <li>Used exclusively for bulk creation; updates are handled
- *     individually.</li>
- *     <li><b>Why a record?</b> The compact, immutable nature of records
- *     perfectly suits this "request envelope" pattern — the wrapper has no
- *     behavior, just a validated collection.</li>
- * </ul>
- *
+ * @param items list of item creation requests, each containing all
+ *              required product fields; must not be empty; each element
+ *              is validated recursively via
+ *              {@link com.pkmprojects.shoppiq.dto.item.ItemRequest}
  * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkItemRequest(
 
-        /*
-          List of item creation requests.
+        /**
+         * List of item creation requests.
          */
         @NotEmpty(message = "At least one item is required.")
         List<@Valid ItemRequest> items

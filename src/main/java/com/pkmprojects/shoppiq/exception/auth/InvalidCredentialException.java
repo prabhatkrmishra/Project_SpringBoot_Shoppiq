@@ -4,17 +4,23 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Concrete leaf exception for
- * credential validation failures. Note the cross-branch inheritance:
- * this extends {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (400 BAD_REQUEST) rather than {@link AuthenticationException} (401).
+ * Thrown when authentication fails due to invalid credentials.
  *
- * <p>Thrown when authentication fails due to invalid credentials.
- * Maps to {@link ErrorCode#INVALID_CREDENTIALS} and results in a
- * {@code 401 Unauthorized} response with a generic error message to
- * avoid leaking whether the username or password was incorrect.</p>
+ * <p>This exception is thrown during the email/password login flow when
+ * the submitted credentials do not match any record in the database.
+ * It uses the {@link ErrorCode#INVALID_CREDENTIALS} code. The detail
+ * message should be generic enough to prevent username enumeration
+ * attacks (e.g., "Invalid email or password.") rather than specifying
+ * which field was incorrect.</p>
+ *
+ * <p>This exception extends {@link InvalidOperationException} rather
+ * than {@link AuthenticationException} because it is typically thrown
+ * by the authentication service during credential validation, not by
+ * the JWT filter. The HTTP 401 status is inherited from the
+ * {@link ErrorCode} mapping.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#INVALID_CREDENTIALS
  * @since 1.0.0
  */
 public class InvalidCredentialException extends InvalidOperationException {

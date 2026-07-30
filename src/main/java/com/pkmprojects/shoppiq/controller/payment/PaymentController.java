@@ -15,24 +15,35 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller exposing payment endpoints for authenticated customers and admins.
+ * REST controller exposing payment endpoints for authenticated customers and admins.
  *
- * <h2>Endpoints</h2>
- * <ul>
- *   <li>{@code GET  /user/payment/get/{id}}     — get payment detail</li>
- *   <li>{@code POST /user/payment/pay/{id}}     — initiate/retry payment</li>
- *   <li>{@code POST /user/payment/verify}       — verify online payment</li>
- *   <li>{@code PUT  /user/payment/cancel/{id}}  — cancel payment</li>
- *   <li>{@code PUT  /user/payment/refund/{id}}  — refund payment (ADMIN only)</li>
- * </ul>
+ * <p>Provides endpoints for retrieving payment details, initiating or retrying
+ * payments, verifying online transactions, cancelling pending payments, and
+ * processing refunds. All customer operations validate that the payment belongs
+ * to the authenticated user. The refund endpoint is restricted to ADMIN via
+ * method-level security.</p>
  *
- * <p>
- * All customer operations validate that the payment belongs to the
- * authenticated user. The refund endpoint is restricted to {@code ADMIN}
- * via {@link com.pkmprojects.shoppiq.config.SecurityConfig}.
- * </p>
+ * <p>This controller acts as the HTTP boundary for payment operations. It
+ * delegates all business logic — payment retrieval, gateway integration,
+ * transaction verification, cancellation, and refund processing — to
+ * {@link PaymentService}. The controller handles no business logic beyond
+ * request validation and authentication extraction.</p>
+ *
+ * <p>All endpoints are scoped to /user/payment. Customer endpoints require
+ * authentication; the refund endpoint additionally requires ADMIN role.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET    /user/payment/get/{id}     — get payment detail
+ * POST   /user/payment/pay/{id}     — initiate or retry payment
+ * POST   /user/payment/verify       — verify online payment via gateway
+ * PUT    /user/payment/cancel/{id}  — cancel a pending or failed payment
+ * PUT    /user/payment/refund/{id}  — refund a completed payment (ADMIN only)
+ * </pre>
  *
  * @author prabhatkrmishra
+ * @see PaymentService
  * @since 1.0.0
  */
 @Validated
@@ -50,8 +61,8 @@ public class PaymentController {
     /**
      * Returns the full payment detail for the authenticated user.
      *
-     * @param user      authenticated customer
-     * @param paymentId payment id (must be positive)
+     * @param user      the authenticated customer
+     * @param paymentId the payment ID to retrieve (must be positive)
      * @return 200 OK with full payment response
      */
     @GetMapping("/get/{id}")
@@ -69,9 +80,12 @@ public class PaymentController {
     /**
      * Initiates or retries payment for a PENDING or FAILED payment.
      *
-     * @param user      authenticated customer
-     * @param paymentId payment id (must be positive)
-     * @return 200 OK with updated payment status
+     * <p>Generates a new payment session with the gateway and returns
+     * the updated payment status.</p>
+     *
+     * @param user      the authenticated customer
+     * @param paymentId the payment ID to pay (must be positive)
+     * @return 200 OK with updated payment status response
      */
     @PostMapping("/pay/{id}")
     public ResponseEntity<PaymentStatusResponse> pay(
@@ -88,9 +102,12 @@ public class PaymentController {
     /**
      * Verifies an online payment using the gateway transaction ID.
      *
-     * @param user    authenticated customer
-     * @param request contains the transactionId from the gateway
-     * @return 200 OK with updated payment status
+     * <p>Calls the payment gateway to confirm the transaction status
+     * and updates the local payment record accordingly.</p>
+     *
+     * @param user    the authenticated customer
+     * @param request the verification payload containing paymentId and transactionId
+     * @return 200 OK with updated payment status response
      */
     @PostMapping("/verify")
     public ResponseEntity<PaymentStatusResponse> verifyPayment(
@@ -107,9 +124,12 @@ public class PaymentController {
     /**
      * Cancels a PENDING or FAILED payment.
      *
-     * @param user      authenticated customer
-     * @param paymentId payment id (must be positive)
-     * @return 200 OK with updated payment status
+     * <p>Only payments in PENDING or FAILED status can be cancelled.
+     * Once a payment is PAID, it cannot be cancelled (use refund instead).</p>
+     *
+     * @param user      the authenticated customer
+     * @param paymentId the payment ID to cancel (must be positive)
+     * @return 200 OK with updated payment status response
      */
     @PutMapping("/cancel/{id}")
     public ResponseEntity<PaymentStatusResponse> cancelPayment(
@@ -124,12 +144,12 @@ public class PaymentController {
     // =========================================================
 
     /**
-     * Refunds a completed (PAID) payment. Restricted to {@code ADMIN} via
-     * method security; ownership is not enforced (admins may refund any payment).
+     * Refunds a completed (PAID) payment. Restricted to ADMIN via method
+     * security; ownership is not enforced since admins may refund any payment.
      *
-     * @param user      authenticated admin
-     * @param paymentId payment id (must be positive)
-     * @return 200 OK with updated payment status
+     * @param user      the authenticated admin
+     * @param paymentId the payment ID to refund (must be positive)
+     * @return 200 OK with updated payment status response
      */
     @PutMapping("/refund/{id}")
     @PreAuthorize("hasRole('ADMIN')")

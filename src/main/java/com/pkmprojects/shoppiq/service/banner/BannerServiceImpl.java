@@ -17,19 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link BannerService}
- * containing CRUD business logic for homepage banner management.
- *
- * <p>Provides public retrieval of active banners and admin CRUD operations
- * including toggling active status. Used by {@code BannerController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Write operations and custom toggle queries are atomic; reads use {@code readOnly = true}.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link BannerService} implementation providing public retrieval of active banners
+ * and admin CRUD operations including toggling active status.
  *
  * @author prabhatkrmishra
  * @see BannerService

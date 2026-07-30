@@ -1,53 +1,35 @@
 package com.pkmprojects.shoppiq.gateway.payment;
 
-import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.config.PaymentGatewayProperties;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentGatewayException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
- * <strong>Spring Boot Concept:</strong> Concrete payment gateway strategy
- * for UPI (India), extending {@link AbstractRestGateway}.
+ * Concrete payment gateway strategy for UPI (Unified Payments Interface, India).
  *
- * <p>UPI has no single public API; this strategy implements the common
- * <em>collect</em> contract: {@link #process(Payment)} raises a collect
- * request against the customer VPA (provided by the PSP config), and
- * {@link #verify(Payment, String)} polls the transaction status. The payment
- * is marked {@code PAID} when the PSP reports the collect as {@code SUCCESS}
- * (or {@code CREDITED}).</p>
+ * <p>This gateway implements the UPI collect model. On {@link #process(Payment)},
+ * it initiates a collect request against the customer's VPA (Virtual Payment
+ * Address) through a Payment Service Provider (PSP). On
+ * {@link #verify(Payment, String)}, it polls the PSP for the transaction
+ * status to confirm whether the payment was completed. Authentication uses
+ * the gateway's API credentials.</p>
  *
- * <p><strong>Educational value:</strong> UPI demonstrates a different
- * payment model from card-based gateways:
- * <ul>
- *   <li><strong>Collect model</strong> — the merchant initiates a "collect
- *       request" to the customer's VPA (Virtual Payment Address), and the
- *       customer approves it on their UPI app. This is the reverse of the
- *       "push" model used by most card gateways.</li>
- *   <li><strong>PSP abstraction</strong> — since UPI has no single public
- *       API, this strategy defines a generic interface that can be backed
- *       by any PSP (Razorpay, PhonePe, Cashfree) via configuration.</li>
- *   <li><strong>Slf4j + Lombok</strong> — uses {@code @Slf4j} for
- *       declarative logger injection.</li>
- *   <li><strong>Warn-level logging for missing config</strong> — validates
- *       required configuration at construction time and logs a warning if
- *       secrets are missing, allowing the application to start but alerting
- *       operators.</li>
- * </ul>
- * </p>
- *
- * <p>Back this with a concrete PSP by pointing {@code shoppiq.payment.gateways.upi.base-url}
- * at the provider's UPI endpoint and supplying its merchant key/VPA.</p>
+ * <p>UPI is a popular payment method in India that allows customers to pay
+ * directly from their bank accounts. The gateway supports popular UPI apps
+ * including Google Pay, PhonePe, Paytm, and BHIM. The merchant VPA is
+ * configured through
+ * {@link com.pkmprojects.shoppiq.config.GatewayConfig#merchantVpa}.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

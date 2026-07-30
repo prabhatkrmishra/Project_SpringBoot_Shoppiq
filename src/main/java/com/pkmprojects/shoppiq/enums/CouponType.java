@@ -1,28 +1,17 @@
 package com.pkmprojects.shoppiq.enums;
 
 /**
- * <strong>Spring Boot Concept:</strong> Defines the cart composition constraint for a promo code.
+ * Defines the cart composition constraint for a promo code.
  *
- * <ul>
- *     <li>{@link #SINGLE} — only valid when every cart item has
- *         {@code quantity == 1} (single-unit purchase).</li>
- *     <li>{@link #BULK} — only valid when at least one cart item has
- *         {@code quantity > 1} (multi-unit / bulk purchase).</li>
- * </ul>
+ * <p>This enum specifies the quantity requirements that a customer's cart
+ * must meet to use a promo code. {@link #SINGLE} requires each cart item
+ * to have a quantity of exactly 1, suitable for single-item promotions.
+ * {@link #BULK} requires at least one cart item with a quantity greater
+ * than 1, suitable for bulk purchase discounts.</p>
  *
- * <p>When {@code null} on a promo code, the coupon type constraint is
- * not enforced and the code may be applied regardless of cart composition.</p>
- *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Business rule enum</strong> — Encodes a cart composition
- *         constraint as an enum to keep the domain model expressive and
- *         type-safe.</li>
- *     <li><strong>Nullable constraint in entity</strong> — When used with
- *         {@code PromoCode.couponType}, {@code null} means "no restriction,"
- *         demonstrating how optional enum fields can represent flexible
- *         business rules.</li>
- * </ul>
+ * <p>When the coupon type is null on a promo code, the cart composition
+ * constraint is not enforced. This allows promo codes to be applied to
+ * any cart regardless of item quantities.</p>
  *
  * @author prabhatkrmishra
  * @since 1.4.0

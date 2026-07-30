@@ -22,51 +22,12 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link PaymentService}.
- *
- * <p><strong>What this Service implementation demonstrates:</strong></p>
- * <ul>
- *   <li><strong>Strategy pattern via dependency injection</strong> — The
- *       {@link com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayRegistry} resolves the
- *       appropriate {@link com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayStrategy} based
- *       on the payment method (COD vs. ONLINE), demonstrating how to delegate external-system
- *       logic to pluggable strategies.</li>
- *   <li><strong>State machine enforcement</strong> — Each method checks the current
- *       {@link com.pkmprojects.shoppiq.enums.PaymentStatus} before proceeding, throwing
- *       {@link com.pkmprojects.shoppiq.exception.general.payment.PaymentInvalidStateException}
- *       for illegal transitions.</li>
- *   <li><strong>Duplicate payment prevention</strong> — {@link #createPayment} uses
- *       {@code paymentLookupService.existsByOrder()} to enforce one payment per order.</li>
- *   <li><strong>Idempotent operations</strong> — {@link #pay} returns immediately if already
- *       {@code PROCESSING}; {@link #verifyPayment} returns immediately if already
- *       {@code PAID}. This supports safe retries from the client.</li>
- *   <li><strong>Ownership assertion</strong> — The private {@code assertOwnership} method
- *       validates that the payment's order belongs to the authenticated user before allowing
- *       customer-facing operations.</li>
- *   <li><strong>Delegation to helper services</strong> — {@code PaymentLookupService} and
- *       {@code PaymentWriteService} are separated from business logic, showing single-responsibility
- *       decomposition at the service layer.</li>
- *   <li><strong>{@code @PreAuthorize} for admin operations</strong> — {@link #refund} is
- *       protected by Spring Security's method-level {@code hasRole('ADMIN')} check.</li>
- *   <li><strong>Payment reference generation</strong> — The formatted reference
- *       ({@code PAY-20240728-42}) is built in a private helper, demonstrating internal ID
- *       generation within the service layer.</li>
- * </ul>
- *
- * <h2>Business Rules Enforced</h2>
- * <ul>
- *   <li>One payment record per order — duplicate creation is rejected.</li>
- *   <li>Paid payments cannot be paid again.</li>
- *   <li>Failed payments can be retried via {@link #pay}.</li>
- *   <li>Only {@code PAID} payments can be refunded.</li>
- *   <li>Only {@code PENDING} or {@code FAILED} payments can be cancelled.</li>
- *   <li>Ownership is verified on every customer-facing operation.</li>
- * </ul>
- *
- * <h2>Payment Reference Format</h2>
- * <pre>PAY-yyyyMMdd-{orderId}</pre>
+ * {@link PaymentService} implementation handling payment creation, processing,
+ * verification, cancellation, and refund with state machine enforcement and
+ * ownership validation.
  *
  * @author prabhatkrmishra
+ * @see PaymentService
  * @since 1.0.0
  */
 @Service

@@ -8,21 +8,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Read-only payment query facade for admin dashboards and reports.
- *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * A ReadModel facade that decouples admin services from {@code PaymentRepository}.
- * Sits between the Service layer and Repository layer, providing aggregate queries
- * over payment data.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *   <li>Sum payment amounts by status (total revenue, refunded amount).</li>
- *   <li>Query payments by date range and status for reports.</li>
- *   <li>Retrieve recent payments for activity feeds.</li>
- * </ul>
+ * Read-only payment query facade for admin dashboards and reports.
  *
  * <p>Decouples admin services from {@code PaymentRepository},
  * providing aggregate queries over payment data.</p>

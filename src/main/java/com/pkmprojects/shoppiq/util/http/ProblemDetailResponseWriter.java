@@ -11,29 +11,17 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * <strong>Spring Boot Concept:</strong> Utility component responsible for writing RFC 9457
- * {@link ProblemDetail} responses.
+ * Utility component for writing RFC 9457 {@link ProblemDetail} responses.
  *
- * <p>
- * This component centralizes the serialization of
- * {@link ProblemDetail} instances into HTTP responses,
- * ensuring a consistent response format across the
- * entire application.
- * </p>
+ * <p>Centralizes serialization of {@link ProblemDetail} instances into
+ * HTTP responses, ensuring consistent error response format across the
+ * application. This component is used by security handlers, filters, and
+ * the global exception handler to write structured error responses.</p>
  *
- * <p><b>How it fits:</b> Used by filters, security handlers, and
- * exception translators — including AI-related exceptions
- * ({@link com.pkmprojects.shoppiq.aiservice.exception.AiAssistantException},
- * {@link com.pkmprojects.shoppiq.aiservice.exception.AiAccessDeniedException}, etc.)
- * to return RFC 9457 problem+json error responses.</p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Write {@link ProblemDetail} responses.</li>
- *     <li>Set the HTTP status code.</li>
- *     <li>Set the response content type.</li>
- *     <li>Serialize the response using Jackson 3.</li>
- * </ul>
+ * <p>The writer sets the appropriate HTTP status code, content type
+ * ({@code application/problem+json}), and character encoding before
+ * serializing the Problem Detail to the response output stream. All
+ * error responses produced by this writer conform to RFC 9457.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

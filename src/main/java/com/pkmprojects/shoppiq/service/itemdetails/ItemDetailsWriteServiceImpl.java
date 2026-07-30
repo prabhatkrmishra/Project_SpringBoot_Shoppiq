@@ -9,26 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link ItemDetailsWriteService}.
- *
- * <h2>What is {@code @Service}?</h2>
- * <p>
- * Spring Stereotype registering this package-private class as a bean.
- * </p>
- *
- * <h2>What is {@code @RequiredArgsConstructor}?</h2>
- * <p>
- * Lombok-generated constructor for injecting {@code ItemDetailsRepository}.
- * </p>
- *
- * <h2>What is {@code @Transactional}?</h2>
- * <p>
- * Each save operation is transactional. When called from {@code InventoryServiceImpl}
- * or {@code AdminInventoryServiceImpl}, the transaction propagates to the caller's
- * transaction (Spring {@code REQUIRED} propagation).
- * </p>
+ * {@link ItemDetailsWriteService} implementation providing transactional persistence
+ * for item-details entities.
  *
  * @author prabhatkrmishra
+ * @see ItemDetailsWriteService
  * @since 1.4.0
  */
 @Service

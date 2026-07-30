@@ -1,14 +1,15 @@
 package com.pkmprojects.shoppiq.service;
 
-import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.category.CategoryRequest;
 import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.category.Category;
 import com.pkmprojects.shoppiq.exception.general.category.CategoryNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.category.DuplicateCategoryException;
 import com.pkmprojects.shoppiq.service.category.CategoryLookupService;
-import com.pkmprojects.shoppiq.service.category.CategoryWriteService;
 import com.pkmprojects.shoppiq.service.category.CategoryServiceImpl;
+import com.pkmprojects.shoppiq.service.category.CategoryWriteService;
+import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -53,10 +54,14 @@ class CategoryServiceImplTest {
     private CategoryWriteService categoryWriteService;
 
     @Mock
+    private ItemDetailsLookupService itemDetailsLookupService;
+
+    @Mock
     private Clock clock;
 
     @InjectMocks
     private CategoryServiceImpl categoryService;
+    private Category stubCategory;
 
     private static void setId(Object entity, Long id) throws Exception {
         Field idField = entity.getClass().getSuperclass().getSuperclass()
@@ -64,8 +69,6 @@ class CategoryServiceImplTest {
         idField.setAccessible(true);
         idField.set(entity, id);
     }
-
-    private Category stubCategory;
 
     @BeforeEach
     void setUp() throws Exception {

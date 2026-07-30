@@ -5,15 +5,21 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a promo code's
- * cart composition constraint is not met by the current cart contents.
+ * Thrown when a promo code's cart composition constraint is not met.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) with factory methods for single/bulk code mismatch and minimum
- * item quantity violations.</p>
+ * <p>This exception is thrown when a promo code requires specific item
+ * types or minimum quantities that the customer's cart does not satisfy.
+ * It uses the {@link ErrorCode#PROMO_CODE_CART_CONSTRAINT} code and
+ * HTTP 400 Bad Request status. The exception provides specific factory
+ * methods for each constraint type.</p>
+ *
+ * <p>The detail message explains the specific constraint (e.g.,
+ * "Promo code 'BULK20' is a bulk coupon and requires at least one
+ * cart item with quantity greater than 1.") to help the client
+ * understand what cart modification is needed.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PROMO_CODE_CART_CONSTRAINT
  * @since 1.4.0
  */
 public final class PromoCodeCartConstraintException extends InvalidOperationException {

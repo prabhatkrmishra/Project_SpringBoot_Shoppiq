@@ -1,25 +1,39 @@
 package com.pkmprojects.shoppiq.aiservice.enums;
 
 /**
- * <strong>Spring Boot Concept:</strong> Represents the lifecycle status of an AI chat conversation.
+ * Lifecycle status of an AI chat conversation.
  *
- * <p>
- * Conversations transition from {@link #ACTIVE} to {@link #RESOLVED} when the
- * user explicitly marks the conversation as complete, or when the system
- * auto-resolves based on closing-phrase detection.
+ * <p>This enumeration defines the valid states for an AI chat conversation's
+ * lifecycle. Conversations transition from {@link #ACTIVE} to
+ * {@link #RESOLVED} when the user marks them complete, the system auto-resolves
+ * them due to inactivity, or an admin manually resolves them. Once resolved,
+ * a conversation cannot accept new messages and is considered closed.</p>
  *
- * @author PrabhatKrMishra
+ * <p>The status field is persisted as a string in the database and is used
+ * for filtering, auto-resolution queries, and admin dashboard status
+ * indicators.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public enum ConversationStatus {
 
     /**
      * Conversation is ongoing and can accept new messages.
+     *
+     * <p>This is the initial status for all new conversations. The AI model
+     * processes messages and the conversation context is maintained in the
+     * chat memory window.</p>
      */
     ACTIVE,
 
     /**
      * Conversation has been closed; no further messages are permitted.
+     *
+     * <p>Once a conversation reaches this status, any attempt to send a new
+     * message results in an {@code AiAssistantException} with a 410 Gone
+     * response. The conversation remains in the database for admin auditing
+     * and historical review.</p>
      */
     RESOLVED
 }

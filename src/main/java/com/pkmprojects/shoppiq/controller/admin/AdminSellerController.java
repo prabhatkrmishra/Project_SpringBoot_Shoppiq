@@ -9,25 +9,35 @@ import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * Admin REST controller for seller management.
+ * Admin REST controller for seller registration and lifecycle management.
  *
- * <h2>Endpoints</h2>
- * <ul>
- *     <li>GET  /api/admin/sellers                — list all sellers</li>
- *     <li>GET  /api/admin/sellers?status=PENDING  — filter by verification status</li>
- *     <li>PUT  /api/admin/sellers/{id}/approve    — approve seller</li>
- *     <li>PUT  /api/admin/sellers/{id}/reject     — reject seller</li>
- * </ul>
+ * <p>Provides endpoints for admins to review, approve, reject, suspend, and
+ * unsuspend seller accounts. Sellers must be approved before they can list
+ * products on the storefront. The approval workflow ensures quality control
+ * over the seller ecosystem.</p>
+ *
+ * <p>This controller acts as the HTTP boundary for seller administration. It
+ * delegates all business logic — status transitions, storefront visibility,
+ * and seller lifecycle management — to {@link AdminSellerService}. The
+ * controller handles no business logic beyond page-size capping.</p>
+ *
+ * <p>All endpoints require ADMIN role and are mounted under /api/admin/sellers.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET  /api/admin/sellers                  — list all sellers (optional status filter)
+ * PUT  /api/admin/sellers/{sellerId}/approve   — approve seller registration
+ * PUT  /api/admin/sellers/{sellerId}/reject    — reject seller registration
+ * PUT  /api/admin/sellers/{sellerId}/suspend   — suspend an approved seller
+ * PUT  /api/admin/sellers/{sellerId}/unsuspend — unsuspend a previously suspended seller
+ * </pre>
  *
  * @author prabhatkrmishra
+ * @see AdminSellerService
  * @since 1.0.0
  */
 @Validated
@@ -45,11 +55,16 @@ public class AdminSellerController {
     }
 
     /**
-     * Returns a paginated list of sellers, optionally filtered by verification status.
+     * Returns a paginated list of sellers, optionally filtered by verification
+     * status.
+     *
+     * <p>When a status query parameter is provided, only sellers with that
+     * verification status are returned. Without the filter, all sellers are
+     * returned regardless of status.</p>
      *
      * @param status optional verification status filter (PENDING, APPROVED, REJECTED)
      * @param page   zero-based page index
-     * @param size   page size (capped by {@code pagination.maxPageSize()})
+     * @param size   page size (capped by the configured maximum)
      * @return 200 OK with page of seller responses
      */
     @GetMapping
@@ -67,7 +82,10 @@ public class AdminSellerController {
     /**
      * Approves a seller's registration, enabling them to list products.
      *
-     * @param sellerId the seller ID
+     * <p>Transitions the seller from PENDING to APPROVED status. The seller
+     * can then create and publish products on the storefront.</p>
+     *
+     * @param sellerId the seller ID to approve
      * @return 200 OK with the updated seller response
      */
     @PutMapping("/{sellerId}/approve")
@@ -79,7 +97,10 @@ public class AdminSellerController {
     /**
      * Rejects a seller's registration application.
      *
-     * @param sellerId the seller ID
+     * <p>Transitions the seller from PENDING to REJECTED status. The seller
+     * can reapply after addressing the rejection reasons.</p>
+     *
+     * @param sellerId the seller ID to reject
      * @return 200 OK with the updated seller response
      */
     @PutMapping("/{sellerId}/reject")
@@ -91,7 +112,10 @@ public class AdminSellerController {
     /**
      * Suspends an approved seller, temporarily disabling their storefront.
      *
-     * @param sellerId the seller ID
+     * <p>The seller's products are hidden from the catalog, and they can no
+     * longer manage their store until unsuspended.</p>
+     *
+     * @param sellerId the seller ID to suspend
      * @return 200 OK with the updated seller response
      */
     @PutMapping("/{sellerId}/suspend")
@@ -103,7 +127,10 @@ public class AdminSellerController {
     /**
      * Unsuspends a previously suspended seller, reactivating their storefront.
      *
-     * @param sellerId the seller ID
+     * <p>The seller's products become visible again, and they regain access
+     * to the seller panel.</p>
+     *
+     * @param sellerId the seller ID to unsuspend
      * @return 200 OK with the updated seller response
      */
     @PutMapping("/{sellerId}/unsuspend")

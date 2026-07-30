@@ -10,28 +10,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link ItemDetailsLookupService}.
- *
- * <h2>What is {@code @Service}?</h2>
- * <p>
- * Registers this package-private class as a Spring bean.
- * </p>
- *
- * <h2>What is {@code @RequiredArgsConstructor}?</h2>
- * <p>
- * Lombok-generated constructor for injecting {@code ItemDetailsRepository}.
- * </p>
- *
- * <h2>What is {@code @Transactional(readOnly = true)}?</h2>
- * <p>
- * All queries are read-only, optimized for performance. The database can use
- * read-optimized plans without write-lock overhead.
- * </p>
- *
- * <p>All queries run in a read-only transaction. Delegates directly
- * to {@code ItemDetailsRepository}.</p>
+ * {@link ItemDetailsLookupService} implementation providing read-only item-details queries.
  *
  * @author prabhatkrmishra
+ * @see ItemDetailsLookupService
  * @since 1.4.0
  */
 @Service
@@ -171,5 +153,10 @@ class ItemDetailsLookupServiceImpl implements ItemDetailsLookupService {
     @Override
     public java.math.BigDecimal sumInventoryValue() {
         return itemDetailsRepository.sumInventoryValue();
+    }
+
+    @Override
+    public boolean existsByCategoryId(Long categoryId) {
+        return itemDetailsRepository.existsByCategoryId(categoryId);
     }
 }

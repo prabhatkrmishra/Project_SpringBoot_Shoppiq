@@ -2,6 +2,7 @@ package com.pkmprojects.shoppiq.service.newsletter;
 
 import com.pkmprojects.shoppiq.dto.newsletter.NewsletterSubscribeRequest;
 import com.pkmprojects.shoppiq.entity.newsletter.NewsletterSubscriber;
+import com.pkmprojects.shoppiq.exception.business.InvalidRequestException;
 import com.pkmprojects.shoppiq.repository.newsletter.NewsletterSubscriberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,26 +15,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link NewsletterSubscriberService}.
- *
- * <p><strong>What this Service implementation demonstrates:</strong></p>
- * <ul>
- *   <li><strong>@Transactional</strong> — Write operations ({@link #subscribe}, {@link #unsubscribe})
- *       are wrapped in transactions so that entity changes propagate to the database atomically.
- *       Read operations ({@link #getActiveSubscriberEmails}) use {@code readOnly = true} for
- *       a minor performance hint to the persistence provider.</li>
- *   <li><strong>Idempotent subscribe</strong> — The subscribe method checks if the email exists.
- *       If active, it silently returns (no-op). If inactive, it reactivates. This avoids
- *       IllegalArgumentException for duplicate subscriptions.</li>
- *   <li><strong>Soft-delete unsubscribe</strong> — Instead of deleting the row, the subscriber
- *       is marked inactive and the {@code unsubscribedAt} timestamp is recorded. This preserves
- *       the subscription history and allows reactivation.</li>
- *   <li><strong>Constructor injection with {@code @RequiredArgsConstructor}</strong> — Dependencies
- *       ({@code NewsletterSubscriberRepository}, {@code Clock}) are injected via constructor,
- *       which is the Spring-recommended approach for immutability and testability.</li>
- * </ul>
+ * {@link NewsletterSubscriberService} implementation handling idempotent subscribe,
+ * soft-delete unsubscribe with reactivation, and active subscriber email retrieval.
  *
  * @author prabhatkrmishra
+ * @see NewsletterSubscriberService
  * @since 1.0.0
  */
 @Slf4j
@@ -60,10 +46,10 @@ public class NewsletterSubscriberServiceImpl implements NewsletterSubscriberServ
         String email = request.email().trim().toLowerCase();
 
         if (email.isBlank()) {
-            throw new IllegalArgumentException("Email must not be blank.");
+            throw InvalidRequestException.detail("Email must not be blank.");
         }
         if (!email.contains("@") || !email.contains(".")) {
-            throw new IllegalArgumentException("Email format is invalid.");
+            throw InvalidRequestException.detail("Email format is invalid.");
         }
 
         var existing = subscriberRepository.findByEmailIgnoreCase(email);

@@ -1,29 +1,52 @@
 package com.pkmprojects.shoppiq.dto.notification;
 
 /**
- * <strong>Spring Boot Concept:</strong> Request payload for updating a user's email notification preferences.
+ * Request payload for updating a user's email notification preferences.
  *
- * <p>All flags use {@code Boolean} (nullable wrapper type) instead of
- * {@code boolean} (primitive), making each field optional. This allows
- * the frontend to send a PATCH request with only the fields to change,
- * without including the current values of unchanged preferences.</p>
+ * <p>This record uses nullable {@code Boolean} wrapper types instead of
+ * primitive {@code boolean} for all fields, enabling partial updates
+ * via PATCH semantics. The frontend sends only the fields the user
+ * wants to change, leaving unchanged fields as {@code null}. The
+ * service layer applies only non-null values, preserving the existing
+ * state of any field not included in the request.</p>
  *
- * <p><b>Partial update pattern:</b> Using nullable booleans in the request
- * DTO is a common approach for PATCH endpoints where the client sends
- * only the fields they want to modify. The service layer checks for
- * non-null values to determine which fields to update.</p>
+ * <p>No validation annotations are needed on the fields because
+ * {@code Boolean} values are either a valid boolean or {@code null},
+ * and {@code null} explicitly means "no change." This design avoids
+ * the common pitfall of accidentally resetting preferences to
+ * {@code false} when the frontend omits them from the request body.</p>
  *
+ * @param orderUpdates      whether to receive order update emails;
+ *                          {@code null} = no change to current setting
+ * @param accountSecurity   whether to receive account security emails;
+ *                          {@code null} = no change to current setting
+ * @param promotions        whether to receive promotional emails;
+ *                          {@code null} = no change to current setting
+ * @param reviewsEngagement whether to receive review engagement emails;
+ *                          {@code null} = no change to current setting
  * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record UpdateNotificationPreferenceRequest(
 
+        /**
+         * Whether to receive order update emails. Null = no change.
+         */
         Boolean orderUpdates,
 
+        /**
+         * Whether to receive account security emails. Null = no change.
+         */
         Boolean accountSecurity,
 
+        /**
+         * Whether to receive promotional emails. Null = no change.
+         */
         Boolean promotions,
 
+        /**
+         * Whether to receive review engagement emails. Null = no change.
+         */
         Boolean reviewsEngagement
 ) {
 }

@@ -1,6 +1,5 @@
 package com.pkmprojects.shoppiq.auth.utils;
 
-import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.auth.JwtAuthenticationException;
@@ -14,102 +13,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Utility class for all JWT operations: token generation, validation,
- * claim extraction, and cookie parsing.
+ * Utility class for JWT operations: generation, validation, and claim extraction.
  *
- * <h3>JWT / Spring Security concepts demonstrated</h3>
- * <ul>
- *   <li><strong>HMAC-SHA256 signing</strong> — tokens are signed with a
- *       symmetric key (the {@code jwt.secret} property) using
- *       {@code io.jsonwebtoken} (JJWT). The same secret is used for both
- *       signing and verification.</li>
- *   <li><strong>Custom JWT claims</strong> — beyond standard claims
- *       ({@code sub}, {@code iat}, {@code exp}), the token carries
- *       application-specific claims: {@code userId} (for DB lookups),
- *       {@code roles} (for authorization, avoiding per-request role queries),
- *       and {@code tokenVersion} (for forced token invalidation).</li>
- *   <li><strong>Token version invalidation</strong> — each user has a
- *       {@code tokenVersion} column in the database. When the password is
- *       changed or an admin forces logout, incrementing this version
- *       immediately invalidates all existing JWTs, even if they haven't
- *       expired yet.</li>
- *   <li><strong>Stateless token design</strong> — the JWT carries enough
- *       information to build a complete {@code SecurityContext} (including
- *       roles) with only one database query per request (to verify token
- *       version and enabled status). No HTTP session is created or read.</li>
- *   <li><strong>Refresh token validation</strong> — {@link #validateTokenForRefresh}
- *       checks the token's age from issuance (not expiration), enabling the
- *       refresh endpoint to accept recently-expired tokens while rejecting
- *       old ones.</li>
- * </ul>
+ * <p>This component provides HMAC-SHA256 signed JWT tokens with custom claims
+ * for stateless authentication. It handles token generation with configurable
+ * expiration, token validation (signature, expiration, token version), and
+ * claim extraction for user identity and roles. The token version claim
+ * supports forced logout by invalidating all existing tokens when the
+ * version is incremented.</p>
  *
- * <h3>Token claims</h3>
- * <ul>
- *   <li>{@code sub} — username for identification</li>
- *   <li>{@code userId} — user ID for entity references</li>
- *   <li>{@code roles} — list of granted authority strings (e.g.,
- *       "ROLE_CUSTOMER", "ROLE_ADMIN") for authorization decisions</li>
- *   <li>{@code tokenVersion} — must match the user's current token version
- *       in the database for the token to be valid.</li>
- *   <li>{@code iat} — issued-at timestamp</li>
- *   <li>{@code exp} — expiration timestamp</li>
- * </ul>
- *
- * <h3>Validation checks (in order)</h3>
- * <ol>
- *   <li>JWT signature verified using HMAC-SHA secret key (handled by JJWT's
- *       {@code parser().verifyWith(key).build().parseSignedClaims()})</li>
- *   <li>Token has not expired ({@code exp} claim checked by JJWT)</li>
- *   <li>Token version matches the user's current version in the database</li>
- *   <li>User account is enabled</li>
- *   <li>Username in token matches the database username</li>
- * </ol>
- *
- * <h3>Request flow</h3>
- * <pre>
- * JwtAuthenticationFilter receives request
- *       ↓
- * Extract JWT from cookie
- *       ↓
- * Parse claims: username, userId, roles, tokenVersion
- *       ↓
- * Load User from database to check tokenVersion and enabled status
- *       ↓
- * tokenVersion matches AND user enabled? → Build authentication from claims
- *       ↓
- * Set SecurityContext with roles from JWT (no further DB queries)
- * </pre>
- *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Utility / Helper pattern</strong> — stateless methods grouped
- *       in a {@code @Component} that can be injected anywhere JWT operations
- *       are needed (filter, service, handler).</li>
- *   <li><strong>Fail-closed validation</strong> — {@link #validateToken} and
- *       {@link #validateTokenForRefresh} return {@code false} for any
- *       exception, ensuring that unexpected errors never accidentally grant
- *       access.</li>
- *   <li><strong>Claim-based authority resolution</strong> — roles are extracted
- *       from the JWT claims rather than queried from the database on every
- *       request, reducing database load and latency for authorization checks.</li>
- * </ul>
- *
- * @see JwtCookieFactory
- * @see JwtAuthenticationFilter
+ * <p>The utility is used by the {@link com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter}
+ * for token validation and by the {@link com.pkmprojects.shoppiq.auth.service.AuthService}
+ * for token generation. It also provides methods for extracting user
+ * information from HTTP requests, which is used by the rate limit filter
+ * and other components that need to identify the current user.</p>
  *
  * @author prabhatkrmishra
+ * @see JwtCookieFactory
+ * @see com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter
  * @since 1.0.0
  */
 @Component
@@ -127,7 +58,7 @@ public class JwtAuthenticationUtils {
         try {
             this.key = Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize JWT signing key", e);
+            throw new JwtAuthenticationException(ErrorCode.INVALID_JWT, "Failed to initialize JWT signing key");
         }
     }
 
@@ -144,6 +75,23 @@ public class JwtAuthenticationUtils {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    /**
+     * Extracts both userId and username from a single JWT parse.
+     * Use this instead of calling {@link #getUserIdFromToken} and
+     * {@link #getUsernameFromToken} separately to avoid parsing the
+     * JWT twice.
+     *
+     * @param token compact JWT string
+     * @return array of [userId, username]; userId may be null if claim is missing
+     */
+    public Object[] extractUserIdAndUsername(String token) {
+        Claims claims = getClaimsFromToken(token);
+        return new Object[]{
+                claims.get("userId", Long.class),
+                claims.getSubject()
+        };
     }
 
     /**
@@ -223,15 +171,17 @@ public class JwtAuthenticationUtils {
      */
     public boolean validateToken(String token, User user) {
         try {
-            boolean expired = isTokenExpired(token);
+            Claims claims = getClaimsFromToken(token);
+
+            boolean expired = claims.getExpiration().toInstant().isBefore(Instant.now(clock));
             if (expired) {
                 throw new JwtAuthenticationException(ErrorCode.JWT_EXPIRED, "JWT token has expired.");
             }
 
-            String tokenUsername = getUsernameFromToken(token);
+            String tokenUsername = claims.getSubject();
             boolean usernameMatches = user.getUsername().equals(tokenUsername);
 
-            Integer tokenTokenVersion = getTokenVersionFromToken(token);
+            Integer tokenTokenVersion = claims.get("tokenVersion", Integer.class);
             boolean tokenVersionMatches = tokenTokenVersion != null
                     && tokenTokenVersion.equals(user.getTokenVersion());
 
@@ -272,7 +222,7 @@ public class JwtAuthenticationUtils {
                     .signWith(key)
                     .compact();
         } catch (Exception e) {
-            throw new RuntimeException("Token generation failed", e);
+            throw new JwtAuthenticationException(ErrorCode.INVALID_JWT, "Token generation failed");
         }
     }
 

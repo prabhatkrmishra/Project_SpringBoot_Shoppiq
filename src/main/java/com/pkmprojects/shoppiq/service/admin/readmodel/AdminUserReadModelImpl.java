@@ -10,18 +10,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminUserReadModel}
- * providing read-only user queries for admin dashboards and reports.
- *
- * <p>Delegates to {@code UserRepository} for user count and recent-user queries.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional(readOnly = true)</strong> — All queries are read-only, optimized for database performance.</li>
- *   <li><strong>@RequiredArgsConstructor</strong> — Lombok-generated constructor injection for final fields.</li>
- * </ul>
- * </p>
+ * {@link AdminUserReadModel} implementation providing read-only user queries
+ * for admin dashboards and reports.
  *
  * @author prabhatkrmishra
  * @see AdminUserReadModel

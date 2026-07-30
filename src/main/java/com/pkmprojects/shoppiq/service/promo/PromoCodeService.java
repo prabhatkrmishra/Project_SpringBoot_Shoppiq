@@ -12,25 +12,10 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Contract for promo code validation, application and admin management.
+ * Business contract for promo code validation, application, and admin management.
  *
- * <p><strong>What the Service layer demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Multi-step validation pipeline</strong> — {@link #validateAndCalculate} checks
- *       existence, active status, validity window, global usage limit, per-user usage limit,
- *       minimum order amount, and cart composition constraints before computing a discount.
- *       This demonstrates layered validation in the service layer.</li>
- *   <li><strong>Separation of concerns</strong> — Validation ({@link #validateAndCalculate}),
- *       discount calculation ({@link #calculateDiscount}), and usage recording
- *       ({@link #recordUsage}) are separate methods, allowing the checkout flow to call them
- *       independently at different stages.</li>
- *   <li><strong>Cart constraint validation</strong> — Supports {@code SINGLE} and {@code BULK}
- *       coupon types with minimum item quantity thresholds, showing domain-specific business
- *       rules at the service layer.</li>
- *   <li><strong>Admin CRUD operations</strong> — Standard CRUD methods ({@link #create},
- *       {@link #update}, {@link #delete}, {@link #findAll}, {@link #findById}) plus a
- *       toggle-active operation.</li>
- * </ul>
+ * <p>Defines operations for multi-step validation pipeline, discount calculation,
+ * usage recording, and standard admin CRUD with toggle-active.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

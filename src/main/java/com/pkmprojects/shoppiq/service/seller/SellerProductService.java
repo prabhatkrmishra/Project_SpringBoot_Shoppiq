@@ -6,33 +6,10 @@ import com.pkmprojects.shoppiq.dto.item.ItemResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * <strong>Spring Boot Concept:</strong> Business contract for seller product management.
+ * Business contract for seller product lifecycle management.
  *
- * <p>
- * Handles the lifecycle of products owned by a seller. Sellers can
- * create, read, update and delete their own products. New products
- * start in {@code DRAFT} status and require admin publishing before
- * becoming visible to customers.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Create a new product as DRAFT.</li>
- *     <li>List all products belonging to the authenticated seller.</li>
- *     <li>Retrieve a specific product by ID (with ownership check).</li>
- *     <li>Update an existing product (with ownership check).</li>
- *     <li>Delete a product (with ownership check).</li>
- *     <li>Enforce seller-level preconditions (ACTIVE, not SUSPENDED).</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>The seller is derived from the authenticated user, not from
- *         the request payload.</li>
- *     <li>Ownership verification ensures sellers can only manage their
- *         own products.</li>
- *     <li>SKU uniqueness is enforced across all sellers.</li>
- * </ul>
+ * <p>Defines operations for CRUD with ownership verification, SKU uniqueness
+ * enforcement, and DRAFT publishing status for new products.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

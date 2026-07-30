@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service;
 
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.promo.CartItemPreview;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeRequest;
 import com.pkmprojects.shoppiq.dto.promo.PromoCodeResponse;
@@ -7,15 +8,22 @@ import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.promo.PromoCode;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.DiscountType;
-import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.exception.general.promo.*;
 import com.pkmprojects.shoppiq.repository.promo.PromoCodeRepository;
 import com.pkmprojects.shoppiq.repository.promo.PromoCodeUsageRepository;
 import com.pkmprojects.shoppiq.service.promo.PromoCodeServiceImpl;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -25,12 +33,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -44,33 +48,30 @@ import static org.mockito.Mockito.*;
 @DisplayName("PromoCodeServiceImpl Tests")
 class PromoCodeServiceImplTest {
 
+    private static final List<CartItemPreview> TEST_ITEMS =
+            List.of(new CartItemPreview(1L, 1, BigDecimal.valueOf(500)));
+    private static final Instant NOW = Instant.parse("2026-07-26T10:30:00Z");
     @Mock
     private PromoCodeRepository promoCodeRepository;
     @Mock
     private PromoCodeUsageRepository promoCodeUsageRepository;
     @Mock
     private Clock clock;
-
     @InjectMocks
     private PromoCodeServiceImpl promoCodeService;
-
-    private static final List<CartItemPreview> TEST_ITEMS =
-            List.of(new CartItemPreview(1L, 1, BigDecimal.valueOf(500)));
-
-    private static final Instant NOW = Instant.parse("2026-07-26T10:30:00Z");
-
-    @BeforeEach
-    void setUp() {
-        lenient().when(clock.instant()).thenReturn(NOW);
-    }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────
 
     private static void setId(Object entity, Long id) throws Exception {
         Field field = entity.getClass().getSuperclass().getSuperclass()
                 .getDeclaredField("id");
         field.setAccessible(true);
         field.set(entity, id);
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(clock.instant()).thenReturn(NOW);
     }
 
     private User buildUser(long id) throws Exception {
@@ -83,11 +84,11 @@ class PromoCodeServiceImplTest {
     }
 
     private PromoCode buildPromoCode(Long id, String code, DiscountType type,
-                                      BigDecimal value, BigDecimal minAmount,
-                                      BigDecimal maxDiscount, Integer usageLimit,
-                                      Integer userUsageLimit, int usedCount,
-                                      Instant validFrom, Instant validUntil,
-                                      boolean active) throws Exception {
+                                     BigDecimal value, BigDecimal minAmount,
+                                     BigDecimal maxDiscount, Integer usageLimit,
+                                     Integer userUsageLimit, int usedCount,
+                                     Instant validFrom, Instant validUntil,
+                                     boolean active) throws Exception {
         PromoCode pc = PromoCode.builder()
                 .code(code)
                 .description("Test promo")
@@ -107,10 +108,10 @@ class PromoCodeServiceImplTest {
     }
 
     private PromoCodeRequest buildRequest(String code, DiscountType type,
-                                           BigDecimal value, BigDecimal minAmount,
-                                           BigDecimal maxDiscount, Integer usageLimit,
-                                           Integer userUsageLimit,
-                                           Instant validFrom, Instant validUntil) {
+                                          BigDecimal value, BigDecimal minAmount,
+                                          BigDecimal maxDiscount, Integer usageLimit,
+                                          Integer userUsageLimit,
+                                          Instant validFrom, Instant validUntil) {
         return new PromoCodeRequest(
                 code, "Test promo", type, value,
                 minAmount, maxDiscount, null, null, usageLimit, userUsageLimit,

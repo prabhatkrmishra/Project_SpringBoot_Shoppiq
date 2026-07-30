@@ -3,27 +3,38 @@ package com.pkmprojects.shoppiq.dto.admin.response;
 import java.math.BigDecimal;
 
 /**
- * <strong>Spring Boot Concept:</strong> Response DTO for admin product inventory listing.
+ * Response DTO for the admin product inventory management page.
  *
- * <p>
- * This DTO provides a product-centric view of inventory with
- * stock levels, pricing, and low-stock indicators for the
- * administrator inventory management page.
- * </p>
+ * <p>This record provides a product-centric view of inventory with
+ * stock levels, pricing information, and computed stock status
+ * indicators. It is returned by the admin inventory listing endpoint
+ * and is designed for the inventory management UI where administrators
+ * monitor stock levels, identify low-stock products, and manage
+ * product availability across the catalog.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Expose product inventory data to the admin API.</li>
- *     <li>Include computed fields like stock status and effective price.</li>
- * </ul>
+ * <p>The {@code effectivePrice} is computed server-side as
+ * {@code basePrice * (1 - discountPercentage / 100)} and is included
+ * for display convenience. The {@code stockStatus} enum provides a
+ * normalized indicator for frontend filtering and conditional styling
+ * (red for out-of-stock, yellow for low-stock, green for in-stock).</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Immutable through Java Records.</li>
- *     <li>Includes stock status enum for easy frontend filtering.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @param itemId             unique product identifier
+ * @param itemName           product display name
+ * @param slug               SEO-friendly URL slug for the product
+ * @param description        product description text
+ * @param categoryName       name of the product's assigned category
+ * @param sku                Stock Keeping Unit identifier for warehouse tracking
+ * @param brand              product manufacturer or brand name
+ * @param basePrice          base selling price before any discount is applied
+ * @param discountPercentage current discount percentage applied to the product
+ * @param effectivePrice     computed selling price after discount; calculated
+ *                           server-side to ensure accuracy
+ * @param stockQuantity      current inventory count for this product
+ * @param stockStatus        computed stock indicator (IN_STOCK, LOW_STOCK, OUT_OF_STOCK)
+ * @param active             whether the product is currently active and visible in the storefront
+ * @param imageUrl           URL of the product's primary image
+ * @param onSale             whether the product is currently marked as on sale
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AdminProductInventoryResponse(
@@ -105,26 +116,6 @@ public record AdminProductInventoryResponse(
 ) {
 
     /**
-     * Stock status enum for easy frontend filtering.
-     */
-    public enum StockStatus {
-        /**
-         * In stock (quantity > low stock threshold).
-         */
-        IN_STOCK,
-
-        /**
-         * Low stock (quantity > 0 but <= threshold).
-         */
-        LOW_STOCK,
-
-        /**
-         * Out of stock (quantity = 0).
-         */
-        OUT_OF_STOCK
-    }
-
-    /**
      * Creates an {@code AdminProductInventoryResponse} from entity data.
      *
      * @param itemId             product identifier
@@ -158,9 +149,11 @@ public record AdminProductInventoryResponse(
             String imageUrl,
             boolean onSale
     ) {
-        BigDecimal effectivePrice = basePrice.multiply(
+        BigDecimal effectivePrice = discountPercentage != null
+                ? basePrice.multiply(
                 BigDecimal.ONE.subtract(discountPercentage.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP))
-        ).setScale(2, java.math.RoundingMode.HALF_UP);
+        ).setScale(2, java.math.RoundingMode.HALF_UP)
+                : basePrice.setScale(2, java.math.RoundingMode.HALF_UP);
 
         StockStatus stockStatus;
         if (stockQuantity == 0) {
@@ -188,5 +181,29 @@ public record AdminProductInventoryResponse(
                 imageUrl,
                 onSale
         );
+    }
+
+    /**
+     * Stock status indicator for frontend filtering and conditional styling.
+     *
+     * <p>Computed server-side by comparing the current stock quantity against
+     * the configured low-stock threshold. Used in the inventory management
+     * UI to highlight products that need attention.</p>
+     */
+    public enum StockStatus {
+        /**
+         * In stock (quantity > low stock threshold).
+         */
+        IN_STOCK,
+
+        /**
+         * Low stock (quantity > 0 but <= threshold).
+         */
+        LOW_STOCK,
+
+        /**
+         * Out of stock (quantity = 0).
+         */
+        OUT_OF_STOCK
     }
 }

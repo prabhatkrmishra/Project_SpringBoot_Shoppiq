@@ -11,19 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminProductService}
- * containing business logic for admin product publishing workflow.
- *
- * <p>Lists products pending review and transitions publishing status between
- * DRAFT, PUBLISHED, and REJECTED. Used by {@code AdminProductController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Publishing status transitions are atomic; reads use {@code readOnly = true}.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link AdminProductService} implementation that handles review of seller-submitted
+ * products and publish/reject status transitions.
  *
  * @author prabhatkrmishra
  * @see AdminProductService

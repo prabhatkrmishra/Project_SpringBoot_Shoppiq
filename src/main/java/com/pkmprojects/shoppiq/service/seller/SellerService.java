@@ -6,35 +6,10 @@ import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * <strong>Spring Boot Concept:</strong> Business contract for seller profile management.
+ * Business contract for seller profile management.
  *
- * <p><strong>What the Service layer demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Interface-first design</strong> — Separates the seller management contract
- *       (registration, profile retrieval, updates, deactivation, store publishing) from its
- *       implementation.</li>
- *   <li><strong>Seller lifecycle</strong> — Registration creates a seller with
- *       {@code verificationStatus = PENDING} and {@code sellerStatus = INACTIVE}. Full
- *       activation requires admin approval, demonstrating a multi-step registration flow.</li>
- *   <li><strong>Soft-delete deactivation</strong> — {@link #deleteProfile} sets the seller
- *       status to {@code INACTIVE} instead of deleting the row.</li>
- *   <li><strong>Store publishing</strong> — {@link #publishStore} transitions a store from
- *       {@code DRAFT} to {@code PUBLISHED}, controlling visibility to customers.</li>
- * </ul>
- *
- * <p>
- * Handles seller registration, profile retrieval, profile updates, and
- * deactivation. Registration creates a seller with PENDING verification
- * status. Activation occurs only after admin approval (Phase 15.3).
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Register a new seller application.</li>
- *     <li>Retrieve the authenticated seller's profile.</li>
- *     <li>Update the authenticated seller's profile.</li>
- *     <li>Deactivate (soft-delete) the seller account.</li>
- * </ul>
+ * <p>Defines operations for registration, profile retrieval, updates,
+ * soft-delete deactivation, and store publishing.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

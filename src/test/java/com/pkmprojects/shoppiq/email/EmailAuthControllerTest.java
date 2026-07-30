@@ -6,8 +6,8 @@ import com.pkmprojects.shoppiq.dto.auth.ForgotPasswordRequest;
 import com.pkmprojects.shoppiq.dto.auth.ResetPasswordRequest;
 import com.pkmprojects.shoppiq.dto.auth.VerifyEmailRequest;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
+import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.verification.service.VerificationCodeService;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +29,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EmailAuthController")

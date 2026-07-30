@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when an AI chat
- * conversation cannot be found by its chat ID or database ID.
+ * Thrown when an AI chat conversation cannot be found.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) with multiple factory methods for different lookup scenarios
- * (public chat ID and internal database ID).</p>
+ * <p>This exception is thrown by AI service methods when a database
+ * lookup for a conversation fails. It uses the
+ * {@link ErrorCode#AI_CONVERSATION_NOT_FOUND} code and HTTP 404 Not
+ * Found status. The conversation may have been deleted or the ID may
+ * be incorrect.</p>
+ *
+ * <p>The detail message includes the conversation identifier (e.g.,
+ * "AI conversation with chatId 'abc-123' was not found.") to help the
+ * client understand which conversation was invalid. The client should
+ * verify the conversation ID and retry the request.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#AI_CONVERSATION_NOT_FOUND
  * @since 1.0.0
  */
 public final class AiConversationNotFoundException extends ResourceNotFoundException {
@@ -29,7 +35,7 @@ public final class AiConversationNotFoundException extends ResourceNotFoundExcep
      */
     public static AiConversationNotFoundException chatId(String chatId) {
         return new AiConversationNotFoundException(
-            "AI conversation with chatId '%s' was not found.".formatted(chatId)
+                "AI conversation with chatId '%s' was not found.".formatted(chatId)
         );
     }
 
@@ -41,7 +47,7 @@ public final class AiConversationNotFoundException extends ResourceNotFoundExcep
      */
     public static AiConversationNotFoundException id(Long id) {
         return new AiConversationNotFoundException(
-            "AI conversation with id '%d' was not found.".formatted(id)
+                "AI conversation with id '%d' was not found.".formatted(id)
         );
     }
 }

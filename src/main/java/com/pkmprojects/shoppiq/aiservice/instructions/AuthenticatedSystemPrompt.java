@@ -4,14 +4,20 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import org.springframework.stereotype.Component;
 
 /**
- * <strong>Spring Boot Concept:</strong> System prompt for authenticated user conversations.
+ * System prompt for authenticated user conversations with full feature access.
  *
- * <p>
- * Includes the user's identity, chat ID, and behavioral guidelines for
- * product recommendations, order lookups, cart management, reviews, and
- * conversation closure detection.
+ * <p>This implementation of {@link SystemPromptProvider} generates behavioral
+ * instructions for AI conversations with logged-in users. The prompt includes
+ * the user's identity (username and account ID), the conversation's chat ID,
+ * and comprehensive instructions for all available features: product search,
+ * order status, cart contents, user reviews, and conversation resolution.</p>
  *
- * @author PrabhatKrMishra
+ * <p>The prompt instructs the AI to always use tools for data retrieval rather
+ * than fabricating information, and includes formatting rules for the custom
+ * chat UI renderer. Strict scope restrictions prevent the AI from engaging
+ * with off-topic requests or prompt injection attempts.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component("authenticatedSystemPrompt")

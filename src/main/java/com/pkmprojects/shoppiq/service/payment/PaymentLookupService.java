@@ -13,10 +13,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Read-only payment query facade.
+ * Read-only payment query facade for lookup, aggregate, and paging queries.
  *
  * <p>Decouples service-layer code from {@code PaymentRepository},
- * providing payment lookup, aggregate, and paging queries.</p>
+ * providing find, exists, count, sum, and date-range queries.</p>
  *
  * @author prabhatkrmishra
  * @since 1.4.0

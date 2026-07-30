@@ -10,8 +10,10 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.StoreStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
+import com.pkmprojects.shoppiq.exception.business.InvalidRequestException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerAlreadyExistsException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.store.StoreNotFoundException;
 import com.pkmprojects.shoppiq.repository.address.AddressRepository;
 import com.pkmprojects.shoppiq.repository.seller.StoreRepository;
 import org.springframework.stereotype.Service;
@@ -21,33 +23,11 @@ import java.time.Clock;
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerService}.
- *
- * <p><strong>What this Service implementation demonstrates:</strong></p>
- * <ul>
- *   <li><strong>Delegation to specialized services</strong> — Rather than injecting repositories
- *       directly for all operations, this implementation delegates read operations to
- *       {@link SellerLookupService} and write operations to {@link SellerWriteService}.
- *       This follows the single-responsibility principle: this class handles only seller
- *       profile workflows (registration, updates, deactivation, store publishing).</li>
- *   <li><strong>Duplicate detection</strong> — {@link #register} checks both {@code userId}
- *       and {@code businessEmail} for conflicts before creating a seller, using
- *       {@link SellerLookupService} methods.</li>
- *   <li><strong>Soft-delete deactivation</strong> — {@link #deleteProfile} sets
- *       {@code sellerStatus = INACTIVE} rather than deleting the row, preserving history.</li>
- *   <li><strong>Store publishing flow</strong> — {@link #publishStore} looks up the seller,
- *       finds their store, and transitions it to {@code PUBLISHED}, with error handling for
- *       missing or already-published stores.</li>
- * </ul>
- *
- * <p>
- * Handles the seller lifecycle from initial registration to profile updates.
- * Registration sets {@code verificationStatus = PENDING} and
- * {@code sellerStatus = INACTIVE}. Activation occurs via admin approval
- * (Phase 15.3).
- * </p>
+ * {@link SellerService} implementation handling seller lifecycle from registration
+ * to profile updates, deactivation, and store publishing.
  *
  * @author prabhatkrmishra
+ * @see SellerService
  * @since 1.0.0
  */
 @Service
@@ -205,11 +185,10 @@ public class SellerServiceImpl implements SellerService {
                 .orElseThrow(() -> SellerNotFoundException.userId(user.getId()));
 
         Store store = storeRepository.findBySellerId(seller.getId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "No store found for seller '%d'.".formatted(seller.getId())));
+                .orElseThrow(() -> StoreNotFoundException.forSeller(seller.getId()));
 
         if (store.getStatus() == StoreStatus.PUBLISHED) {
-            throw new IllegalStateException("Store is already published.");
+            throw InvalidRequestException.detail("Store is already published.");
         }
 
         store.setStatus(StoreStatus.PUBLISHED);

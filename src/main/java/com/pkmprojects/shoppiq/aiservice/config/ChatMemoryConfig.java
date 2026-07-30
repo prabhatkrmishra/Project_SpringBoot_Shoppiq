@@ -13,26 +13,25 @@ import org.springframework.context.annotation.Configuration;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring configuration that provides the LangChain4j {@link ChatMemoryProvider} bean
- * and memory lifecycle management.
+ * Provides per-conversation chat memory using a sliding window of recent messages.
  *
- * <p>
- * Each chat ID is mapped to a {@link MessageWindowChatMemory} instance that retains
- * the last {@value MAX_MESSAGES} messages. Instances are cached in a
- * {@link ConcurrentHashMap} so that memory persists across requests within the
- * same JVM — the same conversation will remember its full context.
+ * <p>This configuration class manages the lifecycle of LangChain4j chat memory
+ * instances that enable the AI model to maintain conversational context across
+ * multiple requests within the same conversation. Each conversation is assigned
+ * an independent memory window, ensuring that messages from one conversation do
+ * not leak into another.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *   <li>Memory is keyed by the public {@code chatId} string, not the database ID</li>
- *   <li>Guest and authenticated conversations share the same provider</li>
- *   <li>Memory is in-memory only; it is lost on JVM restart. The database stores
- *       the full message history separately for persistence across restarts</li>
- *   <li>The window size ({@value MAX_MESSAGES}) is hardcoded; future versions may
- *       make this configurable via {@code shoppiq.ai.max-messages}</li>
- * </ul>
+ * <p>Memory instances are stored in a thread-safe {@link ConcurrentHashMap} and
+ * lazily created on first access for each chat ID. The sliding window retains
+ * the most recent 20 messages per conversation, providing sufficient context
+ * for the AI model while bounding memory consumption. When a conversation is
+ * resolved, its cached memory is explicitly evicted to free resources.</p>
  *
- * @author PrabhatKrMishra
+ * <p>This configuration is conditionally enabled via the {@code shoppiq.ai.enabled}
+ * property. When disabled, no memory beans are created and the AI service layer
+ * is entirely omitted from the application context.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Configuration
@@ -60,10 +59,12 @@ public class ChatMemoryConfig {
     /**
      * Creates a {@link ChatMemoryProvider} that supplies per-conversation memory windows.
      *
-     * <p>
-     * Returns a cached {@link MessageWindowChatMemory} for each chat ID, creating
-     * a new instance on first access. This ensures the AI model retains conversational
-     * context across multiple requests within the same conversation.
+     * <p>The returned provider lazily initializes a {@link MessageWindowChatMemory}
+     * instance for each unique chat ID encountered during conversations. Instances
+     * are cached in a thread-safe map to ensure that repeated requests within the
+     * same conversation share the same memory state. Each memory window retains
+     * up to 20 messages, providing the AI model with sufficient conversational
+     * context while preventing unbounded memory growth.</p>
      *
      * @return a provider that creates and caches {@link MessageWindowChatMemory} instances
      */
@@ -79,9 +80,11 @@ public class ChatMemoryConfig {
     /**
      * Clears the cached chat memory for a specific conversation.
      *
-     * <p>
-     * Should be called when a conversation is resolved to free memory,
-     * especially for guest sessions where memory is not persisted to the database.
+     * <p>This method should be called when a conversation is resolved or when
+     * a guest session is terminated. Evicting the memory entry ensures that
+     * subsequent conversations with the same chat ID start with a fresh
+     * context window, preventing stale conversational state from persisting
+     * across session boundaries.</p>
      *
      * @param chatId the conversation's chat ID (e.g., {@code CHAT-2026-07-A3F2} or {@code guest-<uuid>})
      */

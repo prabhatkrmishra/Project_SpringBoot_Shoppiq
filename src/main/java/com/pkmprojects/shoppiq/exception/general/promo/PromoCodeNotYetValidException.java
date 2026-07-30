@@ -6,14 +6,20 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a promo code
- * is not yet valid.
+ * Thrown when a promo code is not yet valid (before its start date).
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) for temporal validation (validFrom check).</p>
+ * <p>This exception is thrown when a customer applies a promo code before
+ * its valid start date. It uses the
+ * {@link ErrorCode#PROMO_CODE_NOT_YET_VALID} code and HTTP 400 Bad
+ * Request status. The code will become active on the specified date.</p>
+ *
+ * <p>The detail message includes the promo code and start date (e.g.,
+ * "Promo code 'SUMMER2026' is not valid until 2026-08-01T00:00:00Z.")
+ * to help the client understand when the code will become active. The
+ * client should wait until the start date or use a different code.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PROMO_CODE_NOT_YET_VALID
  * @since 1.0.0
  */
 public final class PromoCodeNotYetValidException extends InvalidOperationException {

@@ -1,11 +1,14 @@
 package com.pkmprojects.shoppiq.service.category;
 
-import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.category.CategoryRequest;
 import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.category.Category;
+import com.pkmprojects.shoppiq.exception.business.InvalidRequestException;
+import com.pkmprojects.shoppiq.exception.business.SlugGenerationFailedException;
 import com.pkmprojects.shoppiq.exception.general.category.CategoryNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.category.DuplicateCategoryException;
+import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import com.pkmprojects.shoppiq.util.SlugUtil;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,22 +23,26 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link CategoryService}
- * containing business logic for category management.
+ * Implementation of {@link CategoryService} containing business logic for
+ * category management including creation, updates, deletion, and retrieval.
  *
- * <p>Creates, updates, deletes, and retrieves categories with duplicate-name
- * validation and unique slug generation. Used by {@code CategoryController}.</p>
+ * <p>Creates, updates, and deletes categories with duplicate-name validation,
+ * unique slug generation via {@code SlugUtil}, and slug retry-on-conflict
+ * logic (up to 10 attempts). Delegates persistence to {@link CategoryWriteService}
+ * and queries to {@link CategoryLookupService}, following the CQRS-inspired
+ * read/write separation pattern.</p>
  *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Write operations are atomic; reads use {@code readOnly = true}.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * <p>All write operations are transactional and evict the "categories" cache
+ * on success to ensure fresh data on subsequent reads. Read operations use
+ * {@code @Transactional(readOnly = true)} with {@code @Cacheable} for
+ * optimized retrieval. The implementation enforces a product-reference check
+ * before category deletion, throwing {@code InvalidRequestException} if any
+ * item details reference the category.</p>
  *
  * @author prabhatkrmishra
  * @see CategoryService
+ * @see CategoryLookupService
+ * @see CategoryWriteService
  * @since 1.0.0
  */
 @Service
@@ -47,6 +54,7 @@ public class CategoryServiceImpl implements CategoryService {
      */
     private final CategoryLookupService categoryLookupService;
     private final CategoryWriteService categoryWriteService;
+    private final ItemDetailsLookupService itemDetailsLookupService;
     private final Clock clock;
 
     /**
@@ -57,10 +65,24 @@ public class CategoryServiceImpl implements CategoryService {
      * @param clock                 clock for deterministic time in business logic
      */
     public CategoryServiceImpl(CategoryLookupService categoryLookupService,
-                               CategoryWriteService categoryWriteService, Clock clock) {
+                               CategoryWriteService categoryWriteService,
+                               ItemDetailsLookupService itemDetailsLookupService,
+                               Clock clock) {
         this.categoryLookupService = categoryLookupService;
         this.categoryWriteService = categoryWriteService;
+        this.itemDetailsLookupService = itemDetailsLookupService;
         this.clock = clock;
+    }
+
+    private static String extractRootMessage(DataIntegrityViolationException e) {
+        Throwable cause = e;
+        while (cause != null) {
+            if (cause.getMessage() != null) {
+                return cause.getMessage();
+            }
+            cause = cause.getCause();
+        }
+        return null;
     }
 
     /**
@@ -96,14 +118,15 @@ public class CategoryServiceImpl implements CategoryService {
                 Category saved = categoryWriteService.save(category);
                 return CategoryResponse.fromEntity(saved);
             } catch (DataIntegrityViolationException e) {
-                if (e.getMessage() != null && e.getMessage().contains("slug")) {
+                String rootMessage = extractRootMessage(e);
+                if (rootMessage != null && rootMessage.toLowerCase().contains("slug")) {
                     attempts++;
                 } else {
                     throw e;
                 }
             }
         }
-        throw new RuntimeException("Failed to generate unique slug after 10 attempts");
+        throw SlugGenerationFailedException.forEntity("category", name, 10);
     }
 
     /**
@@ -159,17 +182,12 @@ public class CategoryServiceImpl implements CategoryService {
 
         Category category = getCategoryOrThrow(id);
 
-        /*
-         * Phase 2+
-         *
-         * Prevent deletion if products reference this category.
-         *
-         * Example:
-         *
-         * if (itemRepository.existsByCategory(category)) {
-         *     throw new InvalidOperationException(...);
-         * }
-         */
+        if (itemDetailsLookupService.existsByCategoryId(id)) {
+            throw InvalidRequestException.detail(
+                    "Cannot delete category '%s' because it is referenced by products."
+                            .formatted(category.getName())
+            );
+        }
 
         categoryWriteService.delete(category);
     }
@@ -279,14 +297,11 @@ public class CategoryServiceImpl implements CategoryService {
     /**
      * Generates a unique URL-friendly slug.
      *
-     * <p>
-     * The initial slug is produced by {@link SlugUtil}. If another category
-     * already uses the same slug, numeric suffixes are appended until a
-     * unique slug is found.
-     * </p>
+     * <p>The initial slug is produced by {@link SlugUtil}. If another category
+     * already uses the same slug, numeric suffixes are appended until a unique
+     * slug is found.</p>
      *
-     * <h4>Example</h4>
-     *
+     * <p>Example slug generation:</p>
      * <pre>
      * electronics
      * electronics-2
@@ -303,6 +318,9 @@ public class CategoryServiceImpl implements CategoryService {
         int counter = 2;
 
         while (categoryLookupService.existsBySlug(slug)) {
+            if (counter > 1000) {
+                throw SlugGenerationFailedException.forEntity("category", categoryName, 1000);
+            }
             slug = baseSlug + "-" + counter;
             counter++;
         }

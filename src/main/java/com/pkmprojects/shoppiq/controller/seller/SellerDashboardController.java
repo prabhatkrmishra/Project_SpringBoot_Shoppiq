@@ -13,17 +13,28 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for the seller dashboard.
+ * REST controller for the seller dashboard.
  *
  * <p>Provides summary metrics and recent orders for the authenticated seller's
- * storefront. All endpoints require SELLER or ADMIN role.</p>
+ * storefront. The dashboard summary includes aggregate statistics such as total
+ * products, total orders, revenue, and other key performance indicators. The
+ * recent orders endpoint provides a quick view of the most recent orders
+ * containing the seller's products.</p>
  *
- * <p>Key design points:
- * <ul>
- *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
- *   <li><strong>Seller-scoped</strong> — data is filtered to the authenticated seller.</li>
- * </ul>
- * </p>
+ * <p>This controller acts as the HTTP boundary for dashboard queries. It delegates
+ * all business logic — metric aggregation, order retrieval, and data formatting
+ * — to {@link SellerDashboardService}. The controller handles no business logic
+ * beyond authentication extraction.</p>
+ *
+ * <p>All endpoints require SELLER or ADMIN role and are mounted under
+ * /seller/dashboard.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET    /seller/dashboard/summary        — dashboard summary metrics
+ * GET    /seller/dashboard/recent-orders  — recent orders with seller products
+ * </pre>
  *
  * @author prabhatkrmishra
  * @see SellerDashboardService
@@ -42,8 +53,11 @@ public class SellerDashboardController {
     /**
      * Returns dashboard summary metrics for the authenticated seller.
      *
+     * <p>Includes aggregate statistics such as total products, total orders,
+     * revenue, and other key performance indicators for the seller's storefront.</p>
+     *
      * @param currentUser the authenticated seller
-     * @return 200 OK with dashboard summary (total products, orders, revenue, etc.)
+     * @return 200 OK with dashboard summary response
      */
     @GetMapping("/summary")
     public ResponseEntity<SellerDashboardResponse> getSummary(
@@ -54,6 +68,9 @@ public class SellerDashboardController {
 
     /**
      * Returns the most recent orders containing the seller's products.
+     *
+     * <p>Provides a quick view of recent order activity for the seller's
+     * storefront.</p>
      *
      * @param currentUser the authenticated seller
      * @return 200 OK with list of recent order responses

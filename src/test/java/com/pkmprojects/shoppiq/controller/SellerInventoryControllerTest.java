@@ -5,6 +5,7 @@ import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.ClockConfig;
@@ -13,11 +14,10 @@ import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.controller.seller.SellerInventoryController;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
-import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
-import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.inventory.ItemStockNegativeException;
+import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotVerifiedException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException;
@@ -43,15 +43,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SellerInventoryController.class)
 @Import({
@@ -87,6 +85,7 @@ class SellerInventoryControllerTest {
 
     @MockitoBean
     private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+    private User authenticatedUser;
 
     private static SellerInventoryResponse stubResponse(Long id, int stock) {
         SellerInventoryResponse.StockStatus status;
@@ -102,8 +101,6 @@ class SellerInventoryControllerTest {
                 BigDecimal.valueOf(99.99), stock, status, ProductPublishingStatus.DRAFT, null
         );
     }
-
-    private User authenticatedUser;
 
     @BeforeEach
     void setUp() {

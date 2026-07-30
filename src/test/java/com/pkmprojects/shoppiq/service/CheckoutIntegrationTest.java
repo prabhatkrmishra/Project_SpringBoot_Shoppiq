@@ -3,13 +3,13 @@ package com.pkmprojects.shoppiq.service;
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
-import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.address.Address;
 import com.pkmprojects.shoppiq.entity.cart.Cart;
 import com.pkmprojects.shoppiq.entity.cart.CartItem;
 import com.pkmprojects.shoppiq.entity.category.Category;
 import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.entity.item.ItemDetails;
+import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.entity.role.Role;
 import com.pkmprojects.shoppiq.entity.user.User;
@@ -34,17 +34,21 @@ import com.pkmprojects.shoppiq.repository.payment.PaymentRepository;
 import com.pkmprojects.shoppiq.repository.role.RoleRepository;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.checkout.CheckoutServiceImpl;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Integration test for {@link CheckoutServiceImpl}.
@@ -69,18 +73,30 @@ import static org.assertj.core.api.Assertions.*;
 @DisplayName("Checkout Integration Tests")
 class CheckoutIntegrationTest {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private RoleRepository rolesRepository;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private ItemRepository itemRepository;
-    @Autowired private ItemDetailsRepository itemDetailsRepository;
-    @Autowired private AddressRepository addressRepository;
-    @Autowired private CartRepository cartRepository;
-    @Autowired private CartItemRepository cartItemRepository;
-    @Autowired private OrderRepository orderRepository;
-    @Autowired private OrderItemRepository orderItemRepository;
-    @Autowired private PaymentRepository paymentRepository;
-    @Autowired private CheckoutServiceImpl checkoutService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RoleRepository rolesRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private ItemRepository itemRepository;
+    @Autowired
+    private ItemDetailsRepository itemDetailsRepository;
+    @Autowired
+    private AddressRepository addressRepository;
+    @Autowired
+    private CartRepository cartRepository;
+    @Autowired
+    private CartItemRepository cartItemRepository;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+    @Autowired
+    private PaymentRepository paymentRepository;
+    @Autowired
+    private CheckoutServiceImpl checkoutService;
 
     // ─── Shared test data ──────────────────────────────────────────────
 
@@ -400,9 +416,9 @@ class CheckoutIntegrationTest {
             checkoutService.checkout(user,
                     new CheckoutRequest(address.getId(), PaymentMethod.COD, DeliveryType.NORMAL, null));
 
-            var orders = checkoutService.getMyOrders(user);
-            assertThat(orders).hasSize(1);
-            assertThat(orders.getFirst().status()).isEqualTo(OrderStatus.PLACED);
+            var orders = checkoutService.getMyOrders(user, 0, 10);
+            assertThat(orders.content()).hasSize(1);
+            assertThat(orders.content().getFirst().status()).isEqualTo(OrderStatus.PLACED);
         }
 
         @Test

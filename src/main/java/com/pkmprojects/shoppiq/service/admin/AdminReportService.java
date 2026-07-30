@@ -1,7 +1,8 @@
 package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
-import com.pkmprojects.shoppiq.enums.*;
+import com.pkmprojects.shoppiq.enums.OrderStatus;
+import com.pkmprojects.shoppiq.enums.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -9,46 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <strong>Spring Boot Concept:</strong> Business contract for admin reporting and exports.
+ * Business contract for admin report generation and data export.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * Defines the <strong>Service layer</strong> contract for business reporting.
- * Architecture: {@code AdminReportController → AdminReportService → ReadModels}.
- * This service aggregates data from multiple read-model facades to produce complex
- * business reports.
- * </p>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *     <li>Generate sales report with daily breakdown and top products/categories.</li>
- *     <li>Generate revenue report with discounts, taxes, shipping, and payment method breakdowns.</li>
- *     <li>Generate product performance report with sales and stock data.</li>
- *     <li>Generate customer report with segmentation (VIP, Regular, New).</li>
- *     <li>Generate inventory report with stock status and valuation.</li>
- *     <li>Export reports in PDF, Excel, CSV formats (future implementation).</li>
- * </ul>
- *
- * <p>
- * Defines the operations for generating business reports
- * and exporting data in various formats.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Generate sales report.</li>
- *     <li>Generate revenue report.</li>
- *     <li>Generate product report.</li>
- *     <li>Generate customer report.</li>
- *     <li>Generate inventory report.</li>
- *     <li>Export reports in PDF, Excel, CSV formats.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Works exclusively with DTOs.</li>
- *     <li>Implemented by {@code AdminReportServiceImpl}.</li>
- * </ul>
+ * <p>Defines operations for generating sales, revenue, product, customer,
+ * and inventory reports with computed summaries.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -120,10 +85,25 @@ public interface AdminReportService {
      * Report type enum.
      */
     enum ReportType {
+        /**
+         * Sales volume report.
+         */
         SALES,
+        /**
+         * Revenue report.
+         */
         REVENUE,
+        /**
+         * Product performance report.
+         */
         PRODUCT,
+        /**
+         * Customer report.
+         */
         CUSTOMER,
+        /**
+         * Inventory report.
+         */
         INVENTORY
     }
 
@@ -131,8 +111,17 @@ public interface AdminReportService {
      * Export format enum.
      */
     enum ExportFormat {
+        /**
+         * PDF export.
+         */
         PDF,
+        /**
+         * Excel export.
+         */
         EXCEL,
+        /**
+         * CSV export.
+         */
         CSV
     }
 

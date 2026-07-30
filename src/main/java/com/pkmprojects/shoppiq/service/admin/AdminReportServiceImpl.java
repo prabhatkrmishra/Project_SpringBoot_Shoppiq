@@ -1,10 +1,13 @@
 package com.pkmprojects.shoppiq.service.admin;
 
-import com.pkmprojects.shoppiq.dto.admin.report.*;
+import com.pkmprojects.shoppiq.config.InventoryConstants;
+import com.pkmprojects.shoppiq.dto.admin.report.CustomerAggData;
 import com.pkmprojects.shoppiq.dto.admin.response.CommissionReportResponse;
 import com.pkmprojects.shoppiq.entity.item.ItemDetails;
-import com.pkmprojects.shoppiq.enums.*;
-import com.pkmprojects.shoppiq.config.InventoryConstants;
+import com.pkmprojects.shoppiq.enums.OrderStatus;
+import com.pkmprojects.shoppiq.enums.PaymentMethod;
+import com.pkmprojects.shoppiq.enums.PaymentStatus;
+import com.pkmprojects.shoppiq.exception.business.FeatureNotImplementedException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
 import com.pkmprojects.shoppiq.repository.order.projection.*;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminOrderReadModel;
@@ -23,20 +26,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminReportService}
- * containing business logic for admin report generation.
- *
- * <p>Generates sales, revenue, product performance, customer, inventory, and
- * commission reports by aggregating data through ReadModel facades. Used by
- * {@code AdminReportController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional(readOnly = true)</strong> — All report methods are read-only, optimized for complex aggregation queries.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link AdminReportService} implementation that generates business reports
+ * with computed summaries and chart data for visualization.
  *
  * @author prabhatkrmishra
  * @see AdminReportService
@@ -64,6 +55,66 @@ public class AdminReportServiceImpl implements AdminReportService {
         this.clock = clock;
     }
 
+    /**
+     * Escapes a value for safe CSV output.
+     *
+     * <p>Handles two security concerns:</p>
+     * <ol>
+     *   <li><strong>CSV injection (OWASP)</strong> — Values starting with
+     *       formula-initiating characters ({@code =}, {@code +}, {@code -},
+     *       {@code @}) are prefixed with a single quote to prevent
+     *       spreadsheet formula execution.</li>
+     *   <li><strong>Quoted field escaping</strong> — Embedded double quotes
+     *       are doubled per RFC 4180 so the CSV parser does not break fields.</li>
+     * </ol>
+     *
+     * @param value the raw cell value
+     * @return the escaped value safe for CSV output
+     * @see <a href="https://owasp.org/www-community/attacks/CSV_Injection">OWASP CSV Injection</a>
+     */
+    private static String escapeCsv(String value) {
+        if (value == null) return "";
+        // Double any embedded quotes (RFC 4180)
+        String escaped = value.replace("\"", "\"\"");
+        // Prevent CSV/formula injection: prefix dangerous leading chars with a single quote
+        if (!escaped.isEmpty() && isFormulaInitiatingChar(escaped.charAt(0))) {
+            escaped = "'" + escaped;
+        }
+        return escaped;
+    }
+
+    /**
+     * Returns {@code true} if the character is a formula-initiating character
+     * that could trigger CSV injection in spreadsheet applications.
+     *
+     * @param ch the character to check
+     * @return {@code true} if the character could start a formula
+     */
+    private static boolean isFormulaInitiatingChar(char ch) {
+        return ch == '=' || ch == '+' || ch == '-' || ch == '@'
+                || ch == '\t' || ch == '\r' || ch == '\n';
+    }
+
+    private static BigDecimal avgOrderValue(long orders, BigDecimal revenue) {
+        return orders > 0
+                ? revenue.divide(BigDecimal.valueOf(orders), 2, java.math.RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+    }
+
+    /**
+     * Safely casts a JPQL projection value to the expected type.
+     *
+     * @param value the value from the Object[] tuple
+     * @param type  the expected type
+     * @param <T>   the cast target type
+     * @return the cast value
+     * @throws ClassCastException if the value is not of the expected type
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T safeCast(Object value, Class<T> type) {
+        return type.cast(value);
+    }
+
     @Override
     public SalesReport generateSalesReport(LocalDate startDate, LocalDate endDate) {
         Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
@@ -76,7 +127,7 @@ public class AdminReportServiceImpl implements AdminReportService {
 
         long totalOrders = orderData.size();
         BigDecimal totalRevenue = orderData.stream()
-                .map(row -> (BigDecimal) row[1])
+                .map(row -> safeCast(row[1], BigDecimal.class))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal averageOrderValue = totalOrders > 0
@@ -86,14 +137,14 @@ public class AdminReportServiceImpl implements AdminReportService {
         // Daily sales — group lightweight tuples by date
         Map<LocalDate, SalesReport.DailySales> dailySales = orderData.stream()
                 .collect(Collectors.groupingBy(
-                        row -> ((Instant) row[0]).atZone(ZoneId.systemDefault()).toLocalDate(),
+                        row -> safeCast(row[0], Instant.class).atZone(ZoneId.systemDefault()).toLocalDate(),
                         LinkedHashMap::new,
                         Collectors.collectingAndThen(
                                 Collectors.toList(),
                                 list -> {
                                     long count = list.size();
                                     BigDecimal revenue = list.stream()
-                                            .map(r -> (BigDecimal) r[1])
+                                            .map(r -> safeCast(r[1], BigDecimal.class))
                                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                                     return new SalesReport.DailySales(count, revenue);
                                 }
@@ -103,7 +154,7 @@ public class AdminReportServiceImpl implements AdminReportService {
         // Status distribution — group lightweight tuples by status
         Map<OrderStatus, Long> ordersByStatus = orderData.stream()
                 .collect(Collectors.groupingBy(
-                        row -> (OrderStatus) row[2],
+                        row -> safeCast(row[2], OrderStatus.class),
                         Collectors.counting()
                 ));
 
@@ -149,9 +200,9 @@ public class AdminReportServiceImpl implements AdminReportService {
         List<Object[]> dailyRevData = paymentReadModel.aggregateDailyRevenueBetween(startInstant, endInstant);
         Map<LocalDate, BigDecimal> dailyRevenue = dailyRevData.stream()
                 .collect(Collectors.groupingBy(
-                        row -> ((Instant) row[0]).atZone(ZoneId.systemDefault()).toLocalDate(),
+                        row -> safeCast(row[0], Instant.class).atZone(ZoneId.systemDefault()).toLocalDate(),
                         LinkedHashMap::new,
-                        Collectors.reducing(BigDecimal.ZERO, r -> (BigDecimal) r[1], BigDecimal::add)
+                        Collectors.reducing(BigDecimal.ZERO, r -> safeCast(r[1], BigDecimal.class), BigDecimal::add)
                 ));
 
         // Revenue by payment status — two known statuses in this context
@@ -163,7 +214,7 @@ public class AdminReportServiceImpl implements AdminReportService {
         List<Object[]> methodData = paymentReadModel.aggregateRevenueByPaymentMethodBetween(startInstant, endInstant);
         Map<String, BigDecimal> revenueByPaymentMethod = new LinkedHashMap<>();
         for (Object[] row : methodData) {
-            revenueByPaymentMethod.put(((PaymentMethod) row[0]).name(), (BigDecimal) row[1]);
+            revenueByPaymentMethod.put(safeCast(row[0], PaymentMethod.class).name(), safeCast(row[1], BigDecimal.class));
         }
 
         // Order-level aggregates (discounts, taxes, shipping) — single lightweight query
@@ -173,10 +224,10 @@ public class AdminReportServiceImpl implements AdminReportService {
         BigDecimal shipping = BigDecimal.ZERO;
         if (!charges.isEmpty()) {
             Object[] chargeRow = charges.getFirst();
-            discounts = (BigDecimal) chargeRow[0];
-            taxes = (BigDecimal) chargeRow[1];
-            BigDecimal deliveryCharge = (BigDecimal) chargeRow[2];
-            BigDecimal codSurcharge = (BigDecimal) chargeRow[3];
+            discounts = safeCast(chargeRow[0], BigDecimal.class);
+            taxes = safeCast(chargeRow[1], BigDecimal.class);
+            BigDecimal deliveryCharge = safeCast(chargeRow[2], BigDecimal.class);
+            BigDecimal codSurcharge = safeCast(chargeRow[3], BigDecimal.class);
             shipping = deliveryCharge.add(codSurcharge);
         }
 
@@ -227,6 +278,8 @@ public class AdminReportServiceImpl implements AdminReportService {
         );
     }
 
+    // ── CSV generation ──────────────────────────────────────────────────
+
     @Override
     public CustomerReport generateCustomerReport(LocalDate startDate, LocalDate endDate) {
         Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
@@ -241,10 +294,10 @@ public class AdminReportServiceImpl implements AdminReportService {
                 .map(a -> {
                     LocalDate firstOrder = a.getFirstOrderDate() != null
                             ? a.getFirstOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
-                            : LocalDate.now(clock);
+                            : null;
                     LocalDate lastOrder = a.getLastOrderDate() != null
                             ? a.getLastOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
-                            : LocalDate.now(clock);
+                            : null;
                     return new CustomerReport.TopCustomer(
                             a.getUserId(), a.getUsername(), a.getEmail(),
                             a.getOrderCount(), a.getTotalSpent(), firstOrder, lastOrder
@@ -259,11 +312,11 @@ public class AdminReportServiceImpl implements AdminReportService {
                         a.getOrderCount(), a.getTotalSpent(),
                         a.getTotalSpent().compareTo(BigDecimal.ZERO) > 0
                                 ? a.getTotalSpent().divide(BigDecimal.valueOf(a.getOrderCount()),
-                                        2, java.math.RoundingMode.HALF_UP)
+                                2, java.math.RoundingMode.HALF_UP)
                                 : BigDecimal.ZERO,
                         a.getFirstOrderDate() != null
                                 ? a.getFirstOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
-                                 : LocalDate.now(clock),
+                                : LocalDate.now(clock),
                         a.getLastOrderDate() != null
                                 ? a.getLastOrderDate().atZone(ZoneId.systemDefault()).toLocalDate()
                                 : LocalDate.now(clock)
@@ -299,9 +352,9 @@ public class AdminReportServiceImpl implements AdminReportService {
         long totalCustomers = userReadModel.countAll();
         long newCustomers = userReadModel.countCreatedAfter(startInstant);
         long activeCustomers = customerAggs.size();
-        long returningCustomers = activeCustomers - newCustomers;
-        BigDecimal totalRevenue = topCustomers.stream()
-                .map(CustomerReport.TopCustomer::totalSpent)
+        long returningCustomers = Math.max(0, activeCustomers - newCustomers);
+        BigDecimal totalRevenue = customerAggs.stream()
+                .map(CustomerOrderAggregate::getTotalSpent)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal avgOrderValue = activeCustomers > 0
                 ? totalRevenue.divide(BigDecimal.valueOf(activeCustomers), 2, java.math.RoundingMode.HALF_UP)
@@ -340,7 +393,7 @@ public class AdminReportServiceImpl implements AdminReportService {
                 .toList();
 
         return new InventoryReport(
-                 LocalDate.now(clock), totalProducts, totalStockUnits, totalInventoryValue,
+                LocalDate.now(clock), totalProducts, totalStockUnits, totalInventoryValue,
                 lowStockCount, outOfStockCount, productStatuses
         );
     }
@@ -374,12 +427,10 @@ public class AdminReportServiceImpl implements AdminReportService {
     public byte[] exportReport(ReportType reportType, ExportFormat format, LocalDate startDate, LocalDate endDate) {
         return switch (format) {
             case CSV -> generateCsv(reportType, startDate, endDate);
-            case PDF, EXCEL -> throw new UnsupportedOperationException(
-                    format + " export is not yet implemented. Use CSV instead.");
+            case PDF, EXCEL -> throw FeatureNotImplementedException.of(
+                    format + " export");
         };
     }
-
-    // ── CSV generation ──────────────────────────────────────────────────
 
     private byte[] generateCsv(ReportType reportType, LocalDate startDate, LocalDate endDate) {
         String csv = switch (reportType) {
@@ -429,6 +480,8 @@ public class AdminReportServiceImpl implements AdminReportService {
 
         return sb.toString();
     }
+
+    // ── CSV helpers ──────────────────────────────────────────────────────
 
     private String revenueReportToCsv(RevenueReport report) {
         StringBuilder sb = new StringBuilder();
@@ -538,19 +591,6 @@ public class AdminReportServiceImpl implements AdminReportService {
         }
 
         return sb.toString();
-    }
-
-    // ── CSV helpers ──────────────────────────────────────────────────────
-
-    private static String escapeCsv(String value) {
-        if (value == null) return "";
-        return value.replace("\"", "\"\"");
-    }
-
-    private static BigDecimal avgOrderValue(long orders, BigDecimal revenue) {
-        return orders > 0
-                ? revenue.divide(BigDecimal.valueOf(orders), 2, java.math.RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
     }
 
 }

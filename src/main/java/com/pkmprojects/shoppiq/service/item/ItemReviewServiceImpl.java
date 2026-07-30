@@ -13,30 +13,19 @@ import com.pkmprojects.shoppiq.exception.general.review.ItemReviewAccessDeniedEx
 import com.pkmprojects.shoppiq.exception.general.review.ItemReviewNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.user.UserNotFoundException;
 import com.pkmprojects.shoppiq.repository.item.ItemReviewRepository;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link ItemReviewService}
- * containing business logic for product review management.
- *
- * <p>Handles review creation (with seller/admin prevention and duplicate enforcement),
- * retrieval with visibility filtering for APPROVED vs user-own reviews, and update/deletion
- * with ownership or admin authorization. Used by {@code ItemReviewController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Review write operations are atomic; reads use {@code readOnly = true}.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link ItemReviewService} implementation handling review creation with seller/admin
+ * prevention and duplicate enforcement, retrieval with visibility filtering, and
+ * update/deletion with ownership or admin authorization.
  *
  * @author prabhatkrmishra
  * @see ItemReviewService

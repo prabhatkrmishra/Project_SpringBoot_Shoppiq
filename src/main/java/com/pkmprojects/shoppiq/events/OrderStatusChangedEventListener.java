@@ -14,55 +14,17 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 
 /**
- * <strong>Spring Boot Concept:</strong> {@code @Async} event listener that
- * handles all post-status-change side effects for orders. Demonstrates
- * the <strong>Event Listener</strong> pattern with <strong>conditional
- * logic</strong> based on event payload.
+ * Async event listener that handles post-status-change side effects for orders.
  *
- * <p>Subscribes to {@link OrderStatusChangedEvent} and performs two
- * side effect operations that were previously embedded inline in
- * {@code AdminOrderServiceImpl} and {@code SellerOrderServiceImpl}:</p>
- * <ol>
- *     <li><strong>Status-change email</strong> — notifies the customer
- *         of the new order status via {@link OrderEmailService}.
- *         Runs for every status transition.</li>
- *     <li><strong>Stock restoration</strong> — restores inventory when
- *         the order reaches CANCELLED, RETURNED, or REFUNDED.</li>
- * </ol>
+ * <p>Sends status-change emails and restores inventory when the order
+ * reaches CANCELLED, RETURNED, or REFUNDED. This listener is marked
+ * with {@code @Async} to execute in a separate thread pool, ensuring
+ * that the status update transaction is not blocked by email delivery
+ * or inventory restoration.</p>
  *
- * <p><strong>Educational value:</strong> This listener builds on the
- * patterns shown in {@link OrderPlacedEventListener} and adds:
- * <ul>
- *   <li><strong>Re-fetching entities in async context</strong> — because
- *       this listener runs asynchronously, the original {@link com.pkmprojects.shoppiq.entity.order.Order}
- *       may be detached from the persistence context. The listener
- *       re-fetches it with the required associations eagerly loaded
- *       (via {@code orderRepository.findByIdWithUser()} and
- *       {@code orderRepository.findByIdWithItems()}) to avoid
- *       {@code LazyInitializationException}.</li>
- *   <li><strong>Conditional side effects</strong> — the
- *       {@code RESTORE_STOCK_STATUSES} set determines which statuses
- *       trigger stock restoration, keeping the logic declarative and
- *       easy to modify.</li>
- *   <li><strong>Multiple publishers, one listener</strong> — both
- *       {@code AdminOrderServiceImpl} and {@code SellerOrderServiceImpl}
- *       publish the same event type, and this single listener handles
- *       both, avoiding duplicated side-effect code.</li>
- * </ul>
- * </p>
- *
- * <h2>Async Execution</h2>
- * <p>This listener is annotated {@code @Async}, meaning it runs on a
- * separate thread from the status-update transaction. This ensures that:</p>
- * <ul>
- *     <li>Status update response time is not blocked by email SMTP calls.</li>
- *     <li>Email or stock-restore failures do not affect the status update.</li>
- * </ul>
- *
- * <h2>Error Handling</h2>
- * <p>Both operations are wrapped in try/catch blocks. Failures are
- * logged at WARN level and swallowed — the status update has already
- * been committed successfully at this point.</p>
+ * <p>The listener reloads the order with its associations within the
+ * async context to avoid LazyInitializationException. Failures in
+ * email delivery or stock restoration are logged but do not propagate.</p>
  *
  * @author prabhatkrmishra
  * @see OrderStatusChangedEvent

@@ -8,29 +8,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Service for Role management.
+ * Service for role management and default role lookups.
  *
- * <p><strong>What this Service layer class demonstrates:</strong></p>
- * <ul>
- *   <li><strong>Seed data dependency</strong> — Relies on Flyway migration
- *       {@code V2__seed_roles.sql} to have populated {@code ROLE_CUSTOMER} and
- *       {@code ROLE_SELLER} before this service is used. If the migration has not run,
- *       {@link #getCustomerRole} and {@link #getSellerRole} throw
- *       {@link com.pkmprojects.shoppiq.exception.general.role.RoleNotFoundException}.</li>
- *   <li><strong>Error propagation design choice</strong> — Database failures are explicitly
- *       allowed to propagate naturally rather than being caught and wrapped. This avoids
- *       masking the root cause with a generic exception that adds no diagnostic value.</li>
- *   <li><strong>Static role name constants</strong> — Role names are defined as
- *       {@code static final} fields, centralizing the convention that all role authorities
- *       follow the {@code ROLE_} prefix pattern.</li>
- * </ul>
- *
- * <p>
- * Database failures are allowed to propagate naturally instead of being
- * caught and rewrapped in a generic {@link RuntimeException} — the latter
- * adds no diagnostic value and is indistinguishable create any other
- * unexpected failure once it reaches {@code GlobalExceptionHandler}.
- * </p>
+ * <p>Provides customer and seller role retrieval, relying on Flyway seed data.
+ * Database failures propagate naturally for diagnostic clarity.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -75,9 +56,9 @@ public class RoleService {
      *
      * @return the {@code ROLE_CUSTOMER} entity
      * @throws RoleNotFoundException if the role is missing from the database —
-     *                                this should only happen if the Flyway
-     *                                {@code V2__seed_roles.sql} migration has not
-     *                                yet run, or its seed data was removed
+     *                               this should only happen if the Flyway
+     *                               {@code V2__seed_roles.sql} migration has not
+     *                               yet run, or its seed data was removed
      */
     public Role getCustomerRole() {
         return rolesRepository.findByRoleName(CUSTOMER_ROLE_NAME)

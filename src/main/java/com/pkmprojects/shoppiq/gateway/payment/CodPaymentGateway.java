@@ -3,34 +3,27 @@ package com.pkmprojects.shoppiq.gateway.payment;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.enums.PaymentGateway;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * <strong>Spring Boot Concept:</strong> Concrete implementation of
- * {@link PaymentGatewayStrategy} for Cash on Delivery (COD) orders —
- * a "no-op" strategy pattern implementation.
+ * No-op payment gateway strategy for Cash on Delivery (COD) orders.
  *
- * <p>
- * COD payments involve no external gateway. The payment record is created in
- * {@code PENDING} status and remains there until delivery is confirmed.
- * The {@link #verify} method is a no-op since COD confirmation is handled
- * by the delivery workflow.
- * </p>
+ * <p>COD payments involve no external gateway integration. The payment
+ * record is created in PENDING status and remains there until the order
+ * delivery is confirmed by the customer or delivery agent. This strategy
+ * implements the {@link PaymentGatewayStrategy} interface as a no-op,
+ * since COD does not require any API calls to external services.</p>
  *
- * <p><strong>Educational value:</strong> This class demonstrates the
- * <em>Null Object</em> / <em>No-Op Strategy</em> pattern in the context
- * of the Strategy pattern. Every payment method must have a strategy
- * implementation, even if it does nothing (like COD). By implementing
- * the full interface with no-op methods, the checkout service can treat
- * all payment methods uniformly — no special-case if/else for COD in the
- * service layer. The {@link PaymentGatewayRegistry} resolves the correct
- * strategy, and the service calls {@code process()} and {@code verify()}
- * polymorphically regardless of whether the gateway is real or simulated.
- * </p>
+ * <p>The COD gateway supports the {@link PaymentGateway#NONE} type and
+ * is registered as a Spring bean. It is resolved by the
+ * {@link PaymentGatewayRegistry} when a customer selects the COD payment
+ * method at checkout.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
  */
+@Slf4j
 @Component
 public final class CodPaymentGateway implements PaymentGatewayStrategy {
 
@@ -50,6 +43,7 @@ public final class CodPaymentGateway implements PaymentGatewayStrategy {
         // COD: no external gateway — stays PENDING until delivery confirmed
         payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setGatewayResponse("COD — awaiting delivery confirmation.");
+        log.debug("COD payment {} processed (stays PENDING until delivery)", payment.getId());
     }
 
     /**
@@ -62,5 +56,6 @@ public final class CodPaymentGateway implements PaymentGatewayStrategy {
     @Override
     public void verify(Payment payment, String transactionId) {
         // COD does not support online verification; delivery workflow handles it
+        log.debug("COD verify called for payment {} — no-op (delivery workflow handles confirmation)", payment.getId());
     }
 }

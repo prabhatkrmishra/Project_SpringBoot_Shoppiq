@@ -1,23 +1,20 @@
 package com.pkmprojects.shoppiq.service;
 
+import com.pkmprojects.shoppiq.config.CheckoutProperties;
 import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
 import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.order.OrderResponse;
-import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.address.Address;
 import com.pkmprojects.shoppiq.entity.cart.Cart;
 import com.pkmprojects.shoppiq.entity.cart.CartItem;
 import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.entity.item.ItemDetails;
+import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.order.OrderItem;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.entity.promo.PromoCode;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.enums.DeliveryType;
-import com.pkmprojects.shoppiq.enums.DiscountType;
-import com.pkmprojects.shoppiq.enums.OrderStatus;
-import com.pkmprojects.shoppiq.enums.PaymentMethod;
-import com.pkmprojects.shoppiq.enums.PaymentStatus;
+import com.pkmprojects.shoppiq.enums.*;
 import com.pkmprojects.shoppiq.events.OrderPlacedEvent;
 import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.general.address.AddressNotFoundException;
@@ -36,9 +33,13 @@ import com.pkmprojects.shoppiq.service.checkout.CheckoutServiceImpl;
 import com.pkmprojects.shoppiq.service.inventory.InventoryService;
 import com.pkmprojects.shoppiq.service.payment.PaymentService;
 import com.pkmprojects.shoppiq.service.promo.PromoCodeService;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
@@ -54,7 +55,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -98,16 +100,11 @@ class CheckoutServiceImplTest {
     private ApplicationEventPublisher eventPublisher;
     @Mock
     private Clock clock;
+    @Mock
+    private CheckoutProperties checkoutProperties;
 
     @InjectMocks
     private CheckoutServiceImpl checkoutService;
-
-    @BeforeEach
-    void setUp() {
-        lenient().when(clock.instant()).thenReturn(Instant.parse("2026-01-15T10:30:00Z"));
-    }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────
 
     private static void setId(Object entity, Long id) throws Exception {
         // AuditableEntity → BaseEntity → id
@@ -117,10 +114,19 @@ class CheckoutServiceImplTest {
         field.set(entity, id);
     }
 
+    // ─── Helpers ──────────────────────────────────────────────────────────
+
     private static void setOrderItemId(OrderItem item, Long id) throws Exception {
         Field f = OrderItem.class.getDeclaredField("id");
         f.setAccessible(true);
         f.set(item, id);
+    }
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2026-01-15T10:30:00Z"));
+        lenient().when(checkoutProperties.getExpressDeliveryCharge()).thenReturn(new BigDecimal("7.50"));
+        lenient().when(checkoutProperties.getCodSurcharge()).thenReturn(new BigDecimal("5.00"));
     }
 
     private User buildUser(long id) throws Exception {
@@ -471,41 +477,41 @@ class CheckoutServiceImplTest {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // getMyOrders()
+    // getMyOrders(page, size)
     // ═══════════════════════════════════════════════════════════════════════
 
     @Nested
-    @DisplayName("getMyOrders()")
+    @DisplayName("getMyOrders(page, size)")
     class GetMyOrdersTests {
 
         @Test
-        @DisplayName("Returns mapped list from repository")
-        void getMyOrders_returnsList() throws Exception {
+        @DisplayName("Returns mapped page from repository")
+        void getMyOrders_returnsPage() throws Exception {
             User user = buildUser(1L);
             Address addr = buildAddress(1L, user);
             Order o1 = buildOrder(1L, user, addr, OrderStatus.PLACED);
             Order o2 = buildOrder(2L, user, addr, OrderStatus.DELIVERED);
 
-            Pageable pageable = PageRequest.of(0, 1000, Sort.by(Sort.Direction.DESC, "placedAt"));
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "placedAt"));
             when(orderRepository.findAllByUserOrderByPlacedAtDesc(user, pageable))
                     .thenReturn(new PageImpl<>(List.of(o1, o2), pageable, 2));
 
-            List<OrderResponse> result = checkoutService.getMyOrders(user);
+            var result = checkoutService.getMyOrders(user, 0, 10);
 
-            assertThat(result).hasSize(2);
-            assertThat(result.getFirst().id()).isEqualTo(1L);
-            assertThat(result.get(1).id()).isEqualTo(2L);
+            assertThat(result.content()).hasSize(2);
+            assertThat(result.content().getFirst().id()).isEqualTo(1L);
+            assertThat(result.content().get(1).id()).isEqualTo(2L);
         }
 
         @Test
-        @DisplayName("Returns empty list when user has no orders")
+        @DisplayName("Returns empty page when user has no orders")
         void getMyOrders_empty() throws Exception {
             User user = buildUser(1L);
-            Pageable pageable = PageRequest.of(0, 1000, Sort.by(Sort.Direction.DESC, "placedAt"));
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "placedAt"));
             when(orderRepository.findAllByUserOrderByPlacedAtDesc(user, pageable))
                     .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
-            assertThat(checkoutService.getMyOrders(user)).isEmpty();
+            assertThat(checkoutService.getMyOrders(user, 0, 10).content()).isEmpty();
         }
     }
 

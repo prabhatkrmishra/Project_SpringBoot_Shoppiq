@@ -10,9 +10,16 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Read-only implementation of {@link ChatProductService}.
+ * Read-only implementation of {@link ChatProductService}.
  *
- * @author PrabhatKrMishra
+ * <p>This service delegates to the {@link ItemLookupService} for all product
+ * queries, providing a read-only transactional boundary for AI tool data
+ * access. The {@code @Transactional(readOnly = true)} annotation ensures
+ * that no data modifications occur through this service, even if the
+ * underlying repository methods are accidentally invoked in a write
+ * context.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.4.0
  */
 @Service

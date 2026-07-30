@@ -1,31 +1,42 @@
 package com.pkmprojects.shoppiq.controller.user;
 
-import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.dto.user.ChangePasswordRequest;
 import com.pkmprojects.shoppiq.dto.user.UpdateProfileRequest;
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
+import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.service.user.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for authenticated user profile operations.
+ * REST controller for authenticated user profile operations.
  *
  * <p>Handles registration, profile retrieval, profile updates, and password
- * changes for the currently authenticated user. Registration is public;
- * all other endpoints require authentication.</p>
+ * changes for the currently authenticated user. Registration is a public
+ * endpoint available to unauthenticated visitors. All other endpoints require
+ * authentication and operate on the authenticated user's own profile.</p>
  *
- * <p>Key design points:
- * <ul>
- *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
- *   <li><strong>Self-service</strong> — authenticated endpoints operate on the user's own profile only.</li>
- * </ul>
- * </p>
+ * <p>This controller acts as the HTTP boundary for user profile operations. It
+ * delegates all business logic — account creation, profile retrieval, profile
+ * updates, and password changes — to {@link UserService}. The controller handles
+ * no business logic beyond request validation and response assembly.</p>
+ *
+ * <p>Registration is unauthenticated. Profile and password endpoints require
+ * any authenticated role. All endpoints are mounted under /user.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * POST   /user/register    — register a new user account (public)
+ * GET    /user/profile     — get the authenticated user's profile
+ * PUT    /user/profile     — update the authenticated user's profile
+ * PUT    /user/password    — change the authenticated user's password
+ * </pre>
  *
  * @author prabhatkrmishra
  * @see UserService
@@ -45,9 +56,10 @@ public class UserController {
      * Registers a new user account.
      *
      * <p>This endpoint is public (no authentication required). The request
-     * must include a valid email, username, and password.</p>
+     * must include a valid email, username, and password. A new CUSTOMER
+     * role is assigned by default.</p>
      *
-     * @param newUserRequest the user registration payload
+     * @param newUserRequest the user registration payload (validated via @Valid)
      * @return 201 Created with a success message
      */
     @PostMapping("/register")
@@ -59,8 +71,8 @@ public class UserController {
     /**
      * Returns the authenticated user's profile.
      *
-     * @param user the authenticated user (from JWT)
-     * @return 200 OK with the user profile
+     * @param user the authenticated user resolved from the JWT
+     * @return 200 OK with the user profile response
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/profile")
@@ -71,9 +83,9 @@ public class UserController {
     /**
      * Updates the authenticated user's profile information.
      *
-     * @param user    the authenticated user (from JWT)
-     * @param request the updated profile data
-     * @return 200 OK with the updated user profile
+     * @param user    the authenticated user resolved from the JWT
+     * @param request the updated profile data (validated via @Valid)
+     * @return 200 OK with the updated user profile response
      */
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/profile")
@@ -88,10 +100,11 @@ public class UserController {
     /**
      * Changes the authenticated user's password.
      *
-     * <p>Validates the current password before applying the new one.</p>
+     * <p>Validates the current password before applying the new one.
+     * The new password must meet the configured complexity requirements.</p>
      *
-     * @param user    the authenticated user (from JWT)
-     * @param request the current and new password payload
+     * @param user    the authenticated user resolved from the JWT
+     * @param request the current and new password payload (validated via @Valid)
      * @return 200 OK
      */
     @PreAuthorize("isAuthenticated()")

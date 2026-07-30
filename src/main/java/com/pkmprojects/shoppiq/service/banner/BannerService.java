@@ -7,23 +7,9 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Contract for homepage banner management.
+ * Business contract for homepage banner management.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * This interface defines the <strong>Service layer</strong> contract for banner operations.
- * Architecture: {@code BannerController → BannerService → BannerRepository}.
- * Provides read operations for the public homepage and full CRUD for the admin panel.
- * </p>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *   <li>Retrieve active banners (for public homepage display) sorted by display order.</li>
- *   <li>Full CRUD for admin panel: create, update, toggle active status, delete.</li>
- *   <li>Paginated listing for admin management.</li>
- * </ul>
- *
- * <p>Provides read operations for the public homepage and full CRUD
+ * <p>Defines read operations for the public homepage and full CRUD
  * for the admin panel.</p>
  *
  * @author prabhatkrmishra

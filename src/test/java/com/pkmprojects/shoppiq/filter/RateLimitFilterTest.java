@@ -7,9 +7,14 @@ import com.pkmprojects.shoppiq.config.RateLimitProperties.Rule;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ProblemDetail;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -18,11 +23,15 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -62,23 +71,14 @@ class RateLimitFilterTest {
 
     private RateLimitProperties properties;
     private RateLimitFilter filter;
+    private Clock fixedClock;
 
     // ─────────────────────────────────────────────────────────────
     // Setup
     // ─────────────────────────────────────────────────────────────
 
-    @BeforeEach
-    void setUp() {
-        properties = createProperties("/test/**", 2, 60, KeyType.IP);
-        filter = new RateLimitFilter(properties, jwtAuthUtils, responseWriter);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────
-
     private static RateLimitProperties createProperties(String path, int limit,
-                                                         long duration, KeyType keyType) {
+                                                        long duration, KeyType keyType) {
         RateLimitProperties props = new RateLimitProperties();
         props.setEnabled(true);
         Rule rule = new Rule();
@@ -89,6 +89,10 @@ class RateLimitFilterTest {
         props.setRules(List.of(rule));
         return props;
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────
 
     private static Rule createDefaultRule() {
         Rule rule = new Rule();
@@ -109,6 +113,13 @@ class RateLimitFilterTest {
         return new MockHttpServletResponse();
     }
 
+    @BeforeEach
+    void setUp() {
+        fixedClock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneId.of("UTC"));
+        properties = createProperties("/test/**", 2, 60, KeyType.IP);
+        filter = new RateLimitFilter(properties, jwtAuthUtils, responseWriter, fixedClock);
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> getBuckets() throws Exception {
         Field field = RateLimitFilter.class.getDeclaredField("buckets");
@@ -123,7 +134,7 @@ class RateLimitFilterTest {
     }
 
     private void rebuildFilter() {
-        filter = new RateLimitFilter(properties, jwtAuthUtils, responseWriter);
+        filter = new RateLimitFilter(properties, jwtAuthUtils, responseWriter, fixedClock);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -140,7 +151,7 @@ class RateLimitFilterTest {
             RateLimitProperties disabled = new RateLimitProperties();
             disabled.setEnabled(false);
             disabled.setRules(List.of(createDefaultRule()));
-            RateLimitFilter disabledFilter = new RateLimitFilter(disabled, jwtAuthUtils, responseWriter);
+            RateLimitFilter disabledFilter = new RateLimitFilter(disabled, jwtAuthUtils, responseWriter, fixedClock);
 
             assertThat(disabledFilter.shouldNotFilter(buildRequest("/test", "10.0.0.1"))).isTrue();
         }
@@ -151,7 +162,7 @@ class RateLimitFilterTest {
             RateLimitProperties noRules = new RateLimitProperties();
             noRules.setEnabled(true);
             noRules.setRules(List.of());
-            RateLimitFilter noRulesFilter = new RateLimitFilter(noRules, jwtAuthUtils, responseWriter);
+            RateLimitFilter noRulesFilter = new RateLimitFilter(noRules, jwtAuthUtils, responseWriter, fixedClock);
 
             assertThat(noRulesFilter.shouldNotFilter(buildRequest("/test", "10.0.0.1"))).isTrue();
         }
@@ -378,14 +389,13 @@ class RateLimitFilterTest {
             bucketField.setAccessible(true);
             Bucket bucket = (Bucket) bucketField.get(currentEntry);
 
-            long staleTimestamp = System.nanoTime() - (4000L * 1_000_000_000L);
-            long staleTimestampMillis = System.currentTimeMillis() - (4000L * 1000L);
+            long staleTimestampMillis = fixedClock.millis() - (4000L * 1000L);
 
             Class<?> entryClass = Class.forName(
                     "com.pkmprojects.shoppiq.filter.RateLimitFilter$BucketEntry");
             Constructor<?> ctor = entryClass.getDeclaredConstructor(Bucket.class, long.class, long.class);
             ctor.setAccessible(true);
-            Object staleEntry = ctor.newInstance(bucket, staleTimestamp, staleTimestampMillis);
+            Object staleEntry = ctor.newInstance(bucket, staleTimestampMillis, staleTimestampMillis);
             buckets.put(key, staleEntry);
 
             callEvictStaleBuckets();

@@ -11,6 +11,7 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
+import com.pkmprojects.shoppiq.exception.business.SlugGenerationFailedException;
 import com.pkmprojects.shoppiq.exception.general.category.CategoryNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.item.DuplicateItemException;
 import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
@@ -26,24 +27,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerProductService}.
- *
- * <p>
- * Handles the lifecycle of products owned by a seller. Enforces seller
- * preconditions (ACTIVE, APPROVED, not SUSPENDED) before allowing
- * product operations. All products are created as DRAFT.
- * </p>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Ownership is verified at the service layer via
- *     {@link ItemLookupService#findByIdAndSellerId}.</li>
- *     <li>SKU uniqueness is enforced across the entire catalog,
- *     not per seller.</li>
- *     <li>All write operations are transactional.</li>
- * </ul>
+ * {@link SellerProductService} implementation handling seller product lifecycle
+ * with precondition enforcement, ownership verification, and SKU uniqueness.
  *
  * @author prabhatkrmishra
+ * @see SellerProductService
  * @since 1.0.0
  */
 @Service
@@ -75,11 +63,11 @@ public class SellerProductServiceImpl implements SellerProductService {
      * @param request product creation payload
      * @param user    authenticated user
      * @return created item response
-     * @throws SellerNotFoundException      if no seller exists for the user
-     * @throws SellerSuspendedException      if the seller is suspended
-     * @throws SellerNotVerifiedException    if the seller is not verified
-     * @throws DuplicateItemException        if the SKU already exists
-     * @throws CategoryNotFoundException     if the category is not found
+     * @throws SellerNotFoundException    if no seller exists for the user
+     * @throws SellerSuspendedException   if the seller is suspended
+     * @throws SellerNotVerifiedException if the seller is not verified
+     * @throws DuplicateItemException     if the SKU already exists
+     * @throws CategoryNotFoundException  if the category is not found
      */
     @Override
     public ItemResponse createProduct(ItemRequest request, User user) {
@@ -128,7 +116,7 @@ public class SellerProductServiceImpl implements SellerProductService {
                 }
             }
         }
-        throw new RuntimeException("Failed to generate unique slug after 10 attempts");
+        throw SlugGenerationFailedException.forEntity("item", item.getName(), 10);
     }
 
     /**
@@ -285,6 +273,9 @@ public class SellerProductServiceImpl implements SellerProductService {
         int counter = 2;
 
         while (itemLookupService.existsBySlug(slug)) {
+            if (counter > 1000) {
+                throw SlugGenerationFailedException.forEntity("item", itemName, 1000);
+            }
             slug = baseSlug + "-" + counter;
             counter++;
         }

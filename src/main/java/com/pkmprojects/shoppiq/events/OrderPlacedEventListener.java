@@ -10,67 +10,17 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
- * <strong>Spring Boot Concept:</strong> {@code @Async} event listener that
- * handles post-checkout side effects after an order is placed. Demonstrates
- * the <strong>Event Listener</strong> pattern — the subscriber side of
- * Spring's event-driven architecture.
+ * Async event listener that handles post-checkout side effects after an order is placed.
  *
- * <p>This listener subscribes to {@link OrderPlacedEvent} and performs
- * two side effect operations that were previously embedded inline in
- * {@code CheckoutServiceImpl.doCheckout()}:</p>
- * <ol>
- *     <li><strong>Promo code usage recording</strong> — increments the
- *         global usage counter and creates a per-user usage record via
- *         {@link PromoCodeService#recordUsage}. Only runs when a promo
- *         code was applied.</li>
- *     <li><strong>Order confirmation email</strong> — sends a "placed"
- *         email to the customer via {@link OrderEmailService}.</li>
- * </ol>
+ * <p>Records promo code usage and sends order confirmation emails.
+ * This listener is marked with {@code @Async} to execute in a separate
+ * thread pool, ensuring that the checkout response is not blocked by
+ * email delivery or database updates for promo usage.</p>
  *
- * <p><strong>Educational value:</strong> This class demonstrates how
- * Spring events clean up service-layer code:
- * <ul>
- *   <li><strong>Before events</strong> — the checkout service had to call
- *       {@code promoCodeService.recordUsage()} and
- *       {@code orderEmailService.sendOrderStatusEmail()} inline, mixing
- *       primary logic with side effects.</li>
- *   <li><strong>After events</strong> — the checkout service publishes one
- *       event and returns. All side effects are extracted into this listener,
- *       making the checkout method shorter, more testable, and easier to
- *       extend (add a new listener, don't modify the service).</li>
- *   <li><strong>@Async + @EventListener</strong> — the listener is both
- *       async (runs on a separate thread) and event-driven (triggered by
- *       the event). This is a powerful combination for fire-and-forget
- *       scenarios where the response should not be delayed by background
- *       operations.</li>
- *   <li><strong>Fail-safe error handling</strong> — both operations are
- *       wrapped in try/catch. Side-effect failures never propagate back
- *       to the caller because the primary transaction has already committed.</li>
- * </ul>
- * </p>
- *
- * <h2>Async Execution</h2>
- * <p>This listener is annotated {@code @Async}, meaning it runs on a
- * separate thread from the checkout transaction. This ensures that:</p>
- * <ul>
- *     <li>Checkout response time is not blocked by email SMTP calls.</li>
- *     <li>Email failures do not affect the checkout user experience.</li>
- *     <li>Promo recording failures are logged but do not prevent
- *         order creation.</li>
- * </ul>
- *
- * <h2>Error Handling</h2>
- * <p>Both operations are wrapped in try/catch blocks. Failures are
- * logged at {@code WARN} level and swallowed — the order has already
- * been committed successfully at this point. This is a deliberate
- * design choice: side effects should never roll back the primary
- * transaction.</p>
- *
- * <h2>Transaction Semantics</h2>
- * <p>Because this listener is {@code @Async}, it executes outside the
- * checkout transaction. Each operation ({@code recordUsage},
- * {@code sendEmail}) runs in its own implicit transaction managed by
- * Spring's async infrastructure.</p>
+ * <p>The listener processes events in order: first recording promo usage
+ * (data integrity concern), then sending the confirmation email
+ * (best-effort concern). Failures in either operation are logged but
+ * do not propagate to the event publisher.</p>
  *
  * @author prabhatkrmishra
  * @see OrderPlacedEvent

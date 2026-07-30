@@ -6,20 +6,20 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> General-purpose exception for AI assistant errors that do not map to a
- * specific resource-not-found scenario.
+ * General-purpose exception for AI assistant errors with various HTTP status mappings.
  *
- * <p>
- * Wraps various {@link ErrorCode} values with their corresponding HTTP status
- * codes. Factory methods are provided for common failure modes:
- * <ul>
- *   <li>{@link #apiError(String)} — 500 Internal Server Error (general AI failure)</li>
- *   <li>{@link #timeout(String)} — 504 Gateway Timeout (NIM API timeout)</li>
- *   <li>{@link #rateLimited(String)} — 429 Too Many Requests (rate limit exceeded)</li>
- *   <li>{@link #conversationResolved()} — 410 Gone (message sent to resolved conversation)</li>
- * </ul>
+ * <p>This exception serves as the primary error type for AI-specific failures
+ * that do not fit into the more specialized exception categories. It supports
+ * multiple HTTP status codes through factory methods, each corresponding to
+ * a distinct failure scenario: API errors (500), timeouts (504), rate limiting
+ * (429), and resolved conversation attempts (410).</p>
  *
- * @author PrabhatKrMishra
+ * <p>Each factory method pairs a specific {@link ErrorCode} with an appropriate
+ * HTTP status code and a user-friendly detail message. The exception extends
+ * {@code ShoppiqException} for integration with the global exception handler
+ * and structured error response generation.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Getter
@@ -28,16 +28,20 @@ public class AiAssistantException extends ShoppiqException {
     /**
      * Constructs a new {@code AiAssistantException} with the specified error code, HTTP status, and detail.
      *
-     * @param errorCode  the machine-readable error code
+     * @param errorCode  the machine-readable error code for structured error handling
      * @param httpStatus the HTTP status to return in the response
-     * @param detail     a human-readable error description
+     * @param detail     a human-readable error description suitable for display to end users
      */
     public AiAssistantException(ErrorCode errorCode, HttpStatus httpStatus, String detail) {
         super(errorCode, httpStatus, detail);
     }
 
     /**
-     * Creates an exception for a general AI API failure (500).
+     * Creates an exception for a general AI API failure.
+     *
+     * <p>This factory method produces an exception mapped to HTTP 500
+     * Internal Server Error, suitable for unexpected failures in the
+     * NVIDIA NIM API or LangChain4j processing pipeline.</p>
      *
      * @param detail a human-readable description of the failure
      * @return a new {@code AiAssistantException}
@@ -48,7 +52,11 @@ public class AiAssistantException extends ShoppiqException {
     }
 
     /**
-     * Creates an exception for an NIM API timeout (504).
+     * Creates an exception for an NIM API timeout.
+     *
+     * <p>This factory method produces an exception mapped to HTTP 504
+     * Gateway Timeout, suitable for cases where the NVIDIA NIM API
+     * fails to respond within the configured timeout period.</p>
      *
      * @param detail a human-readable description of the timeout
      * @return a new {@code AiAssistantException}
@@ -59,7 +67,11 @@ public class AiAssistantException extends ShoppiqException {
     }
 
     /**
-     * Creates an exception for a rate-limited request (429).
+     * Creates an exception for a rate-limited request.
+     *
+     * <p>This factory method produces an exception mapped to HTTP 429
+     * Too Many Requests, suitable for cases where the client has exceeded
+     * the allowed request frequency for the AI chat API.</p>
      *
      * @param detail a human-readable description of the rate limit
      * @return a new {@code AiAssistantException}
@@ -70,7 +82,12 @@ public class AiAssistantException extends ShoppiqException {
     }
 
     /**
-     * Creates an exception for a message sent to an already-resolved conversation (410).
+     * Creates an exception for a message sent to an already-resolved conversation.
+     *
+     * <p>This factory method produces an exception mapped to HTTP 410 Gone,
+     * indicating that the conversation has been closed and no further
+     * messages can be accepted. The client should start a new conversation
+     * instead.</p>
      *
      * @return a new {@code AiAssistantException}
      */

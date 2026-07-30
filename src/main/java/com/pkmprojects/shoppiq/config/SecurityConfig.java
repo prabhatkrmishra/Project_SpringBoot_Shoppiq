@@ -18,26 +18,35 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> {@code @Configuration} class that
- * configures the core Spring Security filter chain.
+ * Configures the core Spring Security filter chain for the Shoppiq application.
  *
- * <p>Provides JWT-based stateless authentication, Google OAuth2 login,
- * authority mapping, and endpoint authorization rules. The application is
- * completely stateless — no {@code HttpSession} is ever created or read.
- * OAuth2 authorization-code state is stored in short-lived cookies via
- * {@link HttpCookieOAuth2AuthorizationRequestRepository}. Both username/
- * password and OAuth2 authentication converge on the same JWT cookie
- * mechanism.</p>
+ * <p>This class defines the primary {@link SecurityFilterChain} bean that
+ * governs all HTTP security decisions. It configures a fully stateless
+ * authentication model using JWT tokens carried in HttpOnly cookies, with
+ * Google OAuth2 as an alternative login mechanism. The filter chain is
+ * assembled with CSRF protection, session management, endpoint authorization
+ * rules, and custom entry-point and access-denied handlers.</p>
+ *
+ * <p>Architecturally, this class serves as the single source of truth for
+ * authorization policy. It maps HTTP method and path combinations to role
+ * requirements (ADMIN, SELLER, CUSTOMER), defines public endpoints, and
+ * chains custom filters for rate limiting, JWT authentication, and OAuth2
+ * return-URL handling. The {@link HttpCookieOAuth2AuthorizationRequestRepository}
+ * stores OAuth2 state in cookies to support SPA-style redirects without
+ * server-side session storage.</p>
  *
  * @author prabhatkrmishra
+ * @see HttpCookieOAuth2AuthorizationRequestRepository
+ * @see JwtAuthenticationFilter
+ * @see OAuth2SuccessHandler
  * @since 1.0.0
  */
 @Configuration
@@ -77,18 +86,28 @@ public class SecurityConfig {
     /**
      * Configures the fully stateless security filter chain.
      *
-     * <h4>Session policy</h4>
-     * <p>{@code STATELESS} — Spring Security never creates or consults an
-     * {@code HttpSession}. OAuth2 state is carried in cookies exclusively.</p>
+     * <p>The filter chain is assembled in the following order: CORS
+     * configuration (if enabled), CSRF protection with ignored matchers
+     * for stateless endpoints, session management set to STATELESS, and
+     * endpoint authorization rules. Authorization rules are evaluated
+     * top-to-bottom, with static frontend paths permitted for anonymous
+     * access and API endpoints restricted by HTTP method and role.</p>
      *
-     * <h4>OAuth2 authorization request repository</h4>
-     * <p>{@link HttpCookieOAuth2AuthorizationRequestRepository} is wired into
-     * both {@code authorizationEndpoint()} and {@code redirectionEndpoint()},
-     * replacing the default {@code HttpSessionOAuth2AuthorizationRequestRepository}.</p>
+     * <p>Custom filters are inserted into the chain at specific positions:
+     * the {@link OAuthReturnUrlFilter} runs before the OAuth2 redirect
+     * filter, the {@link JwtAuthenticationFilter} runs before the
+     * username-password filter, and the optional {@link RateLimitFilter}
+     * runs before the JWT filter. This ordering ensures rate limits are
+     * enforced before any authentication work is performed.</p>
      *
-     * @param http HttpSecurity builder
-     * @return configured SecurityFilterChain
-     * @throws Exception if configuration fails
+     * <p>OAuth2 login is configured with a custom success handler and a
+     * cookie-based authorization request repository that replaces the
+     * default HttpSession-based store. The entry point and access-denied
+     * handler return RFC 9457 Problem Details for all security failures.</p>
+     *
+     * @param http the {@link HttpSecurity} builder to configure
+     * @return the fully configured {@link SecurityFilterChain}
+     * @throws Exception if any security configuration step fails
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -206,11 +225,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/items/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/items/slug/**").permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/items/*/create/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/items/*/review/create").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/items/*/reviews").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/reviews/*").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/reviews/*/update").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/reviews/*/delete").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/items/*/review/*").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/items/*/review/*/update").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/items/*/review/*/delete").hasAnyRole("CUSTOMER", "ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/items/create/**").hasRole("ADMIN")
 
@@ -294,9 +313,15 @@ public class SecurityConfig {
      * Exposes the {@link AuthenticationManager} bean for programmatic use
      * in authentication services.
      *
-     * @param config Spring Boot auto-configuration
-     * @return the {@link AuthenticationManager}
-     * @throws Exception if retrieval fails
+     * <p>This bean delegates to Spring Boot's autoconfigured
+     * {@link AuthenticationConfiguration} to resolve the fully configured
+     * {@link AuthenticationManager}. It is required by services that need
+     * to authenticate credentials directly, such as the email-based login
+     * flow, without going through the HTTP filter chain.</p>
+     *
+     * @param config the Spring Boot autoconfigured security configuration
+     * @return the resolved {@link AuthenticationManager} instance
+     * @throws Exception if the manager cannot be resolved
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

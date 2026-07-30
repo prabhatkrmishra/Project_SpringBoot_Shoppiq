@@ -8,28 +8,37 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Response DTO for admin customer management.
+ * Response DTO for admin customer management.
  *
- * <p>
- * This DTO provides a comprehensive view of a user for administrators,
- * including profile details, roles, order statistics, and account status.
- * Supports block/unblock operations.
- * </p>
+ * <p>This record provides a comprehensive view of a user account for
+ * administrators, including profile details, assigned roles, aggregate
+ * order statistics, and account status. It is returned by the admin
+ * user list and detail endpoints and is designed for the customer
+ * management UI where administrators review, block, unblock, and
+ * manage user accounts.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Expose user details to admin API.</li>
- *     <li>Support account blocking/unblocking operations.</li>
- * </ul>
+ * <p>The static {@link #fromEntity(User, long, BigDecimal)} factory
+ * method accepts pre-computed aggregate statistics (order count and
+ * total spend) that are joined from the order table at the repository
+ * level. This avoids N+1 queries while keeping the DTO construction
+ * logic centralized. The {@code enabled} flag controls whether the
+ * user can authenticate; setting it to {@code false} effectively
+ * blocks the account.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Immutable through Java Records.</li>
- *     <li>Includes aggregated order statistics.</li>
- *     <li>Created using {@link #fromEntity(User, long, long, BigDecimal)}.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @param id          unique identifier of the user account
+ * @param name        full display name of the user
+ * @param username    unique username used for authentication
+ * @param email       email address associated with the account
+ * @param roles       list of role names assigned to this user (e.g. "ROLE_USER",
+ *                    "ROLE_ADMIN"); determines access permissions
+ * @param enabled     whether the account is currently enabled and can
+ *                    authenticate; setting to false blocks the user
+ * @param totalOrders total number of confirmed orders placed by this user
+ * @param totalSpent  aggregate monetary value of all qualifying orders,
+ *                    in the platform's base currency
+ * @param createdAt   timestamp when the user account was first created
+ * @param updatedAt   timestamp of the most recent modification to the account
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AdminUserResponse(
@@ -88,9 +97,9 @@ public record AdminUserResponse(
     /**
      * Creates an {@code AdminUserResponse} from a {@link User} entity with aggregated stats.
      *
-     * @param user         user entity
-     * @param totalOrders  total orders count
-     * @param totalSpent   total amount spent
+     * @param user        user entity
+     * @param totalOrders total orders count
+     * @param totalSpent  total amount spent
      * @return mapped response DTO
      */
     public static AdminUserResponse fromEntity(

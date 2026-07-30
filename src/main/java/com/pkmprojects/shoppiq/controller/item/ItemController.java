@@ -12,15 +12,35 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller responsible for managing catalog items.
+ * REST controller for public catalog item browsing.
  *
- * <p>
- * Exposes public endpoints for browsing the product catalog.
- * Product creation, update and deletion are handled by seller
- * and admin controllers respectively.
- * </p>
+ * <p>Exposes read-only endpoints for browsing the product catalog. Supports
+ * browsing all published items, fetching by ID or slug, filtering by category,
+ * viewing new arrivals and sale items, and retrieving top-selling products.
+ * Product creation, update, and deletion are handled by seller and admin
+ * controllers respectively.</p>
+ *
+ * <p>This controller acts as the HTTP boundary for catalog browsing. It delegates
+ * all business logic — query filtering, pagination, slug resolution, and
+ * category-based filtering — to {@link ItemService}. The controller handles
+ * no business logic beyond page-size capping.</p>
+ *
+ * <p>No authentication is required. All endpoints are mounted under /items.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET    /items/all                — paginated list of all published items
+ * GET    /items/{id}               — get a single item by ID
+ * GET    /items/slug/{slug}        — get a single item by URL slug
+ * GET    /items/new-arrivals       — paginated new arrival items
+ * GET    /items/sale               — paginated sale items
+ * GET    /items/category/{slug}    — paginated items by category slug
+ * GET    /items/top-selling        — top-selling items across the store
+ * </pre>
  *
  * @author prabhatkrmishra
+ * @see ItemService
  * @since 1.0.0
  */
 @Validated
@@ -40,7 +60,7 @@ public class ItemController {
      * Returns a paginated list of all published items.
      *
      * @param page zero-based page index
-     * @param size page size (capped by {@code pagination.maxPageSize()})
+     * @param size page size (capped by the configured maximum)
      * @return 200 OK with page of item responses
      */
     @GetMapping("/all")
@@ -67,7 +87,10 @@ public class ItemController {
     /**
      * Returns a single item by its URL slug.
      *
-     * @param slug the item slug
+     * <p>Slugs are URL-friendly identifiers used for SEO-friendly
+     * product URLs.</p>
+     *
+     * @param slug the item URL slug
      * @return 200 OK with the item response
      */
     @GetMapping("/slug/{slug}")
@@ -76,10 +99,11 @@ public class ItemController {
     }
 
     /**
-     * Returns a paginated list of new-arrival items, sorted by creation date descending.
+     * Returns a paginated list of new-arrival items, sorted by creation
+     * date descending.
      *
      * @param page zero-based page index
-     * @param size page size (capped by {@code pagination.maxPageSize()})
+     * @param size page size (capped by the configured maximum)
      * @return 200 OK with page of item responses
      */
     @GetMapping("/new-arrivals")
@@ -94,7 +118,7 @@ public class ItemController {
      * Returns a paginated list of items currently on sale.
      *
      * @param page zero-based page index
-     * @param size page size (capped by {@code pagination.maxPageSize()})
+     * @param size page size (capped by the configured maximum)
      * @return 200 OK with page of item responses
      */
     @GetMapping("/sale")
@@ -108,9 +132,9 @@ public class ItemController {
     /**
      * Returns a paginated list of items in a specific category.
      *
-     * @param slug the category slug
+     * @param slug the category slug to filter by
      * @param page zero-based page index
-     * @param size page size (capped by {@code pagination.maxPageSize()})
+     * @param size page size (capped by the configured maximum)
      * @return 200 OK with page of item responses
      */
     @GetMapping("/category/{slug}")
@@ -125,7 +149,7 @@ public class ItemController {
     /**
      * Returns the top-selling items across the store.
      *
-     * @param size maximum number of items to return (capped by {@code pagination.maxPageSize()})
+     * @param size maximum number of items to return (capped by the configured maximum)
      * @return 200 OK with list of top-selling item responses
      */
     @GetMapping("/top-selling")

@@ -5,12 +5,11 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import jakarta.annotation.PostConstruct;
 
 import java.time.Duration;
 import java.util.Map;
@@ -18,33 +17,33 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * <strong>Spring Boot Concept:</strong> Centralized service for resolving AI model names to LangChain4j
- * {@link ChatModel} and {@link StreamingChatModel} instances.
+ * Centralized service for resolving AI model names to LangChain4j model instances.
  *
- * <p>
- * Maintains a registry of allowed model IDs and their display names.
- * Models are lazily instantiated and cached for the application lifetime.
- * Requests for unknown or disallowed model names fall back to the default model.
+ * <p>This service maintains a registry of allowed NVIDIA NIM model IDs with
+ * lazy instantiation and caching. When the frontend specifies a model in a
+ * chat request, this service resolves it to the corresponding synchronous or
+ * streaming {@link ChatModel} instance. Unrecognized model IDs are rejected
+ * with an {@link AiModelNotSupportedException}.</p>
  *
- * @author PrabhatKrMishra
+ * <p>Model instances are cached in thread-safe maps to avoid recreating
+ * them for repeated requests. The default model (Nemotron 49B) is provided
+ * as a pre-configured bean and is returned directly without caching overhead
+ * when no model selection is specified.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Service
 public class ModelResolutionService {
 
+    /**
+     * The default model ID used when no model is specified or an invalid model is requested.
+     */
+    public static final String DEFAULT_MODEL_ID = "nvidia/llama-3.3-nemotron-super-49b-v1.5";
     private static final Logger log = LoggerFactory.getLogger(ModelResolutionService.class);
-
     private static final String NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
     private static final Duration MODEL_TIMEOUT = Duration.ofSeconds(300);
-
-    private final ChatModel defaultChatModel;
-    private final StreamingChatModel defaultStreamingChatModel;
-    private final String nvidiaApiKey;
-
-    private final Map<String, ChatModel> chatModelCache = new ConcurrentHashMap<>();
-    private final Map<String, StreamingChatModel> streamingModelCache = new ConcurrentHashMap<>();
-
-/**
+    /**
      * Registry of allowed model IDs mapped to their display names.
      * Only models in this registry can be used by the frontend.
      */
@@ -52,11 +51,11 @@ public class ModelResolutionService {
             "nvidia/llama-3.3-nemotron-super-49b-v1.5", "Nemotron 49B",
             "nvidia/nemotron-3-nano-30b-a3b", "Nemotron Nano 30B"
     );
-
-    /**
-     * The default model ID used when no model is specified or an invalid model is requested.
-     */
-    public static final String DEFAULT_MODEL_ID = "nvidia/llama-3.3-nemotron-super-49b-v1.5";
+    private final ChatModel defaultChatModel;
+    private final StreamingChatModel defaultStreamingChatModel;
+    private final String nvidiaApiKey;
+    private final Map<String, ChatModel> chatModelCache = new ConcurrentHashMap<>();
+    private final Map<String, StreamingChatModel> streamingModelCache = new ConcurrentHashMap<>();
 
     public ModelResolutionService(
             ChatModel defaultChatModel,
@@ -75,10 +74,10 @@ public class ModelResolutionService {
     /**
      * Resolves a model name to a synchronous {@link ChatModel}.
      *
-     * <p>
-     * If the model name is null, blank, or not in the registry, the default
-     * model is returned. Otherwise, a new model instance is created (or cached)
-     * for the requested model name.
+     * <p>If the model name is null, blank, or not in the registry, the default
+     * model is returned. Otherwise, a new model instance is created (or retrieved
+     * from cache) for the requested model name. All non-default models are
+     * configured with the same generation parameters as the default model.</p>
      *
      * @param modelName the model identifier from the frontend (e.g., "nvidia/llama-3.3-nemotron-super-49b-v1.5")
      * @return the resolved ChatModel instance
@@ -110,10 +109,10 @@ public class ModelResolutionService {
     /**
      * Resolves a model name to a streaming {@link StreamingChatModel}.
      *
-     * <p>
-     * If the model name is null, blank, or not in the registry, the default
-     * streaming model is returned. Otherwise, a new streaming model instance
-     * is created (or cached) for the requested model name.
+     * <p>If the model name is null, blank, or not in the registry, the default
+     * streaming model is returned. Otherwise, a new streaming model instance is
+     * created (or retrieved from cache) for the requested model name. All
+     * non-default models are configured with the same generation parameters.</p>
      *
      * @param modelName the model identifier from the frontend
      * @return the resolved StreamingChatModel instance
@@ -145,6 +144,10 @@ public class ModelResolutionService {
     /**
      * Returns the set of all allowed model IDs.
      *
+     * <p>Used by the frontend to populate the model selection dropdown.
+     * The returned set is unmodifiable and reflects the current model
+     * registry configuration.</p>
+     *
      * @return unmodifiable set of model ID strings
      */
     public Set<String> getAllowedModelIds() {
@@ -153,6 +156,10 @@ public class ModelResolutionService {
 
     /**
      * Returns the display name for a given model ID.
+     *
+     * <p>Maps the technical model identifier to a human-readable display
+     * name suitable for the frontend model selector. Returns the model ID
+     * itself if no display name mapping exists.</p>
      *
      * @param modelId the model identifier
      * @return the display name, or the model ID itself if not found
@@ -164,6 +171,9 @@ public class ModelResolutionService {
     /**
      * Checks whether a given model ID is in the allowed registry.
      *
+     * <p>Used for input validation before attempting model resolution.
+     * Returns false for null inputs.</p>
+     *
      * @param modelId the model identifier to check
      * @return true if the model is registered and allowed
      */
@@ -172,9 +182,12 @@ public class ModelResolutionService {
     }
 
     /**
-     * Sanitizes and validates the model name. Returns the default model ID
-     * if the input is null or blank. Throws {@link AiModelNotSupportedException}
-     * if the model is explicitly provided but not in the allowed registry.
+     * Sanitizes and validates the model name.
+     *
+     * <p>Returns the default model ID if the input is null or blank. Throws
+     * {@link AiModelNotSupportedException} if the model is explicitly provided
+     * but not found in the allowed registry. Trims whitespace from the input
+     * before validation.</p>
      *
      * @param modelName the raw model name from the request
      * @return a valid, allowed model ID

@@ -10,8 +10,8 @@ import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
 import com.pkmprojects.shoppiq.events.OrderStatusChangedEvent;
 import com.pkmprojects.shoppiq.exception.general.order.OrderInvalidStatusTransitionException;
-import com.pkmprojects.shoppiq.exception.general.order.OrderNotFullyOwnedException;
 import com.pkmprojects.shoppiq.exception.general.order.OrderNotFoundException;
+import com.pkmprojects.shoppiq.exception.general.order.OrderNotFullyOwnedException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotVerifiedException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException;
@@ -24,15 +24,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerOrderService}.
- *
- * <p>
- * Provides order management for sellers. Sellers can view orders
- * containing their products and update status only when all items
- * in the order belong to them.
- * </p>
+ * {@link SellerOrderService} implementation providing order management for sellers
+ * with full-ownership verification and status transition validation.
  *
  * @author prabhatkrmishra
+ * @see SellerOrderService
  * @since 1.0.0
  */
 @Service
@@ -103,8 +99,8 @@ public class SellerOrderServiceImpl implements SellerOrderService {
      * @param newStatus target order status
      * @return updated seller order response
      * @throws OrderNotFoundException                if the order does not exist
-     * @throws OrderNotFullyOwnedException            if not all items belong to the seller
-     * @throws OrderInvalidStatusTransitionException  if the status transition is not allowed
+     * @throws OrderNotFullyOwnedException           if not all items belong to the seller
+     * @throws OrderInvalidStatusTransitionException if the status transition is not allowed
      */
     @Override
     public SellerOrderResponse updateOrderStatus(User user, Long orderId, OrderStatus newStatus) {

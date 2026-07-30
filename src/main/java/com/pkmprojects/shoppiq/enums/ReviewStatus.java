@@ -3,25 +3,17 @@ package com.pkmprojects.shoppiq.enums;
 import com.pkmprojects.shoppiq.entity.review.ItemReview;
 
 /**
- * <strong>Spring Boot Concept:</strong> Moderation status of an {@link ItemReview}.
+ * Moderation status of an {@link ItemReview}.
  *
- * <p>Defines the lifecycle of a customer product review. New reviews
- * start as {@link #PENDING}, requiring admin approval before they
- * become visible. {@link #APPROVED} reviews are shown on the product
- * page, while {@link #REJECTED} reviews are hidden.</p>
+ * <p>This enum models the review moderation workflow. New reviews start
+ * as {@link #PENDING} and become {@link #APPROVED} (visible to all
+ * customers) or {@link #REJECTED} (hidden from customers) after admin
+ * review. Only APPROVED reviews are displayed on product detail pages
+ * and factored into average rating calculations.</p>
  *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Content moderation workflow</strong> — A simple three-state
- *         model (PENDING → APPROVED/REJECTED) for admin review of
- *         user-generated content.</li>
- *     <li><strong>Stored as STRING</strong> — Used with
- *         {@code @Enumerated(EnumType.STRING)} in the JPA entity for
- *         readable database values and easier SQL queries.</li>
- *     <li><strong>Default PENDING</strong> — The {@code ItemReview} entity
- *         sets the default to {@code PENDING} via {@code @Builder.Default},
- *         ensuring all new reviews start in a moderation-required state.</li>
- * </ul>
+ * <p>The moderation process ensures that reviews comply with the
+ * platform's content guidelines before being published. Admins can
+ * approve or reject reviews from the admin dashboard.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

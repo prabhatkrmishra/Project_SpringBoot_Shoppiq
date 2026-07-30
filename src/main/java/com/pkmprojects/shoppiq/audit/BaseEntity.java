@@ -1,58 +1,25 @@
 package com.pkmprojects.shoppiq.audit;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.Id;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
 import lombok.Getter;
 
 /**
- * <strong>Spring Boot Concept:</strong> Represents the root persistence class for all JPA entities in the Shoppiq application.
+ * Root persistence class for all JPA entities in the Shoppiq application.
  *
- * <p>
- * This class centralizes the common persistence attributes required by every
- * database entity.
- * </p>
+ * <p>Centralizes the common persistence attributes required by every
+ * database entity: a database-generated primary key and optimistic
+ * locking support via {@link Version}. Every entity in the domain model
+ * inherits from this class to guarantee a consistent identity strategy
+ * and conflict-prevention mechanism across the entire persistence layer.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Provides a database-generated primary key.</li>
- *     <li>Provides optimistic locking support.</li>
- * </ul>
- *
- * <h2>Design Decisions</h2>
- * <ul>
- *     <li>Uses {@code Long} as the identifier type for simplicity and
- *     compatibility with MySQL auto-increment columns.</li>
- *     <li>Uses {@link Version} to prevent lost updates during concurrent
- *     transactions.</li>
- *     <li>Marked as {@link MappedSuperclass} because it is not a standalone
- *     entity.</li>
- * </ul>
- *
- * <h2>Extended By</h2>
- * <ul>
- *     <li>{@link AuditableEntity}</li>
- *     <li>Any future entity requiring persistence.</li>
- * </ul>
- *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>{@code @MappedSuperclass}</strong> — JPA inheritance strategy
- *         where the superclass is not an entity itself but its fields are inherited
- *         by subclass entities and mapped to their tables.</li>
- *     <li><strong>{@code @Id} + {@code @GeneratedValue(strategy = IDENTITY)}</strong>
- *         — Standard JPA primary key pattern using database auto-increment.</li>
- *     <li><strong>{@code @Version}</strong> — Built-in optimistic locking that
- *         prevents lost updates in concurrent environments without explicit locks.</li>
- *     <li><strong>{@code abstract}</strong> — Prevents direct instantiation;
- *         only concrete subclasses can be persisted.</li>
- *     <li><strong>Lombok {@code @Getter}</strong> — Reduces boilerplate by generating
- *         getters for all fields at compile time.</li>
- * </ul>
+ * <p>Optimistic locking via the {@code version} field ensures that
+ * concurrent updates to the same row are detected and rejected, preventing
+ * silent data loss. Hibernate automatically increments the version on
+ * every flush, and a {@code OptimisticLockException} is thrown if a
+ * stale transaction attempts to commit against an outdated version.</p>
  *
  * @author prabhatkrmishra
+ * @see AuditableEntity
  * @since 1.0.0
  */
 @Getter
@@ -62,10 +29,11 @@ public abstract class BaseEntity {
     /**
      * Unique identifier of the entity.
      *
-     * <p>
-     * Generated automatically by the database using the IDENTITY strategy.
-     * This value uniquely identifies every persisted record.
-     * </p>
+     * <p>Generated automatically by the database using the IDENTITY
+     * strategy (auto-increment). This value uniquely identifies every
+     * persisted record and is never reused once assigned. The identifier
+     * is immutable after initial persist and serves as the primary key
+     * for all JPA mapping and relationship resolution.</p>
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,11 +42,11 @@ public abstract class BaseEntity {
     /**
      * Entity version used for optimistic locking.
      *
-     * <p>
-     * Hibernate automatically increments this value after every successful
-     * update. If multiple transactions attempt to update the same entity,
-     * optimistic locking prevents accidental overwrites.
-     * </p>
+     * <p>Hibernate automatically increments this value after every
+     * successful update. If multiple transactions attempt to update the
+     * same entity concurrently, optimistic locking prevents accidental
+     * overwrites by comparing the expected version with the stored
+     * version at commit time.</p>
      */
     @Version
     private Long version;

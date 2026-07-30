@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.DuplicateResourceException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a seller
- * profile already exists for a user.
+ * Thrown when a seller profile already exists for a user.
  *
- * <p>Leaf exception in the duplicate-resource hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.DuplicateResourceException}
- * (HTTP 409) with factory methods for duplicate user and duplicate
- * business email scenarios.</p>
+ * <p>This exception is thrown during seller registration when the
+ * authenticated user already has an associated seller profile. Each user
+ * can have at most one seller profile. It uses the
+ * {@link ErrorCode#SELLER_ALREADY_EXISTS} code and HTTP 409 Conflict
+ * status.</p>
+ *
+ * <p>The detail message includes the conflicting identifier (e.g.,
+ * "A seller profile for user '42' already exists.") to help the client
+ * understand which field caused the conflict. The client should use
+ * their existing seller profile or contact support.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#SELLER_ALREADY_EXISTS
  * @since 1.0.0
  */
 public final class SellerAlreadyExistsException extends DuplicateResourceException {

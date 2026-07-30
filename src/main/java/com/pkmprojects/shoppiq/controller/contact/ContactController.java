@@ -12,23 +12,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller handling public contact-form
- * submissions.
+ * REST controller handling public contact-form submissions.
  *
- * <p>Exposes a single {@code POST /contact} endpoint that accepts visitor
- * inquiries and delegates to {@link ContactMessageService} for persistence
- * and notification. No authentication is required — anyone can submit the
- * contact form.</p>
+ * <p>Exposes a single unauthenticated endpoint that accepts visitor inquiries
+ * through the site's contact form. Submissions are persisted and become visible
+ * in the admin messages panel for follow-up. No email notification is sent
+ * directly from this controller; the service layer may trigger one asynchronously.</p>
  *
- * <p>Key design points:
- * <ul>
- *   <li><strong>Thin controller</strong> — validates the incoming {@code @Valid}
- *       request body and immediately delegates to the service layer.</li>
- *   <li><strong>Public unauthenticated endpoint</strong> — no
- *       {@code @PreAuthorize} restriction, demonstrating how to selectively
- *       expose open endpoints alongside secured ones.</li>
- * </ul>
- * </p>
+ * <p>This controller acts as the HTTP boundary for contact form intake. It
+ * delegates all business logic — message persistence, validation, and any
+ * asynchronous notification — to {@link ContactMessageService}. The controller
+ * handles no business logic beyond request validation and response assembly.</p>
+ *
+ * <p>No authentication is required. The endpoint is mounted under /contact.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * POST   /contact  — submit a new contact/inquiry message
+ * </pre>
  *
  * @author prabhatkrmishra
  * @see ContactMessageService
@@ -47,22 +49,12 @@ public class ContactController {
     /**
      * Submits a new contact/inquiry message from a site visitor.
      *
-     * <p>The message is persisted via {@link ContactMessageService#create} and
-     * becomes visible in the admin messages panel. No email notification is
-     * sent from this controller; the service layer may trigger one
-     * asynchronously.</p>
-     *
-     * <h4>Request flow:</h4>
-     * <ol>
-     *   <li>Validate the {@link ContactMessageRequest} payload (name, email,
-     *       subject, message body).</li>
-     *   <li>Delegate to {@link ContactMessageService#create} which persists
-     *       the message.</li>
-     *   <li>Return HTTP 201 with the created {@link ContactMessageResponse}.</li>
-     * </ol>
+     * <p>The message is persisted via ContactMessageService and becomes
+     * visible in the admin messages panel. No email notification is sent
+     * from this controller; the service layer may trigger one asynchronously.</p>
      *
      * @param request the validated contact-message payload
-     * @return HTTP 201 with the newly created message response
+     * @return 201 Created with the newly created message response
      */
     @PostMapping
     public ResponseEntity<ContactMessageResponse> submitMessage(

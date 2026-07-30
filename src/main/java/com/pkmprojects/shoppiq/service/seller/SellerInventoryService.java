@@ -5,22 +5,10 @@ import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * <strong>Spring Boot Concept:</strong> Business contract for seller inventory management.
+ * Business contract for seller inventory management.
  *
- * <p>
- * Provides inventory-specific operations for sellers, including viewing
- * stock levels, identifying low stock and out-of-stock products, and
- * performing stock adjustments.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>List the seller's full inventory with stock status.</li>
- *     <li>Identify low stock products.</li>
- *     <li>Identify out of stock products.</li>
- *     <li>Adjust stock quantities for individual products.</li>
- *     <li>Enforce seller-level preconditions (ACTIVE, not SUSPENDED).</li>
- * </ul>
+ * <p>Defines operations for viewing stock levels, identifying low stock and
+ * out-of-stock products, and performing stock adjustments.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

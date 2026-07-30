@@ -7,22 +7,20 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> JPA entity storing verification codes for email verification and password reset.
+ * JPA entity storing verification codes for email verification and password reset.
  *
- * <p><b>How it fits:</b> Supports the user authentication workflow —
- * users must verify their email before they can access AI chat features.
- * Each code is single-use, 6-digit numeric, expires after
- * {@link #CODE_VALIDITY_MINUTES} minutes, and allows a maximum of
- * {@link #MAX_ATTEMPTS} failed attempts before invalidation.</p>
+ * <p>Supports single-use, time-limited codes with attempt tracking for security flows.
+ * Each code is a 6-digit numeric string that expires after a configurable duration (default:
+ * 10 minutes). The entity tracks usage status and failed attempt counts to prevent brute-force
+ * attacks. Codes are automatically invalidated after successful validation or when the maximum
+ * number of failed attempts is exceeded.</p>
  *
- * <p>
- * Each code is linked to a user and an email type to support multiple
- * verification flows.
- * </p>
+ * <p>This entity is used by the verification service to manage the lifecycle of verification
+ * codes. When a new code is generated, any existing unused codes for the same user and email
+ * type are automatically invalidated to prevent code reuse attacks.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

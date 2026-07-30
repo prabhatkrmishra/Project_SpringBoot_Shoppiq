@@ -7,25 +7,14 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.general.address.AddressNotFoundException;
 import com.pkmprojects.shoppiq.repository.address.AddressRepository;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AddressService}
- * containing business logic for customer address operations.
- *
- * <p>Manages CRUD for user addresses with ownership validation and a one-default
- * invariant. Used by {@code AddressController} for customer address management.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — All write operations (create, update, delete, setDefault) execute within database transactions to maintain consistency of the one-default invariant.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link AddressService} implementation that manages CRUD for user addresses
+ * with ownership validation and a one-default-address invariant.
  *
  * @author prabhatkrmishra
  * @see AddressService
@@ -75,7 +64,9 @@ public class AddressServiceImpl implements AddressService {
         return AddressResponse.from(addressRepository.save(address));
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<AddressResponse> getAll(User user) {
         return addressRepository.findAllByUser(user)
@@ -84,7 +75,9 @@ public class AddressServiceImpl implements AddressService {
                 .toList();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public AddressResponse getById(User user, Long id) {
         Address address = findAndValidateOwnership(user, id);
@@ -120,7 +113,9 @@ public class AddressServiceImpl implements AddressService {
         return AddressResponse.from(addressRepository.save(address));
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(User user, Long id) {
         Address address = findAndValidateOwnership(user, id);
@@ -155,7 +150,7 @@ public class AddressServiceImpl implements AddressService {
      * @param user the authenticated user
      * @param id   address ID
      * @return the address entity
-     * @throws AddressNotFoundException    if no address with that ID exists
+     * @throws AddressNotFoundException     if no address with that ID exists
      * @throws AddressAccessDeniedException if the address belongs to another user
      */
     private Address findAndValidateOwnership(User user, Long id) {

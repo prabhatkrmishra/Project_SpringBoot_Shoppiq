@@ -10,28 +10,11 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link Cart} persistence operations.
+ * Persistence operations for the {@link Cart} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Simple derived query</strong> — {@code findByUser} generates
- *       {@code SELECT * FROM carts WHERE user_id = ?}.</li>
- *   <li><strong>Custom JPQL with JOIN FETCH</strong> — {@code findByUserWithItems} shows
- *       how to eagerly load associations (items, itemDetails, category, item) in a single
- *       query to avoid N+1 performance problems during checkout.</li>
- *   <li><strong>When to fall back to {@code @Query}</strong> — The Javadoc on
- *       {@link #findByUserWithItems} explains that Spring Data's parser misinterprets
- *       compound method names like {@code findByUserWithItems}, making {@code @Query}
- *       the correct approach for complex fetch strategies.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findByUser(User)
- *       → SELECT * FROM carts WHERE user_id = ?
- *   findByUserWithItems(@Query)
- *       → SELECT c FROM carts c LEFT JOIN FETCH c.items ...
- * </pre>
+ * <p>Provides methods to query carts by user with eager fetching of cart items and associations
+ * for checkout processing. The repository supports both simple cart lookups and optimized
+ * queries with JOIN FETCH to avoid N+1 queries during cart display and checkout.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

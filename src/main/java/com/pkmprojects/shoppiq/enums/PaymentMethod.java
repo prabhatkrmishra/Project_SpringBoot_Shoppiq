@@ -3,31 +3,18 @@ package com.pkmprojects.shoppiq.enums;
 import com.pkmprojects.shoppiq.entity.order.Order;
 
 /**
- * <strong>Spring Boot Concept:</strong> Supported payment methods for an {@link Order}.
+ * Supported payment methods for an {@link Order}.
  *
- * <p>
- * The frontend submits one of {@code CREDIT_CARD}, {@code PAYPAL} or
- * {@code STRIPE} (see {@code checkout.html}). These are all online methods and
- * are stored as-is for auditing, while {@link #isOnline()} routes them to the
- * online payment strategy. {@code COD} is the only non-online method.
- * </p>
+ * <p>This enum defines all payment methods available to customers at
+ * checkout. Online methods ({@link #CREDIT_CARD}, {@link #PAYPAL},
+ * {@link #STRIPE}, {@link #UPI}) route to an external gateway via
+ * the {@link PaymentGatewayStrategy} strategy pattern. {@link #COD}
+ * is the only offline method and does not require gateway integration.</p>
  *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Enum with behavior</strong> — The {@code isOnline()} method
- *         adds logic to the enum itself, demonstrating that enums in Java can
- *         have methods and are not just constant containers.</li>
- *     <li><strong>Frontend-backend alignment</strong> — The enum values map
- *         directly to what the frontend sends in the checkout form, ensuring
- *         type safety between the UI and the service layer.</li>
- *     <li><strong>Stored as STRING</strong> — Used with
- *         {@code @Enumerated(EnumType.STRING)} in the {@link Order} entity
- *         for human-readable database values.</li>
- *     <li><strong>COD as offline flag</strong> — The distinction between
- *         online (gateway-required) and offline (COD) payments drives the
- *         checkout flow logic: online methods initiate a gateway transaction,
- *         while COD skips it.</li>
- * </ul>
+ * <p>The {@link #isOnline()} method determines whether a gateway is
+ * required for processing. This method is used by the checkout service
+ * to decide whether to redirect the customer to a payment gateway or
+ * to process the order as a cash-on-delivery transaction.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -35,32 +22,57 @@ import com.pkmprojects.shoppiq.entity.order.Order;
 public enum PaymentMethod {
 
     /**
-     * Cash on delivery — no external gateway.
+     * Cash on delivery — no external gateway required.
+     *
+     * <p>The customer pays in cash when the order is delivered. This is
+     * the only offline payment method and does not require a payment
+     * gateway integration. A COD surcharge may apply.</p>
      */
     COD,
 
     /**
-     * Generic online payment (fallback for any online method).
+     * Generic online payment fallback for any online method.
+     *
+     * <p>This is a catch-all for online payments that do not have a
+     * specific enum value. It routes to the default online gateway
+     * configuration.</p>
      */
     ONLINE,
 
     /**
-     * Credit / debit card payment (online).
+     * Credit or debit card payment (online).
+     *
+     * <p>Card payments are processed through the Stripe or Razorpay
+     * gateway, depending on the configured payment provider. The
+     * customer enters their card details on the gateway's hosted
+     * payment page.</p>
      */
     CREDIT_CARD,
 
     /**
      * PayPal payment (online).
+     *
+     * <p>The customer is redirected to PayPal to complete the payment.
+     * PayPal handles card processing internally, so the application
+     * never sees the customer's card details.</p>
      */
     PAYPAL,
 
     /**
      * Stripe payment (online).
+     *
+     * <p>Card payments processed through the Stripe gateway. Stripe
+     * provides a hosted payment page or embedded form for collecting
+     * card details securely.</p>
      */
     STRIPE,
 
     /**
      * UPI payment (online, India) — Google Pay, PhonePe, Paytm, BHIM.
+     *
+     * <p>Unified Payments Interface payments are popular in India.
+     * The customer scans a QR code or enters their UPI ID to
+     * authorize the payment through their UPI app.</p>
      */
     UPI;
 

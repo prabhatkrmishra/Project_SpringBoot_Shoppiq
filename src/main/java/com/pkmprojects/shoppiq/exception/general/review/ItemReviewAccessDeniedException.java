@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a user attempts
- * to update or delete a review they do not own.
+ * Thrown when a user attempts to update or delete a review they do not own.
  *
- * <p>Leaf exception in the authorization hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException}
- * (HTTP 403) with factory methods for ownership violations and role-based
- * restrictions (sellers and admins cannot create reviews).</p>
+ * <p>This exception is thrown when a user attempts to modify or delete a
+ * review that belongs to another user. Only the review author or an
+ * administrator can modify a review. It uses the
+ * {@link ErrorCode#ITEM_REVIEW_ACCESS_DENIED} code and HTTP 403 Forbidden
+ * status.</p>
+ *
+ * <p>The detail message includes the review identifier (e.g.,
+ * "You are not allowed to modify review with id '42'.") to help the
+ * client understand which review was restricted. The client should ensure
+ * they are operating on their own reviews.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#ITEM_REVIEW_ACCESS_DENIED
  * @since 1.0.0
  */
 public final class ItemReviewAccessDeniedException

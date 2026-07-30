@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a requested
- * item cannot be found.
+ * Thrown when a requested item (product) cannot be found by ID, SKU, or slug.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) for missing items, with factory methods for lookup by
- * identifier, SKU, and slug.</p>
+ * <p>This exception is thrown by item service methods when a database
+ * lookup for a product fails. It uses the {@link ErrorCode#ITEM_NOT_FOUND}
+ * code and HTTP 404 Not Found status. The exception provides multiple
+ * static factory methods to create instances for different lookup
+ * scenarios, each with a descriptive detail message.</p>
+ *
+ * <p>The detail message includes the lookup identifier and type (e.g.,
+ * "Item with id '42' was not found.") to help clients understand which
+ * identifier was invalid. The client should verify the identifier and
+ * retry the request.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#ITEM_NOT_FOUND
  * @since 1.0.0
  */
 public final class ItemNotFoundException extends ResourceNotFoundException {

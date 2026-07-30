@@ -8,21 +8,24 @@ import com.pkmprojects.shoppiq.entity.enums.BannerType;
 import com.pkmprojects.shoppiq.exception.general.banner.BannerNotFoundException;
 import com.pkmprojects.shoppiq.repository.banner.BannerRepository;
 import com.pkmprojects.shoppiq.service.banner.BannerServiceImpl;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import static org.assertj.core.api.Assertions.*;
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -52,9 +55,9 @@ class BannerServiceImplTest {
     }
 
     private Banner buildBanner(Long id, String badgeText, BannerType badgeType,
-                                String heading, String bodyText,
-                                String buttonText, String buttonLink,
-                                Integer displayOrder, boolean active) throws Exception {
+                               String heading, String bodyText,
+                               String buttonText, String buttonLink,
+                               Integer displayOrder, boolean active) throws Exception {
         Banner banner = Banner.builder()
                 .badgeText(badgeText)
                 .badgeType(badgeType)
@@ -72,9 +75,9 @@ class BannerServiceImplTest {
     }
 
     private BannerRequest buildRequest(String badgeText, BannerType badgeType,
-                                        String heading, String bodyText,
-                                        String buttonText, String buttonLink,
-                                        Integer displayOrder, Boolean active) {
+                                       String heading, String bodyText,
+                                       String buttonText, String buttonLink,
+                                       Integer displayOrder, Boolean active) {
         return new BannerRequest(
                 badgeText, badgeType, heading, bodyText,
                 buttonText, buttonLink, "#FFFFFF",

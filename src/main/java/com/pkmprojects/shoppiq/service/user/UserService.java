@@ -1,10 +1,10 @@
 package com.pkmprojects.shoppiq.service.user;
 
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
-import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.dto.user.ChangePasswordRequest;
 import com.pkmprojects.shoppiq.dto.user.UpdateProfileRequest;
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
+import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.email.EmailService;
 import com.pkmprojects.shoppiq.email.EmailType;
 import com.pkmprojects.shoppiq.email.dto.EmailMessage;
@@ -13,10 +13,10 @@ import com.pkmprojects.shoppiq.entity.seller.Seller;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
-import com.pkmprojects.shoppiq.exception.general.user.DuplicateUserException;
 import com.pkmprojects.shoppiq.exception.business.CurrentPasswordIncorrectException;
 import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.business.PasswordChangeException;
+import com.pkmprojects.shoppiq.exception.general.user.DuplicateUserException;
 import com.pkmprojects.shoppiq.repository.address.AddressRepository;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.role.RoleService;
@@ -42,49 +42,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * <strong>Spring Boot Concept:</strong> Service for user account management.
+ * Service for user account management including registration, profile updates,
+ * and password changes.
  *
- * <p><strong>What this Service layer class demonstrates:</strong></p>
- * <ul>
- *   <li><strong>Dual registration paths</strong> — Supports both username/password registration
- *       ({@link #createUser}) and Google OAuth2 registration ({@link #createGoogleUser}).
- *       OAuth2 users are created without a password (they authenticate via Google), but can
- *       later set a password via {@link #changePassword}.</li>
- *   <li><strong>Database-level uniqueness</strong> — Unique constraints on {@code email} and
- *       {@code username} provide definitive duplicate protection. Application-level pre-checks
- *       are intentionally avoided; conflicts are caught via
- *       {@link org.springframework.dao.DataIntegrityViolationException} and rethrown as
- *       {@link com.pkmprojects.shoppiq.exception.general.user.DuplicateUserException}.</li>
- *   <li><strong>Transactional email dispatch</strong> — Verification emails are sent
- *       <em>after</em> the database transaction commits using
- *       {@link org.springframework.transaction.support.TransactionSynchronization#afterCommit()}.
- *       This prevents a slow or failed email delivery from holding the database transaction open.</li>
- *   <li><strong>Token version invalidation</strong> — {@link #changePassword} increments
- *       {@code tokenVersion}, which invalidates all previously issued JWTs. This is a security
- *       best practice for password changes.</li>
- *   <li><strong>Seller registration inline</strong> — If {@code isSellerRegistration} is true
- *       in the user request, a {@link com.pkmprojects.shoppiq.entity.seller.Seller} record is
- *       created within the same transaction as the user, ensuring both succeed or both roll back.</li>
- *   <li><strong>Password encoding</strong> — All passwords are BCrypt-hashed via
- *       {@link org.springframework.security.crypto.password.PasswordEncoder} before storage.</li>
- * </ul>
- *
- * <p>Handles user creation for both username/password registration and
- * Google OAuth2 registration. All creation methods are transactional and
- * rely on database-level unique constraints for definitive uniqueness
- * enforcement under concurrent access.</p>
- *
- * <p>Google OAuth2 users are created without a password — they authenticate
- * exclusively via Google OAuth2. This eliminates password storage liability
- * and credential-related attack vectors for OAuth2-only accounts.</p>
- *
- * <p>Database unique constraints on {@code email} and {@code username}
- * provide the authoritative uniqueness enforcement. Application-level
- * existence checks in controller are not performed here; conflicts are
- * caught via {@link DataIntegrityViolationException}.</p>
- *
- * @see com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession
- * @see DuplicateUserException
+ * <p>Supports both username/password and Google OAuth2 registration paths.
+ * Uses database-level unique constraints for definitive duplicate enforcement
+ * and transactional email dispatch after commit.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

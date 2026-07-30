@@ -1,7 +1,6 @@
 package com.pkmprojects.shoppiq.auth.oauth2;
 
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
+import com.pkmprojects.shoppiq.exception.auth.OAuthSessionException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,98 +19,24 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Cookie-based {@link AuthorizationRequestRepository} — replaces Spring
- * Security's default {@code HttpSessionOAuth2AuthorizationRequestRepository}
- * with an HttpOnly cookie implementation for the OAuth2 authorization code
- * flow.
+ * Cookie-based {@link AuthorizationRequestRepository} for stateless OAuth2.
  *
- * <h3>OAuth2 / Spring Security concepts demonstrated</h3>
- * <ul>
- *   <li><strong>AuthorizationRequestRepository contract</strong> — Spring
- *       Security's OAuth2 client uses this SPI to persist the pending
- *       {@link OAuth2AuthorizationRequest} between the authorization redirect
- *       and the callback. The default implementation stores it in the HTTP
- *       session.</li>
- *   <li><strong>Stateless OAuth2 with SessionCreationPolicy.STATELESS</strong> —
- *       because this application never creates an {@code HttpSession}, the
- *       default session-based repository would silently lose the pending
- *       request. This class persists it in a short-lived, HMAC-signed,
- *       HttpOnly cookie instead, enabling a fully stateless OAuth2 flow.</li>
- *   <li><strong>Authorization code flow (PKCE optional)</strong> — the flow
- *       follows the standard OAuth2 pattern: redirect to Google → Google
- *       asks for consent → Google redirects back with an authorization
- *       {@code code} → the code is exchanged for tokens.</li>
- *   <li><strong>State parameter validation</strong> — the {@code state} value
- *       carried in the cookie must match the {@code state} returned by Google,
- *       preventing CSRF attacks against the callback endpoint.</li>
- * </ul>
- *
- * <h3>Cookie lifecycle</h3>
- * <pre>
- * GET /oauth2/authorization/google
- *       ↓
- * saveAuthorizationRequest() — serialize request → write oauth2_auth_request cookie
- *       ↓
- * Browser follows redirect to Google
- *       ↓
- * Google redirects to /login/oauth2/code/google?code=…&state=…
- *       ↓
- * loadAuthorizationRequest() — read cookie → verify HMAC → deserialize
- *       ↓
- * removeAuthorizationRequest() — clear cookie (Max-Age=0)
- *       ↓
- * OAuth2SuccessHandler issues JWT cookie
- * </pre>
- *
- * <h3>Security properties</h3>
- * <ul>
- *   <li>{@code HttpOnly} — cookie is not accessible to JavaScript, mitigating XSS theft</li>
- *   <li>{@code Secure} — HTTPS-only transmission in production (env-driven via
- *       {@code app.security.secure-cookie})</li>
- *   <li>{@code SameSite=Lax} — sent on top-level navigations (Google's redirect)
- *       but not on cross-site sub-requests. {@code Strict} would silently drop
- *       the cookie on the OAuth2 callback because that redirect originates from
- *       {@code accounts.google.com}, which is a different site.</li>
- *   <li>Short {@code Max-Age} of 300 s — limits exposure if the user abandons
- *       the login flow mid-way.</li>
- *   <li>HMAC-SHA256 signed payload — prevents tampering and RCE via Java
- *       deserialization gadget chains (the original Spring Security default
- *       used Java serialization which is vulnerable to gadget-chain attacks).</li>
- * </ul>
- *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Strategy pattern</strong> — implements
- *       {@link AuthorizationRequestRepository} to replace the default session-based
- *       strategy with a cookie-based one.</li>
- *   <li><strong>Secure serialization</strong> — uses JSON + HMAC-SHA256 instead of
- *       Java serialization, avoiding deserialization gadget-chain vulnerabilities.</li>
- *   <li><strong>Careful SameSite choice</strong> — uses {@code Lax} (not
- *       {@code Strict}) because Google's callback redirect is a cross-site
- *       navigation from {@code accounts.google.com}; {@code Strict} would
- *       cause the browser to omit the cookie, breaking the flow.</li>
- * </ul>
- *
- * @see org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository
- * @see OAuth2SuccessHandler
+ * <p>Replaces the default session-based repository with an HMAC-signed,
+ * HttpOnly cookie implementation to support the OAuth2 authorization code
+ * flow without HTTP sessions.</p>
  *
  * @author prabhatkrmishra
+ * @see org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository
+ * @see OAuth2SuccessHandler
  * @since 1.0.0
  */
 @Component
 public class HttpCookieOAuth2AuthorizationRequestRepository
         implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
-
-    private static final Logger logger =
-            LoggerFactory.getLogger(HttpCookieOAuth2AuthorizationRequestRepository.class);
 
     /**
      * Cookie name that holds the Base64url-encoded, HMAC-signed JSON
@@ -119,7 +46,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
      * utilities can reference the exact cookie name without hard-coding it.</p>
      */
     public static final String OAUTH2_AUTH_REQUEST_COOKIE = "oauth2_auth_request";
-
+    private static final Logger logger =
+            LoggerFactory.getLogger(HttpCookieOAuth2AuthorizationRequestRepository.class);
     /**
      * Max-Age for the authorization-request cookie, in seconds.
      *
@@ -142,22 +70,50 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
      * {@code application.yaml}. Defaults to {@code true} so production
      * deployments are safe by default even if the property is omitted.</p>
      */
-    @Value("${app.security.secure-cookie:true}")
-    private boolean secureCookie;
+    private final boolean secureCookie;
 
     /**
-     * HMAC signing key derived from the application's JWT secret.
-     * Injected via {@code jwt.secret} property.
+     * HMAC signing key for cookie payloads.
+     * Uses {@code app.security.cookie-hmac-secret} if set, otherwise
+     * falls back to {@code jwt.secret} for backward compatibility.
      */
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    private final String cookieHmacSecret;
 
-    private final JsonMapper objectMapper = JsonMapper.builder().build();
-    private byte[] hmacKey;
+    private final JsonMapper objectMapper;
+    private final byte[] hmacKey;
 
-    @jakarta.annotation.PostConstruct
-    private void init() {
-        this.hmacKey = jwtSecret.getBytes(StandardCharsets.UTF_8);
+    public HttpCookieOAuth2AuthorizationRequestRepository(
+            @Value("${app.security.secure-cookie:true}") boolean secureCookie,
+            @Value("${app.security.cookie-hmac-secret:${jwt.secret}}") String cookieHmacSecret,
+            JsonMapper objectMapper) {
+        this.secureCookie = secureCookie;
+        this.cookieHmacSecret = cookieHmacSecret;
+        this.objectMapper = objectMapper;
+        this.hmacKey = cookieHmacSecret.getBytes(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Scans the incoming request's cookie array for a cookie with the given
+     * name and returns its value.
+     *
+     * <p>Returns {@code null} — rather than throwing — when no cookies are
+     * present or when none match {@code name}. Callers treat {@code null} as
+     * "absent" and handle the missing-cookie case without an exception.</p>
+     *
+     * @param request incoming HTTP request whose cookies are searched
+     * @param name    the exact cookie name to look up; comparison is
+     *                case-sensitive per RFC 6265 §5.2
+     * @return the value of the first matching cookie, or {@code null} if no
+     * cookie with that name exists
+     */
+    private static String readCookieValue(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+        return Arrays.stream(cookies)
+                .filter(c -> name.equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -219,6 +175,10 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         logger.debug("Saved OAuth2 authorization request in cookie");
     }
 
+    // -------------------------------------------------------------------------
+    // Cookie helpers
+    // -------------------------------------------------------------------------
+
     /**
      * Loads the {@link OAuth2AuthorizationRequest} from the cookie and
      * simultaneously clears the cookie so it cannot be replayed.
@@ -250,10 +210,6 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         }
         return authRequest;
     }
-
-    // -------------------------------------------------------------------------
-    // Cookie helpers
-    // -------------------------------------------------------------------------
 
     /**
      * Writes an HttpOnly cookie with the given name, value, and Max-Age to
@@ -315,30 +271,6 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         response.addCookie(cookie);
     }
 
-    /**
-     * Scans the incoming request's cookie array for a cookie with the given
-     * name and returns its value.
-     *
-     * <p>Returns {@code null} — rather than throwing — when no cookies are
-     * present or when none match {@code name}. Callers treat {@code null} as
-     * "absent" and handle the missing-cookie case without an exception.</p>
-     *
-     * @param request incoming HTTP request whose cookies are searched
-     * @param name    the exact cookie name to look up; comparison is
-     *                case-sensitive per RFC 6265 §5.2
-     * @return the value of the first matching cookie, or {@code null} if no
-     * cookie with that name exists
-     */
-    private static String readCookieValue(HttpServletRequest request, String name) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) return null;
-        return Arrays.stream(cookies)
-                .filter(c -> name.equals(c.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
-    }
-
     // -------------------------------------------------------------------------
     // Secure serialization helpers (JSON + HMAC)
     // -------------------------------------------------------------------------
@@ -376,7 +308,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             return encodedPayload + "." + signature;
         } catch (Exception e) {
             logger.error("Failed to serialize OAuth2 authorization request", e);
-            throw new IllegalStateException("Cannot serialize authorization request", e);
+            throw new OAuthSessionException("Cannot serialize authorization request");
         }
     }
 
@@ -487,7 +419,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             byte[] signature = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new IllegalStateException("HMAC initialization failed", e);
+            throw new OAuthSessionException("HMAC initialization failed");
         }
     }
 

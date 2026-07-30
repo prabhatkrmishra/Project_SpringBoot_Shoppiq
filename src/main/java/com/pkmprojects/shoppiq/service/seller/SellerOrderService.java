@@ -6,20 +6,10 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> Business contract for seller order management.
+ * Business contract for seller order management.
  *
- * <p>
- * Allows sellers to view orders containing their products and update
- * order status when all items in the order belong to them.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>List orders containing the seller's products.</li>
- *     <li>View a specific order filtered to the seller's line items.</li>
- *     <li>Update order status (only when all items belong to the seller).</li>
- *     <li>Enforce seller-level preconditions (ACTIVE, not SUSPENDED).</li>
- * </ul>
+ * <p>Defines operations for viewing orders containing the seller's products
+ * and updating order status when all items belong to the seller.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

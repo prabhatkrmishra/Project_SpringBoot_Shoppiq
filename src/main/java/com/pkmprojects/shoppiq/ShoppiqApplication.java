@@ -10,6 +10,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import com.pkmprojects.shoppiq.config.CheckoutProperties;
 import com.pkmprojects.shoppiq.config.PaginationProperties;
 import com.pkmprojects.shoppiq.config.PaymentGatewayProperties;
 import com.pkmprojects.shoppiq.aiservice.service.ChatServiceImpl;
@@ -17,19 +18,19 @@ import com.pkmprojects.shoppiq.aiservice.service.ChatServiceImpl;
 import java.util.Arrays;
 
 /**
- * <strong>Spring Boot Concept:</strong> Main entry point for the Shoppiq e-commerce application.
- *
- * <p><b>How AI fits:</b> The application bootstraps with {@code @EnableScheduling}
- * which powers the auto-resolve scheduler in {@link ChatServiceImpl},
- * and logs the AI-service configuration status ({@code shoppiq.ai.enabled})
- * on startup for operational diagnostics.</p>
+ * Main entry point for the Shoppiq e-commerce application.
  *
  * <p>Bootstraps the Spring Boot application with async task execution and
- * scheduled job support enabled. Registers {@link PaginationProperties}
- * as a configuration property binding for centralized pagination defaults.</p>
+ * scheduled job support enabled. The {@code @EnableScheduling} annotation
+ * powers the auto-resolve scheduler in {@link ChatServiceImpl}, while
+ * {@code @EnableAsync} allows non-blocking background task execution
+ * throughout the application.</p>
  *
- * <p>On startup, the application logs active profiles and AI-service
- * configuration status for operational diagnostics.</p>
+ * <p>Registers {@link PaginationProperties}, {@link PaymentGatewayProperties},
+ * and {@link CheckoutProperties} as configuration property bindings for
+ * centralized defaults. On startup, the application logs active profiles
+ * and AI-service configuration status ({@code shoppiq.ai.enabled}) for
+ * operational diagnostics.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -37,7 +38,7 @@ import java.util.Arrays;
 @SpringBootApplication
 @EnableAsync
 @EnableScheduling
-@EnableConfigurationProperties({PaginationProperties.class, PaymentGatewayProperties.class})
+@EnableConfigurationProperties({PaginationProperties.class, PaymentGatewayProperties.class, CheckoutProperties.class})
 public class ShoppiqApplication {
 
     private static final Logger log = LoggerFactory.getLogger(ShoppiqApplication.class);

@@ -7,6 +7,7 @@ import com.pkmprojects.shoppiq.entity.category.Category;
 import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.entity.item.ItemDetails;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
+import com.pkmprojects.shoppiq.exception.business.SlugGenerationFailedException;
 import com.pkmprojects.shoppiq.exception.general.category.CategoryNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.item.DuplicateItemException;
 import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
@@ -14,9 +15,9 @@ import com.pkmprojects.shoppiq.service.category.CategoryLookupService;
 import com.pkmprojects.shoppiq.util.SlugUtil;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -26,20 +27,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link ItemService}
- * containing business logic for product catalog operations.
- *
- * <p>Handles bulk item import with SKU uniqueness validation, category resolution,
- * unique slug generation with retry-on-conflict, and catalog queries (by ID, slug,
- * category, new arrivals, on-sale, top-selling). Used by {@code ItemController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Bulk import requires atomic multi-step creation; reads use {@code readOnly = true}.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link ItemService} implementation handling bulk item import with SKU uniqueness
+ * validation, category resolution, unique slug generation with retry-on-conflict,
+ * and catalog queries.
  *
  * @author prabhatkrmishra
  * @see ItemService
@@ -64,6 +54,17 @@ public class ItemServiceImpl implements ItemService {
         this.itemWriteService = itemWriteService;
         this.categoryLookupService = categoryLookupService;
         this.clock = clock;
+    }
+
+    private static String extractRootMessage(DataIntegrityViolationException e) {
+        Throwable cause = e;
+        while (cause != null) {
+            if (cause.getMessage() != null) {
+                return cause.getMessage();
+            }
+            cause = cause.getCause();
+        }
+        return null;
     }
 
     private Item buildItem(ItemRequest request, Category category) {
@@ -95,7 +96,8 @@ public class ItemServiceImpl implements ItemService {
                 itemWriteService.save(item);
                 return;
             } catch (DataIntegrityViolationException e) {
-                if (e.getMessage() != null && e.getMessage().contains("slug")) {
+                String rootMessage = extractRootMessage(e);
+                if (rootMessage != null && rootMessage.toLowerCase().contains("slug")) {
                     item.setSlug(generateUniqueSlug(item.getName()));
                     attempts++;
                 } else {
@@ -103,7 +105,7 @@ public class ItemServiceImpl implements ItemService {
                 }
             }
         }
-        throw new RuntimeException("Failed to generate unique slug after 10 attempts");
+        throw SlugGenerationFailedException.forEntity("item", item.getName(), 10);
     }
 
     private Item findItem(Long id) {
@@ -111,20 +113,19 @@ public class ItemServiceImpl implements ItemService {
                 .orElseThrow(() -> ItemNotFoundException.id(id));
     }
 
-/**
+    /**
      * Imports multiple items in bulk with SKU uniqueness validation and
      * atomic slug-generation retry on conflict.
      *
      * <p>Validates that no request-level SKU duplicates exist, all referenced
      * categories exist, and no SKU already exists in the database. Each item
-     * is persisted individually with slug retry logic.</p>
-     *
-     * <p><strong>Cache:</strong> Evicts all entries from the "items" cache after
-     * successful creation to ensure fresh data on subsequent reads.</p>
+     * is persisted individually with slug retry logic. Evicts all entries
+     * from the "items" cache after successful creation to ensure fresh
+     * data on subsequent reads.</p>
      *
      * @param requests list of item creation requests
      * @return list of created item responses
-     * @throws DuplicateItemException   if a duplicate SKU is detected
+     * @throws DuplicateItemException    if a duplicate SKU is detected
      * @throws CategoryNotFoundException if a referenced category is not found
      */
     @Override
@@ -173,11 +174,9 @@ public class ItemServiceImpl implements ItemService {
                 .toList();
     }
 
-/**
-     * Retrieves a single item by its database identifier.
-     *
-     * <p><strong>Cache:</strong> Results are cached under the "items" cache by ID.
-     * Cache is evicted on item updates or deletions.</p>
+    /**
+     * Retrieves a single item by its database identifier. Results are cached
+     * under the "items" cache by ID, evicted on item updates or deletions.
      *
      * @param id item ID
      * @return item response
@@ -189,11 +188,9 @@ public class ItemServiceImpl implements ItemService {
         return ItemResponse.fromEntity(findItem(id));
     }
 
-/**
-     * Retrieves a single item by its URL-friendly slug.
-     *
-     * <p><strong>Cache:</strong> Results are cached under the "items" cache by slug.
-     * Cache is evicted on item updates or deletions.</p>
+    /**
+     * Retrieves a single item by its URL-friendly slug. Results are cached
+     * under the "items" cache by slug, evicted on item updates or deletions.
      *
      * @param slug item slug
      * @return item response
@@ -292,14 +289,11 @@ public class ItemServiceImpl implements ItemService {
     /**
      * Generates a unique URL-friendly slug.
      *
-     * <p>
-     * The initial slug is produced by {@link SlugUtil}. If another item
-     * already uses the same slug, numeric suffixes are appended until a
-     * unique slug is found.
-     * </p>
+     * <p>The initial slug is produced by {@link SlugUtil}. If another item
+     * already uses the same slug, numeric suffixes are appended until a unique
+     * slug is found.</p>
      *
-     * <h4>Example</h4>
-     *
+     * <p>Example slug generation:</p>
      * <pre>
      * iphone-15-pro
      * iphone-15-pro-2
@@ -315,6 +309,9 @@ public class ItemServiceImpl implements ItemService {
         int counter = 2;
 
         while (itemLookupService.existsBySlug(slug)) {
+            if (counter > 1000) {
+                throw SlugGenerationFailedException.forEntity("item", itemName, 1000);
+            }
             slug = baseSlug + "-" + counter;
             counter++;
         }

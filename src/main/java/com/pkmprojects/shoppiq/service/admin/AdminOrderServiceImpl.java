@@ -1,9 +1,9 @@
 package com.pkmprojects.shoppiq.service.admin;
 
-import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.admin.response.AdminOrderResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.order.Order;
-import com.pkmprojects.shoppiq.enums.*;
+import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.events.OrderStatusChangedEvent;
 import com.pkmprojects.shoppiq.exception.general.order.OrderCannotBeCancelledException;
 import com.pkmprojects.shoppiq.exception.general.order.OrderInvalidStatusTransitionException;
@@ -18,21 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminOrderService}
- * containing business logic for admin order management.
+ * {@link AdminOrderService} implementation that handles order retrieval with
+ * filtering and status transitions with workflow validation.
  *
- * <p>Provides paginated order retrieval with optional status filtering, single
- * order lookup, and status transitions with workflow validation. Publishes
- * {@code OrderStatusChangedEvent} for async side effects. Used by
- * {@code AdminOrderController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Status updates and event publishing are atomic; reads use {@code readOnly = true}.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * <p>Publishes {@code OrderStatusChangedEvent} for async side effects.</p>
  *
  * @author prabhatkrmishra
  * @see AdminOrderService
@@ -47,8 +36,8 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final OrderStatusTransitionValidator orderStatusTransitionValidator;
 
     public AdminOrderServiceImpl(OrderRepository orderRepository,
-                                  ApplicationEventPublisher eventPublisher,
-                                  OrderStatusTransitionValidator orderStatusTransitionValidator) {
+                                 ApplicationEventPublisher eventPublisher,
+                                 OrderStatusTransitionValidator orderStatusTransitionValidator) {
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
         this.orderStatusTransitionValidator = orderStatusTransitionValidator;
@@ -101,8 +90,8 @@ public class AdminOrderServiceImpl implements AdminOrderService {
      * @param newStatus target order status
      * @return updated order response
      * @throws OrderNotFoundException                if the order does not exist
-     * @throws OrderInvalidStatusTransitionException  if the transition is not allowed
-     * @throws OrderCannotBeCancelledException        if cancellation is attempted from an invalid state
+     * @throws OrderInvalidStatusTransitionException if the transition is not allowed
+     * @throws OrderCannotBeCancelledException       if cancellation is attempted from an invalid state
      */
     @Override
     public AdminOrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus) {

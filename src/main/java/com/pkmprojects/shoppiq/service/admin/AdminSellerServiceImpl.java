@@ -9,6 +9,7 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.StoreStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
+import com.pkmprojects.shoppiq.exception.business.SlugGenerationFailedException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerApprovalInvalidException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
 import com.pkmprojects.shoppiq.repository.seller.StoreRepository;
@@ -21,20 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminSellerService}
- * containing business logic for admin seller approval workflow.
- *
- * <p>Manages the seller lifecycle: approving applications with automatic store
- * creation and role assignment, rejecting applications, and suspending/unsuspending
- * sellers. Used by {@code AdminSellerController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Seller approval spans multiple operations (status update + store creation + role grant) that must be atomic.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link AdminSellerService} implementation that handles seller account retrieval,
+ * application approval/rejection, and suspension of active sellers.
  *
  * @author prabhatkrmishra
  * @see AdminSellerService
@@ -54,7 +43,7 @@ public class AdminSellerServiceImpl implements AdminSellerService {
                                   SellerWriteService sellerWriteService,
                                   StoreRepository storeRepository,
                                   UserRepository userRepository,
-                                   RoleService roleService) {
+                                  RoleService roleService) {
         this.sellerLookupService = sellerLookupService;
         this.sellerWriteService = sellerWriteService;
         this.storeRepository = storeRepository;
@@ -97,7 +86,7 @@ public class AdminSellerServiceImpl implements AdminSellerService {
      *
      * @param sellerId seller ID
      * @return updated seller response
-     * @throws SellerNotFoundException       if the seller does not exist
+     * @throws SellerNotFoundException        if the seller does not exist
      * @throws SellerApprovalInvalidException if the seller is not in PENDING status
      */
     @Override
@@ -124,7 +113,7 @@ public class AdminSellerServiceImpl implements AdminSellerService {
      *
      * @param sellerId seller ID
      * @return updated seller response
-     * @throws SellerNotFoundException       if the seller does not exist
+     * @throws SellerNotFoundException        if the seller does not exist
      * @throws SellerApprovalInvalidException if the seller is not in PENDING status
      */
     @Override
@@ -148,7 +137,7 @@ public class AdminSellerServiceImpl implements AdminSellerService {
      *
      * @param sellerId seller ID
      * @return updated seller response
-     * @throws SellerNotFoundException       if the seller does not exist
+     * @throws SellerNotFoundException        if the seller does not exist
      * @throws SellerApprovalInvalidException if the seller is not ACTIVE
      */
     @Override
@@ -176,7 +165,7 @@ public class AdminSellerServiceImpl implements AdminSellerService {
      *
      * @param sellerId seller ID
      * @return updated seller response
-     * @throws SellerNotFoundException       if the seller does not exist
+     * @throws SellerNotFoundException        if the seller does not exist
      * @throws SellerApprovalInvalidException if the seller is not SUSPENDED
      */
     @Override
@@ -208,6 +197,9 @@ public class AdminSellerServiceImpl implements AdminSellerService {
 
         int suffix = 1;
         while (storeRepository.existsBySlug(slug)) {
+            if (suffix > 1000) {
+                throw SlugGenerationFailedException.forEntity("store", seller.getBusinessName(), 1000);
+            }
             slug = baseSlug + "-" + suffix++;
         }
 

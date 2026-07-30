@@ -10,24 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link NotificationService}.
- *
- * <p><strong>What this Service implementation demonstrates:</strong></p>
- * <ul>
- *   <li><strong>Get-or-create pattern</strong> — The {@code getOrCreate} private method checks
- *       if a {@link com.pkmprojects.shoppiq.entity.notification.NotificationPreference} row
- *       exists for the user. If not, it creates one with default values (all flags enabled).
- *       This is a common pattern for optional one-to-one configurations.</li>
- *   <li><strong>Partial field update</strong> — {@link #updatePreferences} only sets fields
- *       where the request value is non-null. This allows clients to send only the fields
- *       they want to change without requiring the full current state.</li>
- *   <li><strong>{@code @Transactional}</strong> — Both public methods are transactional,
- *       ensuring entity changes are flushed atomically to the database.</li>
- *   <li><strong>Constructor injection with Lombok</strong> — Uses {@code @RequiredArgsConstructor}
- *       to generate the constructor for {@code NotificationPreferenceRepository}.</li>
- * </ul>
+ * {@link NotificationService} implementation handling get-or-create preferences
+ * and partial field updates for notification flags.
  *
  * @author prabhatkrmishra
+ * @see NotificationService
  * @since 1.0.0
  */
 @Service

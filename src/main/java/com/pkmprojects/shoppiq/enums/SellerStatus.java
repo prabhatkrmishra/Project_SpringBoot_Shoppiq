@@ -1,27 +1,18 @@
 package com.pkmprojects.shoppiq.enums;
 
 /**
- * <strong>Spring Boot Concept:</strong> Operational status of a seller account.
+ * Operational status of a seller account.
  *
- * <p>Independent of {@link VerificationStatus}. A seller may be
- * {@code ACTIVE} only after being {@code APPROVED}.
- * </p>
+ * <p>This enum is independent of {@link VerificationStatus} and tracks
+ * whether a seller is currently allowed to operate on the platform.
+ * A seller can be {@link #ACTIVE} (selling normally), {@link #SUSPENDED}
+ * (blocked by admin from selling), or {@link #INACTIVE} (not yet approved
+ * or voluntarily deregistered).</p>
  *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Operational lifecycle</strong> — Tracks whether a seller
- *         is currently {@code ACTIVE}, {@code SUSPENDED}, or
- *         {@code INACTIVE}. This status can change multiple times over
- *         the seller's lifetime (e.g., suspension for policy violations,
- *         reactivation after appeal).</li>
- *     <li><strong>Separated from verification</strong> — Unlike
- *         {@link VerificationStatus} (one-time approval), this status
- *         handles day-to-day operational state. The two enums are
- *         independent but interdependent: a seller must be APPROVED
- *         before becoming ACTIVE.</li>
- *     <li><strong>Stored as STRING</strong> — Used with
- *         {@code @Enumerated(EnumType.STRING)} in the JPA entity.</li>
- * </ul>
+ * <p>The seller status affects what operations the seller can perform:
+ * ACTIVE sellers can list products and receive orders, SUSPENDED sellers
+ * cannot, and INACTIVE sellers have not completed the registration
+ * flow.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

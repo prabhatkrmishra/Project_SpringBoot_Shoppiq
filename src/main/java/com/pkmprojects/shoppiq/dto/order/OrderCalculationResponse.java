@@ -3,12 +3,31 @@ package com.pkmprojects.shoppiq.dto.order;
 import java.math.BigDecimal;
 
 /**
- * <strong>Spring Boot Concept:</strong> Server-calculated order summary returned before the order is placed.
+ * Server-calculated order cost summary returned before the order is placed.
  *
- * <p>Every cost component — including delivery charge and COD surcharge — is
- * computed server-side so the frontend displays authoritative values.</p>
+ * <p>This record provides a complete cost breakdown computed by the server
+ * from the user's current cart contents and the selected checkout
+ * parameters. Every cost component is calculated server-side to ensure
+ * the frontend displays authoritative, consistent values regardless of
+ * client-side implementation.</p>
  *
- * @author PrabhatKrMishra
+ * <p>The grand total is computed as
+ * {@code subtotal + deliveryCharge + codSurcharge - discount}. This
+ * response is returned by the order calculation endpoint and is used
+ * by the checkout page to render the order summary before the customer
+ * confirms the purchase.</p>
+ *
+ * @param subtotal       sum of all item line totals before any fees or discounts;
+ *                       computed from the user's current cart contents
+ * @param deliveryCharge shipping fee: {@code 7.50} for EXPRESS_1DAY,
+ *                       {@code 0.00} for NORMAL delivery
+ * @param codSurcharge   additional surcharge: {@code 5.00} when payment
+ *                       method is COD, {@code 0.00} otherwise
+ * @param discount       promo code discount amount; {@code 0.00} if no valid
+ *                       promo code is applied
+ * @param grandTotal     final amount the customer pays, computed as
+ *                       {@code subtotal + deliveryCharge + codSurcharge - discount}
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record OrderCalculationResponse(

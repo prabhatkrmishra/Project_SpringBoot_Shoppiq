@@ -1,76 +1,35 @@
 package com.pkmprojects.shoppiq.service.category;
 
-import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.category.CategoryRequest;
 import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Service interface for managing product categories.
+ * Business contract for product category management.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * This is the primary <strong>Service layer</strong> interface for category management.
- * It acts as the boundary between the presentation layer (controllers) and the
- * persistence layer (repositories), following the
- * {@code CategoryController → CategoryService → CategoryLookupService / CategoryWriteService}
- * pattern.
- * </p>
+ * <p>Defines operations for creating, updating, deleting, and retrieving
+ * categories with automatic slug generation and uniqueness enforcement.
+ * This service acts as the primary boundary between the presentation layer
+ * (controllers) and the persistence layer (repositories), following the
+ * {@code CategoryController → CategoryService → CategoryLookupService /
+ * CategoryWriteService} delegation pattern.</p>
  *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *     <li>Create new categories with unique name/slug validation.</li>
- *     <li>Bulk create categories.</li>
- *     <li>Update existing categories (regenerates slug on name change).</li>
- *     <li>Delete categories (prevented if referenced by products).</li>
- *     <li>Retrieve categories by identifier or slug.</li>
- *     <li>Retrieve top-selling categories from the last 30 days.</li>
- * </ul>
+ * <p>Business rules enforced include: category names must be unique
+ * (case-insensitive), category slugs must be unique, slugs are automatically
+ * generated from category names via {@code SlugUtil}, and categories
+ * referenced by products cannot be deleted. All mutations invalidate the
+ * categories cache to ensure fresh data on subsequent reads.</p>
  *
- * <h2>Business Rules Enforced</h2>
- * <ul>
- *     <li>Category names must be unique (case-insensitive).</li>
- *     <li>Category slugs must be unique.</li>
- *     <li>Slugs are automatically generated from category names via {@code SlugUtil}.</li>
- *     <li>Categories referenced by products cannot be deleted (future enforcement).</li>
- * </ul>
- *
- * <p>
- * This service defines the business operations for category management.
- * It acts as the boundary between the presentation layer (controllers)
- * and the persistence layer (repositories).
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Create new categories.</li>
- *     <li>Bulk create categories.</li>
- *     <li>Update existing categories.</li>
- *     <li>Delete categories.</li>
- *     <li>Retrieve categories by identifier or slug.</li>
- *     <li>Retrieve all available categories.</li>
- *     <li>Enforce business rules such as uniqueness and validation.</li>
- * </ul>
- *
- * <h2>Design Principles</h2>
- * <ul>
- *     <li>Exposes DTOs instead of JPA entities.</li>
- *     <li>Contains business operations only.</li>
- *     <li>Implementation is responsible for validation and persistence.</li>
- *     <li>Controllers should delegate directly to this interface without
- *     implementing business logic.</li>
- * </ul>
- *
- * <h2>Business Rules</h2>
- * <ul>
- *     <li>Category names must be unique.</li>
- *     <li>Category slugs must be unique.</li>
- *     <li>Slugs are automatically generated from category names.</li>
- *     <li>Categories referenced by products cannot be deleted.</li>
- * </ul>
+ * <p>Write operations (create, update, delete) are transactional and may
+ * throw {@code DuplicateCategoryException} for name conflicts or
+ * {@code CategoryNotFoundException} for missing identifiers. Read
+ * operations are read-only transactions with caching enabled.</p>
  *
  * @author prabhatkrmishra
+ * @see CategoryLookupService
+ * @see CategoryWriteService
  * @since 1.0.0
  */
 public interface CategoryService {

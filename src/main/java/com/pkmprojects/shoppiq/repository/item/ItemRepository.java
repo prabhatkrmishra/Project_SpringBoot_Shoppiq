@@ -14,52 +14,12 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository responsible for {@link Item} persistence.
+ * Persistence operations for the {@link Item} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived queries across associations</strong> — {@code findBySellerId},
- *       {@code countBySellerId}, {@code findByIdAndSellerId} navigate the {@code seller}
- *       relationship, generating {@code WHERE seller_id = ?}.</li>
- *   <li><strong>Nested property traversal</strong> — {@code existsByItemDetailsSku} resolves
- *       {@code Item → itemDetails → sku}, generating
- *       {@code SELECT ... FROM items i JOIN item_details id ON i.item_details_id = id.id WHERE id.sku = ?}.</li>
- *   <li><strong>Negated ID check</strong> — {@code existsByItemDetailsSkuAndIdNot} shows
- *       {@code IdNot} mapping to {@code id <> ?}.</li>
- *   <li><strong>JPQL with JOIN FETCH</strong> — {@code findAllWithItemDetails} eagerly loads
- *       {@code itemDetails} and {@code category} to avoid N+1. The {@code DISTINCT} keyword
- *       prevents duplicate rows from the join.</li>
- *   <li><strong>Enum filtering</strong> — {@code findByPublishingStatus} works with
- *       {@link com.pkmprojects.shoppiq.enums.ProductPublishingStatus} directly.</li>
- *   <li><strong>IN-clause queries</strong> — {@code findExistingSkus} uses
- *       {@code WHERE id.sku IN :skus} to batch-check which SKUs already exist.</li>
- *   <li><strong>Case-insensitive search</strong> — {@code findByNameContainingIgnoreCase}
- *       generates {@code WHERE LOWER(name) LIKE LOWER(CONCAT('%', ?, '%'))}.</li>
- *   <li><strong>Complex JPQL with multiple JOIN FETCHes</strong> — {@code findNewArrivals},
- *       {@code findOnSaleItems}, and {@code findByCategorySlug} combine eager fetching
- *       with filtering and sorting.</li>
- *   <li><strong>Native query with projection</strong> — {@code findTopSellingItemIds}
- *       executes raw SQL with aggregation ({@code SUM}), grouping, and returns
- *       {@link com.pkmprojects.shoppiq.repository.item.projection.ItemSalesRanking} projections.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findBySellerId(Long)
- *       → SELECT * FROM items WHERE seller_id = ?
- *   countBySellerId(Long)
- *       → SELECT COUNT(*) FROM items WHERE seller_id = ?
- *   findByIdAndSellerId(Long, Long)
- *       → SELECT * FROM items WHERE id = ? AND seller_id = ?
- *   existsByItemDetailsSku(String)
- *       → SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
- *         FROM items i JOIN item_details id ON i.item_details_id = id.id WHERE id.sku = ?
- *   findBySlug(String)
- *       → SELECT * FROM items WHERE slug = ?
- *   findByNameContainingIgnoreCase(String, Pageable)
- *       → SELECT * FROM items WHERE LOWER(name) LIKE LOWER(CONCAT('%', ?, '%'))
- *         ORDER BY ? LIMIT ? OFFSET ?
- * </pre>
+ * <p>Provides methods to query items by seller, category, publishing status, and various filters
+ * for catalog management. The repository supports paginated queries for item listing, eager
+ * fetching of item details and categories, and aggregate queries for sales analytics and
+ * product performance reporting.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -75,6 +35,13 @@ public interface ItemRepository
      */
     List<Item> findBySellerId(Long sellerId);
 
+    /**
+     * Returns a paginated view of items owned by a specific seller.
+     *
+     * @param sellerId the seller identifier
+     * @param pageable pagination parameters
+     * @return paginated list of items
+     */
     Page<Item> findBySellerId(Long sellerId, Pageable pageable);
 
     /**
@@ -125,6 +92,12 @@ public interface ItemRepository
      */
     List<Item> findAllByOrderByNameAsc();
 
+    /**
+     * Returns a paginated view of all items ordered alphabetically.
+     *
+     * @param pageable pagination parameters
+     * @return paginated list of items
+     */
     Page<Item> findAllByOrderByNameAsc(Pageable pageable);
 
     /**
@@ -135,9 +108,22 @@ public interface ItemRepository
     @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category")
     List<Item> findAllWithItemDetails();
 
+    /**
+     * Returns a paginated view of all items with item details eagerly fetched.
+     *
+     * @param pageable pagination parameters
+     * @return paginated list of items with item details
+     */
     @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.itemDetails id LEFT JOIN FETCH id.category")
     Page<Item> findAllWithItemDetails(Pageable pageable);
 
+    /**
+     * Returns a paginated view of items filtered by publishing status.
+     *
+     * @param status   the publishing status
+     * @param pageable pagination parameters
+     * @return paginated list of items
+     */
     Page<Item> findByPublishingStatus(ProductPublishingStatus status, Pageable pageable);
 
     /**
@@ -171,7 +157,7 @@ public interface ItemRepository
      * <p>Used by the AI assistant's product-detail lookup as a fallback when no
      * exact slug match is found. The RAG retriever is the primary discovery path.</p>
      *
-     * @param name partial product name
+     * @param name     partial product name
      * @param pageable pagination parameters
      * @return matching items
      */
@@ -180,7 +166,7 @@ public interface ItemRepository
     /**
      * Retrieves the latest published items ordered by creation date.
      *
-     * @param status publishing status filter
+     * @param status   publishing status filter
      * @param pageable pagination parameters
      * @return list of latest items
      */
@@ -192,6 +178,13 @@ public interface ItemRepository
             ORDER BY i.createdAt DESC""")
     List<Item> findNewArrivals(@Param("status") ProductPublishingStatus status, org.springframework.data.domain.Pageable pageable);
 
+    /**
+     * Returns a paginated view of the latest published items ordered by creation date.
+     *
+     * @param status   publishing status filter
+     * @param pageable pagination parameters
+     * @return paginated list of latest items
+     */
     @Query("""
             SELECT DISTINCT i FROM Item i
             LEFT JOIN FETCH i.itemDetails id
@@ -213,6 +206,12 @@ public interface ItemRepository
             ORDER BY i.createdAt DESC""")
     List<Item> findOnSaleItems();
 
+    /**
+     * Returns a paginated view of all published items that are marked as on sale.
+     *
+     * @param pageable pagination parameters
+     * @return paginated list of on-sale items
+     */
     @Query("""
             SELECT DISTINCT i FROM Item i
             LEFT JOIN FETCH i.itemDetails id
@@ -221,6 +220,13 @@ public interface ItemRepository
             ORDER BY i.createdAt DESC""")
     Page<Item> findOnSaleItemsPage(Pageable pageable);
 
+    /**
+     * Returns a paginated view of items belonging to a category identified by slug.
+     *
+     * @param slug     the category URL slug
+     * @param pageable pagination parameters
+     * @return paginated list of items in the category
+     */
     @Query("""
             SELECT DISTINCT i FROM Item i
             LEFT JOIN FETCH i.itemDetails id
@@ -232,8 +238,8 @@ public interface ItemRepository
      * Returns item IDs ranked by total quantity sold in delivered orders
      * since the given date, limited to the specified count.
      *
-     * @param since  cutoff timestamp (inclusive)
-     * @param limit  max number of results
+     * @param since cutoff timestamp (inclusive)
+     * @param limit max number of results
      * @return typed projections with itemId
      */
     @Query(value = """
@@ -245,7 +251,7 @@ public interface ItemRepository
             GROUP BY i.id
             ORDER BY total_qty DESC
             LIMIT :limit""",
-           nativeQuery = true)
+            nativeQuery = true)
     List<ItemSalesRanking> findTopSellingItemIds(
             @Param("since") java.time.Instant since,
             @Param("limit") int limit

@@ -3,17 +3,22 @@ package com.pkmprojects.shoppiq.exception.business;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Concrete leaf exception in the
- * {@code business} branch for password change validation failures.
+ * Thrown when a password change request fails validation.
  *
- * <p>Thrown when a password change request fails validation (e.g. mismatched
- * confirmation, or missing current password). Shares the same error code
- * ({@link ErrorCode#CURRENT_PASSWORD_INCORRECT}) as
- * {@link CurrentPasswordIncorrectException} but conveys a different failure
- * scenario through its detail message — error codes are stable identifiers
- * for clients while detail messages provide human-readable context.</p>
+ * <p>This exception is used when the password change process encounters
+ * a validation error that is not covered by more specific exceptions.
+ * It uses the {@link ErrorCode#CURRENT_PASSWORD_INCORRECT} code and
+ * HTTP 400 Bad Request status. The detail message should explain what
+ * validation rule was violated.</p>
+ *
+ * <p>For the specific case where the current password does not match,
+ * prefer using {@link CurrentPasswordIncorrectException} instead, as
+ * it provides a more specific error message without requiring a
+ * parameter.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#CURRENT_PASSWORD_INCORRECT
+ * @see CurrentPasswordIncorrectException
  * @since 1.0.0
  */
 public class PasswordChangeException extends InvalidOperationException {

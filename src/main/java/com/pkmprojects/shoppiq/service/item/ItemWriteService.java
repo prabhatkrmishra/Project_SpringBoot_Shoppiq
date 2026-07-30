@@ -3,25 +3,14 @@ package com.pkmprojects.shoppiq.service.item;
 import com.pkmprojects.shoppiq.entity.item.Item;
 
 /**
- * <strong>Spring Boot Concept:</strong> Write facade for item (product) persistence.
+ * Write facade for item (product) persistence.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * A write-only facade that decouples service-layer code from {@code ItemRepository}.
- * Part of the <strong>CQRS-inspired pattern</strong> where read operations go through
- * {@code ItemLookupService} and write operations through this interface.
- * </p>
- *
- * <h2>Why Separate Read and Write?</h2>
- * <ul>
- *   <li>Clear separation of concerns — query logic stays in {@code ItemLookupService}.</li>
- *   <li>Transactional boundaries can be tuned independently.</li>
- *   <li>Future caching, auditing, or events can be added to writes without affecting reads.</li>
- * </ul>
+ * <p>Decouples service-layer code from {@code ItemRepository},
+ * providing save and delete operations for item entities.</p>
  *
  * @author prabhatkrmishra
- * @since 1.4.0
  * @see ItemLookupService
+ * @since 1.4.0
  */
 public interface ItemWriteService {
 

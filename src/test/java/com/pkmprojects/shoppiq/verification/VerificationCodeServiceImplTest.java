@@ -2,10 +2,10 @@ package com.pkmprojects.shoppiq.verification;
 
 import com.pkmprojects.shoppiq.email.EmailType;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.verification.entity.VerificationCode;
 import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
-import com.pkmprojects.shoppiq.verification.service.impl.VerificationCodeServiceImpl;
+import com.pkmprojects.shoppiq.verification.entity.VerificationCode;
 import com.pkmprojects.shoppiq.verification.repository.VerificationCodeRepository;
+import com.pkmprojects.shoppiq.verification.service.impl.VerificationCodeServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +24,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("VerificationCodeServiceImpl")

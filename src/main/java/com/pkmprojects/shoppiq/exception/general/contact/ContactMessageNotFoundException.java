@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a requested
- * contact message cannot be found.
+ * Thrown when a requested contact message cannot be found.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) for missing
- * {@link com.pkmprojects.shoppiq.entity.contact.ContactMessage} entities.</p>
+ * <p>This exception is thrown by contact service methods when a database
+ * lookup for a contact message fails. It uses the
+ * {@link ErrorCode#CONTACT_MESSAGE_NOT_FOUND} code and HTTP 404 Not
+ * Found status. The message may have been deleted by another
+ * administrator.</p>
+ *
+ * <p>The detail message includes the message identifier (e.g.,
+ * "Contact message with id '42' was not found.") to help the client
+ * understand which message was invalid. The administrator should verify
+ * the message ID and retry the operation.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#CONTACT_MESSAGE_NOT_FOUND
  * @since 1.0.0
  */
 public final class ContactMessageNotFoundException extends ResourceNotFoundException {

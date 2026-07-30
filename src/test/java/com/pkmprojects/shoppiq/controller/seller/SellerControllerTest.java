@@ -1,11 +1,11 @@
 package com.pkmprojects.shoppiq.controller.seller;
 
-import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.ClockConfig;
@@ -14,7 +14,6 @@ import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.dto.seller.request.SellerProfileUpdateRequest;
 import com.pkmprojects.shoppiq.dto.seller.request.SellerRegistrationRequest;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
-import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
@@ -23,11 +22,7 @@ import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.service.seller.SellerService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -38,6 +33,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -45,9 +41,10 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SellerController.class)
 @Import({
@@ -66,27 +63,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @DisplayName("SellerController Tests")
 class SellerControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private JsonMapper objectMapper;
-
-    @MockitoBean
-    private SellerService sellerService;
-
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private RoleService rolesService;
-
-    @MockitoBean
-    private OAuth2SuccessHandler oAuth2SuccessHandler;
-
-    @MockitoBean
-    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
-
     private static final Long USER_ID = 1L;
     private static final Long SELLER_ID = 1L;
     private static final String BUSINESS_NAME = "Test Shop";
@@ -94,7 +70,20 @@ class SellerControllerTest {
     private static final String PHONE = "1234567890";
     private static final String GST_NUMBER = "GST12345";
     private static final String PAN_NUMBER = "ABCDE1234F";
-
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private JsonMapper objectMapper;
+    @MockitoBean
+    private SellerService sellerService;
+    @MockitoBean
+    private UserRepository userRepository;
+    @MockitoBean
+    private RoleService rolesService;
+    @MockitoBean
+    private OAuth2SuccessHandler oAuth2SuccessHandler;
+    @MockitoBean
+    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private User authenticatedUser;
 
     private static SellerResponse stubSellerResponse() {

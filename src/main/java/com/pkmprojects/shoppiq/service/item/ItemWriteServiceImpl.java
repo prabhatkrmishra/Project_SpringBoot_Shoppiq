@@ -7,20 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link ItemWriteService}
- * providing transactional persistence for item entities.
- *
- * <p>Thin write facade that delegates save and delete to {@code ItemRepository}.
- * When called from {@link ItemServiceImpl}, transactions propagate via Spring's
- * default REQUIRED propagation.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Each save/delete operation is individually transactional.</li>
- *   <li><strong>@RequiredArgsConstructor</strong> — Lombok-generated constructor injection for final fields.</li>
- * </ul>
- * </p>
+ * {@link ItemWriteService} implementation providing transactional persistence
+ * for item entities.
  *
  * @author prabhatkrmishra
  * @see ItemWriteService

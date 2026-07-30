@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -24,70 +23,16 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Handles successful Google OAuth2 authentication — Spring Security's
- * {@link AuthenticationSuccessHandler} for the OAuth2 login flow.
+ * Handles successful Google OAuth2 authentication.
  *
- * <h3>OAuth2 / Spring Security concepts demonstrated</h3>
- * <ul>
- *   <li><strong>AuthenticationSuccessHandler contract</strong> — Spring Security
- *       calls this after the OAuth2 authorization code exchange and token
- *       validation succeed. It replaces the default redirect behavior with
- *       custom post-login logic.</li>
- *   <li><strong>OIDC principal validation</strong> — verifies the principal
- *       is an {@link org.springframework.security.oauth2.core.oidc.user.OidcUser}
- *       and checks Google's {@code email_verified} claim before proceeding.
- *       This prevents account takeover using unverified Google accounts.</li>
- *   <li><strong>Returning vs. new user branching</strong> — existing users
- *       receive a JWT cookie and redirect to the original page; new users
- *       are diverted to a registration-completion flow, with their verified
- *       Google profile stored in an HttpOnly cookie.</li>
- *   <li><strong>Stateless OAuth2 integration</strong> — the handler writes
- *       temporary session state (for new users) into a cookie rather than
- *       the HTTP session, maintaining full statelessness.</li>
- *   <li><strong>Return-URL preservation</strong> — reads the
- *       {@code oauth_return_url} cookie (set by {@link OAuthReturnUrlFilter})
- *       so users are redirected back to the page they were on when they
- *       clicked "Login with Google".</li>
- * </ul>
+ * <p>Validates OIDC principal and email verification, then branches to
+ * issue a JWT for returning users or store a registration cookie for
+ * new users.</p>
  *
- * <h3>Branching flow</h3>
- * <pre>
- * Google authenticates user → onAuthenticationSuccess() called
- *       ↓
- * Verify principal is OidcUser (type check, not just cast)
- *       ↓
- * Verify email_verified claim is true
- *       ↓
- * Look up email in local database
- *       ↓
- * ┌─ Existing user → generate JWT cookie
- * │                  → read oauth_return_url cookie
- * │                  → redirect to return URL (or /allitems)
- * │
- * └─ New user → write OAuthRegistrationSession to oauth2_registration cookie
- *               → redirect to /complete-profile?returnUrl=...
- * </pre>
- *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Strategy pattern</strong> — implements
- *       {@link AuthenticationSuccessHandler} to customize post-OAuth2 behavior.</li>
- *   <li><strong>Thin handler, thick service</strong> — the handler delegates
- *       token generation and cookie creation to {@link JwtAuthenticationUtils}
- *       and {@link JwtCookieFactory}, keeping its own logic focused on
- *       OAuth2-specific branching.</li>
- *   <li><strong>Local exception handling</strong> — since this handler runs
- *       inside Spring Security's OAuth2 filter (upstream of
- *       {@code ExceptionTranslationFilter}), exceptions like
- *       {@link com.pkmprojects.shoppiq.exception.auth.InvalidOidcUserException}
- *       are caught here and translated into a login-page redirect.</li>
- * </ul>
- *
+ * @author prabhatkrmishra
  * @see OAuthRegistrationCookieService
  * @see JwtCookieFactory
  * @see OAuthReturnUrlFilter
- *
- * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component

@@ -1,52 +1,33 @@
 package com.pkmprojects.shoppiq.entity.promo;
 
 import com.pkmprojects.shoppiq.audit.AuditableEntity;
-import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.entity.order.Order;
+import com.pkmprojects.shoppiq.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Records a single usage of a {@link PromoCode} by a {@link User} on an {@link Order}.
+ * Records a single usage of a {@link PromoCode} by a {@link User} on
+ * an {@link Order}.
  *
- * <p>This entity enables per-user usage tracking and prevents the same order
- * from applying multiple promo codes.</p>
+ * <p>Enables per-user usage tracking and prevents the same order from
+ * applying multiple promo codes. Links the promo code, the user who
+ * redeemed it, and the order where it was applied. A unique constraint
+ * on {@code (promo_code_id, user_id)} enforces the per-user limit at
+ * the database level, while a unique constraint on {@code order_id}
+ * prevents multiple promo codes on a single order.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Links a promo code to the user who redeemed it.</li>
- *     <li>Links to the order where the code was applied.</li>
- *     <li>Captures the timestamp of usage.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Extends {@link AuditableEntity} to inherit persistence identity,
- *     optimistic locking and auditing support.</li>
- *     <li>A unique constraint on {@code order_id} ensures at most one promo
- *     code per order.</li>
- * </ul>
- *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Audit/log entity</strong> — {@code PromoCodeUsage} is a
- *         classic join/audit entity that records a fact (a promo code was
- *         used) with a timestamp. It connects three other entities:
- *         {@link PromoCode}, {@link User}, and {@link Order}.</li>
- *     <li><strong>Three {@code @ManyToOne} relationships</strong> — Each FK
- *         links back to a different entity. All use {@code FetchType.LAZY}
- *         and {@code optional = false} to enforce mandatory relationships.</li>
- *     <li><strong>Unique constraint on order_id</strong> — Enforces the
- *         business rule that at most one promo code can be applied to a
- *         single order.</li>
- *     <li><strong>Immutable once created</strong> — The entity has no
- *         {@code update()} method or setter-based mutators for business
- *         fields, making it effectively append-only for audit integrity.</li>
- * </ul>
+ * <p>Immutable once created for audit integrity. This entity is not
+ * cascade-deleted when the promo code is deactivated or the order is
+ * cancelled, preserving a complete redemption history for analytics
+ * and compliance purposes.</p>
  *
  * @author prabhatkrmishra
+ * @see PromoCode
+ * @see User
+ * @see com.pkmprojects.shoppiq.entity.order.Order
  * @since 1.0.0
  */
 @Entity
@@ -72,7 +53,13 @@ import java.time.Instant;
 public class PromoCodeUsage extends AuditableEntity {
 
     /**
-     * The promo code that was used.
+     * The promo code that was redeemed in this transaction.
+     *
+     * <p>Required relationship. Each usage record is associated with
+     * exactly one promo code. The promo code reference is lazily loaded
+     * to avoid unnecessary joins when querying usage history. This FK
+     * is used to enforce per-user limits and to compute remaining
+     * global usage quotas.</p>
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -83,7 +70,13 @@ public class PromoCodeUsage extends AuditableEntity {
     private PromoCode promoCode;
 
     /**
-     * The user who redeemed the code.
+     * The user who redeemed the promo code.
+     *
+     * <p>Required relationship. Each usage record is associated with
+     * exactly one user. The user reference is lazily loaded to avoid
+     * unnecessary joins when querying promo usage. This FK is used
+     * to enforce per-user usage limits defined by the promo code's
+     * {@code userUsageLimit} field.</p>
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -94,7 +87,13 @@ public class PromoCodeUsage extends AuditableEntity {
     private User user;
 
     /**
-     * The order on which the code was applied.
+     * The order on which the promo code was applied.
+     *
+     * <p>Required relationship. Each usage record is associated with
+     * exactly one order. A unique constraint on {@code order_id}
+     * ensures that only one promo code can be applied per order. The
+     * order reference is lazily loaded to avoid unnecessary joins
+     * when querying usage patterns.</p>
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -105,7 +104,12 @@ public class PromoCodeUsage extends AuditableEntity {
     private Order order;
 
     /**
-     * Timestamp when the code was used.
+     * Timestamp when the promo code was redeemed by the user.
+     *
+     * <p>Set to the current UTC time at the moment of redemption during
+     * checkout. Used for usage analytics, time-based reporting, and
+     * compliance auditing. Stored as an {@link Instant} for timezone
+     * independence.</p>
      */
     @Column(name = "used_at", nullable = false)
     private Instant usedAt;

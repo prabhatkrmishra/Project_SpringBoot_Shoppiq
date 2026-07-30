@@ -17,9 +17,9 @@ import com.pkmprojects.shoppiq.exception.general.seller.SellerNotVerifiedExcepti
 import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException;
 import com.pkmprojects.shoppiq.repository.order.OrderItemRepository;
 import com.pkmprojects.shoppiq.repository.order.OrderRepository;
-import com.pkmprojects.shoppiq.service.seller.SellerDashboardServiceImpl;
 import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
+import com.pkmprojects.shoppiq.service.seller.SellerDashboardServiceImpl;
 import com.pkmprojects.shoppiq.service.seller.SellerLookupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +29,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;

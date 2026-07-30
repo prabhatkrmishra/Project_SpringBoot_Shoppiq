@@ -4,16 +4,20 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a requested
- * role cannot be found.
+ * Thrown when a requested role cannot be found.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) for missing roles. Typically thrown when seed roles
- * ({@code ROLE_CUSTOMER}, {@code ROLE_SELLER}) are absent from the
- * database.</p>
+ * <p>This exception is thrown by role service methods when a database
+ * lookup for a role fails. It uses the
+ * {@link ErrorCode#ROLE_NOT_FOUND} code and HTTP 404 Not Found status.
+ * Roles are seeded at application startup and should always be present
+ * under normal circumstances.</p>
+ *
+ * <p>The detail message includes the role name (e.g., "Role 'ADMIN' was
+ * not found.") to help the client understand which role was invalid. The
+ * client should verify the role name and retry the request.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#ROLE_NOT_FOUND
  * @since 1.0.0
  */
 public final class RoleNotFoundException extends ResourceNotFoundException {

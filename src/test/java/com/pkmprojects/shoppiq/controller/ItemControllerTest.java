@@ -1,20 +1,20 @@
 package com.pkmprojects.shoppiq.controller;
-import com.pkmprojects.shoppiq.controller.item.ItemController;
 
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.ClockConfig;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
-import com.pkmprojects.shoppiq.dto.common.PageResponse;
+import com.pkmprojects.shoppiq.controller.item.ItemController;
 import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
+import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.item.ItemResponse;
-import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
@@ -23,11 +23,7 @@ import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.item.ItemService;
 import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -46,7 +42,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ItemController.class)
 @Import({
@@ -65,24 +62,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("ItemController Tests")
 class ItemControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private ItemService itemService;
-
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private RoleService rolesService;
-
-    @MockitoBean
-    private OAuth2SuccessHandler oAuth2SuccessHandler;
-
-    @MockitoBean
-    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
-
     private static final Long ITEM_ID = 1L;
     private static final String ITEM_NAME = "Test Product";
     private static final String ITEM_DESC = "A test product description";
@@ -92,6 +71,18 @@ class ItemControllerTest {
     private static final int STOCK = 10;
     private static final BigDecimal DISCOUNT = BigDecimal.ZERO;
     private static final Long CATEGORY_ID = 1L;
+    @Autowired
+    private MockMvc mockMvc;
+    @MockitoBean
+    private ItemService itemService;
+    @MockitoBean
+    private UserRepository userRepository;
+    @MockitoBean
+    private RoleService rolesService;
+    @MockitoBean
+    private OAuth2SuccessHandler oAuth2SuccessHandler;
+    @MockitoBean
+    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
     private static ItemResponse stubResponse(Long id) {
         return new ItemResponse(

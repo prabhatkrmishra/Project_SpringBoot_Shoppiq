@@ -7,26 +7,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link NotificationPreference} entities.
+ * Persistence operations for the {@link NotificationPreference} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Entity association lookup</strong> — {@code findByUser(User)} navigates the
- *       {@code user} foreign key, generating {@code SELECT * FROM notification_preferences WHERE user_id = ?}.</li>
- *   <li><strong>Flat field lookup</strong> — {@code findByUserId(Long)} queries by the raw
- *       foreign-key column directly, showing both approaches for association traversal.</li>
- *   <li><strong>Optional return type</strong> — Both methods return
- *       {@link java.util.Optional}, which is the convention for derived queries that
- *       may return zero or one result.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findByUser(User)
- *       → SELECT * FROM notification_preferences WHERE user_id = ?
- *   findByUserId(Long)
- *       → SELECT * FROM notification_preferences WHERE user_id = ?
- * </pre>
+ * <p>Provides methods to query notification preferences by user for email delivery control.
+ * The repository supports lookups by User entity or user ID for preference checking during
+ * email sending operations.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

@@ -4,14 +4,20 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when an attempt
- * is made to put a product on sale that is already on sale.
+ * Thrown when an attempt is made to put a product on sale that is already on sale.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) to prevent redundant sale status changes.</p>
+ * <p>This exception is thrown when an admin attempts to apply a sale price
+ * to a product that is already discounted. Only one sale can be active at
+ * a time per product. It uses the {@link ErrorCode#ITEM_ALREADY_ON_SALE}
+ * code and HTTP 400 Bad Request status.</p>
+ *
+ * <p>The detail message includes the product name (e.g., "Product
+ * 'Laptop' is already on sale.") to help the client understand which
+ * product was rejected. The admin should remove the existing sale before
+ * applying a new one.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#ITEM_ALREADY_ON_SALE
  * @since 1.0.0
  */
 public final class ProductAlreadyOnSaleException extends InvalidOperationException {

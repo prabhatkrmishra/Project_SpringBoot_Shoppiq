@@ -14,60 +14,26 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> Represents a customer review for an {@link Item}.
+ * Represents a customer review for an {@link Item}.
  *
- * <p>
- * Each review is submitted by a single {@link User} for a single
- * {@link Item}. A review contains a rating together with optional
- * textual feedback describing the customer's experience.
- * </p>
+ * <p>Each review is submitted by a single {@link User} for a single
+ * {@link Item}. Contains a rating on a 1-5 scale together with optional
+ * textual feedback describing the customer's experience. Reviews go
+ * through a moderation workflow tracked by {@link ReviewStatus}
+ * ({@code PENDING}, {@code APPROVED}, {@code REJECTED}) before being
+ * displayed publicly on the product detail page.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Stores customer ratings.</li>
- *     <li>Stores written product feedback.</li>
- *     <li>Associates a review with its author.</li>
- *     <li>Associates a review with the reviewed product.</li>
- * </ul>
- *
- * <h2>Relationships</h2>
- * <ul>
- *     <li>Many reviews belong to one {@link Item}.</li>
- *     <li>Many reviews may be written by one {@link User}.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Extends {@link AuditableEntity} to inherit identity,
- *     optimistic locking and audit timestamps.</li>
- *     <li>The review text is optional.</li>
- *     <li>Ratings are restricted to values between 1 and 5.</li>
- * </ul>
- *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Bidirectional {@code @ManyToOne} on both sides</strong>
- *         — ItemReview has FKs to both {@link Item} and {@link User},
- *         making it the owning side of both relationships. The inverse
- *         sides are the {@code List<ItemReview>} collections in Item and
- *         User.</li>
- *     <li><strong>{@code @JsonBackReference} / {@code @JsonIgnore}</strong>
- *         — Prevents infinite JSON serialization recursion. The Item
- *         reference uses {@code @JsonBackReference} (paired with
- *         {@code @JsonManagedReference} on the Item side), while the User
- *         reference is simply {@code @JsonIgnore}d (never exposed in API
- *         responses).</li>
- *     <li><strong>{@code @Min(1)} / {@code @Max(5)}</strong> — Bean
- *         Validation limits the rating to a 1–5 scale.</li>
- *     <li><strong>{@code @Enumerated(EnumType.STRING)} for moderation
- *         status</strong> — {@link ReviewStatus} tracks whether the review
- *         is {@code PENDING}, {@code APPROVED}, or {@code REJECTED},
- *         enabling admin moderation workflow.</li>
- *     <li><strong>{@code update()} method</strong> — Allows updating rating
- *         and text while preserving identity, version, and relationships.</li>
- * </ul>
+ * <p>The user-item combination should be unique (enforced at the service
+ * layer) to prevent duplicate reviews. Reviews are cascade-deleted when
+ * either the owning user or the reviewed item is removed, maintaining
+ * referential integrity without requiring manual cleanup. The review
+ * entity supports bidirectional relationships with both User and Item
+ * through helper methods that maintain consistency on both sides.</p>
  *
  * @author prabhatkrmishra
+ * @see Item
+ * @see User
+ * @see ReviewStatus
  * @since 1.0.0
  */
 @Entity
@@ -82,6 +48,12 @@ public class ItemReview extends AuditableEntity {
 
     /**
      * Customer who submitted this review.
+     *
+     * <p>Required relationship. Each review is associated with exactly
+     * one user. The user reference is lazily loaded and excluded from
+     * JSON serialization via {@code @JsonIgnore} to prevent circular
+     * reference issues in API responses. Used for review ownership
+     * verification and user-specific review queries.</p>
      */
     @NotNull(message = "Reviewer is required.")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -95,6 +67,13 @@ public class ItemReview extends AuditableEntity {
 
     /**
      * Product being reviewed.
+     *
+     * <p>Required relationship. Each review is associated with exactly
+     * one item. The item reference is lazily loaded and uses
+     * {@code @JsonBackReference} to prevent circular reference issues
+     * in the bidirectional relationship with the item's review
+     * collection. Used for product-level review aggregation and
+     * display.</p>
      */
     @NotNull(message = "Item is required.")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -107,11 +86,13 @@ public class ItemReview extends AuditableEntity {
     private Item item;
 
     /**
-     * Rating assigned by the customer.
+     * Rating assigned by the customer, ranging from 1 (worst) to
+     * 5 (best).
      *
-     * <p>
-     * Valid values range from 1 (worst) to 5 (best).
-     * </p>
+     * <p>Required field. Used to compute aggregate product ratings and
+     * for filtering products by minimum rating. The rating is displayed
+     * as star icons on product cards and detail pages. Validation
+     * constraints enforce the valid range at the persistence layer.</p>
      */
     @NotNull(message = "Rating is required.")
     @Min(value = 1, message = "Rating must be at least 1.")
@@ -120,14 +101,26 @@ public class ItemReview extends AuditableEntity {
     private Integer rating;
 
     /**
-     * Optional written review.
+     * Optional written review providing detailed customer feedback
+     * about the product experience.
+     *
+     * <p>Maximum length of 1000 characters. When present, displayed
+     * below the rating on the product detail page after moderation
+     * approval. May be {@code null} for ratings-only reviews where
+     * the customer provides a star rating without written commentary.</p>
      */
     @Size(max = 1000, message = "Review cannot exceed 1000 characters.")
     @Column(length = 1000)
     private String review;
 
     /**
-     * Moderation status of this review.
+     * Moderation status of this review controlling its public visibility.
+     *
+     * <p>Stored as a string enum with a maximum length of 20 characters.
+     * Defaults to {@link ReviewStatus#PENDING} for new submissions.
+     * Only {@code APPROVED} reviews are displayed on the product detail
+     * page. Admins can approve or reject reviews through the moderation
+     * dashboard, transitioning the status accordingly.</p>
      */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

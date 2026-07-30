@@ -5,25 +5,24 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * <strong>Spring Boot Concept:</strong> Enables Spring's annotation-driven cache management.
+ * Enables Spring's annotation-driven cache management with per-cache TTL control.
  *
- * <p>Provides a simple in-memory cache using {@code ConcurrentMapCacheManager}.
- * For production deployments, consider switching to Redis via
- * {@code spring-boot-starter-data-redis} and configuring
- * {@code RedisCacheManager} instead.</p>
+ * <p>This configuration class activates the {@code @EnableCaching}
+ * infrastructure, allowing any Spring-managed bean to use
+ * {@code @Cacheable}, {@code @CacheEvict}, and {@code @CachePut}
+ * annotations. The actual cache implementation is provided by Spring Boot's
+ * autoconfiguration (defaulting to a concurrent hash map in development)
+ * and can be swapped to Redis or Caffeine via dependency changes.</p>
  *
- * <p><strong>Cache names used:</strong></p>
- * <ul>
- *   <li>{@code banners} — active homepage banners (TTL: 1 hour)</li>
- *   <li>{@code categories} — category listings (TTL: 2 hours)</li>
- *   <li>{@code items} — item details (TTL: 30 minutes)</li>
- * </ul>
- *
- * <p>TTL values are externalized via {@link CacheProperties} under
- * {@code app.cache.ttl.*} and are available for custom {@code CacheManager}
- * configuration when migrating to Redis.</p>
+ * <p>Cache TTL values are externalized through {@link CacheProperties},
+ * which binds to the {@code app.cache.ttl} map in {@code application.yaml}.
+ * Each entry in the map corresponds to a named cache (e.g., "banners",
+ * "categories", "items") and specifies the time-to-live in milliseconds.
+ * This design allows operators to tune cache lifetimes per environment
+ * without code changes.</p>
  *
  * @author prabhatkrmishra
+ * @see CacheProperties
  * @since 1.4.0
  */
 @Configuration

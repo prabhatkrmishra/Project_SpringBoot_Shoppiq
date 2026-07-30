@@ -11,25 +11,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link CartItem} persistence operations.
+ * Persistence operations for the {@link CartItem} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Cross-entity derived queries</strong> — {@code findByCartAndItemDetails}
- *       navigates across {@link com.pkmprojects.shoppiq.entity.cart.Cart} and
- *       {@link com.pkmprojects.shoppiq.entity.item.ItemDetails} associations, generating
- *       {@code SELECT * FROM cart_items WHERE cart_id = ? AND item_details_id = ?}.</li>
- *   <li><strong>Composition via method naming</strong> — Combining entity parameters
- *       with {@code And} to express multi-field lookups without writing JPQL.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findByCartAndItemDetails(Cart, ItemDetails)
- *       → SELECT * FROM cart_items WHERE cart_id = ? AND item_details_id = ?
- *   findAllByCart(Cart)
- *       → SELECT * FROM cart_items WHERE cart_id = ?
- * </pre>
+ * <p>Provides methods to query cart items by cart with eager fetching of product associations
+ * for cart display and checkout processing. The repository supports duplicate detection
+ * for cart item creation and optimized queries to avoid N+1 issues during cart rendering.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

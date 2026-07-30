@@ -3,40 +3,17 @@ package com.pkmprojects.shoppiq.service.admin.readmodel;
 import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
-import com.pkmprojects.shoppiq.repository.order.projection.CategorySalesAggregate;
-import com.pkmprojects.shoppiq.repository.order.projection.CustomerOrderAggregate;
-import com.pkmprojects.shoppiq.repository.order.projection.ProductPerformanceAggregate;
-import com.pkmprojects.shoppiq.repository.order.projection.ProductSalesAggregate;
-import com.pkmprojects.shoppiq.repository.order.projection.SellerRevenueAggregate;
-import org.springframework.data.domain.Page;
+import com.pkmprojects.shoppiq.repository.order.projection.*;
 import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Read-only order query facade for admin dashboards and reports.
+ * Read-only order query facade for admin dashboards and reports.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * This interface follows the <strong>ReadModel</strong> pattern — a lightweight facade
- * that decouples admin services from repository interfaces. It sits between the Service layer
- * (e.g., {@code AdminDashboardServiceImpl}) and the Repository layer.
- * </p>
- * <p>
- * By using ReadModels, the admin services do not depend directly on {@code OrderRepository}
- * or {@code OrderItemRepository}, making them easier to test and refactor.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *   <li>Provide aggregate order queries (counts, filter by date range, recent orders).</li>
- *   <li>Aggregate revenue by seller for commission reports.</li>
- * </ul>
- *
- * <p>Decouples admin services from {@code OrderRepository},
- * {@code OrderItemRepository}, and {@code SellerRepository},
- * providing aggregate queries over order data.</p>
+ * <p>Decouples admin services from {@code OrderRepository} and
+ * {@code OrderItemRepository}, providing aggregate queries over order data.</p>
  *
  * @author prabhatkrmishra
  * @since 1.4.0

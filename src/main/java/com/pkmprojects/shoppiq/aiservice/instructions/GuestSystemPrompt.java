@@ -4,14 +4,22 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import org.springframework.stereotype.Component;
 
 /**
- * <strong>Spring Boot Concept:</strong> System prompt for guest (unauthenticated) conversations.
+ * System prompt for guest (unauthenticated) conversations with limited product discovery.
  *
- * <p>
- * More limited than the authenticated prompt — does not include order,
- * cart, or review tools. Only product catalog search via the retrieval
- * pipeline is available.
+ * <p>This implementation of {@link SystemPromptProvider} generates behavioral
+ * instructions for AI conversations with guest users who are not logged in.
+ * The prompt restricts the assistant to product catalog search only, explicitly
+ * denying access to orders, cart, and review tools. It includes instructions
+ * for politely redirecting users to sign in when they request restricted
+ * features.</p>
  *
- * @author PrabhatKrMishra
+ * <p>The prompt also enforces strict scope restrictions, preventing the AI
+ * from engaging with off-topic requests, prompt injection attempts, or
+ * requests to reveal internal system instructions. Formatting rules are
+ * included to ensure responses render correctly in the custom chat UI
+ * renderer.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component("guestSystemPrompt")

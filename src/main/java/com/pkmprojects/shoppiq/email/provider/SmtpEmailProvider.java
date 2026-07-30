@@ -17,39 +17,17 @@ import org.thymeleaf.context.Context;
 import java.util.Map;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link EmailProvider}
- * using Spring's {@link JavaMailSender} for SMTP-based email delivery.
- * The default {@code shoppiq.email.provider=smtp} provider for production
- * environments.
+ * SMTP-based email provider using Spring's JavaMailSender for production environments.
  *
- * <p>
- * Default provider for production environments. Supports HTML email
- * rendering via Thymeleaf templates.
- * </p>
+ * <p>Default provider with HTML email rendering via Thymeleaf templates and async delivery.
+ * This provider sends emails through an SMTP server configured via Spring's mail properties.
+ * It renders email content using Thymeleaf templates and sends HTML-formatted emails with
+ * UTF-8 encoding. The provider is marked with {@code @Async} to ensure non-blocking email
+ * delivery.</p>
  *
- * <p><strong>Educational value:</strong> This class demonstrates several
- * Spring Boot infrastructure patterns:
- * <ul>
- *   <li><strong>JavaMailSender</strong> — Spring's abstraction over
- *       {@code jakarta.mail}, auto-configured by {@code spring-boot-starter-mail}.
- *       Adding {@code spring.mail.host}, {@code spring.mail.username}, etc.
- *       to application.properties is all that's needed to configure it.</li>
- *   <li><strong>@Async method</strong> — the {@code send()} method is
- *       annotated with Spring's {@code @Async}, meaning it runs on a separate
- *       thread pool (configured via {@code @EnableAsync} on a configuration
- *       class). This ensures that the calling thread (usually a service layer
- *       method) is not blocked by the SMTP call.</li>
- *   <li><strong>Thymeleaf for email</strong> — uses a dedicated
- *       {@link org.thymeleaf.TemplateEngine} (injected with
- *       {@code @Qualifier("emailTemplateEngine")}) for rendering HTML
- *       email templates, separate from the web-facing template engine.</li>
- *   <li><strong>MimeMessageHelper</strong> — Spring's convenience wrapper
- *       for building Jakarta Mail {@code MimeMessage}s, supporting HTML
- *       content and attachments.</li>
- *   <li><strong>Graceful disabling</strong> — checks {@code shoppiq.email.enabled}
- *       at runtime, allowing operators to disable email without redeploying.</li>
- * </ul>
- * </p>
+ * <p>The provider can be disabled via the {@code shoppiq.email.enabled} property. When disabled,
+ * emails are silently skipped without attempting delivery. This is useful for environments where
+ * email delivery should be simulated without actually sending messages.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -64,9 +42,9 @@ public class SmtpEmailProvider implements EmailProvider {
     private final boolean enabled;
 
     public SmtpEmailProvider(JavaMailSender mailSender,
-                              @Qualifier("emailTemplateEngine") TemplateEngine emailTemplateEngine,
-                              @Value("${shoppiq.email.from:noreply@shoppiq.com}") String fromAddress,
-                              @Value("${shoppiq.email.enabled:true}") boolean enabled) {
+                             @Qualifier("emailTemplateEngine") TemplateEngine emailTemplateEngine,
+                             @Value("${shoppiq.email.from:noreply@shoppiq.com}") String fromAddress,
+                             @Value("${shoppiq.email.enabled:true}") boolean enabled) {
         this.mailSender = mailSender;
         this.emailTemplateEngine = emailTemplateEngine;
         this.fromAddress = fromAddress;

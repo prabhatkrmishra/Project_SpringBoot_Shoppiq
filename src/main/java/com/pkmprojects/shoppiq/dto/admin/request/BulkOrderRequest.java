@@ -1,42 +1,37 @@
 package com.pkmprojects.shoppiq.dto.admin.request;
 
-import com.pkmprojects.shoppiq.entity.order.Order;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Request DTO used for bulk creation of {@link Order orders}
- * by an admin user for test-data population.
+ * Request DTO for bulk creation of orders by an administrator.
  *
- * <p>
- * Wraps a list of {@link AdminOrderItem} to enable proper Bean Validation
- * on collection contents.
- * </p>
+ * <p>This record wraps a list of {@link AdminOrderItem} entries and is
+ * submitted to the admin bulk order endpoint for creating multiple
+ * orders in a single API call. It is primarily used for test-data
+ * population during development and staging, enabling administrators
+ * to simulate realistic order volumes at scale.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Accept admin-supplied order information in bulk.</li>
- *     <li>Perform request validation on the collection and its contents.</li>
- *     <li>Remain independent of persistence entities.</li>
- * </ul>
+ * <p>Each element in the list undergoes cascading validation via
+ * {@link jakarta.validation.Valid @Valid}, ensuring that user
+ * references, address references, and payment methods meet their
+ * respective constraints. The list must not be empty. Orders are
+ * constructed from each user's existing cart contents at the service
+ * layer.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Marked as {@code final} through Java record semantics.</li>
- *     <li>{@code @NotEmpty} ensures the client supplies at least one order.</li>
- *     <li>{@code @Valid} triggers cascading validation on each
- *     {@link AdminOrderItem} in the list.</li>
- *     <li>Used exclusively for admin test-data bulk creation.</li>
- *     <li>This pattern is identical for all bulk DTOs — a single-record wrapper
- *     with a validated list — providing a consistent API experience.</li>
- * </ul>
- *
+ * @param orders list of order creation requests, each specifying a
+ *               target user, shipping address, and payment method;
+ *               must not be empty; each element is validated
+ *               recursively via {@link AdminOrderItem}
  * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkOrderRequest(
+        /**
+         * List of order creation requests. Must not be empty.
+         */
         @NotEmpty(message = "At least one order is required.")
         List<@Valid AdminOrderItem> orders
 ) {

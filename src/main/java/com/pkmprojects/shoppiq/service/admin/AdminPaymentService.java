@@ -7,41 +7,10 @@ import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import java.math.BigDecimal;
 
 /**
- * <strong>Spring Boot Concept:</strong> Business contract for admin payment management.
+ * Business contract for admin payment management and refund processing.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * Defines the <strong>Service layer</strong> contract for payment administration.
- * Architecture: {@code AdminPaymentController → AdminPaymentService → PaymentLookupService / PaymentWriteService}.
- * </p>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *     <li>Retrieve all payments with optional status filtering and pagination.</li>
- *     <li>Retrieve a single payment by ID.</li>
- *     <li>Process refunds — only {@code PAID} payments can be refunded (business rule).</li>
- *     <li>Get payment dashboard statistics (totals, revenue, refunded amounts).</li>
- * </ul>
- *
- * <p>
- * Defines the operations for managing payments,
- * including retrieval, refunds, and dashboard statistics.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Retrieve all payments with pagination.</li>
- *     <li>Retrieve a single payment by ID.</li>
- *     <li>Process refund for a payment.</li>
- *     <li>Get payment dashboard statistics.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Works exclusively with DTOs.</li>
- *     <li>Refunds only allowed for PAID payments.</li>
- *     <li>Implemented by {@code AdminPaymentServiceImpl}.</li>
- * </ul>
+ * <p>Defines operations for retrieving payments with filtering, processing
+ * refunds for PAID payments, and computing payment dashboard statistics.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

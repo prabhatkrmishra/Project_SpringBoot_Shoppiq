@@ -11,25 +11,10 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * <strong>Spring Boot Concept:</strong> Read-only item query facade.
- *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * A <strong>ReadModel</strong> facade that decouples service-layer code from
- * {@code ItemRepository}. Provides lookup, search, paging, and aggregate queries
- * for product data without exposing the repository directly.
- * </p>
- *
- * <h2>Why a Separate Read Facade?</h2>
- * <ul>
- *   <li>Encapsulates all item read queries in one place.</li>
- *   <li>Services (like {@code ItemServiceImpl}, {@code AdminInventoryServiceImpl})
- *       depend on this interface, not on {@code ItemRepository} directly.</li>
- *   <li>Makes it easy to add caching, logging, or other cross-cutting concerns later.</li>
- * </ul>
+ * Read-only item query facade for product lookup, search, and aggregate queries.
  *
  * <p>Decouples service-layer code from {@code ItemRepository},
- * providing item lookup, search, paging, and aggregate queries.</p>
+ * providing find, exists, count, search, paging, and top-selling queries.</p>
  *
  * @author prabhatkrmishra
  * @since 1.4.0

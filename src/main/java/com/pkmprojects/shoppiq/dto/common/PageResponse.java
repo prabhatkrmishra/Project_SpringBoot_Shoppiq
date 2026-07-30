@@ -6,22 +6,32 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * <strong>Spring Boot Concept:</strong> Generic paginated response wrapper.
+ * Generic paginated response wrapper used across all paginated endpoints.
  *
- * <p>
- * Used consistently across all paginated REST endpoints to return
- * both the content page and its navigation metadata.
- * </p>
+ * <p>This record wraps a list of content items together with pagination
+ * navigation metadata. It is returned by every paginated REST endpoint
+ * in the application, providing a consistent response structure that
+ * the frontend can rely on for rendering pagination controls and
+ * infinite-scroll mechanisms.</p>
  *
- * @param content       the page items
- * @param page          zero-based page index
- * @param size          requested page size
- * @param totalElements total element count across all pages
- * @param totalPages    total number of pages
- * @param first         whether this is the first page
- * @param last          whether this is the last page
- * @param <T>           content element type
- * @author PrabhatKrMishra
+ * <p>The static {@link #of(Page, Function)} factory method converts a
+ * Spring Data {@code Page} entity directly into this DTO, applying an
+ * entity-to-DTO mapping function to each element. An overloaded
+ * {@link #of(List, int, int, long, Function)} variant accepts raw
+ * pagination data for cases where the content list is computed
+ * independently of Spring Data.</p>
+ *
+ * @param content       the page items, already mapped to DTOs via the
+ *                      supplied mapping function
+ * @param page          zero-based page index (0 = first page)
+ * @param size          requested page size (maximum items per page)
+ * @param totalElements total number of elements across all pages;
+ *                      used to calculate total page count
+ * @param totalPages    total number of pages available
+ * @param first         whether this is the first page (true when page = 0)
+ * @param last          whether this is the last page (true when no more pages follow)
+ * @param <T>           the content element type, typically a response DTO
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record PageResponse<T>(
@@ -73,7 +83,7 @@ public record PageResponse<T>(
      * @return a new PageResponse
      */
     public static <E, T> PageResponse<T> of(List<E> content, int page, int size,
-                                             long totalElements, Function<E, T> mapper) {
+                                            long totalElements, Function<E, T> mapper) {
         List<T> mapped = content.stream().map(mapper).toList();
         int totalPages = size > 0 ? (int) Math.ceil((double) totalElements / size) : 0;
         return new PageResponse<>(

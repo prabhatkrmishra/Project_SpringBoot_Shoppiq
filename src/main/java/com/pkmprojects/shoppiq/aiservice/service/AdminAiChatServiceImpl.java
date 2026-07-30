@@ -2,7 +2,6 @@ package com.pkmprojects.shoppiq.aiservice.service;
 
 import com.pkmprojects.shoppiq.aiservice.dto.ChatMessageDto;
 import com.pkmprojects.shoppiq.aiservice.dto.admin.AiChatLogDetailDto;
-import com.pkmprojects.shoppiq.aiservice.repository.projection.ConversationMessageCount;
 import com.pkmprojects.shoppiq.aiservice.dto.admin.AiChatLogDto;
 import com.pkmprojects.shoppiq.aiservice.entity.ChatConversation;
 import com.pkmprojects.shoppiq.aiservice.entity.ChatMessage;
@@ -14,29 +13,28 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.exception.general.aiservice.AiConversationNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * Default implementation of {@link AdminAiChatService}.
  *
- * <p><b>How AI fits:</b> Performs admin-specific operations over AI
- * conversations: paginated listing (with optional search query and status
- * filter), full message transcript retrieval, message deletion, conversation
- * deletion, and resolution. Uses batch-count queries to efficiently compute
- * per-conversation message counts.</p>
+ * <p>This service performs admin-specific operations over AI conversations
+ * with transactional read/write methods. It routes through the appropriate
+ * repository method based on the presence of search query and/or status
+ * filter, and batch-counts user messages to populate the message count
+ * field without N+1 query issues.</p>
  *
- * <p><b>Pattern used:</b> Facade over {@link ChatConversationRepository}
- * and {@link ChatMessageRepository} with transactional read/write methods.
- * Maps JPA entities to admin DTOs ({@link com.pkmprojects.shoppiq.aiservice.dto.admin.AiChatLogDto},
- * {@link com.pkmprojects.shoppiq.aiservice.dto.admin.AiChatLogDetailDto}).</p>
+ * <p>All write operations (delete, resolve) include existence checks and
+ * throw {@link AiConversationNotFoundException} if the target conversation
+ * does not exist. Conversation deletion cascades to remove all child
+ * messages before deleting the conversation entity.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -50,6 +48,9 @@ class AdminAiChatServiceImpl implements AdminAiChatService {
 
     /**
      * Constructs the admin service with required repositories.
+     *
+     * <p>The clock dependency is used for deterministic timestamp generation
+     * during conversation resolution, supporting testing and audit logging.</p>
      *
      * @param conversationRepository conversation data access
      * @param messageRepository      message data access
@@ -65,10 +66,11 @@ class AdminAiChatServiceImpl implements AdminAiChatService {
 
     /**
      * {@inheritDoc}
-     * <p>
-     * Routes through the appropriate repository method based on the presence
-     * of search query and/or status filter. Batch-counts user messages to
-     * populate the message count field without N+1 queries.
+     *
+     * <p>Routes through the appropriate repository method based on the presence
+     * of search query and/or status filter. Batch-counts user messages via
+     * {@link ChatMessageRepository#countByConversationIdsAndRoleBatch} to
+     * populate the message count field without N+1 query issues.</p>
      */
     @Override
     @Transactional(readOnly = true)
@@ -99,9 +101,10 @@ class AdminAiChatServiceImpl implements AdminAiChatService {
 
     /**
      * {@inheritDoc}
-     * <p>
-     * Loads the conversation and all its messages, mapping them to DTOs
-     * with role labels, tool names, and timestamps.
+     *
+     * <p>Loads the conversation and all its messages, mapping them to DTOs
+     * with role labels, tool names, and timestamps. Guest conversations
+     * display "Guest" as the user name with null user ID and email fields.</p>
      */
     @Override
     @Transactional(readOnly = true)
@@ -135,8 +138,9 @@ class AdminAiChatServiceImpl implements AdminAiChatService {
 
     /**
      * {@inheritDoc}
-     * <p>
-     * Returns {@code false} if no message exists with the given ID.
+     *
+     * <p>Returns {@code false} if no message exists with the given ID.
+     * The deletion is immediate and does not affect the parent conversation.</p>
      */
     @Override
     @Transactional
@@ -150,9 +154,9 @@ class AdminAiChatServiceImpl implements AdminAiChatService {
 
     /**
      * {@inheritDoc}
-     * <p>
-     * Cascading delete — removes all child messages before deleting the
-     * conversation entity itself.
+     *
+     * <p>Performs a cascading delete: removes all child messages before deleting
+     * the conversation entity itself. Throws if the conversation does not exist.</p>
      */
     @Override
     @Transactional
@@ -166,9 +170,10 @@ class AdminAiChatServiceImpl implements AdminAiChatService {
 
     /**
      * {@inheritDoc}
-     * <p>
-     * Updates the conversation status to RESOLVED, sets the resolution
-     * timestamp, and appends a SYSTEM message to the conversation history.
+     *
+     * <p>Updates the conversation status to RESOLVED, sets the resolution
+     * timestamp, and appends a SYSTEM message recording the admin-initiated
+     * resolution. Throws if the conversation does not exist.</p>
      */
     @Override
     @Transactional
@@ -192,8 +197,13 @@ class AdminAiChatServiceImpl implements AdminAiChatService {
      * Maps a {@link ChatConversation} entity and pre-computed message counts
      * to an {@link AiChatLogDto}.
      *
-     * @param conv       the conversation entity
-     * @param msgCounts  map of conversation ID to user-message count
+     * <p>Extracts user identification fields (ID, name, email) from the
+     * conversation's user relationship, falling back to "Guest" for
+     * unauthenticated sessions. The message count is sourced from the
+     * pre-computed map to avoid additional database queries.</p>
+     *
+     * @param conv      the conversation entity
+     * @param msgCounts map of conversation ID to user-message count
      * @return the admin DTO
      */
     private AiChatLogDto toLogDto(ChatConversation conv, Map<Long, Long> msgCounts) {

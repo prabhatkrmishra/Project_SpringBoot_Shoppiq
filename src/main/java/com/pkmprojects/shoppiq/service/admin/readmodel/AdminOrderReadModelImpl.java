@@ -5,11 +5,7 @@ import com.pkmprojects.shoppiq.enums.OrderStatus;
 import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.repository.order.OrderItemRepository;
 import com.pkmprojects.shoppiq.repository.order.OrderRepository;
-import com.pkmprojects.shoppiq.repository.order.projection.CategorySalesAggregate;
-import com.pkmprojects.shoppiq.repository.order.projection.CustomerOrderAggregate;
-import com.pkmprojects.shoppiq.repository.order.projection.ProductPerformanceAggregate;
-import com.pkmprojects.shoppiq.repository.order.projection.ProductSalesAggregate;
-import com.pkmprojects.shoppiq.repository.order.projection.SellerRevenueAggregate;
+import com.pkmprojects.shoppiq.repository.order.projection.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,19 +15,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminOrderReadModel}
- * providing read-only order queries for admin dashboards and reports.
- *
- * <p>Delegates to {@code OrderRepository} and {@code OrderItemRepository} for
- * count, find, and revenue aggregation queries.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional(readOnly = true)</strong> — All queries are read-only, optimized for database performance.</li>
- *   <li><strong>@RequiredArgsConstructor</strong> — Lombok-generated constructor injection for final fields.</li>
- * </ul>
- * </p>
+ * {@link AdminOrderReadModel} implementation providing read-only order queries
+ * for admin dashboards and reports.
  *
  * @author prabhatkrmishra
  * @see AdminOrderReadModel

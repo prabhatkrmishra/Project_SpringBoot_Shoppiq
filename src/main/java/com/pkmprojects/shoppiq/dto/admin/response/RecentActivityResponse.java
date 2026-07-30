@@ -5,30 +5,28 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Response DTO for recent activity feed on the admin dashboard.
+ * Response DTO for the recent activity feed on the admin dashboard.
  *
- * <p>
- * This DTO aggregates the most recent orders, payments, reviews,
- * and user registrations for the administrator dashboard activity feed.
- * </p>
+ * <p>This record aggregates the most recent platform activity across
+ * four categories: orders, payments, reviews, and user registrations.
+ * Each category is limited to the 10 most recent entries, providing
+ * administrators with a quick overview of recent platform activity
+ * without requiring navigation to individual management pages.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Expose recent activity data to the admin API.</li>
- *     <li>Provide a unified view of recent platform activity.</li>
- * </ul>
+ * <p>The nested data records ({@link RecentOrderData},
+ * {@link RecentPaymentData}, {@link RecentReviewData},
+ * {@link RecentUserData}) are lightweight projections containing only
+ * the fields needed for the dashboard feed display. They carry no
+ * validation constraints and are never used as request bodies.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Immutable through Java Records.</li>
- *     <li><b>Nested records</b> for each activity type ({@link RecentOrderData},
- *     {@link RecentPaymentData}, etc.) — a compositional pattern that groups
- *     related data without creating separate top-level files.</li>
- *     <li>Limited to the most recent 10 entries per category.</li>
- *     <li>Each nested record acts as a lightweight <i>projection</i> of the
- *     full entity, returning only fields needed for the dashboard widget.</li>
- * </ul>
- *
+ * @param recentOrders   the 10 most recent orders placed on the platform,
+ *                       ordered by placement timestamp descending
+ * @param recentPayments the 10 most recent payment transactions processed,
+ *                       ordered by creation timestamp descending
+ * @param recentReviews  the 10 most recent product reviews submitted by
+ *                       customers, ordered by creation timestamp descending
+ * @param recentUsers    the 10 most recent user account registrations,
+ *                       ordered by creation timestamp descending
  * @author prabhatkrmishra
  * @since 1.0.0
  */
@@ -57,7 +55,17 @@ public record RecentActivityResponse(
 ) {
 
     /**
-     * Recent order data point.
+     * Recent order data point for the dashboard activity feed.
+     *
+     * <p>Lightweight projection containing only the fields needed for
+     * the activity feed display: order identifier, customer username,
+     * status label, grand total, and placement timestamp.</p>
+     *
+     * @param orderId          unique identifier of the order
+     * @param customerUsername username of the customer who placed the order
+     * @param status           current order status as a string label
+     * @param grandTotal       final amount the customer paid for this order
+     * @param placedAt         timestamp when the order was placed
      */
     public record RecentOrderData(
 
@@ -89,7 +97,18 @@ public record RecentActivityResponse(
     }
 
     /**
-     * Recent payment data point.
+     * Recent payment data point for the dashboard activity feed.
+     *
+     * <p>Lightweight projection containing only the fields needed for
+     * the activity feed display: payment identifier, reference code,
+     * customer username, status label, amount, and creation timestamp.</p>
+     *
+     * @param paymentId        unique identifier of the payment record
+     * @param paymentReference internal reference code for display and lookup
+     * @param customerUsername username of the customer who made the payment
+     * @param paymentStatus    current payment status as a string label
+     * @param amount           monetary amount of the payment
+     * @param createdAt        timestamp when the payment record was created
      */
     public record RecentPaymentData(
 
@@ -126,7 +145,17 @@ public record RecentActivityResponse(
     }
 
     /**
-     * Recent review data point.
+     * Recent review data point for the dashboard activity feed.
+     *
+     * <p>Lightweight projection containing only the fields needed for
+     * the activity feed display: review identifier, product name,
+     * reviewer username, rating, and creation timestamp.</p>
+     *
+     * @param reviewId         unique identifier of the review record
+     * @param itemName         name of the product being reviewed
+     * @param reviewerUsername username of the customer who submitted the review
+     * @param rating           integer rating from 1 to 5 assigned by the reviewer
+     * @param createdAt        timestamp when the review was first submitted
      */
     public record RecentReviewData(
 
@@ -158,7 +187,16 @@ public record RecentActivityResponse(
     }
 
     /**
-     * Recent user registration data point.
+     * Recent user registration data point for the dashboard activity feed.
+     *
+     * <p>Lightweight projection containing only the fields needed for
+     * the activity feed display: user identifier, username, email, and
+     * registration timestamp.</p>
+     *
+     * @param userId    unique identifier of the newly registered user
+     * @param username  username chosen by the user during registration
+     * @param email     email address associated with the new account
+     * @param createdAt timestamp when the user account was created
      */
     public record RecentUserData(
 

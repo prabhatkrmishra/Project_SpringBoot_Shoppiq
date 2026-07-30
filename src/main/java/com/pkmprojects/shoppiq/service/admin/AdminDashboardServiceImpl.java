@@ -1,18 +1,21 @@
 package com.pkmprojects.shoppiq.service.admin;
 
+import com.pkmprojects.shoppiq.config.InventoryConstants;
 import com.pkmprojects.shoppiq.dto.admin.analytics.*;
-import com.pkmprojects.shoppiq.dto.admin.response.*;
-import com.pkmprojects.shoppiq.entity.review.ItemReview;
+import com.pkmprojects.shoppiq.dto.admin.response.DashboardSummaryResponse;
+import com.pkmprojects.shoppiq.dto.admin.response.RecentActivityResponse;
+import com.pkmprojects.shoppiq.dto.admin.response.SalesAnalyticsResponse;
 import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.order.OrderItem;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
+import com.pkmprojects.shoppiq.entity.review.ItemReview;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.enums.*;
+import com.pkmprojects.shoppiq.enums.OrderStatus;
+import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminOrderReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminPaymentReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminProductReadModel;
 import com.pkmprojects.shoppiq.service.admin.readmodel.AdminUserReadModel;
-import com.pkmprojects.shoppiq.config.InventoryConstants;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,20 +32,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminDashboardService}
- * containing business logic for admin dashboard aggregation.
+ * {@link AdminDashboardService} implementation that computes dashboard summary
+ * statistics, time-series sales analytics, and recent activity feeds.
  *
- * <p>Computes dashboard summary statistics, time-series sales analytics, and
- * recent activity feeds by querying ReadModel facades. Used by
- * {@code AdminDashboardController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional(readOnly = true)</strong> — All aggregation methods are read-only, optimized for complex multi-table queries.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * <p>Aggregates data through ReadModel facades for the admin dashboard.</p>
  *
  * @author prabhatkrmishra
  * @see AdminDashboardService

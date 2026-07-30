@@ -5,17 +5,23 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> Mid-level category exception that
- * groups all "bad request" business rule violations under HTTP
- * {@code 400 Bad Request}.
+ * Base exception for business rule violations under HTTP 400 Bad Request.
  *
- * <p>Base exception indicating that an operation cannot be performed in the
- * current state. A single abstract parent serves multiple concrete exceptions
- * across different domains (auth, user profile) while sharing HTTP 400 —
- * clients see the same status for all invalid operations regardless of the
- * specific domain.</p>
+ * <p>This abstract class serves as the parent for all invalid-operation
+ * exceptions (e.g., {@link InvalidRequestException},
+ * {@link PasswordChangeException}, {@link CurrentPasswordIncorrectException}).
+ * It hardcodes the HTTP status to {@link HttpStatus#BAD_REQUEST} so that
+ * subclasses only need to provide an {@link ErrorCode} and a detail
+ * message. The global exception handler maps this to a 400 Problem
+ * Detail response.</p>
+ *
+ * <p>Service methods should throw concrete subclasses of this exception
+ * when a business rule is violated. The detail message should clearly
+ * explain what operation was attempted, why it failed, and what the
+ * client should do to resolve the issue.</p>
  *
  * @author prabhatkrmishra
+ * @see com.pkmprojects.shoppiq.exception.base.ShoppiqException
  * @since 1.0.0
  */
 public abstract class InvalidOperationException extends ShoppiqException {

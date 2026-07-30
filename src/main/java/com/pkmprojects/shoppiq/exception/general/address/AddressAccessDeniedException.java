@@ -4,14 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a user attempts
- * to access an address they do not own.
+ * Thrown when a user attempts to access an address they do not own.
  *
- * <p>Leaf exception in the authorization hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException}
- * (HTTP 403) for address resource ownership violations.</p>
+ * <p>This exception is thrown when a user attempts to access or modify an
+ * address that belongs to another user. Addresses are private and can
+ * only be managed by the owner. It uses the
+ * {@link ErrorCode#ADDRESS_ACCESS_DENIED} code and HTTP 403 Forbidden
+ * status.</p>
+ *
+ * <p>The detail message includes the address identifier (e.g.,
+ * "You are not allowed to access address with id '42'.") to help the
+ * client understand which address was restricted. The client should
+ * ensure they are operating on their own addresses.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#ADDRESS_ACCESS_DENIED
  * @since 1.0.0
  */
 public final class AddressAccessDeniedException extends UnauthorizedOperationException {

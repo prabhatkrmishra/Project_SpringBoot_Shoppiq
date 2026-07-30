@@ -1,41 +1,37 @@
 package com.pkmprojects.shoppiq.dto.admin.request;
 
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
-import com.pkmprojects.shoppiq.entity.user.User;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Request DTO used for bulk creation of {@link User users}
- * by an admin user for test-data population.
+ * Request DTO for bulk creation of user accounts by an administrator.
  *
- * <p>
- * Wraps a list of {@link UserRequest} to enable proper Bean Validation
- * on collection contents.
- * </p>
+ * <p>This record wraps a list of {@link com.pkmprojects.shoppiq.dto.user.UserRequest}
+ * entries and is submitted to the admin bulk user endpoint for creating
+ * multiple user accounts in a single API call. It is primarily used
+ * for test-data population during development and staging, enabling
+ * administrators to provision realistic user bases at scale.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Accept admin-supplied user registration information in bulk.</li>
- *     <li>Perform request validation on the collection and its contents.</li>
- *     <li>Remain independent of persistence entities.</li>
- * </ul>
+ * <p>Each element in the list undergoes cascading validation via
+ * {@link jakarta.validation.Valid @Valid}, ensuring that user
+ * registration fields (name, email, username, password) meet their
+ * respective constraints. Passwords are encrypted at the service
+ * layer before persistence. The list must not be empty.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Marked as {@code final} through Java record semantics.</li>
- *     <li>{@code @NotEmpty} ensures the client supplies at least one user.</li>
- *     <li>{@code @Valid} triggers cascading validation on each
- *     {@link UserRequest} in the list.</li>
- *     <li>Used exclusively for admin test-data bulk creation.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @param users list of user creation requests, each containing all
+ *              required registration fields; must not be empty; each
+ *              element is validated recursively via
+ *              {@link com.pkmprojects.shoppiq.dto.user.UserRequest}
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkUserRequest(
+        /**
+         * List of user creation requests. Must not be empty.
+         */
         @NotEmpty(message = "At least one user is required.")
         List<@Valid UserRequest> users
 ) {

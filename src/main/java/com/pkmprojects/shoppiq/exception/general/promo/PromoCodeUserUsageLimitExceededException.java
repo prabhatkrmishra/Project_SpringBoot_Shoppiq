@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a user has
- * exceeded their per-user usage limit for a promo code.
+ * Thrown when a user has exceeded their per-user usage limit for a promo code.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) for per-user usage limit validation, separate from the global
- * usage limit.</p>
+ * <p>This exception is thrown when an individual customer has used a promo
+ * code the maximum number of times allowed per user. Other customers may
+ * still be able to use it. It uses the
+ * {@link ErrorCode#PROMO_CODE_USER_USAGE_LIMIT_EXCEEDED} code and
+ * HTTP 400 Bad Request status.</p>
+ *
+ * <p>The detail message includes the promo code and per-user limit (e.g.,
+ * "You have already used promo code 'SUMMER2026' the maximum of 3 time(s).")
+ * to help the client understand why the code was rejected. The client
+ * should use a different promo code.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PROMO_CODE_USER_USAGE_LIMIT_EXCEEDED
  * @since 1.0.0
  */
 public final class PromoCodeUserUsageLimitExceededException extends InvalidOperationException {

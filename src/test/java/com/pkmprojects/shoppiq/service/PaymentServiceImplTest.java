@@ -5,7 +5,10 @@ import com.pkmprojects.shoppiq.dto.payment.PaymentStatusResponse;
 import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.enums.*;
+import com.pkmprojects.shoppiq.enums.OrderStatus;
+import com.pkmprojects.shoppiq.enums.PaymentGateway;
+import com.pkmprojects.shoppiq.enums.PaymentMethod;
+import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.exception.general.payment.DuplicatePaymentException;
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentInvalidStateException;
@@ -13,12 +16,15 @@ import com.pkmprojects.shoppiq.exception.general.payment.PaymentNotFoundExceptio
 import com.pkmprojects.shoppiq.gateway.payment.CodPaymentGateway;
 import com.pkmprojects.shoppiq.gateway.payment.OnlinePaymentGateway;
 import com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayRegistry;
-import com.pkmprojects.shoppiq.service.payment.PaymentServiceImpl;
 import com.pkmprojects.shoppiq.service.payment.PaymentLookupService;
+import com.pkmprojects.shoppiq.service.payment.PaymentServiceImpl;
 import com.pkmprojects.shoppiq.service.payment.PaymentWriteService;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
@@ -29,7 +35,8 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -55,29 +62,17 @@ import static org.mockito.Mockito.*;
 @DisplayName("PaymentServiceImpl Tests")
 class PaymentServiceImplTest {
 
-    @Mock
-    private PaymentLookupService paymentLookupService;
-
-    @Mock
-    private PaymentWriteService paymentWriteService;
-
     // Use real gateway implementations — they are stateless and safe to use directly
     private final CodPaymentGateway codGateway = new CodPaymentGateway();
     private final OnlinePaymentGateway onlineGateway = new OnlinePaymentGateway(Clock.systemDefaultZone());
-
+    @Mock
+    private PaymentLookupService paymentLookupService;
+    @Mock
+    private PaymentWriteService paymentWriteService;
     private PaymentGatewayRegistry gatewayRegistry;
     private PaymentServiceImpl paymentService;
 
     // ─── Setup ────────────────────────────────────────────────────────────
-
-    @BeforeEach
-    void setUp() {
-        gatewayRegistry = new PaymentGatewayRegistry(List.of(codGateway, onlineGateway));
-        Clock fixedClock = Clock.fixed(Instant.parse("2026-01-15T10:30:00Z"), ZoneOffset.UTC);
-        paymentService = new PaymentServiceImpl(paymentLookupService, paymentWriteService, gatewayRegistry, fixedClock);
-    }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────
 
     private static void setId(Object entity, Long id) throws Exception {
         Field f = entity.getClass().getSuperclass().getSuperclass().getDeclaredField("id");
@@ -85,10 +80,19 @@ class PaymentServiceImplTest {
         f.set(entity, id);
     }
 
+    // ─── Helpers ──────────────────────────────────────────────────────────
+
     private static void setPaymentId(Payment p, Long id) throws Exception {
         Field f = Payment.class.getSuperclass().getSuperclass().getDeclaredField("id");
         f.setAccessible(true);
         f.set(p, id);
+    }
+
+    @BeforeEach
+    void setUp() {
+        gatewayRegistry = new PaymentGatewayRegistry(List.of(codGateway, onlineGateway));
+        Clock fixedClock = Clock.fixed(Instant.parse("2026-01-15T10:30:00Z"), ZoneOffset.UTC);
+        paymentService = new PaymentServiceImpl(paymentLookupService, paymentWriteService, gatewayRegistry, fixedClock);
     }
 
     private User buildUser(long id) throws Exception {

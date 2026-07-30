@@ -4,17 +4,20 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Concrete leaf exception for
- * OAuth2 registration session expiration — an auth-domain error that
- * maps to {@code 400 Bad Request} rather than {@code 401 Unauthorized}.
+ * Thrown when the OAuth2 registration session is missing, invalid, or has expired.
  *
- * <p>Thrown when the Google OAuth2 registration-completion flow cannot
- * proceed because the server-side session is missing or has expired.
- * This is distinct from {@link AuthenticationException}: the user is not
- * being denied access from a credential failure, but is attempting to
- * complete a multi-step registration flow outside its valid window.</p>
+ * <p>This exception is thrown during the OAuth2 registration completion
+ * flow when the session cookie is absent or no longer valid. The session
+ * stores the user's Google profile information and is used to complete
+ * the local account creation. If the session has expired, the user must
+ * re-initiate the Google login flow to create a new session.</p>
+ *
+ * <p>It uses the {@link ErrorCode#OAUTH_SESSION_INVALID} code and
+ * HTTP 400 Bad Request status. The detail message should explain that
+ * the session has expired and instruct the user to log in again.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#OAUTH_SESSION_INVALID
  * @since 1.0.0
  */
 public final class OAuthSessionException extends InvalidOperationException {

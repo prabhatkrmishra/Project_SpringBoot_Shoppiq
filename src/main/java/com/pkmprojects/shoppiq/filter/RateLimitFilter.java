@@ -11,13 +11,11 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import io.github.bucket4j.Refill;
+import jakarta.annotation.PreDestroy;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -27,11 +25,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 
-import jakarta.annotation.PreDestroy;
+import java.io.IOException;
 import java.net.URI;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -39,54 +37,19 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * <strong>Spring Boot Concept:</strong> {@link jakarta.servlet.Filter}
- * implementation that enforces per-path token-bucket rate limiting using
- * Bucket4j.
+ * Filter that enforces per-path token-bucket rate limiting using Bucket4j.
  *
- * <p>Placed before {@link com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter}
- * in the security filter chain so that abusive traffic is rejected before any
- * authentication processing occurs. This is an example of the
- * <em>Filter in the Chain of Responsibility</em> pattern: each filter in the
- * chain handles or forwards the request, and the order of filters matters.</p>
+ * <p>Placed before the JWT authentication filter so abusive traffic is
+ * rejected before authentication processing. Supports IP-based and
+ * user-IP-based bucket keys. The filter is conditionally registered via
+ * {@link com.pkmprojects.shoppiq.config.RateLimitFilterConfig} based on
+ * the {@code app.rate-limit.enabled} property.</p>
  *
- * <p><strong>Educational value:</strong> This class demonstrates several
- * Spring Boot concepts:
- * <ul>
- *   <li><strong>OncePerRequestFilter</strong> — Spring's base class for
- *       filters that should execute exactly once per request dispatch.</li>
- *   <li><strong>Filter chain positioning</strong> — placed <em>before</em>
- *       authentication so unauthenticated abusive traffic is rejected early,
- *       saving resources.</li>
- *   <li><strong>Bucket4j token bucket</strong> — a concurrency-safe rate
- *       limiting algorithm with greedy refill.</li>
- *   <li><strong>ConcurrentHashMap + scheduled eviction</strong> — managing
- *       ephemeral state in a web application without a backing store.</li>
- *   <li><strong>{@code @PreDestroy}</strong> — clean shutdown of the
- *       eviction scheduler.</li>
- * </ul>
- * </p>
- *
- * <h4>Key resolution</h4>
- * <ul>
- *   <li>{@link KeyType#IP} — bucket key is the client's remote address.
- *       Used for unauthenticated endpoints (login, register, etc.).</li>
- *   <li>{@link KeyType#USER_IP} — bucket key is {@code userId:ip}.
- *       Used for authenticated critical endpoints (checkout, payment,
- *       password change). Requires a valid JWT to extract the user ID;
- *       if no JWT is present the request falls through unauthenticated
- *       and is not rate-limited by this rule.</li>
- * </ul>
- *
- * <h4>Error response</h4>
- * <p>When a bucket is exhausted, the filter writes an RFC 9457
- * {@link ProblemDetail} with status {@code 429 Too Many Requests} and a
- * {@code Retry-After} header indicating the seconds until the next token
- * becomes available.</p>
- *
- * <h4>Bucket lifecycle</h4>
- * <p>Buckets are stored in a {@link ConcurrentHashMap} and created lazily
- * per key. Expired buckets are evicted periodically to prevent unbounded
- * memory growth.</p>
+ * <p>The filter evaluates configured rules in order and applies the first
+ * matching rule to a given request. If no rule matches, the request is
+ * allowed through without throttling. When a rate limit is exceeded, the
+ * filter returns a 429 Too Many Requests response with a Retry-After
+ * header and RFC 9457 Problem Detail body.</p>
  *
  * @author prabhatkrmishra
  * @see RateLimitProperties
@@ -95,15 +58,13 @@ import java.util.concurrent.TimeUnit;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(RateLimitFilter.class);
-
-    private final RateLimitProperties properties;
-    private final JwtAuthenticationUtils jwtAuthenticationUtils;
-    private final ProblemDetailResponseWriter responseWriter;
-
     private static final long EVICT_AFTER_SECONDS = 3600;
     private static final long EVICT_INTERVAL_SECONDS = 300;
     private static final int MAX_BUCKETS = 10_000;
-
+    private final RateLimitProperties properties;
+    private final JwtAuthenticationUtils jwtAuthenticationUtils;
+    private final ProblemDetailResponseWriter responseWriter;
+    private final Clock clock;
     private final Map<PathPattern, Rule> ruleIndex = new ConcurrentHashMap<>();
     private final Map<String, BucketEntry> buckets = new ConcurrentHashMap<>();
     private final ScheduledExecutorService evictor = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -116,16 +77,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * Constructs the filter, parses path patterns from the rule
      * configuration, and starts the bucket eviction scheduler.
      *
-     * @param properties              rate limit configuration
+     * @param properties             rate limit configuration
      * @param jwtAuthenticationUtils utility for JWT operations
-     * @param responseWriter          writer for RFC 9457 error responses
+     * @param responseWriter         writer for RFC 9457 error responses
+     * @param clock                  injectable clock for testability
      */
     public RateLimitFilter(RateLimitProperties properties,
                            JwtAuthenticationUtils jwtAuthenticationUtils,
-                           ProblemDetailResponseWriter responseWriter) {
+                           ProblemDetailResponseWriter responseWriter,
+                           Clock clock) {
         this.properties = properties;
         this.jwtAuthenticationUtils = jwtAuthenticationUtils;
         this.responseWriter = responseWriter;
+        this.clock = clock;
 
         PathPatternParser parser = new PathPatternParser();
         for (Rule rule : properties.getRules()) {
@@ -137,6 +101,25 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         evictor.scheduleAtFixedRate(this::evictStaleBuckets,
                 EVICT_INTERVAL_SECONDS, EVICT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Formats a wait duration in seconds into a human-readable string
+     * suitable for user-facing messages.
+     *
+     * @param seconds the wait duration in seconds
+     * @return a human-readable string (e.g. "30 seconds", "15 minutes", "2 hours")
+     */
+    static String formatWaitDuration(long seconds) {
+        if (seconds < 60) {
+            return seconds + " second" + (seconds == 1 ? "" : "s");
+        }
+        long minutes = seconds / 60;
+        if (minutes < 60) {
+            return minutes + " minute" + (minutes == 1 ? "" : "s");
+        }
+        long hours = minutes / 60;
+        return hours + " hour" + (hours == 1 ? "" : "s");
     }
 
     /**
@@ -155,30 +138,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
     }
 
-    private static final class BucketEntry {
-        final Bucket bucket;
-        final long createdAt;
-        volatile long lastAccessedAt;
-
-        BucketEntry(Bucket bucket, long createdAt, long lastAccessedAt) {
-            this.bucket = bucket;
-            this.createdAt = createdAt;
-            this.lastAccessedAt = lastAccessedAt;
-        }
-    }
-
     /**
      * Removes buckets that have exceeded their maximum age or idle time.
      */
     private void evictStaleBuckets() {
-        long now = System.nanoTime();
-        long nowMillis = System.currentTimeMillis();
+        long nowMillis = clock.millis();
         Iterator<Map.Entry<String, BucketEntry>> it = buckets.entrySet().iterator();
         int removed = 0;
         while (it.hasNext()) {
             Map.Entry<String, BucketEntry> entry = it.next();
-            long ageSeconds = TimeUnit.NANOSECONDS.toSeconds(now - entry.getValue().createdAt);
-            long idleSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMillis - entry.getValue().lastAccessedAt);
+            long ageSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMillis - entry.getValue().createdAtMillis);
+            long idleSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMillis - entry.getValue().lastAccessedAtMillis);
             if (ageSeconds > EVICT_AFTER_SECONDS || idleSeconds > EVICT_AFTER_SECONDS / 2) {
                 it.remove();
                 removed++;
@@ -260,15 +230,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * @return the bucket key, or {@code null} if the key cannot be resolved
      * (e.g. USER_IP rule but no valid JWT present)
      */
-    /**
-     * Resolves the bucket key for the current request based on the rule's
-     * {@link KeyType}.
-     *
-     * @param request the incoming HTTP request
-     * @param rule    the matched rate limit rule
-     * @return the bucket key, or {@code null} if the key cannot be resolved
-     * (e.g. USER_IP rule but no valid JWT present)
-     */
     private String resolveBucketKey(HttpServletRequest request, Rule rule) {
         String remoteAddr = request.getRemoteAddr();
 
@@ -297,14 +258,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * @param rule the rate limit rule defining capacity and refill
      * @return the bucket instance
      */
-    /**
-     * Retrieves an existing bucket for the given key or creates a new one
-     * with the bandwidth defined by the rule.
-     *
-     * @param key  the bucket key
-     * @param rule the rate limit rule defining capacity and refill
-     * @return the bucket instance
-     */
     private Bucket resolveBucket(String key, Rule rule) {
         BucketEntry existing = buckets.get(key);
         if (existing != null) {
@@ -323,7 +276,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 rule.getLimit(),
                 Refill.greedy(rule.getLimit(), Duration.ofSeconds(rule.getDuration()))
         );
-        return buckets.computeIfAbsent(key, k -> new BucketEntry(Bucket.builder().addLimit(bandwidth).build(), System.nanoTime(), System.currentTimeMillis()))
+        return buckets.computeIfAbsent(key, k -> new BucketEntry(Bucket.builder().addLimit(bandwidth).build(), clock.millis(), clock.millis()))
                 .bucket;
     }
 
@@ -336,7 +289,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private void touchBucket(String key) {
         BucketEntry entry = buckets.get(key);
         if (entry != null) {
-            entry.lastAccessedAt = System.currentTimeMillis();
+            entry.lastAccessedAtMillis = clock.millis();
         }
     }
 
@@ -352,22 +305,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return !properties.isEnabled() || ruleIndex.isEmpty();
     }
 
-    /**
-     * Formats a wait duration in seconds into a human-readable string
-     * suitable for user-facing messages.
-     *
-     * @param seconds the wait duration in seconds
-     * @return a human-readable string (e.g. "30 seconds", "15 minutes", "2 hours")
-     */
-    static String formatWaitDuration(long seconds) {
-        if (seconds < 60) {
-            return seconds + " second" + (seconds == 1 ? "" : "s");
+    private static final class BucketEntry {
+        final Bucket bucket;
+        final long createdAtMillis;
+        volatile long lastAccessedAtMillis;
+
+        BucketEntry(Bucket bucket, long createdAtMillis, long lastAccessedAtMillis) {
+            this.bucket = bucket;
+            this.createdAtMillis = createdAtMillis;
+            this.lastAccessedAtMillis = lastAccessedAtMillis;
         }
-        long minutes = seconds / 60;
-        if (minutes < 60) {
-            return minutes + " minute" + (minutes == 1 ? "" : "s");
-        }
-        long hours = minutes / 60;
-        return hours + " hour" + (hours == 1 ? "" : "s");
     }
 }

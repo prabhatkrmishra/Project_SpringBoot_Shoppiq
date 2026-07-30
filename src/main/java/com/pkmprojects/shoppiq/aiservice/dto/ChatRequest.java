@@ -4,17 +4,24 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * <strong>Spring Boot Concept:</strong> Request DTO for sending a message to the AI assistant.
+ * Request DTO for sending a message to the AI assistant.
  *
- * <p>
- * Used by both the authenticated {@code /api/ai/chat} and guest
- * {@code /api/ai/guest} endpoints. The {@code chatId} field is
- * optional — when omitted, a new conversation is created.
+ * <p>This immutable record serves as the inbound contract for both the
+ * authenticated and guest chat endpoints. The {@code message} field is
+ * required and limited to 2000 characters to prevent excessive prompt
+ * lengths. The {@code chatId} field is optional; when omitted, the
+ * service creates a new conversation. The {@code model} field allows
+ * the frontend to specify which LLM to use for the response, falling
+ * back to the default model when not provided.</p>
  *
- * @param message the user's message (required, max 2000 characters)
+ * <p>Validation is performed via Jakarta Bean Validation annotations,
+ * ensuring that malformed requests are rejected at the controller
+ * layer before reaching the service.</p>
+ *
+ * @param message the user's message text (required, max 2000 characters)
  * @param chatId  the target conversation ID (optional; omit to create a new conversation)
  * @param model   the AI model to use (optional; omit to use the default model)
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record ChatRequest(

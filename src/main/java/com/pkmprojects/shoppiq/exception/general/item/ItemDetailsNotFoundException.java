@@ -4,16 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when item details
- * for an Item cannot be found.
+ * Thrown when item details (specifications, descriptions) for a product cannot be found.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) for the case where the parent
- * {@link com.pkmprojects.shoppiq.entity.item.Item} exists but its associated
- * {@link com.pkmprojects.shoppiq.entity.item.ItemDetails} record is missing.</p>
+ * <p>This exception is thrown by item service methods when a database
+ * lookup for detailed product information fails. Item details are created
+ * separately from the item itself and may not always be present. It uses
+ * the {@link ErrorCode#ITEM_DETAILS_NOT_FOUND} code and HTTP 404 Not
+ * Found status.</p>
+ *
+ * <p>The detail message includes the item details identifier (e.g.,
+ * "Item details with id '42' were not found.") to help the client
+ * understand which details were missing. The client should verify the
+ * identifier and retry the request.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#ITEM_DETAILS_NOT_FOUND
  * @since 1.0.0
  */
 public final class ItemDetailsNotFoundException extends ResourceNotFoundException {

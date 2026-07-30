@@ -1,11 +1,8 @@
 package com.pkmprojects.shoppiq.service.checkout;
 
+import com.pkmprojects.shoppiq.config.CheckoutProperties;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
-import com.pkmprojects.shoppiq.dto.order.CheckoutRequest;
-import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
-import com.pkmprojects.shoppiq.dto.order.OrderCalculationRequest;
-import com.pkmprojects.shoppiq.dto.order.OrderCalculationResponse;
-import com.pkmprojects.shoppiq.dto.order.OrderResponse;
+import com.pkmprojects.shoppiq.dto.order.*;
 import com.pkmprojects.shoppiq.dto.promo.CartItemPreview;
 import com.pkmprojects.shoppiq.entity.address.Address;
 import com.pkmprojects.shoppiq.entity.cart.Cart;
@@ -53,24 +50,10 @@ import java.time.Clock;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link CheckoutService}
- * containing the full checkout workflow business logic.
- *
- * <p>Orchestrates the entire order placement flow: validates cart and address,
- * checks stock, calculates totals (subtotal, delivery, COD surcharge, tax,
- * discount with promos), persists the order with items, reduces inventory,
- * clears the cart, creates a payment record, and publishes
- * {@code OrderPlacedEvent}. Also provides cost preview, order history,
- * cancellation, return, refund, and replacement requests. Used by
- * {@code CheckoutController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — The checkout orchestrates ~10 persistence operations that must be atomic; also catches {@code OptimisticLockingFailureException} for concurrent stock conflicts.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link CheckoutService} implementation that orchestrates the full checkout workflow:
+ * validating cart and address, checking stock, calculating totals, persisting the order,
+ * reducing inventory, clearing the cart, creating a payment record, and publishing
+ * {@code OrderPlacedEvent}.
  *
  * @author prabhatkrmishra
  * @see CheckoutService
@@ -88,6 +71,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final PaymentService paymentService;
     private final PromoCodeService promoCodeService;
     private final ApplicationEventPublisher eventPublisher;
+    private final CheckoutProperties checkoutProperties;
     private final Clock clock;
 
     public CheckoutServiceImpl(CartRepository cartRepository,
@@ -98,6 +82,7 @@ public class CheckoutServiceImpl implements CheckoutService {
                                PaymentService paymentService,
                                PromoCodeService promoCodeService,
                                ApplicationEventPublisher eventPublisher,
+                               CheckoutProperties checkoutProperties,
                                Clock clock) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
@@ -107,6 +92,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         this.paymentService = paymentService;
         this.promoCodeService = promoCodeService;
         this.eventPublisher = eventPublisher;
+        this.checkoutProperties = checkoutProperties;
         this.clock = clock;
     }
 
@@ -176,13 +162,13 @@ public class CheckoutServiceImpl implements CheckoutService {
                 ? request.deliveryType() : DeliveryType.NORMAL;
         BigDecimal deliveryCharge = BigDecimal.ZERO;
         if (deliveryType == DeliveryType.EXPRESS_1DAY) {
-            deliveryCharge = new BigDecimal("7.50");
+            deliveryCharge = checkoutProperties.getExpressDeliveryCharge();
         }
 
         // COD surcharge
         BigDecimal codSurcharge = BigDecimal.ZERO;
         if (request.paymentMethod() == PaymentMethod.COD) {
-            codSurcharge = new BigDecimal("5.00");
+            codSurcharge = checkoutProperties.getCodSurcharge();
         }
 
         List<CartItemPreview> cartPreviews = cartItems.stream()
@@ -228,13 +214,14 @@ public class CheckoutServiceImpl implements CheckoutService {
             BigDecimal lineSubtotal = PriceUtil.effectivePrice(details)
                     .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
+            BigDecimal effectiveUnitPrice = PriceUtil.effectivePrice(details);
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .itemDetails(details)
-                    .itemNameSnapshot(item != null ? item.getName() : details.getItem().getName())
-                    .unitPriceSnapshot(details.getPrice())
+                    .itemNameSnapshot(item != null ? item.getName() : "")
+                    .unitPriceSnapshot(effectiveUnitPrice)
                     .quantity(cartItem.getQuantity())
-                    .subtotal(lineSubtotal)
+                    .subtotal(effectiveUnitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity())))
                     .build();
 
             order.addOrderItem(orderItem);
@@ -290,12 +277,12 @@ public class CheckoutServiceImpl implements CheckoutService {
 
         BigDecimal deliveryCharge = BigDecimal.ZERO;
         if (deliveryType == DeliveryType.EXPRESS_1DAY) {
-            deliveryCharge = new BigDecimal("7.50");
+            deliveryCharge = checkoutProperties.getExpressDeliveryCharge();
         }
 
         BigDecimal codSurcharge = BigDecimal.ZERO;
         if (request.paymentMethod() == PaymentMethod.COD) {
-            codSurcharge = new BigDecimal("5.00");
+            codSurcharge = checkoutProperties.getCodSurcharge();
         }
 
         BigDecimal tax = BigDecimal.ZERO;
@@ -329,22 +316,6 @@ public class CheckoutServiceImpl implements CheckoutService {
     // =========================================================
     // Query
     // =========================================================
-
-    /**
-     * Returns all orders belonging to the authenticated user, newest first.
-     *
-     * @param user authenticated customer
-     * @return list of full order responses
-     */
-    @Transactional(readOnly = true)
-    public List<OrderResponse> getMyOrders(User user) {
-        Pageable pageable = PageRequest.of(0, 1000, Sort.by(Sort.Direction.DESC, "placedAt"));
-        return orderRepository.findAllByUserOrderByPlacedAtDesc(user, pageable)
-                .getContent()
-                .stream()
-                .map(OrderResponse::from)
-                .toList();
-    }
 
     /**
      * Returns a paginated list of the authenticated user's orders, newest first.

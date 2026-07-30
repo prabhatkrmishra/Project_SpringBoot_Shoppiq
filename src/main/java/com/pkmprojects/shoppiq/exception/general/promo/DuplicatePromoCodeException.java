@@ -4,14 +4,20 @@ import com.pkmprojects.shoppiq.exception.business.DuplicateResourceException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a promo code
- * with the same code string already exists.
+ * Thrown when a promo code with the same code string already exists.
  *
- * <p>Leaf exception in the duplicate-resource hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.DuplicateResourceException}
- * (HTTP 409) for promo code code-string uniqueness enforcement.</p>
+ * <p>This exception is thrown during promo code creation when the submitted
+ * code value conflicts with an existing record. It uses the
+ * {@link ErrorCode#PROMO_CODE_ALREADY_EXISTS} code and HTTP 409 Conflict
+ * status. Promo codes must be unique across the system.</p>
+ *
+ * <p>The detail message includes the conflicting code (e.g.,
+ * "A promo code with code 'SUMMER2026' already exists.") to help the
+ * client understand which code caused the conflict. The client should
+ * use a different code value.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PROMO_CODE_ALREADY_EXISTS
  * @since 1.0.0
  */
 public final class DuplicatePromoCodeException extends DuplicateResourceException {

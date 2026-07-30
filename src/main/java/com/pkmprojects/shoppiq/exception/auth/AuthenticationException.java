@@ -5,18 +5,24 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> Mid-level category exception in the
- * {@code auth} package — groups all authentication failures under HTTP
- * {@code 401 Unauthorized}.
+ * Base exception for all authentication failures under HTTP 401 Unauthorized.
  *
- * <p>Thrown when authentication fails (invalid credentials, invalid or
- * expired JWT, invalid OIDC user). Together with
- * {@link com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException}
- * (403), these two form the security-related branches of the exception
- * hierarchy: 401 indicates the client is not authenticated, while 403
- * indicates the client is authenticated but lacks required permissions.</p>
+ * <p>This abstract class serves as the parent for all authentication-related
+ * exceptions (e.g., {@link InvalidCredentialException},
+ * {@link JwtAuthenticationException}, {@link InvalidOidcUserException}).
+ * It hardcodes the HTTP status to {@link HttpStatus#UNAUTHORIZED} so that
+ * subclasses only need to provide an {@link ErrorCode} and a detail
+ * message. The global exception handler maps this to a 401 Problem
+ * Detail response.</p>
+ *
+ * <p>This exception is distinct from
+ * {@link com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException},
+ * which uses HTTP 403 Forbidden. A 401 response means the user is not
+ * identified (missing or invalid credentials), while a 403 response means
+ * the identified user lacks permission to perform the action.</p>
  *
  * @author prabhatkrmishra
+ * @see com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException
  * @since 1.0.0
  */
 public abstract class AuthenticationException extends ShoppiqException {

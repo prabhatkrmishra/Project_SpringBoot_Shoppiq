@@ -15,19 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link CategoryLookupService}
- * providing read-only category queries.
- *
- * <p>Delegates to {@code CategoryRepository} for find, exists, count, search,
- * and top-selling queries. All queries run in a read-only transaction.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional(readOnly = true)</strong> — All queries are read-only, optimized for database performance.</li>
- *   <li><strong>@RequiredArgsConstructor</strong> — Lombok-generated constructor injection for final fields.</li>
- * </ul>
- * </p>
+ * {@link CategoryLookupService} implementation providing read-only category queries.
  *
  * @author prabhatkrmishra
  * @see CategoryLookupService

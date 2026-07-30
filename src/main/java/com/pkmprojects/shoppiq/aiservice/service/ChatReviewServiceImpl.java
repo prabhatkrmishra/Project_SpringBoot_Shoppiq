@@ -9,9 +9,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Read-only implementation of {@link ChatReviewService}.
+ * Read-only implementation of {@link ChatReviewService}.
  *
- * @author PrabhatKrMishra
+ * <p>This service delegates to the {@link ItemReviewRepository} for all
+ * review queries, providing a read-only transactional boundary for AI
+ * tool data access. The {@code @Transactional(readOnly = true)}
+ * annotation ensures that no data modifications occur through this
+ * service.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.4.0
  */
 @Service

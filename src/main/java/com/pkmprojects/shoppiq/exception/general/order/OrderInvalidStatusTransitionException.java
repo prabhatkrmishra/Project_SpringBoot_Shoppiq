@@ -5,15 +5,22 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when an invalid
- * order status transition is attempted.
+ * Thrown when an invalid order status transition is attempted.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) to enforce the order lifecycle state machine (e.g., cannot go
- * from DELIVERED back to PENDING).</p>
+ * <p>This exception is thrown when an admin attempts to move an order to
+ * a status that is not reachable from the current status. The order
+ * status machine defines valid transitions (e.g., PENDING to CONFIRMED,
+ * CONFIRMED to SHIPPED). It uses the
+ * {@link ErrorCode#ORDER_INVALID_STATUS_TRANSITION} code and HTTP 400
+ * Bad Request status.</p>
+ *
+ * <p>The detail message includes the current and attempted statuses
+ * (e.g., "Invalid status transition from SHIPPED to PENDING.") to help
+ * the client understand which transition was invalid. The client should
+ * review the order status machine and only attempt valid transitions.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#ORDER_INVALID_STATUS_TRANSITION
  * @since 1.0.0
  */
 public final class OrderInvalidStatusTransitionException extends InvalidOperationException {

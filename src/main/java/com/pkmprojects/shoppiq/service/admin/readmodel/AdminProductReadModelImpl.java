@@ -15,20 +15,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminProductReadModel}
- * providing read-only product queries for admin dashboards and reports.
- *
- * <p>Delegates to {@link ItemLookupService}, {@link ItemDetailsLookupService},
- * {@code ItemReviewRepository}, and {@link SellerLookupService} for product
- * aggregate queries.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional(readOnly = true)</strong> — All queries are read-only, optimized for database performance.</li>
- *   <li><strong>@RequiredArgsConstructor</strong> — Lombok-generated constructor injection for final fields.</li>
- * </ul>
- * </p>
+ * {@link AdminProductReadModel} implementation providing read-only product queries
+ * for admin dashboards and reports.
  *
  * @author prabhatkrmishra
  * @see AdminProductReadModel

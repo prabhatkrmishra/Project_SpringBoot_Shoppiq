@@ -7,43 +7,23 @@ import org.springframework.stereotype.Component;
 /**
  * Factory for creating JWT cookies with consistent security attributes.
  *
- * <h3>Spring Security / cookie concepts demonstrated</h3>
- * <ul>
- *   <li><strong>HttpOnly cookie for JWT transport</strong> — the JWT is
- *       delivered exclusively as an HttpOnly cookie (never in a response body
- *       or {@code Authorization} header). This prevents JavaScript from
- *       reading the token, mitigating XSS-based credential theft.</li>
- *   <li><strong>SameSite=Lax CSRF protection</strong> — the {@code SameSite=Lax}
- *       attribute tells the browser to send the cookie only on same-site
- *       top-level navigations, not on cross-site requests. This provides
- *       built-in CSRF protection without requiring a separate CSRF token.</li>
- *   <li><strong>Environment-driven Secure flag</strong> — the {@code Secure}
- *       flag is controlled by {@code app.security.secure-cookie}, enabling
- *       HTTP for local development and HTTPS for production without code changes.</li>
- *   <li><strong>Max-Age for session vs. persistent cookies</strong> —
- *       {@code Max-Age=-1} creates a session cookie (deleted when browser
- *       closes); {@code Max-Age=0} expires it immediately (logout);
- *       positive values create persistent cookies (remember-me).</li>
- * </ul>
+ * <p>This component creates HttpOnly, SameSite=Lax cookies for JWT transport
+ * with configurable Secure flag. It supports three cookie types: session
+ * cookies (browser-close expiration), persistent cookies (fixed max-age),
+ * and expiring cookies (for OAuth2 state). The Secure flag is configurable
+ * through the {@code app.security.secure-cookie} property to allow
+ * HTTP in development while enforcing HTTPS in production.</p>
  *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Factory pattern</strong> — a single place that creates
- *       consistently-configured cookies. Every JWT cookie in the application
- *       goes through this factory, ensuring identical security attributes.</li>
- *   <li><strong>Centralized configuration</strong> — the {@code Secure} flag
- *       is injected once and applied to all cookies, avoiding scattered
- *       conditionals throughout the codebase.</li>
- *   <li><strong>Simple API</strong> — a single {@link #buildJwtCookie} method
- *       accepts the token value and Max-Age, hiding all cookie attribute
- *       complexity from callers.</li>
- * </ul>
+ * <p>The cookie factory is used by the authentication service for login/logout,
+ * by the OAuth2 success handler for setting tokens after social login, and
+ * by the refresh endpoint for issuing new tokens. All cookies are created
+ * through this factory to ensure consistent security attributes across the
+ * application.</p>
  *
+ * @author prabhatkrmishra
  * @see JwtAuthenticationUtils
  * @see com.pkmprojects.shoppiq.auth.service.AuthService
  * @see com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler
- *
- * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component

@@ -74,6 +74,9 @@ class CartServiceImplTest {
     // ---------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------
+    private User alice;
+    private ItemDetails stubDetails;
+    private Cart aliceCart;
 
     /**
      * Reflectively sets the private {@code id} field declared in
@@ -109,6 +112,10 @@ class CartServiceImplTest {
         setId(user, id);
         return user;
     }
+
+    // ---------------------------------------------------------------
+    // Shared fixtures
+    // ---------------------------------------------------------------
 
     /**
      * Builds an ItemDetails with given id, price, discount, and stock.
@@ -157,14 +164,6 @@ class CartServiceImplTest {
         setCartItemId(item, id);
         return item;
     }
-
-    // ---------------------------------------------------------------
-    // Shared fixtures
-    // ---------------------------------------------------------------
-
-    private User alice;
-    private ItemDetails stubDetails;
-    private Cart aliceCart;
 
     @BeforeEach
     void setUp() throws Exception {

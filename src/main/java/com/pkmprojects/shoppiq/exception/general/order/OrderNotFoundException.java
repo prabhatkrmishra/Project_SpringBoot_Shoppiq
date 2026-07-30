@@ -4,17 +4,20 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when the requested
- * order cannot be found.
+ * Thrown when the requested order cannot be found.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) for missing {@link com.pkmprojects.shoppiq.entity.order.Order}
- * entities. Unlike most project exceptions using private constructors, this
- * one has a public constructor for flexible message creation in addition to
- * the factory method.</p>
+ * <p>This exception is thrown by order service methods when a database
+ * lookup for an order fails. It uses the {@link ErrorCode#ORDER_NOT_FOUND}
+ * code and HTTP 404 Not Found status. The order ID may be incorrect or
+ * the order may have been soft-deleted.</p>
+ *
+ * <p>The detail message includes the order identifier (e.g.,
+ * "Order with id '42' was not found.") to help the client understand
+ * which order was invalid. The client should verify the order ID and
+ * retry the request.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#ORDER_NOT_FOUND
  * @since 1.0.0
  */
 public final class OrderNotFoundException extends ResourceNotFoundException {

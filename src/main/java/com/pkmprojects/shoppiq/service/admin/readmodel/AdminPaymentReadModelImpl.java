@@ -12,19 +12,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminPaymentReadModel}
- * providing read-only payment queries for admin dashboards and reports.
- *
- * <p>Delegates to {@link PaymentLookupService} for aggregate payment queries
- * including amount sums by status and date range.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional(readOnly = true)</strong> — All queries are read-only, optimized for database performance.</li>
- *   <li><strong>@RequiredArgsConstructor</strong> — Lombok-generated constructor injection for final fields.</li>
- * </ul>
- * </p>
+ * {@link AdminPaymentReadModel} implementation providing read-only payment queries
+ * for admin dashboards and reports.
  *
  * @author prabhatkrmishra
  * @see AdminPaymentReadModel

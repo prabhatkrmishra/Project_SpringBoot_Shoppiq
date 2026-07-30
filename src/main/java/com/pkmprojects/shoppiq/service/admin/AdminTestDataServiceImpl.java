@@ -2,32 +2,27 @@ package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
-import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
-
 import com.pkmprojects.shoppiq.dto.cart.CartItemResponse;
 import com.pkmprojects.shoppiq.dto.item.ItemResponse;
+import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.review.ItemReviewResponse;
-import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
 import com.pkmprojects.shoppiq.dto.user.UserRequest;
+import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.entity.address.Address;
 import com.pkmprojects.shoppiq.entity.cart.Cart;
 import com.pkmprojects.shoppiq.entity.cart.CartItem;
 import com.pkmprojects.shoppiq.entity.category.Category;
 import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.entity.item.ItemDetails;
-import com.pkmprojects.shoppiq.entity.review.ItemReview;
 import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.order.OrderAddressSnapshot;
 import com.pkmprojects.shoppiq.entity.order.OrderItem;
+import com.pkmprojects.shoppiq.entity.review.ItemReview;
 import com.pkmprojects.shoppiq.entity.seller.Seller;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.enums.OrderStatus;
-import com.pkmprojects.shoppiq.enums.PaymentStatus;
-import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
-import com.pkmprojects.shoppiq.enums.ReviewStatus;
-import com.pkmprojects.shoppiq.enums.SellerStatus;
-import com.pkmprojects.shoppiq.enums.VerificationStatus;
+import com.pkmprojects.shoppiq.enums.*;
+import com.pkmprojects.shoppiq.exception.business.SlugGenerationFailedException;
 import com.pkmprojects.shoppiq.exception.general.address.AddressNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.cart.CartEmptyException;
 import com.pkmprojects.shoppiq.exception.general.inventory.InsufficientStockException;
@@ -39,18 +34,18 @@ import com.pkmprojects.shoppiq.repository.item.ItemReviewRepository;
 import com.pkmprojects.shoppiq.repository.order.OrderRepository;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.cart.CartServiceImpl;
-import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.service.category.CategoryLookupService;
 import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.item.ItemWriteService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
+import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.service.seller.SellerLookupService;
 import com.pkmprojects.shoppiq.service.seller.SellerWriteService;
 import com.pkmprojects.shoppiq.util.PriceUtil;
 import com.pkmprojects.shoppiq.util.SlugUtil;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -60,20 +55,18 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminTestDataService}
- * containing bulk-creation business logic for populating test data.
+ * Implementation of {@link AdminTestDataService} containing bulk-creation
+ * business logic for populating test data.
  *
  * <p>Creates users, items, addresses, reviews, sellers, cart items, and orders
  * in bulk within single transactions. Used by {@code AdminTestDataController}
- * for development and testing environments.</p>
+ * for development and testing environments. All mutations are transactional
+ * to ensure atomicity across the multiple entity types being created.</p>
  *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Bulk operations span multiple entities and repository calls that must succeed or fail atomically.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability, with 14 collaborators explicit in the constructor.</li>
- * </ul>
- * </p>
+ * <p>Delegates to {@code RoleService} for role resolution, {@code CartServiceImpl}
+ * for cart operations, and {@code ItemWriteService}/{@code SellerWriteService}
+ * for persistence. Password encoding uses the injected {@code PasswordEncoder}
+ * for consistent BCrypt hashing.</p>
  *
  * @author prabhatkrmishra
  * @see AdminTestDataService
@@ -257,13 +250,10 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
             User user = findUser(item.userId());
 
             Item itemEntity = itemLookupService.findById(item.itemId())
-                    .orElseThrow(() -> new RuntimeException(
-                            "Item with id '%d' was not found.".formatted(item.itemId())));
+                    .orElseThrow(() -> com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException.id(item.itemId()));
 
             if (itemReviewRepository.existsByUserIdAndItemId(item.userId(), item.itemId())) {
-                throw new RuntimeException(
-                        "User '%d' has already reviewed item '%d'."
-                                .formatted(item.userId(), item.itemId()));
+                throw com.pkmprojects.shoppiq.exception.general.item.DuplicateItemReviewException.userId(item.userId());
             }
 
             ItemReview review = ItemReview.builder()
@@ -295,9 +285,7 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
             User user = findUser(item.userId());
 
             if (sellerLookupService.existsByUserId(item.userId())) {
-                throw new RuntimeException(
-                        "User '%d' already has a seller profile."
-                                .formatted(item.userId()));
+                throw com.pkmprojects.shoppiq.exception.general.seller.SellerAlreadyExistsException.forUser(item.userId());
             }
 
             Seller seller = Seller.builder()
@@ -521,6 +509,9 @@ public class AdminTestDataServiceImpl implements AdminTestDataService {
         int counter = 2;
 
         while (itemLookupService.existsBySlug(slug)) {
+            if (counter > 1000) {
+                throw SlugGenerationFailedException.forEntity("item", itemName, 1000);
+            }
             slug = baseSlug + "-" + counter;
             counter++;
         }

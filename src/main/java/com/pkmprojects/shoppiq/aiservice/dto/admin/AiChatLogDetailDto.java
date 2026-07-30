@@ -6,12 +6,18 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Admin DTO for viewing the full detail of a single AI chat conversation.
+ * Admin DTO for viewing the full detail of a single AI chat conversation.
  *
- * <p>
- * Returned by the {@code GET /api/admin/ai-chats/{chatId}} endpoint. Contains
- * the complete message history with role labels, tool names, and timestamps
- * for administrative review.
+ * <p>This immutable record contains the complete message history of a
+ * conversation along with all metadata fields needed for administrative
+ * review. It extends the summary data with a full chronological list of
+ * {@link ChatMessageDto} objects, each carrying role labels, tool names,
+ * and creation timestamps.</p>
+ *
+ * <p>The {@code resolvedAt} field is nullable and populated only when the
+ * conversation has been resolved, either by the user, the system
+ * auto-resolve task, or an admin action. Admins use this DTO to inspect
+ * conversation content, verify AI responses, and audit tool usage.</p>
  *
  * @param chatId     the public conversation identifier
  * @param userId     the owning user's database ID ({@code null} for guests)
@@ -22,7 +28,7 @@ import java.util.List;
  * @param createdAt  timestamp when the conversation was created
  * @param resolvedAt timestamp when the conversation was resolved ({@code null} if still active)
  * @param messages   the full list of messages in chronological order
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AiChatLogDetailDto(

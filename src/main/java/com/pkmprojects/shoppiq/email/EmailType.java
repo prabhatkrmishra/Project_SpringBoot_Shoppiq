@@ -1,33 +1,17 @@
 package com.pkmprojects.shoppiq.email;
 
 /**
- * <strong>Spring Boot Concept:</strong> Enum that enumerates all transactional
- * email types in the application. Each constant carries metadata
- * ({@code templateName}, {@code defaultSubject}) making it a self-describing
- * configuration object rather than a simple string constant.
+ * Enumerates all transactional email types with template routing and default subjects.
  *
- * <p>
- * Each type maps to a specific Thymeleaf email template and a notification
- * preference flag in the {@link com.pkmprojects.shoppiq.entity.notification.NotificationPreference}
- * entity.
- * </p>
+ * <p>Each type maps to a Thymeleaf template and a notification preference flag for delivery control.
+ * The email type determines which template is used to render the email content, what the default
+ * subject line is, and which notification preference setting controls whether the email is sent.
+ * This centralized routing ensures consistent email formatting and delivery behavior across the
+ * application.</p>
  *
- * <p><strong>Educational value:</strong> This enum demonstrates a pattern
- * where enum constants carry domain-relevant data:
- * <ul>
- *   <li><strong>Template routing</strong> — {@code getTemplateName()} returns
- *       the Thymeleaf template name, linking the enum to the view layer.</li>
- *   <li><strong>Default subject</strong> — each type has a fallback subject
- *       line used when no custom subject is provided.</li>
- *   <li><strong>Preference mapping</strong> — the service layer
- *       ({@link com.pkmprojects.shoppiq.email.impl.EmailServiceImpl}) maps
- *       each type to a notification preference flag to determine whether the
- *       email should be sent.</li>
- *   <li><strong>Domain-driven design</strong> — the enum makes the email
- *       domain explicit and type-safe, preventing invalid email types at
- *       compile time.</li>
- * </ul>
- * </p>
+ * <p>The email type is also used for logging and auditing purposes, allowing administrators to
+ * track email delivery statistics by type. Each type has a unique template name that maps to
+ * a Thymeleaf HTML template file in the email templates directory.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -74,7 +58,14 @@ public enum EmailType {
      */
     ADMIN_MAIL("promotion", "Message from Shoppiq Admin");
 
+    /**
+     * The Thymeleaf template name (without .html extension).
+     */
     private final String templateName;
+
+    /**
+     * The default subject line for this email type.
+     */
     private final String defaultSubject;
 
     EmailType(String templateName, String defaultSubject) {

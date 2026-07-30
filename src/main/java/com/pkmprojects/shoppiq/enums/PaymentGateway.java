@@ -3,31 +3,19 @@ package com.pkmprojects.shoppiq.enums;
 import com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayStrategy;
 
 /**
- * <strong>Spring Boot Concept:</strong> Identifies which payment gateway processed a transaction.
+ * Identifies which payment gateway processed a transaction.
  *
- * <p>
- * {@code NONE} is used for cash-on-delivery orders, where no external
- * gateway is involved. The remaining values represent future integrations
- * that can be plugged in via the {@link PaymentGatewayStrategy}
- * strategy interface without changing the checkout flow.
- * </p>
+ * <p>This enum maps each supported payment provider to a named constant
+ * that is stored with the payment record for auditing and reconciliation
+ * purposes. {@link #NONE} is used for cash-on-delivery orders where no
+ * external gateway is involved. The remaining values represent gateway
+ * integrations plugged in via the {@link PaymentGatewayStrategy} strategy
+ * interface.</p>
  *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Strategy pattern integration</strong> — This enum works
- *         with the {@code PaymentGatewayStrategy} interface to select the
- *         appropriate gateway implementation at runtime, demonstrating how
- *         enums can drive polymorphic behavior in Spring.</li>
- *     <li><strong>Future-ready design</strong> — Values like {@code STRIPE},
- *         {@code PAYPAL}, and {@code UPI} are defined upfront even if not
- *         yet implemented, making the data model stable.</li>
- *     <li><strong>Stored as STRING in the JPA entity</strong> — Used with
- *         {@code @Enumerated(EnumType.STRING)} in {@link Payment} for
- *         human-readable database values.</li>
- *     <li><strong>NONE for COD</strong> — {@code NONE} represents the
- *         absence of a gateway for cash-on-delivery, keeping the model
- *         consistent (every payment has a gateway value).</li>
- * </ul>
+ * <p>The gateway enum is used by the {@link com.pkmprojects.shoppiq.gateway.payment.PaymentGatewayRegistry}
+ * to look up the correct strategy implementation for processing payments.
+ * It is also stored in the payment entity to track which provider handled
+ * each transaction.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

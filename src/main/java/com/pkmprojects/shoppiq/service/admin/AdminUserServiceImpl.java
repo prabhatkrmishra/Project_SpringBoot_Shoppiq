@@ -1,13 +1,12 @@
 package com.pkmprojects.shoppiq.service.admin;
 
-import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.admin.response.AdminUserResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.general.user.UserNotFoundException;
 import com.pkmprojects.shoppiq.repository.order.OrderRepository;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.payment.PaymentLookupService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -25,20 +24,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminUserService}
- * containing business logic for admin customer management.
- *
- * <p>Provides paginated customer retrieval with optional enabled/disabled filtering,
- * account blocking/unblocking, and customer dashboard statistics. Used by
- * {@code AdminUserController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Write operations (block/unblock) are atomic; read methods use {@code readOnly = true} for performance.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link AdminUserService} implementation that handles paginated customer retrieval,
+ * account blocking/unblocking, and customer dashboard statistics.
  *
  * @author prabhatkrmishra
  * @see AdminUserService

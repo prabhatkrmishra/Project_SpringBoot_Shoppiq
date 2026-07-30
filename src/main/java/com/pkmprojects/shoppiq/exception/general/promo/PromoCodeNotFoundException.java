@@ -4,14 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a requested
- * promo code could not be found.
+ * Thrown when a requested promo code could not be found.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) with factory methods for lookup by code string and by ID.</p>
+ * <p>This exception is thrown when a customer applies a promo code that
+ * does not exist in the system. It uses the
+ * {@link ErrorCode#PROMO_CODE_NOT_FOUND} code and HTTP 404 Not Found
+ * status. The code may be misspelled or expired and removed from the
+ * database.</p>
+ *
+ * <p>The detail message includes the promo code string (e.g.,
+ * "Promo code 'SUMMER2026' was not found.") to help the client
+ * understand which code was invalid. The client should verify the code
+ * and retry.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PROMO_CODE_NOT_FOUND
  * @since 1.0.0
  */
 public final class PromoCodeNotFoundException extends ResourceNotFoundException {

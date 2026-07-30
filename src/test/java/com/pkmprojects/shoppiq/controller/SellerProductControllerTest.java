@@ -1,22 +1,21 @@
 package com.pkmprojects.shoppiq.controller;
 
-import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.ClockConfig;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
 import com.pkmprojects.shoppiq.controller.seller.SellerProductController;
+import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.item.ItemRequest;
-import com.pkmprojects.shoppiq.dto.category.CategoryResponse;
 import com.pkmprojects.shoppiq.dto.item.ItemResponse;
-import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
 import com.pkmprojects.shoppiq.exception.general.item.DuplicateItemException;
@@ -43,18 +42,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SellerProductController.class)
 @Import({
@@ -73,27 +72,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @DisplayName("SellerProductController Tests")
 class SellerProductControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private JsonMapper objectMapper;
-
-    @MockitoBean
-    private SellerProductService sellerProductService;
-
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private RoleService rolesService;
-
-    @MockitoBean
-    private OAuth2SuccessHandler oAuth2SuccessHandler;
-
-    @MockitoBean
-    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
-
     private static final Long ITEM_ID = 1L;
     private static final String ITEM_NAME = "Test Product";
     private static final String ITEM_DESC = "A test product description";
@@ -103,6 +81,22 @@ class SellerProductControllerTest {
     private static final int STOCK = 10;
     private static final BigDecimal DISCOUNT = BigDecimal.ZERO;
     private static final Long CATEGORY_ID = 1L;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private JsonMapper objectMapper;
+    @MockitoBean
+    private SellerProductService sellerProductService;
+    @MockitoBean
+    private UserRepository userRepository;
+    @MockitoBean
+    private RoleService rolesService;
+    @MockitoBean
+    private OAuth2SuccessHandler oAuth2SuccessHandler;
+    @MockitoBean
+    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+    private ItemRequest validRequest;
+    private User authenticatedUser;
 
     private static ItemResponse stubResponse(Long id) {
         return new ItemResponse(
@@ -113,9 +107,6 @@ class SellerProductControllerTest {
                 Instant.now(), Instant.now()
         );
     }
-
-    private ItemRequest validRequest;
-    private User authenticatedUser;
 
     @BeforeEach
     void setUp() {

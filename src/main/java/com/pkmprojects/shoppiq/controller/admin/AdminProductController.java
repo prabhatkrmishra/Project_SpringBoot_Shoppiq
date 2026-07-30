@@ -8,24 +8,33 @@ import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> Admin REST controller for product lifecycle management.
+ * Admin REST controller for product lifecycle management.
  *
- * <h2>Endpoints</h2>
- * <ul>
- *     <li>GET  /api/admin/products/pending    — list DRAFT products</li>
- *     <li>PUT  /api/admin/products/{id}/publish — publish a product</li>
- *     <li>PUT  /api/admin/products/{id}/reject  — reject a product</li>
- * </ul>
+ * <p>Handles the approval workflow for seller-submitted products. Products are
+ * created in DRAFT status by sellers and must be reviewed by an admin before
+ * appearing on the storefront. The admin can publish (approve) or reject each
+ * pending product submission.</p>
+ *
+ * <p>This controller acts as the HTTP boundary for the product approval pipeline.
+ * It delegates all business logic — status transitions, storefront visibility
+ * toggling, and notification dispatch — to {@link AdminProductService}. The
+ * controller handles no business logic beyond page-size capping.</p>
+ *
+ * <p>All endpoints require ADMIN role and are mounted under /api/admin/products.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET  /api/admin/products/pending       — list DRAFT products pending review
+ * PUT  /api/admin/products/{id}/publish  — publish a product to the storefront
+ * PUT  /api/admin/products/{id}/reject   — reject a pending product
+ * </pre>
  *
  * @author prabhatkrmishra
+ * @see AdminProductService
  * @since 1.0.0
  */
 @Validated
@@ -45,9 +54,12 @@ public class AdminProductController {
     /**
      * Returns a paginated list of products in DRAFT status pending admin review.
      *
+     * <p>Only products with a status of DRAFT (submitted by sellers) are
+     * included. The page size is capped by the configured maximum.</p>
+     *
      * @param page zero-based page index
-     * @param size page size (capped by {@code pagination.maxPageSize()})
-     * @return 200 OK with page of pending products
+     * @param size page size (capped by the configured maximum)
+     * @return 200 OK with page of pending product responses
      */
     @GetMapping("/pending")
     public ResponseEntity<PageResponse<AdminProductResponse>> getPendingProducts(
@@ -60,8 +72,11 @@ public class AdminProductController {
     /**
      * Publishes a pending product, making it visible on the storefront.
      *
-     * @param id the product ID
-     * @return 200 OK with the updated product
+     * <p>Transitions the product from DRAFT to PUBLISHED status. The product
+     * will immediately become browsable in the catalog.</p>
+     *
+     * @param id the product ID to publish
+     * @return 200 OK with the updated product response
      */
     @PutMapping("/{id}/publish")
     public ResponseEntity<AdminProductResponse> publishProduct(
@@ -72,8 +87,11 @@ public class AdminProductController {
     /**
      * Rejects a pending product, preventing it from being published.
      *
-     * @param id the product ID
-     * @return 200 OK with the updated product (status remains DRAFT or set to REJECTED)
+     * <p>The product status is set to REJECTED. The seller can review the
+     * rejection and resubmit after making corrections.</p>
+     *
+     * @param id the product ID to reject
+     * @return 200 OK with the updated product response
      */
     @PutMapping("/{id}/reject")
     public ResponseEntity<AdminProductResponse> rejectProduct(

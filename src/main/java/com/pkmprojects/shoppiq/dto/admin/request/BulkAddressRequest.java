@@ -1,43 +1,37 @@
 package com.pkmprojects.shoppiq.dto.admin.request;
 
-import com.pkmprojects.shoppiq.entity.address.Address;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
 /**
- * Request DTO used for bulk creation of {@link Address addresses}
- * by an admin user for test-data population.
+ * Request DTO for bulk creation of addresses by an administrator.
  *
- * <p>
- * Wraps a list of {@link AdminAddressItem} to enable proper Bean Validation
- * on collection contents.
- * </p>
+ * <p>This record wraps a list of {@link AdminAddressItem} entries and
+ * is submitted to the admin bulk address endpoint for creating
+ * multiple user addresses in a single API call. It is primarily used
+ * for test-data population during development and staging, and for
+ * data migration scenarios where addresses need to be provisioned
+ * at scale.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Accept admin-supplied address information in bulk.</li>
- *     <li>Perform request validation on the collection and its contents.</li>
- *     <li>Remain independent of persistence entities.</li>
- * </ul>
+ * <p>Each element in the list undergoes cascading validation via
+ * {@link jakarta.validation.Valid @Valid}, ensuring that both the
+ * user reference and the nested address payload meet all
+ * constraints. The list itself must not be empty, as bulk operations
+ * with zero items would be a no-op.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Marked as {@code final} through Java record semantics.</li>
- *     <li>{@code @NotEmpty} ensures the client supplies at least one address.</li>
- *     <li>{@code @Valid} triggers cascading validation on each
- *     {@link AdminAddressItem} in the list.</li>
- *     <li>Used exclusively for admin test-data bulk creation.</li>
- *     <li><b>Validation trick:</b> Using {@code List<@Valid AdminAddressItem>}
- *     (type-use {@code @Valid}) is the standard way to validate collections
- *     in Jakarta Bean Validation 3.0+ without a wrapper annotation.</li>
- * </ul>
- *
+ * @param addresses list of address creation requests, each containing
+ *                  a target user ID and complete address details;
+ *                  must not be empty; each element is validated
+ *                  recursively via {@link AdminAddressItem}
  * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record BulkAddressRequest(
+        /**
+         * List of address creation requests. Must not be empty.
+         */
         @NotEmpty(message = "At least one address is required.")
         List<@Valid AdminAddressItem> addresses
 ) {

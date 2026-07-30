@@ -6,27 +6,32 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.service.notification.NotificationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for managing authenticated
- * user notification preferences.
+ * REST controller for managing authenticated user notification preferences.
  *
- * <p>Exposes endpoints under {@code /user/notifications} to read and update
- * the current user's email notification settings. All endpoints require
- * authentication via {@code @PreAuthorize("isAuthenticated()")} and resolve the
- * user from the Spring Security context.</p>
+ * <p>Exposes endpoints under /user/notifications to read and update the current
+ * user's email notification settings. Users can configure which types of email
+ * notifications they receive, such as order updates and promotional content.
+ * Preferences are stored per-user and persist across sessions.</p>
  *
- * <p>Key design points:
- * <ul>
- *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
- *   <li><strong>User-specific data scoping</strong> — the controller never
- *       accepts a user ID from the client; the authenticated principal is the
- *       only identity used, preventing horizontal privilege escalation.</li>
- * </ul>
- * </p>
+ * <p>This controller acts as the HTTP boundary for notification preference
+ * management. It delegates all business logic — preference retrieval, validation,
+ * and persistence — to {@link NotificationService}. The controller handles no
+ * business logic beyond extracting the authenticated principal.</p>
+ *
+ * <p>All endpoints require authentication (any role). The authenticated user is
+ * resolved from the Spring Security context.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET    /user/notifications  — get current notification preferences
+ * PUT    /user/notifications  — update notification preferences
+ * </pre>
  *
  * @author prabhatkrmishra
  * @see NotificationService
@@ -46,7 +51,7 @@ public class NotificationController {
     /**
      * Returns the authenticated user's notification preferences.
      *
-     * @param user the authenticated user (from JWT)
+     * @param user the authenticated user resolved from the JWT
      * @return 200 OK with the current notification preferences
      */
     @GetMapping
@@ -59,8 +64,8 @@ public class NotificationController {
     /**
      * Updates the authenticated user's notification preferences.
      *
-     * @param user    the authenticated user (from JWT)
-     * @param request the updated preference values
+     * @param user    the authenticated user resolved from the JWT
+     * @param request the updated preference values (validated via @Valid)
      * @return 200 OK with the updated notification preferences
      */
     @PutMapping

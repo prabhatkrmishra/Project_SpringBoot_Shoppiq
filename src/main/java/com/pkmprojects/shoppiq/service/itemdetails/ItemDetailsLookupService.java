@@ -6,33 +6,14 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Read-only item-details query facade.
+ * Read-only item-details query facade for lookup and aggregate queries.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * A <strong>ReadModel</strong> facade that decouples service-layer code from
- * {@code ItemDetailsRepository}. Provides lookup and aggregate queries for
- * inventory stock data.
- * </p>
- *
- * <h2>What are Item Details?</h2>
- * <p>
- * {@code ItemDetails} holds the <strong>variant-level</strong> product data: SKU, price,
- * stock quantity, brand, discount, category, and image. Each {@code Item} (product listing)
- * has one set of details.
- * </p>
- *
- * <h2>Consumers</h2>
- * <ul>
- *     <li>{@code CartService} — resolves item details for cart operations.</li>
- *     <li>{@code AdminInventoryServiceImpl} — admin inventory dashboards.</li>
- *     <li>{@code SellerInventoryServiceImpl} — seller inventory management.</li>
- *     <li>{@code AdminProductReadModelImpl} — admin product statistics.</li>
- * </ul>
+ * <p>Decouples service-layer code from {@code ItemDetailsRepository},
+ * providing find, exists, count, and stock queries for item variant data.</p>
  *
  * @author prabhatkrmishra
- * @since 1.4.0
  * @see ItemDetailsWriteService
+ * @since 1.4.0
  */
 public interface ItemDetailsLookupService {
 
@@ -128,4 +109,12 @@ public interface ItemDetailsLookupService {
      * @return total inventory value
      */
     java.math.BigDecimal sumInventoryValue();
+
+    /**
+     * Checks if any item details reference the given category.
+     *
+     * @param categoryId the category ID to check
+     * @return true if items reference this category
+     */
+    boolean existsByCategoryId(Long categoryId);
 }

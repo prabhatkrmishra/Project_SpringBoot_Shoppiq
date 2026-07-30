@@ -13,9 +13,18 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Read-only implementation of {@link ChatOrderService}.
+ * Read-only implementation of {@link ChatOrderService}.
  *
- * @author PrabhatKrMishra
+ * <p>This service delegates to the {@link OrderRepository} for all order
+ * queries, providing a read-only transactional boundary for AI tool data
+ * access. The {@code @Transactional(readOnly = true)} annotation ensures
+ * that no data modifications occur through this service.</p>
+ *
+ * <p>The user-order listing method returns up to 50 orders ordered by
+ * placement date descending, which is sufficient for the AI assistant's
+ * recent order history display.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.4.0
  */
 @Service
@@ -33,7 +42,7 @@ class ChatOrderServiceImpl implements ChatOrderService {
     @Override
     public List<Order> findByUserNewestFirst(User user) {
         return orderRepository.findAllByUserOrderByPlacedAtDesc(user,
-                PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "placedAt")))
+                        PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "placedAt")))
                 .getContent();
     }
 }

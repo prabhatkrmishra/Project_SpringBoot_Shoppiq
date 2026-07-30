@@ -5,34 +5,37 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.service.seller.SellerInventoryService;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for seller inventory management.
+ * REST controller for seller inventory management.
  *
- * <p>Exposes endpoints for sellers to view their full inventory, identify
- * low-stock and out-of-stock products, and adjust stock quantities. All
- * endpoints require SELLER or ADMIN role.</p>
+ * <p>Exposes endpoints for sellers to view their full product inventory, identify
+ * low-stock and out-of-stock products, and adjust stock quantities with audit
+ * reasons. Inventory data is scoped to the authenticated seller — sellers can
+ * only view and modify their own products.</p>
  *
- * <p>Key design points:
- * <ul>
- *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
- *   <li><strong>Seller-scoped</strong> — inventory is filtered to the authenticated seller's products.</li>
- * </ul>
- * </p>
+ * <p>This controller acts as the HTTP boundary for inventory operations. It
+ * delegates all business logic — inventory retrieval, stock-level filtering,
+ * and stock adjustment with audit logging — to {@link SellerInventoryService}.
+ * The controller handles no business logic beyond page-size capping and request
+ * validation.</p>
+ *
+ * <p>All endpoints require SELLER or ADMIN role and are mounted under
+ * /seller/inventory.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET    /seller/inventory              — paginated full inventory
+ * GET    /seller/inventory/low-stock    — low-stock products
+ * GET    /seller/inventory/out-of-stock — out-of-stock products
+ * PUT    /seller/inventory/{id}/adjust  — adjust stock with audit reason
+ * </pre>
  *
  * @author prabhatkrmishra
  * @see SellerInventoryService
@@ -56,7 +59,7 @@ public class SellerInventoryController {
      *
      * @param currentUser the authenticated seller
      * @param page        zero-based page index
-     * @param size        page size (capped by {@code pagination.maxPageSize()})
+     * @param size        page size (capped by the configured maximum)
      * @return 200 OK with page of inventory responses
      */
     @GetMapping
@@ -73,7 +76,7 @@ public class SellerInventoryController {
      *
      * @param currentUser the authenticated seller
      * @param page        zero-based page index
-     * @param size        page size (capped by {@code pagination.maxPageSize()})
+     * @param size        page size (capped by the configured maximum)
      * @return 200 OK with page of low-stock inventory responses
      */
     @GetMapping("/low-stock")
@@ -90,7 +93,7 @@ public class SellerInventoryController {
      *
      * @param currentUser the authenticated seller
      * @param page        zero-based page index
-     * @param size        page size (capped by {@code pagination.maxPageSize()})
+     * @param size        page size (capped by the configured maximum)
      * @return 200 OK with page of out-of-stock inventory responses
      */
     @GetMapping("/out-of-stock")
@@ -105,9 +108,12 @@ public class SellerInventoryController {
     /**
      * Adjusts the stock quantity for a seller's product with an audit reason.
      *
+     * <p>The quantity is a delta (positive or negative) applied to the
+     * current stock level. An audit reason is required for traceability.</p>
+     *
      * @param id          the product ID (must be positive)
      * @param quantity    the quantity adjustment delta (positive or negative)
-     * @param reason      the audit reason for the adjustment
+     * @param reason      the audit reason for the adjustment (max 255 characters)
      * @param currentUser the authenticated seller
      * @return 200 OK with the updated inventory response
      */

@@ -4,14 +4,20 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a promo code
- * is inactive.
+ * Thrown when a promo code is currently inactive.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) for active-status validation.</p>
+ * <p>This exception is thrown when a customer applies a promo code that
+ * has been deactivated by an administrator. It uses the
+ * {@link ErrorCode#PROMO_CODE_INACTIVE} code and HTTP 400 Bad Request
+ * status. The code exists but is not currently usable.</p>
+ *
+ * <p>The detail message includes the promo code (e.g.,
+ * "Promo code 'SUMMER2026' is currently inactive.") to help the client
+ * understand which code was deactivated. The client should contact
+ * support or use a different promo code.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PROMO_CODE_INACTIVE
  * @since 1.0.0
  */
 public final class PromoCodeInactiveException extends InvalidOperationException {

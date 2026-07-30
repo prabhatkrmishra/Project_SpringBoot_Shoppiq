@@ -10,31 +10,12 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link PromoCode} persistence operations.
+ * Persistence operations for the {@link PromoCode} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived queries</strong> — {@code findByCode} and {@code existsByCode} show
- *       simple string-based lookups.</li>
- *   <li><strong>Custom JPQL count query</strong> — {@code countByPromoCodeIdAndUserId} uses
- *       JPQL with {@code COUNT(u)} to count per-user usage records via the
- *       {@link com.pkmprojects.shoppiq.entity.promo.PromoCodeUsage} association.</li>
- *   <li><strong>{@code @Modifying} with conditional JPQL</strong> — {@code incrementUsedCountAtomically}
- *       atomically increments {@code usedCount} with an inline guard:
- *       {@code (usageLimit IS NULL OR usedCount < usageLimit)}. This is a race-condition-safe
- *       pattern for enforcing usage limits at the database level.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findByCode(String)
- *       → SELECT * FROM promo_codes WHERE code = ?
- *   existsByCode(String)
- *       → SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END FROM promo_codes WHERE code = ?
- *   incrementUsedCountAtomically(@Modifying @Query)
- *       → UPDATE promo_codes SET used_count = used_count + 1
- *         WHERE id = ? AND (usage_limit IS NULL OR used_count &lt; usage_limit)
- * </pre>
+ * <p>Provides methods to query promo codes by code string, check existence, and perform atomic
+ * usage count increments for promo code management. The repository supports case-insensitive
+ * code lookups and atomic operations to prevent race conditions during concurrent promo code
+ * applications.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

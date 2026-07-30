@@ -3,12 +3,20 @@ package com.pkmprojects.shoppiq.aiservice.dto.admin;
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Admin DTO for listing all AI chat conversations in the management dashboard.
+ * Admin DTO for listing all AI chat conversations in the management dashboard.
  *
- * <p>
- * Returned by the {@code GET /api/admin/ai-chats} endpoint as a paginated list.
- * Includes user identification fields to display who owns each conversation,
- * with guest conversations showing "Guest" as the username.
+ * <p>This immutable record provides a paginated overview of AI chat
+ * conversations for the admin monitoring panel. It includes user
+ * identification fields that are not exposed in the customer-facing
+ * API, such as user ID, display name, and email address. Guest
+ * conversations are identified by "Guest" as the display name with
+ * null user ID and email fields.</p>
+ *
+ * <p>The {@code messageCount} field is populated via batch counting
+ * queries to avoid N+1 performance issues when rendering large
+ * conversation lists. The {@code lastActivityAt} timestamp reflects
+ * the most recent message or conversation update, enabling sorting
+ * by recent activity.</p>
  *
  * @param chatId         the public conversation identifier
  * @param userId         the owning user's database ID ({@code null} for guests)
@@ -19,7 +27,7 @@ import java.time.Instant;
  * @param messageCount   number of user messages in the conversation
  * @param createdAt      timestamp when the conversation was created
  * @param lastActivityAt timestamp of the most recent message or update
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record AiChatLogDto(

@@ -20,12 +20,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link PaymentLookupService}.
- *
- * <p>All queries run in a read-only transaction. Delegates directly
- * to {@code PaymentRepository} with appropriate sort ordering.</p>
+ * {@link PaymentLookupService} implementation providing read-only payment queries.
  *
  * @author prabhatkrmishra
+ * @see PaymentLookupService
  * @since 1.4.0
  */
 @Service
@@ -34,6 +32,20 @@ import java.util.Optional;
 class PaymentLookupServiceImpl implements PaymentLookupService {
 
     private final PaymentRepository paymentRepository;
+
+    /**
+     * Safely casts a JPQL projection value to the expected type.
+     *
+     * @param value the value from the Object[] tuple
+     * @param type  the expected type
+     * @param <T>   the cast target type
+     * @return the cast value
+     * @throws ClassCastException if the value is not of the expected type
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T safeCast(Object value, Class<T> type) {
+        return type.cast(value);
+    }
 
     /**
      * Finds a payment by ID.
@@ -192,7 +204,7 @@ class PaymentLookupServiceImpl implements PaymentLookupService {
                 userIds, PaymentStatus.PAID);
         Map<Long, BigDecimal> resultMap = new HashMap<>(userIds.size());
         for (Object[] row : results) {
-            resultMap.put((Long) row[0], (BigDecimal) row[1]);
+            resultMap.put(safeCast(row[0], Long.class), safeCast(row[1], BigDecimal.class));
         }
         return resultMap;
     }

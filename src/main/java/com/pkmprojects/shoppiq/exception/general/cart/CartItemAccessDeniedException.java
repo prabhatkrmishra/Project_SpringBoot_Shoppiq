@@ -4,14 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a user attempts
- * to access a cart item that does not belong to their cart.
+ * Thrown when a user attempts to access a cart item that does not belong to their cart.
  *
- * <p>Leaf exception in the authorization hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.UnauthorizedOperationException}
- * (HTTP 403) for cart item ownership violations.</p>
+ * <p>This exception is thrown by cart service methods when a user tries
+ * to modify or view a cart item that belongs to another user's cart. It
+ * uses the {@link ErrorCode#CART_ITEM_ACCESS_DENIED} code and HTTP 403
+ * Forbidden status. Each user has an isolated cart that is not accessible
+ * to others.</p>
+ *
+ * <p>The detail message includes the cart item identifier (e.g.,
+ * "Cart item with id '42' does not belong to your cart.") to help the
+ * client understand which item was restricted. The client should ensure
+ * they are operating on their own cart items.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#CART_ITEM_ACCESS_DENIED
  * @since 1.0.0
  */
 public final class CartItemAccessDeniedException extends UnauthorizedOperationException {

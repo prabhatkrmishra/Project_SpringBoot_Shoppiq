@@ -4,14 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a seller
- * operation is attempted before the seller has been verified.
+ * Thrown when a seller operation is attempted before the seller has been verified.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) to prevent operations on unverified sellers.</p>
+ * <p>This exception is thrown when an unverified seller attempts to perform
+ * actions that require admin approval. Sellers must be verified by an
+ * administrator before they can list products or receive orders. It uses
+ * the {@link ErrorCode#SELLER_NOT_VERIFIED} code and HTTP 400 Bad
+ * Request status.</p>
+ *
+ * <p>The detail message includes the seller ID and the attempted action
+ * (e.g., "Seller '42' is not verified. Cannot perform action: list_product.")
+ * to help the client understand what operation was blocked. The seller
+ * should wait for admin approval or contact support.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#SELLER_NOT_VERIFIED
  * @since 1.0.0
  */
 public final class SellerNotVerifiedException extends InvalidOperationException {

@@ -27,50 +27,11 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Handles promo code validation, discount calculation and admin management.
- *
- * <p><strong>What this Service implementation demonstrates:</strong></p>
- * <ul>
- *   <li><strong>Multi-step validation pipeline</strong> — {@link #validateAndCalculate} performs
- *       a sequential check: existence → active → validity window → global usage → per-user usage
- *       → minimum order amount → cart constraints. Each failure throws a specific exception
- *       subclass, giving precise error feedback to the client.</li>
- *   <li><strong>Atomic usage counting</strong> — {@link #recordUsage} uses
- *       {@link com.pkmprojects.shoppiq.repository.promo.PromoCodeRepository#incrementUsedCountAtomically}
- *       with a conditional JPQL update ({@code WHERE ... AND (usageLimit IS NULL OR usedCount < usageLimit)})
- *       to safely increment the counter under concurrent access. If the update affects zero rows,
- *       the limit was reached between the check and the increment.</li>
- *   <li><strong>Discount computation with clamping</strong> — {@link #calculateDiscount} handles
- *       percentage vs. fixed discounts, applies max discount caps, and clamps the result to the
- *       eligible subtotal (and overall subtotal as a safety net) so the discount never exceeds
- *       the order total.</li>
- *   <li><strong>Eligible subtotal for BULK coupons</strong> — {@code computeEligibleSubtotal}
- *       demonstrates domain logic: for BULK coupons with a minimum item quantity, only items
- *       meeting the threshold contribute to the discount base.</li>
- *   <li><strong>Cart constraint validation</strong> — {@code validateCartConstraints} enforces
- *       coupon-type rules (SINGLE requires all qty = 1, BULK requires at least one qty > 1)
- *       and minimum item quantity thresholds.</li>
- *   <li><strong>Admin CRUD</strong> — Standard create/update/delete/find operations with
- *       duplicate-code checking and paginated listing.</li>
- *   <li><strong>{@code @Transactional}</strong> — Write operations like {@link #recordUsage}
- *       are transactional. Read-only validation uses {@code readOnly = true}.</li>
- * </ul>
- *
- * <h2>Coupon type constraints</h2>
- * <ul>
- *     <li>{@link com.pkmprojects.shoppiq.enums.CouponType#SINGLE}: all cart items must have quantity == 1.</li>
- *     <li>{@link com.pkmprojects.shoppiq.enums.CouponType#BULK}: at least one cart item must have quantity &gt; 1.</li>
- * </ul>
- *
- * <h2>Minimum item quantity</h2>
- * <p>When {@code minItemQuantity} is set, at least one cart item must have
- * quantity &ge; that threshold.</p>
- *
- * <h2>Discount clamping</h2>
- * <p>The computed discount is always clamped to the eligible subtotal so
- * it never pushes the total negative.</p>
+ * {@link PromoCodeService} implementation handling multi-step validation pipeline,
+ * atomic usage counting, discount computation with clamping, and admin CRUD.
  *
  * @author prabhatkrmishra
+ * @see PromoCodeService
  * @since 1.0.0
  */
 @Service
@@ -105,7 +66,7 @@ public class PromoCodeServiceImpl implements PromoCodeService {
      * @param subtotal order subtotal before discount
      * @param items    cart line item previews
      * @return the validated promo code entity
-     * @throws PromoCodeNotFoundException              if the code does not exist
+     * @throws PromoCodeNotFoundException               if the code does not exist
      * @throws PromoCodeInactiveException               if the code is inactive
      * @throws PromoCodeNotYetValidException            if the code is not yet valid
      * @throws PromoCodeExpiredException                if the code has expired
@@ -475,7 +436,7 @@ public class PromoCodeServiceImpl implements PromoCodeService {
      * @param subtotal order subtotal before discount
      * @param items    cart line item previews
      * @return the validated promo code entity
-     * @throws PromoCodeNotFoundException          if the code does not exist
+     * @throws PromoCodeNotFoundException           if the code does not exist
      * @throws PromoCodeInactiveException           if the code is inactive
      * @throws PromoCodeNotYetValidException        if the code is not yet valid
      * @throws PromoCodeExpiredException            if the code has expired

@@ -11,25 +11,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link Address} entities.
+ * Persistence operations for the {@link Address} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived query methods</strong> — Spring Data JPA parses method names like
- *       {@code findByUserAndIsDefaultTrue} and automatically generates the corresponding
- *       SQL: {@code SELECT * FROM addresses WHERE user_id = ? AND is_default = TRUE}.</li>
- *   <li><strong>{@code @Query} with JPQL</strong> — The {@link #clearDefaultForUser} method
- *       uses a custom JPQL {@code UPDATE} statement with {@code @Modifying}, teaching that
- *       derived method names cannot express bulk updates efficiently.</li>
- *   <li><strong>Interface-based repositories</strong> — No implementation needed; Spring
- *       provides the proxy at runtime via {@link org.springframework.data.jpa.repository.JpaRepository}.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findAllByUser(User)          → SELECT * FROM addresses WHERE user_id = ?
- *   findByUserAndIsDefaultTrue   → SELECT * FROM addresses WHERE user_id = ? AND is_default = TRUE
- * </pre>
+ * <p>Provides methods to query addresses by user, find default addresses, and manage default
+ * address flags for user profile management. The repository supports bulk operations for
+ * clearing default flags when setting a new default address.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -52,6 +38,11 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
      */
     Optional<Address> findByUserAndIsDefaultTrue(User user);
 
+    /**
+     * Clears the default flag on all addresses belonging to the given user.
+     *
+     * @param user the owning user
+     */
     @Modifying
     @Query("UPDATE Address a SET a.isDefault = false WHERE a.user = :user")
     void clearDefaultForUser(@Param("user") User user);

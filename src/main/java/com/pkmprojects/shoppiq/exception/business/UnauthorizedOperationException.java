@@ -5,17 +5,23 @@ import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> Mid-level category exception that
- * groups all "forbidden" cases under HTTP {@code 403 Forbidden}.
+ * Base exception for "forbidden" cases under HTTP 403 Forbidden.
  *
- * <p>Base exception indicating that the current user is authenticated but
- * lacks the required permissions — distinct from
- * {@link com.pkmprojects.shoppiq.exception.auth.AuthenticationException}
- * (401, not authenticated). These two statuses live in separate branches
- * of the exception hierarchy, reflecting their different HTTP semantics
- * and ensuring exception handlers map them to the correct HTTP response.</p>
+ * <p>This abstract class serves as the parent for all authorization
+ * failure exceptions (e.g., access-denied errors for resources that
+ * belong to another user). It hardcodes the HTTP status to
+ * {@link HttpStatus#FORBIDDEN} so that subclasses only need to provide
+ * an {@link ErrorCode} and a detail message. The global exception
+ * handler maps this to a 403 Problem Detail response.</p>
+ *
+ * <p>This exception is distinct from authentication failures (HTTP 401).
+ * A 403 response means the user is authenticated but lacks permission
+ * to perform the requested action. Service methods should throw this
+ * when ownership or role checks fail.</p>
  *
  * @author prabhatkrmishra
+ * @see com.pkmprojects.shoppiq.exception.base.ShoppiqException
+ * @see com.pkmprojects.shoppiq.exception.auth.AuthenticationException
  * @since 1.0.0
  */
 public abstract class UnauthorizedOperationException extends ShoppiqException {

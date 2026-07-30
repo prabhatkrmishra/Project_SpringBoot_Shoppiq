@@ -7,46 +7,17 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * <strong>Spring Boot Concept:</strong> Utility class for converting human-readable text into URL-friendly slugs.
+ * Utility class for converting human-readable text into URL-friendly slugs.
  *
- * <p>
- * A slug is a lowercase, normalized, URL-safe representation of text.
- * Slugs are commonly used to build readable URLs for categories, products,
- * blog posts, and other resources.
- * </p>
+ * <p>Performs Unicode normalization, diacritical mark removal, whitespace
+ * replacement, and lowercase conversion. Does not guarantee slug uniqueness;
+ * uniqueness must be enforced by the service layer. The slug generation
+ * algorithm is deterministic: the same input always produces the same
+ * output.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Normalize Unicode text.</li>
- *     <li>Remove diacritical marks.</li>
- *     <li>Replace whitespace with hyphens.</li>
- *     <li>Remove unsupported characters.</li>
- *     <li>Collapse duplicate hyphens.</li>
- *     <li>Convert text to lowercase.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>This class performs <strong>only text transformation</strong>.</li>
- *     <li>It does <strong>not</strong> guarantee slug uniqueness.</li>
- *     <li>Slug uniqueness must be enforced by the service layer.</li>
- * </ul>
- *
- * <h2>Examples</h2>
- *
- * <pre>
- * Electronics & Gadgets  -> electronics-gadgets
- * Men's Fashion          -> mens-fashion
- * Café & Bistro          -> cafe-bistro
- * Home Appliances        -> home-appliances
- * </pre>
- *
- * <h2>Thread Safety</h2>
- *
- * <p>
- * This utility is completely stateless and thread-safe.
- * All regular expressions are immutable and precompiled.
- * </p>
+ * <p>This utility is used by category, item, and store services to generate
+ * SEO-friendly URLs. The generated slugs are lowercase, use hyphens as
+ * word separators, and contain only alphanumeric characters and hyphens.</p>
  *
  * @author prabhatkrmishra
  * @see CategoryService

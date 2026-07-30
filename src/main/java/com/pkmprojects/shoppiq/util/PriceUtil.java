@@ -6,17 +6,16 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Stateless utility for price calculations shared across service layers.
+ * Stateless utility for computing effective (post-discount) prices.
  *
- * <p><b>How it fits:</b> Used by the AI assistant's product detail
- * tool to compute effective (post-discount) prices when responding
- * to user queries about product costs.</p>
+ * <p>Provides methods to calculate the final selling price of an item
+ * after applying percentage-based discounts. The utility ensures consistent
+ * price calculations across the application by using a single rounding
+ * strategy (HALF_UP to 2 decimal places).</p>
  *
- * <h2>Effective price formula</h2>
- * <pre>
- *   effectivePrice = price × (1 − discountPercentage / 100)
- * </pre>
- * Rounded to 2 decimal places using {@link RoundingMode#HALF_UP}.
+ * <p>This utility is used by cart, checkout, and order services to compute
+ * line item totals, order subtotals, and discount amounts. All calculations
+ * use {@link BigDecimal} for precise monetary arithmetic.</p>
  *
  * @author prabhatkrmishra
  * @since 1.1.0

@@ -4,16 +4,17 @@ import com.pkmprojects.shoppiq.dto.review.ItemReviewRequest;
 import com.pkmprojects.shoppiq.dto.review.ItemReviewResponse;
 import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.entity.review.ItemReview;
-import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.entity.role.Role;
+import com.pkmprojects.shoppiq.entity.user.User;
+import com.pkmprojects.shoppiq.enums.ReviewStatus;
 import com.pkmprojects.shoppiq.exception.general.item.DuplicateItemReviewException;
 import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.review.ItemReviewAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.general.review.ItemReviewNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.user.UserNotFoundException;
-import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.repository.item.ItemReviewRepository;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
+import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.item.ItemReviewServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,8 +29,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
-
-import com.pkmprojects.shoppiq.enums.ReviewStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,6 +62,9 @@ class ItemReviewServiceImplTest {
     // ---------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------
+    private Item stubItem;
+    private User stubUser;
+    private ItemReview stubReview;
 
     /**
      * Sets the private {@code id} declared in {@code BaseEntity} on any
@@ -74,10 +76,6 @@ class ItemReviewServiceImplTest {
         idField.setAccessible(true);
         idField.set(entity, id);
     }
-
-    private Item stubItem;
-    private User stubUser;
-    private ItemReview stubReview;
 
     @BeforeEach
     void setUp() throws Exception {

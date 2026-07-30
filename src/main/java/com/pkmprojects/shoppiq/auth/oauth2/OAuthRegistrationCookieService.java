@@ -1,6 +1,5 @@
 package com.pkmprojects.shoppiq.auth.oauth2;
 
-import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.dto.OAuthRegistrationSession;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
@@ -10,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -21,80 +22,19 @@ import java.util.Arrays;
 import java.util.Base64;
 
 /**
- * Cookie-based service for persisting {@link OAuthRegistrationSession} during
- * the OAuth2 registration completion flow.
+ * Cookie-based service for persisting OAuth2 registration sessions.
  *
- * <h3>Spring Security / OAuth2 concepts demonstrated</h3>
- * <ul>
- *   <li><strong>Stateless OAuth2 registration state</strong> — with
- *       {@code SessionCreationPolicy.STATELESS}, new OAuth2 users who must
- *       complete registration still need a short-lived token that survives
- *       the round-trip between the OAuth2 callback and the registration
- *       endpoint. This cookie replaces what would typically be an HTTP session.</li>
- *   <li><strong>HMAC-signed cookie payload</strong> — the serialized JSON is
- *       signed with HMAC-SHA256 using the JWT secret, preventing tampering.
- *       This is critical because the email address drives the local account
- *       creation.</li>
- *   <li><strong>Two-layer expiry enforcement</strong> — the cookie has a
- *       {@code Max-Age} (browser deletes it automatically) AND the server
- *       re-validates the {@code authenticatedAt} timestamp server-side in
- *       {@code AuthController}, providing defense in depth.</li>
- * </ul>
+ * <p>Provides HMAC-signed cookies to carry verified Google profile data
+ * through the registration completion flow without HTTP sessions.</p>
  *
- * <h3>Cookie lifecycle</h3>
- * <pre>
- * OAuth2SuccessHandler — new user detected
- *       ↓
- * save() — serialize OAuthRegistrationSession → write oauth2_registration cookie
- *       ↓
- * Browser receives 302 redirect to /complete-profile
- *       ↓
- * GET /auth/google/get-profile — read() → return email + name to frontend form
- *       ↓
- * POST /auth/google/complete-profile — read() → validate timeout → create user
- *       ↓
- * clear() — write Max-Age=0 to delete oauth2_registration cookie
- *       ↓
- * JWT cookie issued, user is logged in
- * </pre>
- *
- * <h3>Security properties</h3>
- * <ul>
- *   <li>{@code HttpOnly} — JavaScript cannot read the cookie, mitigating XSS.</li>
- *   <li>{@code Secure} — HTTPS-only in production (env-driven).</li>
- *   <li>{@code SameSite=Strict} — only sent on same-site requests; the
- *       registration form lives on the same origin, so this does not restrict
- *       legitimate use while blocking CSRF.</li>
- *   <li>Short {@code Max-Age} — controlled by {@code oauth.registration
- *       .timeout-minutes} (default 10 min).</li>
- *   <li>HMAC-SHA256 integrity — prevents cookie tampering.</li>
- * </ul>
- *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Service pattern</strong> — encapsulates all cookie read/write/clear
- *       operations behind a clean {@code save()}, {@code read()}, {@code clear()}
- *       API, hiding serialization, HMAC, and cookie attribute details.</li>
- *   <li><strong>Null-safe read</strong> — {@link #read} returns {@code null}
- *       for any failure (missing cookie, invalid signature, deserialization
- *       error) rather than throwing, simplifying error handling in the controller.</li>
- *   <li><strong>JSON + HMAC instead of Java serialization</strong> — avoids
- *       Java serialization vulnerabilities (gadget-chain RCE) that would be
- *       present if using Spring Security's default session-based approach.</li>
- * </ul>
- *
+ * @author prabhatkrmishra
  * @see OAuthRegistrationSession
  * @see com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler
  * @see com.pkmprojects.shoppiq.auth.controller.AuthController
- *
- * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component
 public class OAuthRegistrationCookieService {
-
-    private static final Logger logger =
-            LoggerFactory.getLogger(OAuthRegistrationCookieService.class);
 
     /**
      * Cookie name that holds the Base64url-encoded JSON representation of
@@ -104,38 +44,9 @@ public class OAuthRegistrationCookieService {
      * can reference the exact cookie name without hard-coding it.</p>
      */
     public static final String OAUTH2_REGISTRATION_COOKIE = "oauth2_registration";
-
-    /**
-     * Controls the {@code Secure} flag on every cookie written by this service.
-     *
-     * <p>Driven by {@code app.security.secure-cookie} in
-     * {@code application.yaml}. Set to {@code false} for local HTTP development
-     * and {@code true} for HTTPS production deployments. Defaults to {@code true}
-     * so production is safe even if the property is accidentally omitted.</p>
-     */
-    @Value("${app.security.secure-cookie:true}")
-    private boolean secureCookie;
-
-    /**
-     * Max-Age of the registration cookie in minutes, matching the server-side
-     * timeout enforced by {@code AuthController}.
-     *
-     * <p>Driven by {@code oauth.registration.timeout-minutes} in
-     * {@code application.yaml} (default 10). The cookie expiry and the
-     * server-side timestamp check use the same value so the browser deletes
-     * the cookie at approximately the same moment the server would reject it.</p>
-     */
-    @Value("${oauth.registration.timeout-minutes:10}")
-    private int timeoutMinutes;
-
+    private static final Logger logger =
+            LoggerFactory.getLogger(OAuthRegistrationCookieService.class);
     private static final String HMAC_ALGORITHM = "HmacSHA256";
-
-    /**
-     * HMAC signing key derived from the JWT secret, used to sign the
-     * cookie payload to prevent tampering.
-     */
-    private SecretKeySpec hmacKey;
-
     /**
      * Jackson mapper used to serialize/deserialize {@link OAuthRegistrationSession}
      * to/from JSON.
@@ -148,9 +59,34 @@ public class OAuthRegistrationCookieService {
      * when Base64-decoded, which aids debugging.</p>
      */
     private final JsonMapper objectMapper;
-
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    /**
+     * Controls the {@code Secure} flag on every cookie written by this service.
+     *
+     * <p>Driven by {@code app.security.secure-cookie} in
+     * {@code application.yaml}. Set to {@code false} for local HTTP development
+     * and {@code true} for HTTPS production deployments. Defaults to {@code true}
+     * so production is safe even if the property is accidentally omitted.</p>
+     */
+    @Value("${app.security.secure-cookie:true}")
+    private boolean secureCookie;
+    /**
+     * Max-Age of the registration cookie in minutes, matching the server-side
+     * timeout enforced by {@code AuthController}.
+     *
+     * <p>Driven by {@code oauth.registration.timeout-minutes} in
+     * {@code application.yaml} (default 10). The cookie expiry and the
+     * server-side timestamp check use the same value so the browser deletes
+     * the cookie at approximately the same moment the server would reject it.</p>
+     */
+    @Value("${oauth.registration.timeout-minutes:10}")
+    private int timeoutMinutes;
+    /**
+     * HMAC signing key derived from the JWT secret, used to sign the
+     * cookie payload to prevent tampering.
+     */
+    private SecretKeySpec hmacKey;
+    @Value("${app.security.cookie-hmac-secret:${jwt.secret}}")
+    private String cookieHmacSecret;
 
     /**
      * Constructs the service with the application's primary Jackson 3 mapper.
@@ -162,10 +98,40 @@ public class OAuthRegistrationCookieService {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Scans the incoming request's cookie array for a cookie with the given
+     * name and returns its value.
+     *
+     * <p>Returns {@code null} — rather than throwing — in the following cases:</p>
+     * <ul>
+     *   <li>The request carries no cookies at all ({@code getCookies()}
+     *       returns {@code null}, which is permitted by the Servlet spec).</li>
+     *   <li>No cookie in the array matches {@code name}.</li>
+     * </ul>
+     * <p>Callers treat {@code null} as "absent" and handle the missing-cookie
+     * case explicitly without needing to catch an exception.</p>
+     *
+     * @param request incoming HTTP request whose cookie array is searched;
+     *                must not be {@code null}
+     * @param name    the exact cookie name to look up; comparison is
+     *                case-sensitive per RFC 6265 §5.2
+     * @return the value of the first matching cookie, or {@code null} if no
+     * cookie with that name is present
+     */
+    private static String readCookieValue(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+        return Arrays.stream(cookies)
+                .filter(c -> name.equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
+    }
+
     @PostConstruct
     public void init() {
         this.hmacKey = new SecretKeySpec(
-                jwtSecret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
+                cookieHmacSecret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
     }
 
     /**
@@ -328,35 +294,5 @@ public class OAuthRegistrationCookieService {
         mac.init(hmacKey);
         byte[] hmacBytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         return Base64.getUrlEncoder().withoutPadding().encodeToString(hmacBytes);
-    }
-
-    /**
-     * Scans the incoming request's cookie array for a cookie with the given
-     * name and returns its value.
-     *
-     * <p>Returns {@code null} — rather than throwing — in the following cases:</p>
-     * <ul>
-     *   <li>The request carries no cookies at all ({@code getCookies()}
-     *       returns {@code null}, which is permitted by the Servlet spec).</li>
-     *   <li>No cookie in the array matches {@code name}.</li>
-     * </ul>
-     * <p>Callers treat {@code null} as "absent" and handle the missing-cookie
-     * case explicitly without needing to catch an exception.</p>
-     *
-     * @param request incoming HTTP request whose cookie array is searched;
-     *                must not be {@code null}
-     * @param name    the exact cookie name to look up; comparison is
-     *                case-sensitive per RFC 6265 §5.2
-     * @return the value of the first matching cookie, or {@code null} if no
-     * cookie with that name is present
-     */
-    private static String readCookieValue(HttpServletRequest request, String name) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) return null;
-        return Arrays.stream(cookies)
-                .filter(c -> name.equals(c.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
     }
 }

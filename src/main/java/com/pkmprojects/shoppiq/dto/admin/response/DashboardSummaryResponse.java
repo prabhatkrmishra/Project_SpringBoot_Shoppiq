@@ -1,34 +1,41 @@
 package com.pkmprojects.shoppiq.dto.admin.response;
 
-import com.pkmprojects.shoppiq.entity.item.Item;
-import com.pkmprojects.shoppiq.entity.order.Order;
-import com.pkmprojects.shoppiq.entity.user.User;
-
 import java.math.BigDecimal;
-import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Response DTO for the admin dashboard summary cards.
+ * Response DTO for the admin dashboard summary cards.
  *
- * <p>
- * This DTO aggregates key metrics displayed at the top of the
- * administrator dashboard. All counts are real-time snapshots
- * retrieved from the database.
- * </p>
+ * <p>This record aggregates key platform metrics displayed at the top
+ * of the administrator dashboard. It provides a snapshot of user
+ * registration, product catalog, order volume, and revenue figures
+ * including today's performance and inventory health indicators. The
+ * data is refreshed on each dashboard load to ensure administrators
+ * see current figures.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Expose aggregated dashboard statistics to the admin API.</li>
- *     <li>Hide internal aggregation queries from the API consumer.</li>
- * </ul>
+ * <p>The static {@link #from} factory method accepts pre-computed
+ * aggregate counts and handles null-safe conversion of monetary
+ * values, defaulting to {@code BigDecimal.ZERO} when the underlying
+ * query returns null. This ensures the frontend always receives
+ * valid numeric values without null-checking.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Immutable through Java Records.</li>
- *     <li>Created using {@link #from(User, Item, Order, Instant)}.</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @param totalUsers         total number of registered user accounts on the platform
+ * @param totalProducts      total number of products in the catalog, including
+ *                           products in all publishing states
+ * @param totalOrders        total number of orders placed across all statuses
+ * @param todaysOrders       number of orders placed on the current calendar day
+ * @param todaysRevenue      total monetary revenue generated today from
+ *                           confirmed orders, in the platform's base currency
+ * @param totalRevenue       cumulative revenue from all confirmed orders across
+ *                           the platform's entire history
+ * @param pendingOrders      number of orders currently in PLACED status
+ *                           awaiting seller or admin confirmation
+ * @param cancelledOrders    total number of orders that have been cancelled
+ * @param outOfStockProducts number of products with zero inventory;
+ *                           indicates items requiring restocking
+ * @param lowStockProducts   number of products with inventory below the
+ *                           configured low-stock threshold; indicates
+ *                           items at risk of stockout
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record DashboardSummaryResponse(
@@ -88,15 +95,15 @@ public record DashboardSummaryResponse(
     /**
      * Creates a {@code DashboardSummaryResponse} from aggregate counts.
      *
-     * @param totalUsers            total registered users
-     * @param totalProducts         total catalog products
-     * @param totalOrders           total orders placed
-     * @param todaysOrders          orders placed today
-     * @param todaysRevenue         revenue generated today
-     * @param pendingOrders         orders in PLACED status
-     * @param cancelledOrders       cancelled orders
-     * @param outOfStockProducts    products with zero stock
-     * @param lowStockProducts      products below low-stock threshold
+     * @param totalUsers         total registered users
+     * @param totalProducts      total catalog products
+     * @param totalOrders        total orders placed
+     * @param todaysOrders       orders placed today
+     * @param todaysRevenue      revenue generated today
+     * @param pendingOrders      orders in PLACED status
+     * @param cancelledOrders    cancelled orders
+     * @param outOfStockProducts products with zero stock
+     * @param lowStockProducts   products below low-stock threshold
      * @return populated response DTO
      */
     public static DashboardSummaryResponse from(

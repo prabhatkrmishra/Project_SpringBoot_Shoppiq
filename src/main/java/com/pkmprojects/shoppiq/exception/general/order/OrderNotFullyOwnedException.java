@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a seller
- * attempts to modify an order that contains items from other sellers.
+ * Thrown when a seller attempts to modify an order that contains items from other sellers.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) to enforce multi-tenant ownership — sellers can only act on
- * their own line items.</p>
+ * <p>This exception is thrown when a seller tries to update the status of
+ * an order that includes products from multiple sellers. A seller can
+ * only modify orders that contain exclusively their own items. It uses
+ * the {@link ErrorCode#INVALID_OPERATION} code and HTTP 400 Bad Request
+ * status.</p>
+ *
+ * <p>The detail message includes the order identifier (e.g.,
+ * "Order '42' contains items from other sellers and cannot be modified.")
+ * to help the client understand why the modification was rejected. The
+ * seller should only modify orders that contain only their products.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#INVALID_OPERATION
  * @since 1.0.0
  */
 public final class OrderNotFullyOwnedException extends InvalidOperationException {

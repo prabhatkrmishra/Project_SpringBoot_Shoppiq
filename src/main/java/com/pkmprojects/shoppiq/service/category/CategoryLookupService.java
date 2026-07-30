@@ -9,28 +9,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Read-only category query facade.
+ * Read-only category query facade for lookup, search, and aggregate queries.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * A <strong>ReadModel</strong> facade that decouples service-layer code from
- * {@code CategoryRepository}. Sits between the Service layer and Repository layer,
- * providing lookup, search, and aggregate queries for categories.
- * </p>
- *
- * <h2>What is a ReadModel Facade?</h2>
- * <p>
- * Instead of services calling {@code CategoryRepository} directly, they call this
- * facade. This abstraction makes the code easier to test and refactor — if the
- * repository changes, only this facade needs updating.
- * </p>
- *
- * <h2>Consumers</h2>
- * <ul>
- *     <li>{@code ItemServiceImpl} — resolves categories for item operations.</li>
- *     <li>{@code AdminProductServiceImpl} — admin product management.</li>
- *     <li>{@code SellerProductServiceImpl} — seller product management.</li>
- * </ul>
+ * <p>Decouples service-layer code from {@code CategoryRepository},
+ * providing find, exists, count, search, and top-selling queries.</p>
  *
  * @author prabhatkrmishra
  * @see CategoryWriteService

@@ -3,13 +3,25 @@ package com.pkmprojects.shoppiq.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * <strong>Spring Boot Concept:</strong> {@code @ConfigurationProperties}
- * record bound to {@code app.pagination.*} in {@code application.yaml}.
+ * Configuration properties for pagination defaults across the application.
  *
- * <p>Provides externalized pagination defaults (default page size, max page
- * size, and role-specific sizes for admin, seller, and catalog endpoints).
- * Allows operators to tune page sizes without touching code.</p>
+ * <p>This record binds to the {@code app.pagination.*} prefix in
+ * {@code application.yaml} and provides role-specific page size defaults.
+ * Different user roles have different pagination needs: admins browsing
+ * large dashboards may prefer larger page sizes, while catalog browsing
+ * by anonymous customers benefits from smaller, faster-loading pages.</p>
  *
+ * <p>The properties are consumed by service and controller layers to apply
+ * default page sizes when the client does not specify a size parameter.
+ * The {@link #maxPageSize} acts as an upper bound to prevent clients from
+ * requesting excessively large result sets that could cause memory or
+ * performance issues.</p>
+ *
+ * @param defaultPageSize the fallback page size when no role-specific default applies
+ * @param maxPageSize     the absolute maximum page size any client may request
+ * @param adminPageSize   the default page size for admin dashboard endpoints
+ * @param sellerPageSize  the default page size for seller management endpoints
+ * @param catalogPageSize the default page size for public catalog browsing
  * @author prabhatkrmishra
  * @since 1.0.0
  */

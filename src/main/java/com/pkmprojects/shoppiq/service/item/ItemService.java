@@ -7,25 +7,10 @@ import com.pkmprojects.shoppiq.dto.item.ItemResponse;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Business contract for managing catalog items.
+ * Business contract for public product catalog operations.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * Defines the <strong>Service layer</strong> contract for the public product catalog.
- * Architecture: {@code ItemController → ItemService → ItemLookupService / ItemWriteService}.
- * This service provides the public-facing product queries used by the storefront.
- * </p>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *   <li>Bulk import products with SKU deduplication and slug conflict resolution.</li>
- *   <li>Retrieve products by ID or slug.</li>
- *   <li>Paginated catalog listing with sorting.</li>
- *   <li>New arrivals (newest products first).</li>
- *   <li>On-sale items (products with active discounts).</li>
- *   <li>Products by category (via category slug).</li>
- *   <li>Top-selling products from the last 30 days.</li>
- * </ul>
+ * <p>Defines operations for bulk import, product retrieval, paginated listing,
+ * new arrivals, on-sale items, category filtering, and top-selling queries.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

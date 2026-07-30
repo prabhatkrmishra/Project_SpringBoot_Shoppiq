@@ -14,12 +14,33 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST controller for admin homepage banner management.
+ * Admin REST controller for homepage banner management.
  *
- * <p>All endpoints require {@code ADMIN} role and are mounted under
- * {@code /api/admin/banners}.</p>
+ * <p>Provides full CRUD operations for promotional banners displayed in the
+ * homepage Sales &amp; Offers section. Banners can be toggled active/inactive
+ * without permanent deletion, allowing admins to temporarily hide promotions
+ * and re-enable them later.</p>
+ *
+ * <p>This controller acts as the HTTP boundary for banner administration. It
+ * delegates all business logic — persistence, validation, ordering, and active
+ * status management — to {@link BannerService}. The controller itself contains
+ * no business logic beyond page-size capping.</p>
+ *
+ * <p>All endpoints require ADMIN role and are mounted under /api/admin/banners.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET    /api/admin/banners              — list all banners (paginated)
+ * GET    /api/admin/banners/{id}         — get a single banner by ID
+ * POST   /api/admin/banners              — create a new banner
+ * PUT    /api/admin/banners/{id}         — update an existing banner
+ * PATCH  /api/admin/banners/{id}/toggle  — toggle active status
+ * DELETE /api/admin/banners/{id}         — delete a banner permanently
+ * </pre>
  *
  * @author prabhatkrmishra
+ * @see BannerService
  * @since 1.0.0
  */
 @Validated
@@ -37,9 +58,11 @@ public class AdminBannerController {
     }
 
     /**
-     * Returns all banners, paginated.
+     * Returns all banners in a paginated response.
      *
-     * @return 200 OK with page of banners
+     * @param page zero-based page index
+     * @param size page size (capped by the configured maximum)
+     * @return 200 OK with page of banner responses
      */
     @GetMapping
     public ResponseEntity<PageResponse<BannerResponse>> findAll(
@@ -50,10 +73,10 @@ public class AdminBannerController {
     }
 
     /**
-     * Returns a single banner by ID.
+     * Returns a single banner by its unique identifier.
      *
-     * @param id banner ID
-     * @return 200 OK with the banner
+     * @param id the banner ID to retrieve
+     * @return 200 OK with the banner response
      */
     @GetMapping("/{id}")
     public ResponseEntity<BannerResponse> findById(@PathVariable Long id) {
@@ -63,8 +86,8 @@ public class AdminBannerController {
     /**
      * Creates a new homepage banner.
      *
-     * @param request banner payload
-     * @return 201 Created with the created banner
+     * @param request the banner payload (validated via @Valid)
+     * @return 201 Created with the newly created banner response
      */
     @PostMapping
     public ResponseEntity<BannerResponse> create(@Valid @RequestBody BannerRequest request) {
@@ -75,9 +98,9 @@ public class AdminBannerController {
     /**
      * Updates an existing homepage banner.
      *
-     * @param id      banner ID
-     * @param request updated banner payload
-     * @return 200 OK with the updated banner
+     * @param id      the banner ID to update
+     * @param request the updated banner payload (validated via @Valid)
+     * @return 200 OK with the updated banner response
      */
     @PutMapping("/{id}")
     public ResponseEntity<BannerResponse> update(@PathVariable Long id,
@@ -88,8 +111,11 @@ public class AdminBannerController {
     /**
      * Toggles the active status of a banner.
      *
-     * @param id banner ID
-     * @return 200 OK with the updated banner
+     * <p>If the banner is currently active it becomes inactive, and vice
+     * versa. Inactive banners are not displayed on the homepage.</p>
+     *
+     * @param id the banner ID to toggle
+     * @return 200 OK with the updated banner response
      */
     @PatchMapping("/{id}/toggle")
     public ResponseEntity<BannerResponse> toggleActive(@PathVariable Long id) {
@@ -97,9 +123,12 @@ public class AdminBannerController {
     }
 
     /**
-     * Deletes a homepage banner.
+     * Deletes a homepage banner permanently.
      *
-     * @param id banner ID
+     * <p>This action cannot be undone. Consider toggling the banner off
+     * instead of deleting if you may want to reuse it later.</p>
+     *
+     * @param id the banner ID to delete
      * @return 204 No Content
      */
     @DeleteMapping("/{id}")

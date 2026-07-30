@@ -3,26 +3,59 @@ package com.pkmprojects.shoppiq.repository.order.projection;
 import java.math.BigDecimal;
 
 /**
- * Projection for product performance aggregation — computes per-product
- * sales statistics (quantity, revenue, average price) directly in the
- * database using GROUP BY.
+ * Projection for aggregating product performance statistics within a date range.
  *
- * <p>Current stock is joined from {@code ItemDetails} separately since
- * it is not an aggregate function result.</p>
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 public interface ProductPerformanceAggregate {
 
+    /**
+     * The item identifier.
+     *
+     * @return item ID
+     */
     Long getItemId();
 
+    /**
+     * The item name.
+     *
+     * @return item name
+     */
     String getItemName();
 
+    /**
+     * The SKU.
+     *
+     * @return SKU
+     */
     String getSku();
 
+    /**
+     * Total quantity sold.
+     *
+     * @return quantity sold
+     */
     Long getQuantitySold();
 
+    /**
+     * Total revenue.
+     *
+     * @return revenue
+     */
     BigDecimal getRevenue();
 
+    /**
+     * Average unit price.
+     *
+     * @return average price
+     */
     BigDecimal getAveragePrice();
 
+    /**
+     * Current stock quantity from ItemDetails.
+     *
+     * @return current stock
+     */
     Integer getCurrentStock();
 }

@@ -6,9 +6,9 @@ import com.pkmprojects.shoppiq.dto.cart.CartResponse;
 import com.pkmprojects.shoppiq.dto.cart.UpdateCartItemRequest;
 import com.pkmprojects.shoppiq.entity.cart.Cart;
 import com.pkmprojects.shoppiq.entity.cart.CartItem;
+import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.entity.item.ItemDetails;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.exception.general.cart.CartItemAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.general.cart.CartItemNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.inventory.InsufficientStockException;
@@ -17,27 +17,16 @@ import com.pkmprojects.shoppiq.repository.cart.CartItemRepository;
 import com.pkmprojects.shoppiq.repository.cart.CartRepository;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import com.pkmprojects.shoppiq.util.PriceUtil;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link CartService}
- * containing business logic for shopping cart operations.
- *
- * <p>Manages the user's cart: adding items with stock validation, retrieving
- * with calculated subtotals, updating quantities, deleting items with ownership
- * verification, and clearing the cart. Used by {@code CartController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Cart operations span multiple repository calls that must succeed or fail atomically.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link CartService} implementation that manages the user's cart: adding items
+ * with stock validation, retrieving with calculated subtotals, updating quantities,
+ * deleting items with ownership verification, and clearing the cart.
  *
  * @author prabhatkrmishra
  * @see CartService
@@ -73,8 +62,8 @@ public class CartServiceImpl implements CartService {
      * @param user    authenticated user
      * @param request add-to-cart payload
      * @return created or updated cart item response
-     * @throws ItemDetailsNotFoundException   if the item details do not exist
-     * @throws InsufficientStockException     if stock is insufficient
+     * @throws ItemDetailsNotFoundException if the item details do not exist
+     * @throws InsufficientStockException   if stock is insufficient
      */
     @Override
     public CartItemResponse create(User user, AddCartItemRequest request) {
@@ -124,8 +113,8 @@ public class CartServiceImpl implements CartService {
      * @param user       authenticated user
      * @param cartItemId cart item ID
      * @return cart item response
-     * @throws CartItemNotFoundException      if the item does not exist
-     * @throws CartItemAccessDeniedException   if the item belongs to another user
+     * @throws CartItemNotFoundException     if the item does not exist
+     * @throws CartItemAccessDeniedException if the item belongs to another user
      */
     @Override
     @Transactional(readOnly = true)
@@ -141,9 +130,9 @@ public class CartServiceImpl implements CartService {
      * @param cartItemId cart item ID
      * @param request    update payload
      * @return updated cart item response
-     * @throws CartItemNotFoundException      if the item does not exist
-     * @throws CartItemAccessDeniedException   if the item belongs to another user
-     * @throws InsufficientStockException      if stock is insufficient
+     * @throws CartItemNotFoundException     if the item does not exist
+     * @throws CartItemAccessDeniedException if the item belongs to another user
+     * @throws InsufficientStockException    if stock is insufficient
      */
     @Override
     public CartItemResponse update(User user, Long cartItemId, UpdateCartItemRequest request) {
@@ -159,8 +148,8 @@ public class CartServiceImpl implements CartService {
      *
      * @param user       authenticated user
      * @param cartItemId cart item ID
-     * @throws CartItemNotFoundException      if the item does not exist
-     * @throws CartItemAccessDeniedException   if the item belongs to another user
+     * @throws CartItemNotFoundException     if the item does not exist
+     * @throws CartItemAccessDeniedException if the item belongs to another user
      */
     @Override
     public void delete(User user, Long cartItemId) {
@@ -192,9 +181,16 @@ public class CartServiceImpl implements CartService {
      */
     private Cart findOrCreateCart(User user) {
         return cartRepository.findByUser(user)
-                .orElseGet(() -> cartRepository.save(
-                        Cart.builder().user(user).build()
-                ));
+                .orElseGet(() -> {
+                    try {
+                        return cartRepository.save(
+                                Cart.builder().user(user).build()
+                        );
+                    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                        return cartRepository.findByUser(user)
+                                .orElseThrow(() -> e);
+                    }
+                });
     }
 
     /**

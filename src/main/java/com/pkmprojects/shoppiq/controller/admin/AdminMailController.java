@@ -14,18 +14,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for admin mail functionality.
+ * REST controller for admin mail functionality.
  *
- * <p>Provides user search (for recipient selection) and mail-sending endpoints.
- * All endpoints require {@code ADMIN} role and are mounted under
- * {@code /api/admin/mail}.</p>
+ * <p>Provides user search for recipient selection and mail-sending endpoints.
+ * The search endpoint allows admins to find users by name, email, or username
+ * when composing bulk or targeted emails. The send endpoint dispatches emails
+ * either synchronously to specific recipients or asynchronously to all users.</p>
  *
- * <p>Key design points:
- * <ul>
- *   <li><strong>Thin controller</strong> — no business logic; validates input and delegates to service layer.</li>
- *   <li><strong>Background sending</strong> — bulk mail to "all users" is dispatched asynchronously in the service layer.</li>
- * </ul>
- * </p>
+ * <p>This controller acts as the HTTP boundary for admin mail operations. It
+ * delegates all business logic — user search, email composition, and async
+ * dispatch — to {@link AdminMailService}. The controller handles no business
+ * logic beyond assembling the response map.</p>
+ *
+ * <p>All endpoints require ADMIN role and are mounted under /api/admin/mail.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET  /api/admin/mail/search  — search users by name, email, or username
+ * POST /api/admin/mail/send    — send email to recipients or all users
+ * </pre>
  *
  * @author prabhatkrmishra
  * @see AdminMailService
@@ -42,8 +50,11 @@ public class AdminMailController {
     /**
      * Searches for users by name, email, or username for recipient selection.
      *
+     * <p>Returns a lightweight summary of matching users (id, name, email,
+     * username) suitable for rendering in a recipient picker UI.</p>
+     *
      * @param q the search query string
-     * @return 200 OK with list of matching user summaries (id, name, email, username)
+     * @return 200 OK with list of matching user summaries
      */
     @GetMapping("/search")
     public ResponseEntity<List<Map<String, Object>>> searchUsers(@RequestParam String q) {
@@ -62,14 +73,14 @@ public class AdminMailController {
     }
 
     /**
-     * Sends an email to one or more recipients (or all users).
+     * Sends an email to one or more recipients or to all users.
      *
-     * <p>When {@code sendToAll} is enabled, the email is dispatched
-     * asynchronously in the background. Otherwise it is sent synchronously
-     * to the specified recipients.</p>
+     * <p>When sendToAll is enabled, the email is dispatched asynchronously
+     * in the background and the endpoint returns immediately. Otherwise it
+     * is sent synchronously to the specified recipients.</p>
      *
-     * @param request the mail payload (subject, body, recipients)
-     * @param admin   the authenticated admin (used as sender)
+     * @param request the mail payload (subject, body, recipients, sendToAll flag)
+     * @param admin   the authenticated admin used as the sender address
      * @return 200 OK with a status message
      */
     @PostMapping("/send")

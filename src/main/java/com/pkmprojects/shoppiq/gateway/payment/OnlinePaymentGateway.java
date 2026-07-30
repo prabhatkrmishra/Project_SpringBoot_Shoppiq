@@ -11,35 +11,20 @@ import java.time.Clock;
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Profile-based placeholder (stub)
- * implementation of {@link PaymentGatewayStrategy} for local development.
+ * Profile-based placeholder gateway for local development and testing.
  *
- * <p>
- * This implementation simulates online payment processing without calling
- * a real gateway. It is ONLY available in the {@code dev} profile and MUST
- * NOT be enabled in production. Intended to be replaced with a concrete
- * gateway (Razorpay, Stripe, or PayPal) in a future phase by implementing
- * {@link PaymentGatewayStrategy} and registering it via the
- * {@link PaymentGatewayRegistry}.
- * </p>
+ * <p>This gateway simulates online payment processing without calling a
+ * real payment provider. It is only available in the {@code dev} profile
+ * and is intended to be replaced with a concrete gateway (Razorpay, Stripe,
+ * etc.) in production. The placeholder generates a dummy payment URL and
+ * accepts any transaction ID during verification, making it ideal for
+ * integration testing and local development workflows.</p>
  *
- * <p><strong>Educational value:</strong> This class demonstrates Spring's
- * <strong>{@code @Profile}</strong> mechanism: the bean is only created when
- * the {@code dev} profile is active. This allows the application to run
- * without real payment gateway credentials during development while the
- * exact same code path (Strategy → Registry → service call) is exercised.
- * When a real gateway bean exists (e.g. {@link RazorpayGateway} with its
- * own {@code supports()} return value), it automatically replaces this
- * placeholder in the registry — no configuration changes needed.
- * </p>
- *
- * <h2>Simulated Behaviour</h2>
- * <ul>
- *   <li>{@link #process(Payment)} — moves payment to {@code PROCESSING},
- *       sets a dummy gateway response with a simulated payment URL.</li>
- *   <li>{@link #verify(Payment, String)} — accepts any non-blank transactionId
- *       and marks the payment as {@code PAID}.</li>
- * </ul>
+ * <p>The gateway supports the {@link PaymentGateway#ONLINE} type and acts
+ * as the fallback for any payment method that does not have a dedicated
+ * gateway configured. When a real gateway is added, it registers with its
+ * own key and this implementation remains as the fallback for unhandled
+ * methods.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

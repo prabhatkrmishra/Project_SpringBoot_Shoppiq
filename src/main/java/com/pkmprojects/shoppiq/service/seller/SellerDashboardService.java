@@ -7,19 +7,10 @@ import com.pkmprojects.shoppiq.entity.user.User;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Business contract for the seller dashboard.
+ * Business contract for the seller dashboard.
  *
- * <p>
- * Provides summary metrics and recent activity data for the
- * authenticated seller's store.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Compute seller dashboard summary (products, orders, revenue, stock alerts).</li>
- *     <li>Retrieve recent orders containing the seller's products.</li>
- *     <li>Enforce seller-level preconditions (ACTIVE, not SUSPENDED).</li>
- * </ul>
+ * <p>Defines operations for retrieving dashboard summary metrics and recent
+ * orders for the authenticated seller's store.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

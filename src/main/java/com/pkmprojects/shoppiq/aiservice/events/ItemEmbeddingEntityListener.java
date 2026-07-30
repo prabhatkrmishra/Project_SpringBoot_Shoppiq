@@ -6,16 +6,23 @@ import jakarta.persistence.PostUpdate;
 import jakarta.persistence.PreRemove;
 
 /**
- * <strong>Spring Boot Concept:</strong> JPA entity listener that publishes {@link ProductEmbeddingEvent}s whenever a
- * product is created, updated, or deleted.
+ * JPA entity listener that publishes {@link ProductEmbeddingEvent}s on product lifecycle changes.
  *
- * <p>
- * Registered on {@link Item} via {@code @EntityListeners}. The events are
- * consumed by {@code ProductCatalogIngester} in an after-commit transaction
- * phase, keeping the Qdrant vector store in sync with the catalog without
- * coupling the persistence layer to the RAG infrastructure.
+ * <p>This listener is registered on the {@code Item} entity and fires on
+ * post-persist, post-update, and pre-remove lifecycle callbacks. It
+ * extracts the relevant product data and publishes a
+ * {@link ProductEmbeddingEvent} via the static
+ * {@link ApplicationEventPublisherHolder}, keeping the Qdrant vector
+ * store in sync with the product catalog without coupling the persistence
+ * layer to RAG infrastructure.</p>
  *
- * @author PrabhatKrMishra
+ * <p>For upsert events (create/update), the listener extracts product
+ * name, description, price, category, brand, and stock information.
+ * For delete events, only the item ID and a deletion flag are included,
+ * allowing the consumer to remove the corresponding vector from the
+ * store.</p>
+ *
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 public class ItemEmbeddingEntityListener {

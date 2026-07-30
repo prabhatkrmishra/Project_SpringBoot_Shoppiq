@@ -1,21 +1,20 @@
 package com.pkmprojects.shoppiq.controller;
-import com.pkmprojects.shoppiq.controller.address.AddressController;
 
-import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.config.ClockConfig;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
+import com.pkmprojects.shoppiq.controller.address.AddressController;
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.address.CreateAddressRequest;
-import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.general.address.AddressAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.general.address.AddressNotFoundException;
@@ -37,6 +36,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.util.List;
@@ -44,9 +44,10 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Controller-slice tests for {@link AddressController}.
@@ -85,34 +86,26 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @DisplayName("AddressController Tests")
 class AddressControllerTest {
 
+    private static final Instant NOW = Instant.parse("2025-01-01T00:00:00Z");
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private JsonMapper objectMapper;
-
     @MockitoBean
     private AddressService addressService;
-
     @MockitoBean
     private UserRepository userRepository;
-
     @MockitoBean
     private RoleService rolesService;
-
     @MockitoBean
     private OAuth2SuccessHandler oAuth2SuccessHandler;
-
-    @MockitoBean
-    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
     // ---------------------------------------------------------------
     // Fixture helpers
     // ---------------------------------------------------------------
-
+    @MockitoBean
+    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private User authenticatedUser;
-
-    private static final Instant NOW = Instant.parse("2025-01-01T00:00:00Z");
 
     private static AddressResponse stubResponse(long id, boolean isDefault) {
         return new AddressResponse(

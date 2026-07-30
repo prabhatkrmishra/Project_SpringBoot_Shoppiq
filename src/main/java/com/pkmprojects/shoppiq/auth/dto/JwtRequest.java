@@ -7,31 +7,23 @@ import java.util.StringJoiner;
 /**
  * Data Transfer Object for the login request payload.
  *
- * <h3>Spring Security concepts demonstrated</h3>
- * <ul>
- *   <li><strong>Remember-me pattern</strong> — the {@code rememberMe} flag
- *       controls whether the JWT cookie is a session cookie ({@code Max-Age=-1},
- *       discarded on browser close) or a persistent cookie ({@code Max-Age}
- *       set to the JWT expiration). This is a stateless alternative to Spring
- *       Security's {@code RememberMeServices} which typically uses a persistent
- *       token approach.</li>
- *   <li><strong>Credential transport</strong> — the username and password arrive
- *       over HTTPS in the request body, then are validated by {@code AuthenticationManager}
- *       via {@code UsernamePasswordAuthenticationToken} in {@link com.pkmprojects.shoppiq.auth.service.AuthService}.</li>
- * </ul>
+ * <p>The {@code rememberMe} flag controls whether the JWT cookie is a session
+ * cookie ({@code Max-Age=-1}, discarded on browser close) or a persistent
+ * cookie ({@code Max-Age} set to the JWT expiration). This is a stateless
+ * alternative to Spring Security's {@code RememberMeServices} which typically
+ * uses a persistent token approach. The username and password arrive over HTTPS
+ * in the request body, then are validated by {@code AuthenticationManager} via
+ * {@code UsernamePasswordAuthenticationToken} in
+ * {@link com.pkmprojects.shoppiq.auth.service.AuthService}.</p>
  *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Java record</strong> — concise, immutable DTO with auto-generated
- *       accessors, {@code equals()}, and {@code hashCode()}.</li>
- *   <li><strong>Bean Validation</strong> — {@code @NotBlank} ensures mandatory fields
- *       are validated at the controller boundary.</li>
- * </ul>
+ * <p>This record uses Bean Validation with {@code @NotBlank} to ensure
+ * mandatory fields are validated at the controller boundary. The immutable
+ * Java record provides auto-generated accessors, {@code equals()}, and
+ * {@code hashCode()}.</p>
  *
  * @param username   the user's login name
  * @param password   the user's password
  * @param rememberMe whether the session should persist across browser restarts
- *
  * @author prabhatkrmishra
  * @since 1.0.0
  */

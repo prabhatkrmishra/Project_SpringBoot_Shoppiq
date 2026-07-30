@@ -8,8 +8,8 @@ import com.pkmprojects.shoppiq.email.EmailService;
 import com.pkmprojects.shoppiq.email.EmailType;
 import com.pkmprojects.shoppiq.email.dto.EmailMessage;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
+import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.verification.service.VerificationCodeService;
 import jakarta.validation.Valid;
@@ -28,48 +28,9 @@ import java.util.Map;
 /**
  * REST controller for email verification and password reset flows.
  *
- * <h3>Spring Security concepts demonstrated</h3>
- * <ul>
- *   <li><strong>Password-less self-service flows</strong> — the controller handles
- *       {@code forgot-password}, {@code reset-password}, {@code verify-email}, and
- *       {@code confirm-email} using time-limited verification codes rather than
- *       requiring the user to be authenticated.</li>
- *   <li><strong>Token version invalidation on password change</strong> — when a
- *       password is reset, the user's {@code tokenVersion} is incremented
- *       ({@code user.setTokenVersion(user.getTokenVersion() + 1)}), which
- *       immediately invalidates all existing JWT sessions. This is a common
- *       pattern for forcing logout after credential changes.</li>
- *   <li><strong>Side-channel verification</strong> — verification codes are sent
- *       via email (out-of-band), proving ownership of the email address without
- *       requiring the user's password.</li>
- * </ul>
- *
- * <h3>Authentication flow</h3>
- * <ol>
- *   <li><b>Forgot password:</b> {@code POST /auth/forgot-password} generates a
- *       6-digit code and emails it to the user (if the email exists — the response
- *       is identical regardless to prevent email enumeration).</li>
- *   <li><b>Reset password:</b> {@code POST /auth/reset-password} validates the code,
- *       updates the password hash via {@code PasswordEncoder}, and increments
- *       the token version to invalidate all existing JWTs.</li>
- *   <li><b>Verify email:</b> {@code POST /auth/verify-email} generates and sends
- *       a verification code.</li>
- *   <li><b>Confirm email:</b> {@code POST /auth/confirm-email} validates the code,
- *       sets {@code emailVerified = true}, and records the verification timestamp.</li>
- * </ol>
- *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Null-object on lookup</strong> — the controller never reveals whether
- *       an email exists in the system; unauthenticated flows silently no-op for
- *       non-existent accounts to prevent email enumeration attacks.</li>
- *   <li><strong>Service delegation</strong> — verification code generation and
- *       validation are handled by {@link com.pkmprojects.shoppiq.verification.service.VerificationCodeService},
- *       keeping the controller focused on HTTP orchestration.</li>
- *   <li><strong>Generic verification codes</strong> — the same {@code VerificationCodeService}
- *       supports both {@code PASSWORD_RESET} and {@code VERIFICATION} email types,
- *       each scoped by an {@link com.pkmprojects.shoppiq.email.EmailType} enum.</li>
- * </ul>
+ * <p>Provides password-less self-service flows using time-limited verification codes.
+ * Password reset invalidates all existing JWT sessions by incrementing the user's
+ * {@code tokenVersion}. Verification codes are sent via email as a side-channel.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

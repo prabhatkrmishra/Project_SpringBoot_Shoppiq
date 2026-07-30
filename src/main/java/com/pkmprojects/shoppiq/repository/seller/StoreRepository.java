@@ -6,26 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link Store} entities.
+ * Persistence operations for the {@link Store} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived query by slug</strong> — {@code findBySlug} generates
- *       {@code SELECT * FROM stores WHERE slug = ?}, used for public store pages.</li>
- *   <li><strong>Derived query by association ID</strong> — {@code findBySellerId} navigates
- *       the {@code seller} foreign key, generating {@code SELECT * FROM stores WHERE seller_id = ?}.</li>
- *   <li><strong>Optional return type</strong> — Both methods return
- *       {@link java.util.Optional}, the standard pattern for finders that may return
- *       zero or one result.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findBySlug(String)
- *       → SELECT * FROM stores WHERE slug = ?
- *   findBySellerId(Long)
- *       → SELECT * FROM stores WHERE seller_id = ?
- * </pre>
+ * <p>Provides methods to query stores by slug, seller ID, and existence checks for store management
+ * and URL resolution. The repository supports slug-based lookups for public store pages and
+ * seller-based lookups for store management workflows.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

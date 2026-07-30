@@ -4,6 +4,7 @@ import com.pkmprojects.shoppiq.dto.admin.response.AdminReviewResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.review.ItemReview;
 import com.pkmprojects.shoppiq.enums.ReviewStatus;
+import com.pkmprojects.shoppiq.exception.business.InvalidRequestException;
 import com.pkmprojects.shoppiq.exception.general.review.ItemReviewNotFoundException;
 import com.pkmprojects.shoppiq.repository.item.ItemReviewRepository;
 import org.springframework.data.domain.PageRequest;
@@ -13,19 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminReviewService}
- * containing business logic for admin review moderation.
- *
- * <p>Provides paginated review listing, approval, rejection, and deletion for
- * moderating product reviews. Used by {@code AdminReviewController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Review moderation actions (approve/reject/delete) are atomic; reads use {@code readOnly = true}.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link AdminReviewService} implementation that handles retrieval with status
+ * filtering, approval, rejection, and permanent deletion of product reviews.
  *
  * @author prabhatkrmishra
  * @see AdminReviewService
@@ -84,6 +74,13 @@ public class AdminReviewServiceImpl implements AdminReviewService {
         ItemReview review = itemReviewRepository.findById(reviewId)
                 .orElseThrow(() -> ItemReviewNotFoundException.id(reviewId));
 
+        if (review.getStatus() == ReviewStatus.APPROVED) {
+            return AdminReviewResponse.fromEntity(review);
+        }
+        if (review.getStatus() != ReviewStatus.PENDING) {
+            throw InvalidRequestException.detail("Only PENDING reviews can be approved.");
+        }
+
         review.setStatus(ReviewStatus.APPROVED);
         ItemReview saved = itemReviewRepository.save(review);
         return AdminReviewResponse.fromEntity(saved);
@@ -100,6 +97,13 @@ public class AdminReviewServiceImpl implements AdminReviewService {
     public AdminReviewResponse rejectReview(Long reviewId) {
         ItemReview review = itemReviewRepository.findById(reviewId)
                 .orElseThrow(() -> ItemReviewNotFoundException.id(reviewId));
+
+        if (review.getStatus() == ReviewStatus.REJECTED) {
+            return AdminReviewResponse.fromEntity(review);
+        }
+        if (review.getStatus() != ReviewStatus.PENDING) {
+            throw InvalidRequestException.detail("Only PENDING reviews can be rejected.");
+        }
 
         review.setStatus(ReviewStatus.REJECTED);
         ItemReview saved = itemReviewRepository.save(review);

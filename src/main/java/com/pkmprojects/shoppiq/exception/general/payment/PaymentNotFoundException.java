@@ -4,15 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a requested
- * payment record cannot be found.
+ * Thrown when a requested payment record cannot be found.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) with factory methods for lookup by payment ID, transaction ID,
- * and order ID.</p>
+ * <p>This exception is thrown by payment service methods when a database
+ * lookup for a payment fails. It uses the
+ * {@link ErrorCode#PAYMENT_NOT_FOUND} code and HTTP 404 Not Found status.
+ * The payment ID may be incorrect or the payment may not have been
+ * initiated yet.</p>
+ *
+ * <p>The detail message includes the lookup identifier and type (e.g.,
+ * "Payment with id '42' was not found.") to help clients understand which
+ * identifier was invalid. The client should verify the payment ID and
+ * retry the request.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#PAYMENT_NOT_FOUND
  * @since 1.0.0
  */
 public final class PaymentNotFoundException extends ResourceNotFoundException {

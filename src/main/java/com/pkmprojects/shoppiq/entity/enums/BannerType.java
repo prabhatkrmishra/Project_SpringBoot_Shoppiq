@@ -1,52 +1,81 @@
 package com.pkmprojects.shoppiq.entity.enums;
 
 /**
- * <strong>Spring Boot Concept:</strong> Defines the visual style variant for a homepage banner.
+ * Defines the visual style variant for a homepage banner.
  *
- * <p>Each type maps to a CSS gradient class on the frontend:</p>
- * <ul>
- *     <li>{@link #PRIMARY} &rarr; {@code offer-banner-primary} (red gradient)</li>
- *     <li>{@link #SECONDARY} &rarr; {@code offer-banner-secondary} (purple gradient)</li>
- *     <li>{@link #ACCENT} &rarr; {@code offer-banner-accent} (green gradient)</li>
- *     <li>{@link #HIGHLIGHT} &rarr; {@code offer-banner-highlight} (orange/amber gradient)</li>
- *     <li>{@link #INFO} &rarr; {@code offer-banner-info} (blue gradient)</li>
- *     <li>{@link #PREMIUM} &rarr; {@code offer-banner-premium} (gold/dark gradient)</li>
- * </ul>
+ * <p>Each type maps to a CSS gradient class on the frontend, providing
+ * a consistent visual language for promotional content. The banner type
+ * determines the background gradient color scheme and overall visual tone
+ * of the banner, helping customers quickly identify the category or
+ * urgency of the promotion at a glance.</p>
  *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Frontend-backend contract</strong> — Each enum value maps
- *         to a specific CSS class in the frontend, creating a strongly-typed
- *         contract between the backend API and the UI.</li>
- *     <li><strong>Stored as STRING</strong> — Used with
- *         {@code @Enumerated(EnumType.STRING)} in the {@link Banner} entity
- *         for readable database values.</li>
- *     <li><strong>Package placement</strong> — Located in
- *         {@code entity.enums} rather than {@code enums} because this enum
- *         is specific to the Banner entity module, demonstrating how enum
- *         packages can mirror domain modules.</li>
- * </ul>
+ * <p>Administrators select a banner type when creating or editing
+ * banners through the CMS interface. The type should align with the
+ * promotional content: sale promotions typically use warm colors (PRIMARY,
+ * HIGHLIGHT), while informational announcements use cooler tones (INFO,
+ * PREMIUM).</p>
  *
  * @author prabhatkrmishra
+ * @see com.pkmprojects.shoppiq.entity.banner.Banner
  * @since 1.0.0
  */
 public enum BannerType {
 
-    /** Red gradient banner (e.g. limited-time sales). */
+    /**
+     * Red gradient banner conveying urgency and excitement.
+     *
+     * <p>Typically used for limited-time sales, clearance events, and
+     * time-sensitive promotions. The red gradient creates a sense of
+     * urgency that encourages immediate customer action.</p>
+     */
     PRIMARY,
 
-    /** Purple gradient banner (e.g. new arrivals). */
+    /**
+     * Purple gradient banner conveying creativity and luxury.
+     *
+     * <p>Typically used for new arrivals, exclusive collections, and
+     * premium product launches. The purple gradient suggests sophistication
+     * and newness, appealing to customers seeking the latest offerings.</p>
+     */
     SECONDARY,
 
-    /** Green gradient banner (e.g. perks, free shipping). */
+    /**
+     * Green gradient banner conveying value and positive action.
+     *
+     * <p>Typically used for perks, free shipping offers, and positive
+     * value propositions. The green gradient suggests savings and
+     * beneficial offers, attracting cost-conscious customers.</p>
+     */
     ACCENT,
 
-    /** Orange/amber gradient banner (e.g. flash sale, last chance). */
+    /**
+     * Orange/amber gradient banner conveying energy and time pressure.
+     *
+     * <p>Typically used for flash sales, last-chance offers, and
+     * high-energy promotions. The orange gradient creates a warm,
+     * energetic feel that drives impulse purchases and quick
+     * decision-making.</p>
+     */
     HIGHLIGHT,
 
-    /** Blue gradient banner (e.g. announcements, general info). */
+    /**
+     * Blue gradient banner conveying trust and general information.
+     *
+     * <p>Typically used for announcements, general information, and
+     * informational campaigns. The blue gradient establishes trust
+     * and professionalism, suitable for non-promotional content
+     * that requires customer attention.</p>
+     */
     INFO,
 
-    /** Gold/dark gradient banner (e.g. VIP, exclusive offers). */
+    /**
+     * Gold/dark gradient banner conveying exclusivity and premium
+     * status.
+     *
+     * <p>Typically used for VIP offers, exclusive deals, and premium
+     * member promotions. The gold gradient suggests luxury and
+     * exclusivity, appealing to high-value customers and loyalty
+     * program members.</p>
+     */
     PREMIUM
 }

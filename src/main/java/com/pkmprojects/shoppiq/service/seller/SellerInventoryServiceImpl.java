@@ -1,5 +1,6 @@
 package com.pkmprojects.shoppiq.service.seller;
 
+import com.pkmprojects.shoppiq.config.InventoryConstants;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerInventoryResponse;
 import com.pkmprojects.shoppiq.entity.item.Item;
@@ -8,30 +9,25 @@ import com.pkmprojects.shoppiq.entity.seller.Seller;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.enums.SellerStatus;
 import com.pkmprojects.shoppiq.enums.VerificationStatus;
-import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.inventory.ItemStockNegativeException;
+import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotVerifiedException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException;
 import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsWriteService;
-import com.pkmprojects.shoppiq.config.InventoryConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link SellerInventoryService}.
- *
- * <p>
- * Provides inventory management for sellers. Enforces seller preconditions
- * (ACTIVE, APPROVED, not SUSPENDED) and ownership verification before
- * allowing stock operations.
- * </p>
+ * {@link SellerInventoryService} implementation providing inventory management for sellers
+ * with seller precondition enforcement and ownership verification.
  *
  * @author prabhatkrmishra
+ * @see SellerInventoryService
  * @since 1.0.0
  */
 @Service
@@ -122,8 +118,8 @@ public class SellerInventoryServiceImpl implements SellerInventoryService {
      * @param reason   reason for the adjustment
      * @param user     authenticated user
      * @return updated inventory response
-     * @throws ItemNotFoundException         if the item does not exist or does not belong to the seller
-     * @throws ItemStockNegativeException    if the adjustment would result in negative stock
+     * @throws ItemNotFoundException      if the item does not exist or does not belong to the seller
+     * @throws ItemStockNegativeException if the adjustment would result in negative stock
      */
     @Override
     public SellerInventoryResponse adjustStock(Long itemId, int quantity, String reason, User user) {

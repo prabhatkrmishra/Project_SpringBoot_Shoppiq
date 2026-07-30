@@ -15,7 +15,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <strong>Spring Boot Concept:</strong> Service for sending order lifecycle emails.
+ * Service for sending order lifecycle emails to customers.
+ *
+ * <p>Resolves status-specific subjects and messages, formats shipping
+ * address for delivery notifications, and delegates to the email service.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

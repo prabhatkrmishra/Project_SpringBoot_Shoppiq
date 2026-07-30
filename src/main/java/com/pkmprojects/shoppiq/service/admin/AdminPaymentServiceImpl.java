@@ -1,9 +1,9 @@
 package com.pkmprojects.shoppiq.service.admin;
 
-import com.pkmprojects.shoppiq.dto.admin.response.*;
+import com.pkmprojects.shoppiq.dto.admin.response.AdminPaymentResponse;
 import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.entity.payment.Payment;
-import com.pkmprojects.shoppiq.enums.*;
+import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentInvalidStateException;
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentNotFoundException;
 import com.pkmprojects.shoppiq.service.payment.PaymentLookupService;
@@ -17,20 +17,8 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Implementation of {@link AdminPaymentService}
- * containing business logic for admin payment management.
- *
- * <p>Provides paginated payment retrieval with optional status filtering, single
- * payment lookup, refund processing, and payment dashboard statistics. Used by
- * {@code AdminPaymentController}.</p>
- *
- * <p>Why this design:
- * <ul>
- *   <li><strong>@Service</strong> — Spring stereotype for service-layer beans, auto-detected via component scanning.</li>
- *   <li><strong>@Transactional</strong> — Refund processing is atomic; reads use {@code readOnly = true}.</li>
- *   <li><strong>Constructor injection</strong> — final fields for immutability and testability.</li>
- * </ul>
- * </p>
+ * {@link AdminPaymentService} implementation that handles payment retrieval,
+ * refund processing, and dashboard statistics computation.
  *
  * @author prabhatkrmishra
  * @see AdminPaymentService
@@ -90,8 +78,8 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
      *
      * @param paymentId payment ID
      * @return updated payment response
-     * @throws PaymentNotFoundException        if the payment does not exist
-     * @throws PaymentInvalidStateException     if the payment is not PAID
+     * @throws PaymentNotFoundException     if the payment does not exist
+     * @throws PaymentInvalidStateException if the payment is not PAID
      */
     @Override
     public AdminPaymentResponse refundPayment(Long paymentId) {

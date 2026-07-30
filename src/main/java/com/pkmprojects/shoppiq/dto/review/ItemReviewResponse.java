@@ -6,89 +6,92 @@ import com.pkmprojects.shoppiq.enums.ReviewStatus;
 import java.time.Instant;
 
 /**
- * Response DTO returned for {@link ItemReview} resources.
+ * Response DTO returned for product review resources.
  *
- * <p>
- * This DTO represents the publicly visible information of a product review.
- * It exposes review information together with basic reviewer details while
- * hiding internal persistence implementation.
- * </p>
+ * <p>This record exposes the publicly visible information of a product
+ * review, including the review content, rating, and basic reviewer
+ * details. It is returned by the product review list endpoint and is
+ * designed for the product detail page where customer reviews are
+ * displayed. Only reviews with APPROVED status are visible on the
+ * public product page.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Expose review information.</li>
- *     <li>Expose reviewer information.</li>
- *     <li>Hide JPA entities from the REST API.</li>
- * </ul>
+ * <p>The DTO does not expose the complete User entity, providing only
+ * {@code reviewerId}, {@code reviewerName}, and {@code reviewerUsername}
+ * for privacy. The static {@link #fromEntity(ItemReview)} factory
+ * method handles the entity-to-DTO mapping, and the {@code status}
+ * field tracks the review's moderation state (PENDING, APPROVED,
+ * REJECTED).</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Immutable through Java Records.</li>
- *     <li>Created using {@link #fromEntity(ItemReview)}.</li>
- *     <li>Does not expose the complete {@code User} entity — only
- *     {@code reviewerId}, {@code reviewerName}, {@code reviewerUsername}.</li>
- *     <li><b>Moderation:</b> Includes {@code status} field with
- *     {@link com.pkmprojects.shoppiq.enums.ReviewStatus} — only
- *     APPROVED reviews are visible on the product page.</li>
- * </ul>
- *
+ * @param id               unique identifier of the review record
+ * @param itemId           identifier of the product being reviewed
+ * @param itemName         display name of the product for context
+ * @param reviewerId       identifier of the reviewer's user account
+ * @param reviewerName     display name of the reviewer
+ * @param reviewerUsername username of the reviewer for attribution
+ * @param rating           integer rating from 1 (lowest) to 5 (highest)
+ * @param review           optional written review text; may be null for
+ *                         rating-only reviews
+ * @param status           moderation status controlling public visibility
+ *                         (PENDING, APPROVED, REJECTED)
+ * @param createdAt        timestamp when the review was first submitted
+ * @param updatedAt        timestamp of the most recent modification
  * @author prabhatkrmishra
  * @since 1.0.0
  */
 public record ItemReviewResponse(
 
-        /*
-          Review identifier.
+        /**
+         * Review identifier.
          */
         Long id,
 
-        /*
-          Item identifier.
+        /**
+         * Item identifier.
          */
         Long itemId,
 
-        /*
-          Item name.
+        /**
+         * Item name.
          */
         String itemName,
 
-        /*
-          Reviewer identifier.
+        /**
+         * Reviewer identifier.
          */
         Long reviewerId,
 
-        /*
-          Reviewer's display name.
+        /**
+         * Reviewer's display name.
          */
         String reviewerName,
 
-        /*
-          Reviewer's username.
+        /**
+         * Reviewer's username.
          */
         String reviewerUsername,
 
-        /*
-          Rating assigned by the reviewer.
+        /**
+         * Rating assigned by the reviewer.
          */
         Integer rating,
 
-        /*
-          Written review.
+        /**
+         * Written review.
          */
         String review,
 
-        /*
-          Moderation status.
+        /**
+         * Moderation status.
          */
         ReviewStatus status,
 
-        /*
-          Creation timestamp.
+        /**
+         * Creation timestamp.
          */
         Instant createdAt,
 
-        /*
-          Last modification timestamp.
+        /**
+         * Last modification timestamp.
          */
         Instant updatedAt
 

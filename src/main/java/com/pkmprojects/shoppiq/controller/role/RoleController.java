@@ -13,14 +13,29 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for role management operations.
+ * REST controller for role management operations.
  *
- * <p>Provides endpoints to create, list, and delete application roles.
- * All endpoints require the {@code ADMIN} role. Roles define the
- * authorization hierarchy used by Spring Security's
- * {@code @PreAuthorize} annotations throughout the application.</p>
+ * <p>Provides endpoints to create and list application roles. Roles define the
+ * authorization hierarchy used by Spring Security's @PreAuthorize annotations
+ * throughout the application. Role names must follow a naming convention:
+ * uppercase letters, digits, and underscores only, starting with a letter.</p>
+ *
+ * <p>This controller acts as the HTTP boundary for role administration. It
+ * delegates all business logic — role creation, name validation, and listing —
+ * to {@link RoleService}. The controller handles no business logic beyond
+ * path variable validation.</p>
+ *
+ * <p>All endpoints require ADMIN role and are mounted under /roles.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * POST   /roles/create/{roleName}  — create a new application role
+ * GET    /roles/all                — list all existing roles
+ * </pre>
  *
  * @author prabhatkrmishra
+ * @see RoleService
  * @since 1.0.0
  */
 @Validated
@@ -38,8 +53,11 @@ public class RoleController {
     /**
      * Creates a new application role.
      *
+     * <p>The role name must be uppercase letters, digits, and underscores
+     * only, starting with a letter. Names must be between 2 and 50 characters.</p>
+     *
      * @param roleName the role name (uppercase, underscore-separated)
-     * @return 200 OK with the created role
+     * @return 200 OK with the created role response
      */
     @PostMapping("/create/{roleName}")
     public ResponseEntity<Role> createRole(
@@ -58,7 +76,7 @@ public class RoleController {
     /**
      * Returns all existing roles.
      *
-     * @return 200 OK with list of all roles
+     * @return 200 OK with list of all role responses
      */
     @GetMapping("/all")
     public ResponseEntity<List<Role>> getAllRoles() {

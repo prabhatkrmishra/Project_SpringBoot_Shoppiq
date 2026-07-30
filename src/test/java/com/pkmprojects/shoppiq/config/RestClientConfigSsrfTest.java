@@ -1,6 +1,9 @@
 package com.pkmprojects.shoppiq.config;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.boot.http.client.FilteredHostException;
 import org.springframework.boot.http.client.InetAddressFilter;
 import org.springframework.web.client.RestClient;
@@ -8,7 +11,8 @@ import org.springframework.web.client.RestClient;
 import java.net.InetAddress;
 import java.net.URI;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests verifying the SSRF protection configured in {@link RestClientConfig}.
@@ -140,9 +144,9 @@ class RestClientConfigSsrfTest {
     @DisplayName("FilteredHostException carries the blocked host")
     void filteredHostExceptionContainsHost() {
         assertThatThrownBy(() -> ssrfProtectedClient.get()
-                        .uri(URI.create("http://127.0.0.1:8080/ok"))
-                        .retrieve()
-                        .body(String.class))
+                .uri(URI.create("http://127.0.0.1:8080/ok"))
+                .retrieve()
+                .body(String.class))
                 .isInstanceOf(FilteredHostException.class)
                 .satisfies(ex -> {
                     FilteredHostException fex = (FilteredHostException) ex;
@@ -249,9 +253,9 @@ class RestClientConfigSsrfTest {
      */
     private void assertBlocked(String uri, String expectedHost) {
         assertThatThrownBy(() -> ssrfProtectedClient.get()
-                        .uri(URI.create(uri))
-                        .retrieve()
-                        .body(String.class))
+                .uri(URI.create(uri))
+                .retrieve()
+                .body(String.class))
                 .isInstanceOf(FilteredHostException.class)
                 .satisfies(ex -> {
                     FilteredHostException fex = (FilteredHostException) ex;

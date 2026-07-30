@@ -8,25 +8,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link ContactMessage} persistence operations.
+ * Persistence operations for the {@link ContactMessage} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived count queries</strong> — {@code countByStatus} generates
- *       {@code SELECT COUNT(*) FROM contact_messages WHERE status = ?}.</li>
- *   <li><strong>Pagination with ordering</strong> — {@code findAllByOrderByCreatedAtDesc}
- *       accepts an optional {@link org.springframework.data.domain.Pageable} parameter;
- *       when a {@code Pageable} is supplied, Spring Data automatically wraps the query
- *       with a count query and applies {@code LIMIT} / {@code OFFSET}.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findAllByOrderByCreatedAtDesc
- *       → SELECT * FROM contact_messages ORDER BY created_at DESC
- *   countByStatus(ContactMessageStatus)
- *       → SELECT COUNT(*) FROM contact_messages WHERE status = ?
- * </pre>
+ * <p>Provides methods to query contact messages with pagination and count by status for admin
+ * dashboard statistics. The repository supports ordered queries for message listing and
+ * status-based counting for unread message indicators.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -34,7 +20,19 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ContactMessageRepository extends JpaRepository<ContactMessage, Long> {
 
+    /**
+     * Returns all contact messages ordered by creation date descending.
+     *
+     * @param pageable pagination parameters
+     * @return paginated list of contact messages
+     */
     Page<ContactMessage> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+    /**
+     * Counts contact messages by status.
+     *
+     * @param status the message status
+     * @return count of messages with the given status
+     */
     long countByStatus(ContactMessageStatus status);
 }

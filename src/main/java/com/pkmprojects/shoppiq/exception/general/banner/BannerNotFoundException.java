@@ -4,15 +4,20 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a requested
- * homepage banner could not be found.
+ * Thrown when a requested homepage banner cannot be found.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) for missing {@link com.pkmprojects.shoppiq.entity.banner.Banner}
- * entities.</p>
+ * <p>This exception is thrown by banner service methods when a database
+ * lookup for a banner fails. Banners are used on the homepage to promote
+ * sales and featured products. It uses the
+ * {@link ErrorCode#BANNER_NOT_FOUND} code and HTTP 404 Not Found status.</p>
+ *
+ * <p>The detail message includes the banner identifier (e.g.,
+ * "Banner with id '42' was not found.") to help the client understand
+ * which banner was invalid. The administrator should verify the banner
+ * ID and retry the operation.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#BANNER_NOT_FOUND
  * @since 1.0.0
  */
 public final class BannerNotFoundException extends ResourceNotFoundException {

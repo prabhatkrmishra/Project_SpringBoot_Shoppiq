@@ -7,29 +7,10 @@ import com.pkmprojects.shoppiq.dto.cart.UpdateCartItemRequest;
 import com.pkmprojects.shoppiq.entity.user.User;
 
 /**
- * <strong>Spring Boot Concept:</strong> Contract for shopping cart operations.
+ * Business contract for shopping cart operations.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * Service layer interface for cart management.
- * Architecture: {@code CartController → CartService → CartRepository / CartItemRepository / ItemDetailsLookupService}.
- * </p>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *   <li>Add items to the user's cart (auto-creates cart if none exists).</li>
- *   <li>Merge quantities when the same product is added twice.</li>
- *   <li>Retrieve cart with calculated subtotals and effective prices.</li>
- *   <li>Update quantities with stock validation.</li>
- *   <li>Remove individual items or clear the entire cart after checkout.</li>
- *   <li>Enforce ownership — users can only access their own cart items.</li>
- * </ul>
- *
- * <p>
- * All methods are scoped to the authenticated user; the user principal
- * must always be supplied by the controller and never inferred from
- * client-provided data.
- * </p>
+ * <p>Defines operations for adding, updating, and removing cart items with
+ * stock validation, ownership enforcement, and quantity merging.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

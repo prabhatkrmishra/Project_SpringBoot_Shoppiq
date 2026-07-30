@@ -3,12 +3,12 @@ package com.pkmprojects.shoppiq.aiservice.controller;
 import com.pkmprojects.shoppiq.aiservice.dto.ChatRequest;
 import com.pkmprojects.shoppiq.aiservice.exception.AiServiceUnavailableException;
 import com.pkmprojects.shoppiq.aiservice.service.ChatService;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
@@ -18,19 +18,22 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for guest (unauthenticated) AI chat conversations.
+ * REST controller for guest (unauthenticated) AI chat conversations.
  *
- * <p>
- * Provides endpoints for guest users to interact with the AI assistant without
- * an account. Guest sessions are tracked via a {@code GUEST_SESSION} cookie.
- * Guest conversations have no tool access — only product catalog search via the
- * RAG retrieval pipeline.
+ * <p>This controller provides endpoints for guest users to interact with the
+ * AI assistant without requiring an account. Guest sessions are tracked via
+ * a {@code GUEST_SESSION} cookie with a 24-hour expiry. Guest conversations
+ * have no tool access (orders, cart, reviews) and rely solely on the RAG
+ * retrieval pipeline for product information.</p>
  *
- * <h2>Endpoints</h2>
+ * <p>The controller manages session lifecycle: creating new session UUIDs
+ * when needed, setting HttpOnly secure cookies, and returning session IDs
+ * in the response body for frontend localStorage synchronization.</p>
+ *
  * <ul>
- *   <li>{@code POST /api/ai/guest} — send a message and receive the AI response</li>
- *   <li>{@code GET /api/ai/guest/{sessionId}/messages} — retrieve full message history</li>
- *   <li>{@code DELETE /api/ai/guest/{sessionId}} — clear a guest conversation</li>
+ *     <li>{@code POST   /api/ai/guest}                    — send a message and receive the AI response</li>
+ *     <li>{@code GET    /api/ai/guest/{sessionId}/messages} — retrieve full message history</li>
+ *     <li>{@code DELETE /api/ai/guest/{sessionId}}          — clear a guest conversation</li>
  * </ul>
  *
  * @author PrabhatKrMishra
@@ -42,11 +45,14 @@ import java.util.UUID;
 @ConditionalOnProperty(name = "shoppiq.ai.enabled", havingValue = "true", matchIfMissing = false)
 public class AiGuestChatController {
 
-    @Autowired(required = false)
-    private ChatService chatService;
+    private final ChatService chatService;
+    private final boolean secureCookie;
 
-    @Value("${app.security.secure-cookie:true}")
-    private boolean secureCookie;
+    public AiGuestChatController(@Nullable ChatService chatService,
+                                 @Value("${app.security.secure-cookie:true}") boolean secureCookie) {
+        this.chatService = chatService;
+        this.secureCookie = secureCookie;
+    }
 
     @PostConstruct
     void logInit() {
@@ -62,10 +68,13 @@ public class AiGuestChatController {
     /**
      * Sends a message as a guest user and receives the AI response.
      *
-     * <p>
-     * If no {@code GUEST_SESSION} cookie is present, a new session UUID is generated
-     * and set as an HttpOnly cookie with a 24-hour expiry. The session ID is returned
-     * in the response body for the frontend to store in {@code localStorage}.
+     * <p>If no {@code GUEST_SESSION} cookie is present, a new session UUID is
+     * generated and set as an HttpOnly cookie with a 24-hour expiry. The session
+     * ID is also returned in the response body for the frontend to store in
+     * {@code localStorage}, ensuring session persistence across page reloads.</p>
+     *
+     * <p>The response includes both the AI assistant's text response and the
+     * session ID for frontend state management.</p>
      *
      * @param request   the chat request containing the user message and optional model
      * @param sessionId the existing guest session ID (from cookie), or {@code null} for new sessions
@@ -106,6 +115,10 @@ public class AiGuestChatController {
     /**
      * Returns the full message history for a guest conversation.
      *
+     * <p>Guest messages are stored in memory (not persisted to the database)
+     * and are returned with synthetic sequential IDs. Messages are ordered
+     * chronologically.</p>
+     *
      * @param sessionId the guest session UUID (from cookie)
      * @return list of messages in chronological order
      */
@@ -118,6 +131,10 @@ public class AiGuestChatController {
 
     /**
      * Clears a guest conversation's in-memory message store.
+     *
+     * <p>Removes all messages for the session and evicts the chat memory
+     * window. Returns 204 No Content on success. This operation is
+     * irreversible; guest messages are not persisted to the database.</p>
      *
      * @param sessionId the guest session UUID (from cookie)
      * @return 204 No Content on success

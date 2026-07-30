@@ -9,12 +9,27 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Public REST controller for homepage banner data.
+ * Public REST controller for homepage banner data.
  *
- * <p>Exposes a read-only endpoint for the active banners displayed
- * on the homepage Sales &amp; Offers section.</p>
+ * <p>Exposes a read-only endpoint for the active banners displayed on the
+ * homepage Sales &amp; Offers section. This is an unauthenticated public endpoint
+ * intended for the storefront. Only banners flagged as active by admins are
+ * returned.</p>
+ *
+ * <p>This controller acts as the HTTP boundary for public banner retrieval. It
+ * delegates the query for active banners to {@link BannerService}. No business
+ * logic resides in the controller.</p>
+ *
+ * <p>No authentication is required. All endpoints are mounted under /api/banners.</p>
+ *
+ * <p>Supported endpoints:</p>
+ *
+ * <pre>
+ * GET    /api/banners/active  — list all active banners sorted by display order
+ * </pre>
  *
  * @author prabhatkrmishra
+ * @see BannerService
  * @since 1.0.0
  */
 @RestController
@@ -30,7 +45,11 @@ public class BannerController {
     /**
      * Returns all active banners sorted by display order.
      *
-     * @return 200 OK with list of active banners
+     * <p>Only banners with the active flag set to true are included.
+     * Results are ordered by the displayOrder field for consistent
+     * rendering on the homepage.</p>
+     *
+     * @return 200 OK with list of active banner responses
      */
     @GetMapping("/active")
     public List<BannerResponse> getActiveBanners() {

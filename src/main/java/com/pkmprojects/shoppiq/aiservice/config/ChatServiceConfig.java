@@ -7,13 +7,12 @@ import com.pkmprojects.shoppiq.aiservice.service.ChatService;
 import com.pkmprojects.shoppiq.aiservice.service.ChatServiceImpl;
 import com.pkmprojects.shoppiq.aiservice.service.ModelResolutionService;
 import com.pkmprojects.shoppiq.aiservice.tools.ShoppiqTools;
-import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,27 +21,29 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import reactor.core.publisher.Flux;
 
 import java.time.Clock;
 import java.time.Duration;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring configuration that creates the NVIDIA NIM-backed {@link ChatModel}
- * and {@link StreamingChatModel} beans, and wires them into {@link ChatServiceImpl}.
+ * Configures NVIDIA NIM-backed chat models and assembles the top-level
+ * ChatService bean for the AI assistant.
  *
- * <p>
- * Only active when the {@code shoppiq.ai.enabled=true} property is set. The default model
- * is {@code nvidia/llama-3.3-nemotron-super-49b-v1.5}. Additional models are
- * resolved and cached by {@link ModelResolutionService} on demand.
+ * <p>This configuration class creates the primary synchronous and streaming
+ * chat model beans using the NVIDIA NIM API with the default model
+ * (Nemotron 49B). Both models are configured with identical generation
+ * parameters (temperature 0.6, top-p 0.95, max tokens 4096) and a 120-second
+ * timeout to ensure consistent behavior across streaming and non-streaming
+ * conversation paths.</p>
  *
- * <h2>Beans Provided</h2>
- * <ul>
- *   <li>{@link ChatModel} — synchronous chat model (default)</li>
- *   <li>{@link StreamingChatModel} — streaming (token-by-token) chat model (default)</li>
- *   <li>{@link ChatService} — the main AI service implementation</li>
- * </ul>
+ * <p>The class also assembles the {@link ChatServiceImpl} bean by injecting
+ * all required dependencies: chat memory providers, RAG content retrievers,
+ * tool methods, persistence repositories, model resolution services, and
+ * system prompt providers. The resolve threshold parameter controls how many
+ * user messages must be present before auto-resolution can trigger.</p>
  *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @see ChatServiceImpl
  * @see ModelResolutionService
  * @since 1.0.0
@@ -62,6 +63,17 @@ public class ChatServiceConfig {
         this.resolveThreshold = resolveThreshold;
     }
 
+    /**
+     * Creates the primary synchronous chat model bean backed by NVIDIA NIM.
+     *
+     * <p>Configures the OpenAI-compatible chat model with the default Nemotron 49B
+     * model, a 4096-token output limit, and a 120-second timeout. Request and
+     * response logging is enabled for debugging. This bean is marked as
+     * {@code @Primary} so that it is injected wherever a {@link ChatModel} is
+     * required without explicit qualification.</p>
+     *
+     * @return the primary synchronous chat model instance
+     */
     @Bean
     @Primary
     public ChatModel chatModel() {
@@ -79,6 +91,16 @@ public class ChatServiceConfig {
                 .build();
     }
 
+    /**
+     * Creates the primary streaming chat model bean backed by NVIDIA NIM.
+     *
+     * <p>Configures the OpenAI-compatible streaming chat model with the same
+     * parameters as the synchronous model. This bean is used for real-time
+     * token-by-token response delivery via Project Reactor {@link Flux}.
+     * Marked as {@code @Primary} for automatic injection.</p>
+     *
+     * @return the primary streaming chat model instance
+     */
     @Bean
     @Primary
     public StreamingChatModel streamingChatModel() {
@@ -96,6 +118,27 @@ public class ChatServiceConfig {
                 .build();
     }
 
+    /**
+     * Creates the primary {@link ChatService} bean with all required dependencies.
+     *
+     * <p>This factory method assembles the {@link ChatServiceImpl} by injecting
+     * chat memory providers, tool methods, RAG content retrievers, persistence
+     * repositories, model resolution services, and context-specific system prompt
+     * providers. The resolve threshold parameter controls the minimum number of
+     * user messages required before the auto-resolution heuristic can trigger.</p>
+     *
+     * @param chatMemoryProvider     provides per-conversation memory windows
+     * @param chatMemoryConfig       manages memory lifecycle (clear on resolve)
+     * @param shoppiqTools           tool methods available to the AI model
+     * @param contentRetriever       RAG content retriever for product context
+     * @param conversationRepository persistence for conversations
+     * @param messageRepository      persistence for messages
+     * @param modelResolutionService resolves model names to model instances
+     * @param authenticatedPrompt    system prompt for logged-in users
+     * @param guestPrompt            system prompt for guest sessions
+     * @param clock                  clock for deterministic time
+     * @return the assembled ChatService instance
+     */
     @Bean
     public ChatService aiService(
             ChatMemoryProvider chatMemoryProvider,
@@ -104,7 +147,6 @@ public class ChatServiceConfig {
             ContentRetriever contentRetriever,
             ChatConversationRepository conversationRepository,
             ChatMessageRepository messageRepository,
-            UserRepository userRepository,
             ModelResolutionService modelResolutionService,
             @Qualifier("authenticatedSystemPrompt") SystemPromptProvider authenticatedPrompt,
             @Qualifier("guestSystemPrompt") SystemPromptProvider guestPrompt,
@@ -116,7 +158,7 @@ public class ChatServiceConfig {
 
         return new ChatServiceImpl(
                 chatMemoryProvider, chatMemoryConfig,
-                shoppiqTools, contentRetriever, conversationRepository, messageRepository, userRepository,
+                shoppiqTools, contentRetriever, conversationRepository, messageRepository,
                 modelResolutionService, authenticatedPrompt, guestPrompt, resolveThreshold, clock);
     }
 }

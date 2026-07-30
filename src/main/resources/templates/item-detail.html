@@ -282,7 +282,7 @@
                             danger: true
                         }).then(function (confirmed) {
                             if (!confirmed) return;
-                            API.del('/reviews/' + rid + '/delete').then(function () {
+                            API.del('/items/' + currentItemId + '/review/' + rid + '/delete').then(function () {
                                 showToast('Review deleted', 'success');
                                 loadReviews();
                             }).catch(function (err) {
@@ -502,7 +502,7 @@
                         }
                         var btn = document.getElementById('review-submit-btn');
                         setButtonLoading(btn, true);
-                        API.post('/items/' + currentItemId + '/create/review', {
+                        API.post('/items/' + currentItemId + '/review/create', {
                             rating: selectedRating,
                             review: document.getElementById('review-text').value.trim()
                         }).then(function () {
@@ -543,7 +543,7 @@
                         }
                         var btn = this;
                         setButtonLoading(btn, true);
-                        API.put('/reviews/' + editingReviewId + '/update', {
+                        API.put('/items/' + currentItemId + '/review/' + editingReviewId + '/update', {
                             rating: editSelectedRating,
                             review: document.getElementById('edit-review-text').value.trim()
                         }).then(function () {

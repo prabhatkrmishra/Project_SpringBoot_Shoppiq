@@ -26,6 +26,20 @@ class SlugUtilTest {
     // toSlug()
     // ---------------------------------------------------------------
 
+    @Test
+    @DisplayName("Cannot be instantiated via reflection")
+    void constructor_throwsAssertionError() {
+        assertThatThrownBy(() -> {
+            var constructor = SlugUtil.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            constructor.newInstance();
+        }).hasCauseInstanceOf(AssertionError.class);
+    }
+
+    // ---------------------------------------------------------------
+    // isSlug()
+    // ---------------------------------------------------------------
+
     @Nested
     @DisplayName("toSlug()")
     class ToSlug {
@@ -89,7 +103,7 @@ class SlugUtilTest {
     }
 
     // ---------------------------------------------------------------
-    // isSlug()
+    // Utility class guard
     // ---------------------------------------------------------------
 
     @Nested
@@ -129,19 +143,5 @@ class SlugUtilTest {
         void isSlug_null_returnsFalse() {
             assertThat(SlugUtil.isSlug(null)).isFalse();
         }
-    }
-
-    // ---------------------------------------------------------------
-    // Utility class guard
-    // ---------------------------------------------------------------
-
-    @Test
-    @DisplayName("Cannot be instantiated via reflection")
-    void constructor_throwsAssertionError() {
-        assertThatThrownBy(() -> {
-            var constructor = SlugUtil.class.getDeclaredConstructor();
-            constructor.setAccessible(true);
-            constructor.newInstance();
-        }).hasCauseInstanceOf(AssertionError.class);
     }
 }

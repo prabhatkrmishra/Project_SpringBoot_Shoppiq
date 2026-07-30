@@ -1,8 +1,8 @@
 package com.pkmprojects.shoppiq.exception.handler;
 
-import com.pkmprojects.shoppiq.exception.constants.ProblemDetailProperties;
 import com.pkmprojects.shoppiq.exception.base.ShoppiqException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
+import com.pkmprojects.shoppiq.exception.constants.ProblemDetailProperties;
 import com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory;
 import com.pkmprojects.shoppiq.exception.formatter.ValidationErrorFormatter;
 import jakarta.servlet.RequestDispatcher;
@@ -10,6 +10,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.connector.ClientAbortException;
+import org.springframework.boot.http.client.FilteredHostException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -21,27 +23,32 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import org.apache.catalina.connector.ClientAbortException;
-import org.springframework.boot.http.client.FilteredHostException;
-
 import java.io.IOException;
 import java.net.URI;
 
 /**
- * <strong>Spring Boot Concept:</strong> {@code @RestControllerAdvice} class
- * that converts application and framework exceptions into RFC 9457
- * compliant {@link ProblemDetail} responses.
+ * Central exception handler that converts application and framework exceptions
+ * into RFC 9457 compliant {@link ProblemDetail} responses.
  *
- * <p>Uses Spring's {@code @ExceptionHandler} to target specific exception
- * types, ordered from most specific ({@link com.pkmprojects.shoppiq.exception.base.ShoppiqException})
- * to most generic ({@link Exception}). Delegates {@code ProblemDetail}
- * creation to {@link com.pkmprojects.shoppiq.exception.factory.ProblemDetailFactory}
- * and validation error formatting to
- * {@link com.pkmprojects.shoppiq.exception.formatter.ValidationErrorFormatter}.
- * The 404 handler checks the {@code Accept} header to return JSON for API
- * clients or forward to the HTML error page for browser requests.</p>
+ * <p>This {@code @RestControllerAdvice} class intercepts all exceptions thrown
+ * by controller methods and translates them into structured HTTP responses.
+ * It uses Spring's {@code @ExceptionHandler} mechanism to target specific
+ * exception types, ordered from most specific ({@link ShoppiqException}) to
+ * most generic ({@link Exception}). Each handler delegates to
+ * {@link ProblemDetailFactory} for Problem Detail creation and
+ * {@link ValidationErrorFormatter} for validation error formatting.</p>
+ *
+ * <p>The handler implements a content-negotiation strategy for 404 errors:
+ * API clients (those sending {@code Accept: application/json}) receive a
+ * JSON Problem Detail response, while browser requests are forwarded to the
+ * {@code /error} endpoint for HTML error page rendering. This dual behavior
+ * ensures that both SPA frontends and traditional browser users see
+ * appropriate error pages.</p>
  *
  * @author prabhatkrmishra
+ * @see ProblemDetailFactory
+ * @see ValidationErrorFormatter
+ * @see ShoppiqException
  * @since 1.0.0
  */
 @Slf4j
@@ -49,11 +56,18 @@ import java.net.URI;
 public class GlobalExceptionHandler {
 
     /**
-     * Handles all application-specific exceptions.
+     * Handles all application-specific exceptions thrown by service and
+     * controller layers.
      *
-     * @param exception application exception
-     * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response
+     * <p>This is the primary handler for any exception that extends
+     * {@link ShoppiqException}. It extracts the error code, HTTP status,
+     * and detail message from the exception and delegates to
+     * {@link ProblemDetailFactory} to create the response. The exception
+     * is logged at WARN level with the error code for diagnostics.</p>
+     *
+     * @param exception the application-specific exception
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response
      */
     @ExceptionHandler(ShoppiqException.class)
     public ProblemDetail handleShoppiqException(ShoppiqException exception, HttpServletRequest request) {
@@ -64,11 +78,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles Bean Validation failures.
+     * Handles Bean Validation failures from {@code @Valid} and {@code @Validated}
+     * annotations on controller method parameters.
      *
-     * @param exception validation exception
-     * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response
+     * <p>Collects all field-level and global-level validation errors from the
+     * {@link org.springframework.validation.BindingResult} and formats them
+     * into a human-readable string using {@link ValidationErrorFormatter}.
+     * The formatted message is included in the Problem Detail response at
+     * HTTP 400 status. Validation errors are logged at DEBUG level to avoid
+     * noise in production logs.</p>
+     *
+     * @param exception the validation exception containing binding errors
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 400 status
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidationException(MethodArgumentNotValidException exception, HttpServletRequest request) {
@@ -84,16 +106,22 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles requests for missing static resources (e.g. favicon.ico) and 404 errors.
+     * Handles requests for missing static resources (e.g., favicon.ico)
+     * and undefined API endpoints.
      *
-     * <p>
-     * Forwards to the /error page so the HTML error template is rendered.
-     * </p>
+     * <p>This handler implements content negotiation: if the request
+     * includes an {@code Accept} header containing {@code application/json}
+     * or {@code application/problem+json}, it returns a JSON Problem Detail
+     * response. For browser requests (no JSON Accept header), it forwards
+     * to the {@code /error} endpoint so the HTML error template is rendered.
+     * This ensures that API clients and browser users both receive
+     * appropriate error responses.</p>
      *
-     * @param exception NoResourceFoundException for missing resources
-     * @param request   current HTTP request
-     * @param response  current HTTP response
-     * @return ProblemDetail for API requests, or void when forwarding for browser requests
+     * @param exception the exception indicating a missing resource
+     * @param request   the current HTTP request
+     * @param response  the current HTTP response
+     * @return a Problem Detail for API requests, or void when forwarding for browser requests
+     * @throws IOException if forwarding to the error page fails
      */
     @ExceptionHandler(NoResourceFoundException.class)
     public Object handleNoResourceFoundException(NoResourceFoundException exception,
@@ -116,11 +144,17 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles constraint violations from {@code @Validated} method parameters
-     * (e.g. {@code @RequestParam @NotBlank} on controller methods).
+     * such as {@code @RequestParam @NotBlank} on controller methods.
      *
-     * @param exception constraint violation exception
-     * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response with 400 status
+     * <p>Unlike {@code @Valid} on request body parameters, constraint
+     * violations on method parameters throw
+     * {@link ConstraintViolationException} instead of
+     * {@link MethodArgumentNotValidException}. This handler formats the
+     * violation message and returns a Problem Detail response at HTTP 400.</p>
+     *
+     * @param exception the constraint violation exception
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 400 status
      */
     @ExceptionHandler(ConstraintViolationException.class)
     public ProblemDetail handleConstraintViolationException(
@@ -134,12 +168,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles missing required request parameters (e.g. a {@code @RequestParam}
-     * with no default value that was not supplied in the request).
+     * Handles missing required request parameters such as a
+     * {@code @RequestParam} with no default value that was not supplied.
      *
-     * @param exception missing parameter exception
-     * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response with 400 status
+     * <p>This exception is thrown by Spring MVC when a controller method
+     * declares a required request parameter that is absent from the
+     * incoming request. The handler formats a clear message indicating
+     * which parameter is missing and returns HTTP 400.</p>
+     *
+     * @param exception the missing parameter exception
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 400 status
      */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ProblemDetail handleMissingServletRequestParameterException(
@@ -153,12 +192,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles malformed or unreadable JSON request bodies (e.g. a JSON array
-     * sent where an object is expected, or completely invalid JSON).
+     * Handles malformed or unreadable JSON request bodies.
      *
-     * @param exception message conversion failure
-     * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response with 400 status
+     * <p>This exception is thrown when the request body cannot be
+     * deserialized by Jackson, typically because the JSON is
+     * syntactically invalid or a JSON array was sent where an object
+     * was expected. The handler returns a generic message to avoid
+     * leaking parser details, at HTTP 400 status.</p>
+     *
+     * @param exception the message conversion failure
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 400 status
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail handleHttpMessageNotReadableException(
@@ -172,12 +216,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles type mismatch errors for request parameters
-     * (e.g. invalid enum value like "VERIFIED" when expected "APPROVED").
+     * Handles type mismatch errors for request parameters.
      *
-     * @param exception type mismatch exception
-     * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response with 400 status
+     * <p>This exception is thrown when a request parameter cannot be
+     * converted to the expected type, such as providing "VERIFIED" when
+     * an enum value of "APPROVED" is expected. The handler formats a
+     * message indicating the invalid value, the parameter name, and the
+     * expected type, at HTTP 400 status.</p>
+     *
+     * @param exception the type mismatch exception
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 400 status
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ProblemDetail handleMethodArgumentTypeMismatchException(
@@ -199,12 +248,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles client disconnections (browser navigated away, tab closed, etc.).
+     * Handles client disconnections such as browser navigation, tab closure,
+     * or network interruption during request processing.
      *
-     * <p>
-     * These are expected and harmless. Logged at DEBUG level only.
-     * Returns null to avoid writing a response body to a disconnected client.
-     * </p>
+     * <p>These exceptions are expected and harmless in production. They occur
+     * when the client disconnects before the server can write the response.
+     * The handler logs at DEBUG level only and returns null to avoid writing
+     * a response body to a disconnected client, which would cause an
+     * {@link java.io.IOException}.</p>
+     *
+     * @param exception the client abort exception
+     * @param request   the current HTTP request
+     * @return null to skip response writing
      */
     @ExceptionHandler(ClientAbortException.class)
     public Object handleClientAbortException(ClientAbortException exception, HttpServletRequest request) {
@@ -217,12 +272,15 @@ public class GlobalExceptionHandler {
     /**
      * Handles SSRF-blocked outbound requests.
      *
-     * <p>Thrown by {@link org.springframework.boot.http.client.InetAddressFilter}
-     * when an outbound HTTP request targets a blocked (internal) address.</p>
+     * <p>This exception is thrown by {@link org.springframework.boot.http.client.InetAddressFilter}
+     * when an outbound HTTP request targets a blocked (internal) address.
+     * The handler logs the blocked host at WARN level and returns a 403
+     * Forbidden response to prevent the application from being used as a
+     * proxy to internal networks.</p>
      *
-     * @param exception filtered host exception
-     * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response with 403 status
+     * @param exception the filtered host exception
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 403 status
      */
     @ExceptionHandler(FilteredHostException.class)
     public ProblemDetail handleFilteredHostException(FilteredHostException exception, HttpServletRequest request) {
@@ -235,15 +293,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles database constraint violations (unique key, NOT NULL, foreign key).
+     * Handles database constraint violations such as unique key, NOT NULL,
+     * or foreign key violations.
      *
-     * <p>Logs the actual SQL-level detail at WARN level for diagnostics but
-     * returns a generic client-facing message to avoid leaking schema or
-     * query details.</p>
+     * <p>The actual SQL-level detail is logged at WARN level for diagnostics,
+     * but the client receives a generic message to avoid leaking database
+     * schema or query details. The response uses HTTP 409 Conflict status
+     * to indicate that the request conflicts with existing data.</p>
      *
-     * @param exception data integrity violation
-     * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response with 409 status
+     * @param exception the data integrity violation exception
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 409 status
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ProblemDetail handleDataIntegrityViolationException(
@@ -257,11 +317,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles all unexpected exceptions.
+     * Handles all unexpected exceptions that are not caught by any other handler.
      *
-     * @param exception unexpected exception
-     * @param request   current HTTP request
-     * @return RFC 9457 ProblemDetail response
+     * <p>This is the catch-all handler for any exception that slips through
+     * the more specific handlers. It logs the full exception stack trace at
+     * ERROR level for post-mortem analysis and returns a generic HTTP 500
+     * response with no internal details to avoid leaking sensitive
+     * information.</p>
+     *
+     * @param exception the unexpected exception
+     * @param request   the current HTTP request
+     * @return an RFC 9457 Problem Detail response with 500 status
      */
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpectedException(Exception exception, HttpServletRequest request) {
@@ -274,10 +340,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Creates the RFC 9457 instance URI.
+     * Creates the RFC 9457 instance URI from the current request.
      *
-     * @param request current HTTP request
-     * @return request URI
+     * <p>The instance URI identifies the specific occurrence of the error
+     * and is set to the request URI. This allows clients to correlate
+     * error responses with the requests that produced them.</p>
+     *
+     * @param request the current HTTP request
+     * @return the request URI as an {@link URI} instance
      */
     private URI createInstance(HttpServletRequest request) {
         return URI.create(request.getRequestURI());
@@ -286,6 +356,15 @@ public class GlobalExceptionHandler {
     /**
      * Determines whether the request expects a JSON response (API client)
      * versus an HTML response (browser).
+     *
+     * <p>Checks the {@code Accept} header for {@code application/json} or
+     * {@code application/problem+json} content types. Returns true for
+     * API clients and false for browser requests, enabling the 404 handler
+     * to choose between returning a Problem Detail response or forwarding
+     * to the HTML error page.</p>
+     *
+     * @param request the current HTTP request
+     * @return true if the request is from an API client, false otherwise
      */
     private boolean isApiRequest(HttpServletRequest request) {
         String accept = request.getHeader("Accept");
@@ -293,10 +372,21 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Forwards the request to the /error page with error attributes set.
+     * Forwards the request to the {@code /error} page with error attributes
+     * set for the HTML error template.
+     *
+     * <p>This method sets the HTTP status code, error message, and error
+     * code as request attributes that the Thymeleaf error template can
+     * read and render. If forwarding fails (e.g., the error page itself
+     * throws an exception), it falls back to sending a raw 404 error.</p>
+     *
+     * @param request       the current HTTP request
+     * @param response      the current HTTP response
+     * @param problemDetail the Problem Detail to extract error attributes from
+     * @throws IOException if forwarding or error sending fails
      */
     private void forwardToErrorPage(HttpServletRequest request, HttpServletResponse response,
-                                     ProblemDetail problemDetail) throws IOException {
+                                    ProblemDetail problemDetail) throws IOException {
         try {
             request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, problemDetail.getStatus());
             request.setAttribute(RequestDispatcher.ERROR_MESSAGE, problemDetail.getDetail());

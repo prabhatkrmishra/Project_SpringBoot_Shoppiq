@@ -15,10 +15,10 @@ import com.pkmprojects.shoppiq.exception.general.item.ItemNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotFoundException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerNotVerifiedException;
 import com.pkmprojects.shoppiq.exception.general.seller.SellerSuspendedException;
-import com.pkmprojects.shoppiq.service.seller.SellerInventoryServiceImpl;
 import com.pkmprojects.shoppiq.service.item.ItemLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsLookupService;
 import com.pkmprojects.shoppiq.service.itemdetails.ItemDetailsWriteService;
+import com.pkmprojects.shoppiq.service.seller.SellerInventoryServiceImpl;
 import com.pkmprojects.shoppiq.service.seller.SellerLookupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,8 +38,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SellerInventoryServiceImpl Tests")

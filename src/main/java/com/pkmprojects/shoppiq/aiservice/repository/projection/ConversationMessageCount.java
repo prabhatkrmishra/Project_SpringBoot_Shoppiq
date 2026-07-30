@@ -1,16 +1,12 @@
 package com.pkmprojects.shoppiq.aiservice.repository.projection;
 
 /**
- * <strong>Spring Boot Concept:</strong> Typed projection for batch-counting messages of a specific role
- * across multiple conversations.
+ * Projection for batch-counting messages of a specific role across conversations.
  *
- * <p><b>How AI fits:</b> Used by both {@code ChatServiceImpl} and
- * {@code AdminAiChatServiceImpl} to efficiently compute message counts
- * for conversation summaries without N+1 queries.</p>
- *
- * <p><b>Pattern used:</b> Spring Data JPA projection interface —
- * replaces fragile {@code Object[]} index-based access with
- * a compile-time safe interface.</p>
+ * <p>This lightweight interface is used by Spring Data JPA to return aggregated
+ * message count data without loading full entity graphs. It supports the admin
+ * dashboard's conversation listing by providing pre-computed message counts
+ * in a single query, avoiding N+1 performance issues.</p>
  *
  * @author prabhatkrmishra
  * @since 1.5.0
@@ -20,12 +16,18 @@ public interface ConversationMessageCount {
     /**
      * The conversation identifier.
      *
+     * <p>This corresponds to the internal database ID of the conversation,
+     * used as the key in the batch-count result map.</p>
+     *
      * @return conversation ID
      */
     Long getConversationId();
 
     /**
      * The count of matching messages in this conversation.
+     *
+     * <p>Represents the number of messages with the specified role
+     * (typically {@code USER}) within the conversation.</p>
      *
      * @return message count
      */

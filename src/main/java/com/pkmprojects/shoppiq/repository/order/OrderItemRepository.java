@@ -17,20 +17,11 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for {@link OrderItem} persistence.
+ * Persistence operations for the {@link OrderItem} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived query by association</strong> — {@code findAllByOrder(Order)} generates
- *       {@code SELECT * FROM order_items WHERE order_id = ?}.</li>
- *   <li><strong>JPQL aggregation with COALESCE</strong> — {@code sumRevenueBySellerIdAndPaymentStatus}
- *       joins across four tables ({@code OrderItem → ItemDetails → Item → Seller → Order}) and
- *       uses {@code COALESCE(SUM(oi.subtotal), 0)} to safely aggregate revenue, returning
- *       a {@link java.math.BigDecimal}.</li>
- *   <li><strong>JPQL with GROUP BY and projections</strong> — {@code aggregateRevenueBySeller}
- *       demonstrates multi-table joins, grouping, and mapping results to an interface-based
- *       projection ({@link com.pkmprojects.shoppiq.repository.order.projection.SellerRevenueAggregate}).</li>
- * </ul>
+ * <p>Provides methods to query order items by order, seller, and date range for order management
+ * and sales reporting. The repository supports aggregate queries for product performance,
+ * category sales, and seller revenue analytics.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -91,7 +82,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             GROUP BY oi.itemDetails.id, oi.itemNameSnapshot, oi.itemDetails.sku
             ORDER BY revenue DESC""")
     List<ProductSalesAggregate> aggregateProductSalesByDateRange(@Param("start") Instant start,
-                                                                  @Param("end") Instant end);
+                                                                 @Param("end") Instant end);
 
     /**
      * Aggregates sales per category within a date range, ordered by revenue descending.
@@ -110,7 +101,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             GROUP BY c.id, c.name
             ORDER BY revenue DESC""")
     List<CategorySalesAggregate> aggregateCategorySalesByDateRange(@Param("start") Instant start,
-                                                                    @Param("end") Instant end);
+                                                                   @Param("end") Instant end);
 
     /**
      * Aggregates product performance (quantity, revenue, average price) within a date range,
@@ -132,5 +123,5 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             GROUP BY oi.itemDetails.id, oi.itemNameSnapshot, oi.itemDetails.sku, id.stockQuantity
             ORDER BY revenue DESC""")
     List<ProductPerformanceAggregate> aggregateProductPerformanceByDateRange(@Param("start") Instant start,
-                                                                              @Param("end") Instant end);
+                                                                             @Param("end") Instant end);
 }

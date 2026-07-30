@@ -4,14 +4,21 @@ import com.pkmprojects.shoppiq.exception.business.InvalidOperationException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when the requested
- * cart quantity exceeds available stock.
+ * Thrown when the requested cart quantity exceeds available stock.
  *
- * <p>Leaf exception in the invalid-operation hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.InvalidOperationException}
- * (HTTP 400) for inventory constraint violations during checkout.</p>
+ * <p>This exception is thrown when a customer attempts to add more units
+ * of an item to their cart than are currently in stock. The system
+ * prevents over-commitment of inventory to maintain data integrity and
+ * accurate stock counts. It uses the {@link ErrorCode#INSUFFICIENT_STOCK}
+ * code and HTTP 400 Bad Request status.</p>
+ *
+ * <p>The detail message includes the SKU, requested quantity, and
+ * available quantity (e.g., "Insufficient stock for SKU 'PROD-001':
+ * requested 5, available 3.") to help the client understand how many
+ * units are actually available.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#INSUFFICIENT_STOCK
  * @since 1.0.0
  */
 public final class InsufficientStockException extends InvalidOperationException {

@@ -8,10 +8,10 @@ import com.pkmprojects.shoppiq.aiservice.enums.ConversationStatus;
 import com.pkmprojects.shoppiq.aiservice.exception.AiServiceUnavailableException;
 import com.pkmprojects.shoppiq.aiservice.service.ChatService;
 import com.pkmprojects.shoppiq.entity.user.User;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,20 +21,25 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> REST controller for authenticated AI chat conversations.
+ * REST controller for authenticated AI chat conversations.
  *
- * <p>
- * Provides endpoints for creating conversations, sending messages (with
- * optional streaming), listing conversation history, and resolving conversations.
- * All endpoints require a valid JWT and {@code ROLE_CUSTOMER} or {@code ROLE_ADMIN}.
+ * <p>This controller provides the primary API for authenticated users to
+ * interact with the Shoppiq AI assistant. It supports conversation creation,
+ * message sending (with optional model selection), conversation history
+ * retrieval, and conversation resolution. All endpoints require a valid JWT
+ * and {@code ROLE_CUSTOMER} or {@code ROLE_ADMIN} security clearance.</p>
  *
- * <h2>Endpoints</h2>
+ * <p>The controller delegates all business logic to {@link ChatService},
+ * handling only request validation, service availability checks, and
+ * response assembly. Each endpoint returns a {@link ChatResponse} containing
+ * the conversation ID, full message history, and current status.</p>
+ *
  * <ul>
- *   <li>{@code POST /api/ai/chat} — create a new conversation and send the first message</li>
- *   <li>{@code POST /api/ai/chat/{chatId}} — send a message to an existing conversation</li>
- *   <li>{@code GET /api/ai/chat/conversations} — list all conversations for the authenticated user</li>
- *   <li>{@code GET /api/ai/chat/{chatId}/messages} — retrieve full message history</li>
- *   <li>{@code DELETE /api/ai/chat/{chatId}} — mark a conversation as resolved</li>
+ *     <li>{@code POST   /api/ai/chat}                    — create a new conversation and send the first message</li>
+ *     <li>{@code POST   /api/ai/chat/{chatId}}            — send a message to an existing conversation</li>
+ *     <li>{@code GET    /api/ai/chat/conversations}       — list all conversations for the authenticated user</li>
+ *     <li>{@code GET    /api/ai/chat/{chatId}/messages}   — retrieve full message history</li>
+ *     <li>{@code DELETE /api/ai/chat/{chatId}}            — mark a conversation as resolved</li>
  * </ul>
  *
  * @author PrabhatKrMishra
@@ -47,8 +52,11 @@ import java.util.List;
 @ConditionalOnProperty(name = "shoppiq.ai.enabled", havingValue = "true", matchIfMissing = false)
 public class AiChatController {
 
-    @Autowired(required = false)
-    private ChatService chatService;
+    private final ChatService chatService;
+
+    public AiChatController(@Nullable ChatService chatService) {
+        this.chatService = chatService;
+    }
 
     @PostConstruct
     void logInit() {
@@ -64,11 +72,11 @@ public class AiChatController {
     /**
      * Creates a new conversation and sends the first message.
      *
-     * <p>
-     * Generates a unique chat ID, persists the user message, invokes the AI model,
-     * persists the assistant response, and returns the full conversation with all
-     * messages. The {@code model} field in the request body selects which LLM to
-     * use (omitting it falls back to the default model).
+     * <p>Generates a unique chat ID, persists the user message, invokes the
+     * AI model, persists the assistant response, and returns the full
+     * conversation with all messages. The {@code model} field in the request
+     * body selects which LLM to use; omitting it falls back to the default
+     * model.</p>
      *
      * @param user    the authenticated user (injected by Spring Security)
      * @param request the chat request containing the user message and optional model
@@ -91,10 +99,10 @@ public class AiChatController {
     /**
      * Sends a message to an existing conversation.
      *
-     * <p>
-     * Validates conversation ownership, persists the user message, invokes the AI
-     * model, persists the assistant response, and returns the updated conversation.
-     * Throws if the conversation has been resolved.
+     * <p>Validates conversation ownership, persists the user message, invokes
+     * the AI model, persists the assistant response, and returns the updated
+     * conversation. Throws if the conversation has been resolved or if the
+     * user does not own the conversation.</p>
      *
      * @param user    the authenticated user (injected by Spring Security)
      * @param chatId  the public conversation identifier
@@ -118,6 +126,10 @@ public class AiChatController {
     /**
      * Returns all conversations for the authenticated user, ordered by most recently updated.
      *
+     * <p>The returned list includes conversation summaries with chat ID, title,
+     * status, message count, and timestamps, suitable for rendering in the
+     * sidebar conversation list.</p>
+     *
      * @param user the authenticated user (injected by Spring Security)
      * @return list of conversation summaries
      */
@@ -131,6 +143,10 @@ public class AiChatController {
 
     /**
      * Returns the full message history for a specific conversation.
+     *
+     * <p>Validates that the conversation belongs to the authenticated user
+     * before returning the messages. Messages are returned in chronological
+     * order with all roles included.</p>
      *
      * @param user   the authenticated user (injected by Spring Security)
      * @param chatId the public conversation identifier
@@ -147,6 +163,11 @@ public class AiChatController {
 
     /**
      * Marks a conversation as resolved, preventing further messages.
+     *
+     * <p>Sets the conversation status to RESOLVED, records the resolution
+     * timestamp, and appends a SYSTEM message. Returns 204 No Content
+     * on success. The conversation remains in the database for historical
+     * review.</p>
      *
      * @param user   the authenticated user (injected by Spring Security)
      * @param chatId the public conversation identifier

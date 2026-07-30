@@ -11,13 +11,13 @@ import com.pkmprojects.shoppiq.aiservice.repository.ChatMessageRepository;
 import com.pkmprojects.shoppiq.aiservice.service.ChatOrderService;
 import com.pkmprojects.shoppiq.aiservice.service.ChatProductService;
 import com.pkmprojects.shoppiq.aiservice.service.ChatReviewService;
+import com.pkmprojects.shoppiq.dto.cart.CartResponse;
 import com.pkmprojects.shoppiq.entity.item.Item;
 import com.pkmprojects.shoppiq.entity.order.Order;
 import com.pkmprojects.shoppiq.entity.review.ItemReview;
 import com.pkmprojects.shoppiq.entity.user.User;
 import com.pkmprojects.shoppiq.exception.general.aiservice.AiConversationNotFoundException;
 import com.pkmprojects.shoppiq.service.cart.CartService;
-import com.pkmprojects.shoppiq.dto.cart.CartResponse;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
@@ -42,33 +42,22 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> LangChain4j tool methods that give the AI assistant access to Shoppiq's
- * product catalog, orders, cart, and review data.
+ * LangChain4j tool methods that give the AI assistant access to Shoppiq's data.
  *
- * <p>
- * Each {@code @Tool}-annotated method is auto-discovered by LangChain4j and
- * made available to the AI model for function calling. The model decides when
- * to invoke each tool based on the tool description and the user's request.
+ * <p>This component provides a collection of tool methods annotated with
+ * {@code @Tool} that the AI model can invoke during conversations to
+ * retrieve real data from the Shoppiq database. Tools include product
+ * detail lookup, order status checking, cart contents retrieval, user
+ * review access, semantic product search via vector embeddings, and
+ * conversation resolution.</p>
  *
- * <h2>Tools</h2>
- * <ul>
- *   <li>{@link #semanticProductSearch} — vector/semantic product search with optional category/price filters</li>
- *   <li>{@link #getProductDetail} — detailed product information by slug or name</li>
- *   <li>{@link #getOrderStatus} — recent order history for the authenticated user</li>
- *   <li>{@link #getCartContents} — current shopping cart contents</li>
- *   <li>{@link #getUserReviews} — product reviews written by the user</li>
- *   <li>{@link #resolveCurrentConversation} — resolve (close) the current conversation</li>
- * </ul>
+ * <p>Each tool method includes a descriptive annotation that the LLM uses
+ * to decide when to invoke it. Tools are only available to authenticated
+ * users; guest conversations rely solely on RAG-based product retrieval
+ * without tool access. The {@code @ToolMemoryId} annotation provides
+ * the conversation's chat ID for user resolution and memory isolation.</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *   <li>Tool methods are stateless — they delegate to existing repository/service beans</li>
- *   <li>The {@code @ToolMemoryId} parameter provides the chat ID, which is used to
- *       look up the owning user via {@link ChatConversationRepository}</li>
- *   <li>Guest users cannot use order, cart, or review tools (no authenticated user)</li>
- * </ul>
- *
- * @author PrabhatKrMishra
+ * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Component
@@ -101,13 +90,18 @@ public class ShoppiqTools {
     /**
      * Retrieves detailed information for a specific product by slug or name.
      *
-     * <p>
-     * First attempts an exact slug lookup, then falls back to a full-text
-     * search if no slug matches. Returns SKU, price, discount, stock,
-     * category, description, and URL.
+     * <p>This tool first attempts an exact slug lookup via
+     * {@link ChatProductService#findBySlug(String)}. If no slug matches,
+     * it falls back to a case-insensitive name search via
+     * {@link ChatProductService#findByNameContaining(String, int)}.
+     * The returned string includes product name, SKU, price, discount
+     * percentage, stock quantity, category, description, and URL link.</p>
+     *
+     * <p>Used by the AI model when a user asks about a specific product's
+     * details, specifications, or availability.</p>
      *
      * @param identifier the product slug (e.g., "wireless-headphones") or name
-     * @return formatted product detail or a "not found" message
+     * @return formatted product detail string, or a "not found" message
      */
     @Tool("Get detailed information about a specific product by name or slug. Use this when the user asks about a specific product's details, specs, or availability.")
     public String getProductDetail(
@@ -151,14 +145,19 @@ public class ShoppiqTools {
     /**
      * Returns the authenticated user's recent order history.
      *
-     * <p>
-     * Each order includes its ID, status, grand total, and placement timestamp.
-     * Results are limited to the most recent orders.
+     * <p>This tool supports two modes: single-order lookup (when an order
+     * number is provided) and recent-order listing (when omitted). Single-order
+     * mode validates ownership before returning details. Recent-order mode
+     * returns up to the specified limit (default 5) orders with ID, status,
+     * grand total, and placement timestamp.</p>
+     *
+     * <p>Used by the AI model when a user asks about their orders, delivery
+     * status, or purchase history.</p>
      *
      * @param orderNumber optional specific order number to filter by
      * @param limit       maximum number of orders to return (default 5)
      * @param chatId      the conversation ID, used to resolve the authenticated user
-     * @return formatted order list or a "no orders" message
+     * @return formatted order list, single order details, or a "no orders" message
      */
     @Tool("Get the status and details of the user's recent orders. Use this when the user asks about their orders, delivery status, or purchase history.")
     public String getOrderStatus(
@@ -174,12 +173,11 @@ public class ShoppiqTools {
                 return chatOrderService.findById(orderId)
                         .filter(order -> order.getUser().getId().equals(user.getId()))
                         .map(order -> {
-                            StringBuilder sb = new StringBuilder();
-                            sb.append("Order #").append(order.getId()).append("\n");
-                            sb.append("Status: ").append(order.getStatus()).append("\n");
-                            sb.append("Total: $").append(order.getGrandTotal()).append("\n");
-                            sb.append("Placed: ").append(order.getPlacedAt()).append("\n");
-                            return sb.toString();
+                            String sb = "Order #" + order.getId() + "\n" +
+                                    "Status: " + order.getStatus() + "\n" +
+                                    "Total: $" + order.getGrandTotal() + "\n" +
+                                    "Placed: " + order.getPlacedAt() + "\n";
+                            return sb;
                         })
                         .orElse("No order found with number '" + orderNumber + "'.");
             } catch (NumberFormatException _) {
@@ -211,8 +209,13 @@ public class ShoppiqTools {
     /**
      * Returns the authenticated user's current shopping cart contents.
      *
-     * <p>
-     * Includes item names, quantities, unit prices, and the cart subtotal.
+     * <p>This tool retrieves the user's cart via {@link CartService} and
+     * formats the contents as a readable summary including item names,
+     * quantities, unit prices, and the cart subtotal. Returns an "empty
+     * cart" message if the cart contains no items.</p>
+     *
+     * <p>Used by the AI model when a user asks what's in their cart, the
+     * cart total, or wants to discuss their cart items.</p>
      *
      * @param chatId the conversation ID, used to resolve the authenticated user
      * @return formatted cart summary or an "empty cart" message
@@ -240,9 +243,13 @@ public class ShoppiqTools {
     /**
      * Returns product reviews written by the authenticated user.
      *
-     * <p>
-     * Each review includes the product name, rating (out of 5), and the
-     * review text.
+     * <p>This tool retrieves the user's review history via
+     * {@link ChatReviewService} and formats each review with the product
+     * name, rating (out of 5), and review text. Results are limited to
+     * the specified count (default 5) and ordered by most recent first.</p>
+     *
+     * <p>Used by the AI model when a user asks about reviews they've
+     * written or wants to see their review history.</p>
      *
      * @param limit  maximum number of reviews to return (default 5)
      * @param chatId the conversation ID, used to resolve the authenticated user
@@ -280,9 +287,14 @@ public class ShoppiqTools {
     /**
      * Resolves (closes) the current conversation.
      *
-     * <p>
-     * Marks the conversation as RESOLVED, records the resolution timestamp,
-     * and appends a SYSTEM message to the conversation history.
+     * <p>This tool validates conversation ownership, marks the conversation
+     * as RESOLVED, records the resolution timestamp, appends a SYSTEM
+     * message, and clears the chat memory window. Returns a confirmation
+     * message or indicates that the conversation is already resolved.</p>
+     *
+     * <p>Used by the AI model when the user indicates they are done
+     * (e.g., says "thanks", "bye", "that's all", or explicitly asks
+     * to close the chat).</p>
      *
      * @param chatId the conversation ID, used to resolve the conversation
      * @return confirmation message
@@ -317,6 +329,26 @@ public class ShoppiqTools {
         return "Conversation resolved. Thank you for chatting with Shoppiq!";
     }
 
+    /**
+     * Performs semantic product search using vector embeddings.
+     *
+     * <p>This tool embeds the natural-language query using the local
+     * BGE model and searches the Qdrant vector store for the most
+     * semantically similar product text segments. Results are filtered
+     * by optional category slug and maximum price constraints, and are
+     * ranked by cosine similarity score (minimum 0.6). The returned
+     * string includes product names, prices, and clickable links.</p>
+     *
+     * <p>Used by the AI model for vague or natural-language queries like
+     * "comfortable running shoes", "gift for a photographer", or "laptop
+     * for college".</p>
+     *
+     * @param query    natural-language description of what the user wants
+     * @param category optional category slug to restrict results (e.g., "electronics")
+     * @param maxPrice optional maximum price in USD
+     * @param limit    number of results (default 5, max 10)
+     * @return formatted product list or a "no results" message
+     */
     @Tool("Semantic product search using vector embeddings. Use for vague or natural-language queries like 'comfortable running shoes', 'gift for a photographer', or 'laptop for college'. Returns the most relevant products with price and link.")
     public String semanticProductSearch(
             @P("Natural-language description of what the user wants") String query,
@@ -359,10 +391,11 @@ public class ShoppiqTools {
     /**
      * Builds a vector-store filter for semantic product search.
      *
-     * <p>
-     * Combines optional category and max-price constraints into a single
-     * {@link Filter} suitable for {@link EmbeddingSearchRequest}. Returns
-     * {@code null} when no filters are specified (unrestricted search).
+     * <p>Combines optional category and max-price constraints into a single
+     * {@link Filter} suitable for {@link EmbeddingSearchRequest}. Uses
+     * {@link Filter#and} when both constraints are present. Returns
+     * {@code null} when no filters are specified, enabling unrestricted
+     * search across the entire product catalog.</p>
      *
      * @param category optional category slug to restrict results
      * @param maxPrice optional maximum price in USD
@@ -390,9 +423,11 @@ public class ShoppiqTools {
     /**
      * Resolves the authenticated user from the conversation's chat ID.
      *
-     * <p>
-     * Looks up the conversation by its public chat ID, then retrieves the
-     * associated user. Throws if the conversation is a guest session (no user).
+     * <p>Looks up the conversation by its public chat ID and retrieves the
+     * associated user. Throws {@link AiAssistantException} if the conversation
+     * is a guest session (no user associated) and throws
+     * {@link AiConversationNotFoundException} if the conversation does not
+     * exist.</p>
      *
      * @param chatId the conversation's public identifier
      * @return the authenticated user

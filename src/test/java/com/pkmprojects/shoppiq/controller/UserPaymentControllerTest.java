@@ -1,32 +1,35 @@
 package com.pkmprojects.shoppiq.controller;
-import com.pkmprojects.shoppiq.controller.payment.PaymentController;
 
-import tools.jackson.databind.json.JsonMapper;
 import com.pkmprojects.shoppiq.auth.entrypoint.ShoppiqAuthenticationEntryPoint;
 import com.pkmprojects.shoppiq.auth.handler.ShoppiqAccessDeniedHandler;
 import com.pkmprojects.shoppiq.auth.jwt.JwtAuthenticationFilter;
 import com.pkmprojects.shoppiq.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.pkmprojects.shoppiq.auth.oauth2.OAuth2SuccessHandler;
+import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
+import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
-import com.pkmprojects.shoppiq.auth.oauth2.OAuthReturnUrlFilter;
 import com.pkmprojects.shoppiq.config.ClockConfig;
 import com.pkmprojects.shoppiq.config.JacksonConfig;
 import com.pkmprojects.shoppiq.config.SecurityConfig;
+import com.pkmprojects.shoppiq.controller.payment.PaymentController;
 import com.pkmprojects.shoppiq.dto.payment.PaymentResponse;
 import com.pkmprojects.shoppiq.dto.payment.PaymentStatusResponse;
-import com.pkmprojects.shoppiq.auth.security.SecurityUser;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.enums.*;
-import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
+import com.pkmprojects.shoppiq.enums.PaymentGateway;
+import com.pkmprojects.shoppiq.enums.PaymentMethod;
+import com.pkmprojects.shoppiq.enums.PaymentStatus;
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentAccessDeniedException;
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentInvalidStateException;
 import com.pkmprojects.shoppiq.exception.general.payment.PaymentNotFoundException;
+import com.pkmprojects.shoppiq.exception.handler.GlobalExceptionHandler;
 import com.pkmprojects.shoppiq.repository.user.UserRepository;
 import com.pkmprojects.shoppiq.service.payment.PaymentService;
 import com.pkmprojects.shoppiq.service.role.RoleService;
 import com.pkmprojects.shoppiq.util.http.ProblemDetailResponseWriter;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -37,16 +40,19 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Controller slice integration tests for {@link PaymentController}.
@@ -72,14 +78,21 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @DisplayName("PaymentController Tests")
 class PaymentControllerTest {
 
-    @Autowired MockMvc mockMvc;
-    @Autowired JsonMapper objectMapper;
+    @Autowired
+    MockMvc mockMvc;
+    @Autowired
+    JsonMapper objectMapper;
 
-    @MockitoBean PaymentService paymentService;
-    @MockitoBean UserRepository userRepository;
-    @MockitoBean RoleService rolesService;
-    @MockitoBean HttpCookieOAuth2AuthorizationRequestRepository cookieRepo;
-    @MockitoBean OAuth2SuccessHandler oAuth2SuccessHandler;
+    @MockitoBean
+    PaymentService paymentService;
+    @MockitoBean
+    UserRepository userRepository;
+    @MockitoBean
+    RoleService rolesService;
+    @MockitoBean
+    HttpCookieOAuth2AuthorizationRequestRepository cookieRepo;
+    @MockitoBean
+    OAuth2SuccessHandler oAuth2SuccessHandler;
 
     private User customer;
 

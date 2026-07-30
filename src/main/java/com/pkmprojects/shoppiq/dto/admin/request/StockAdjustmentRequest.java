@@ -5,31 +5,28 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
 /**
- * Request DTO for admin stock adjustment operations.
+ * Request DTO for admin stock adjustment operations on a product.
  *
- * <p>
- * Used by administrators to manually adjust product stock levels
- * (e.g., after receiving a new shipment, performing a physical count,
- * or correcting data entry errors).
- * </p>
+ * <p>This record is submitted to the admin stock adjustment endpoint
+ * to manually set the inventory level for a specific product. It is
+ * used in scenarios such as receiving a new shipment from a supplier,
+ * performing a physical inventory count reconciliation, or writing
+ * off damaged or expired stock. The {@code quantity} field represents
+ * the absolute replacement value, not a delta from the current
+ * stock level.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Accept stock adjustment requests from admin API.</li>
- *     <li>Validate adjustment parameters.</li>
- * </ul>
+ * <p>The {@code reason} field is required and provides an audit trail
+ * for inventory changes. It is stored alongside the adjustment
+ * record and is visible in the stock adjustment history. Common
+ * reasons include "New Shipment", "Physical Count", "Damage
+ * Write-off", and "Supplier Return".</p>
  *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>{@code quantity} is an <b>absolute replacement</b>, not a delta — the
- *     service layer sets stock to this exact value.</li>
- *     <li>{@code reason} provides audit trail context (e.g., "New Shipment").</li>
- *     <li>{@code @PositiveOrZero} allows setting stock to zero (out of stock).</li>
- * </ul>
- *
- * <p><b>Why a record?</b> The compact syntax clearly communicates the DTO's
- * shape: exactly two fields with their constraints visible at a glance.</p>
- *
+ * @param quantity the new absolute stock quantity to set; must be
+ *                 zero or non-negative; this is not a relative delta
+ *                 but a replacement for the current value
+ * @param reason   human-readable explanation for the adjustment,
+ *                 required, max 255 characters; stored in the audit
+ *                 trail for accountability and reporting
  * @author prabhatkrmishra
  * @since 1.0.0
  */

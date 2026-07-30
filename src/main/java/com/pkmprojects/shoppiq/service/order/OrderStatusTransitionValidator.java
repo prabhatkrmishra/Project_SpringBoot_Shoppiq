@@ -15,7 +15,7 @@ import static java.util.Map.entry;
  * Both admin and seller order services must use this validator to ensure
  * consistent business rules across the application.</p>
  *
- * <h2>Valid State Machine</h2>
+ * <p>Valid state machine transitions:</p>
  * <pre>
  * PLACED → CONFIRMED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED
  * PLACED → CANCEL_REQUEST → CANCELLED
@@ -25,7 +25,7 @@ import static java.util.Map.entry;
  * DELIVERED → REPLACE_REQUEST → REPLACE_PICKUP → PICKUP_ARRIVED → ISSUE_REPLACE → REPLACE_DELIVERED → REPLACED
  * </pre>
  *
- * @author Shoppiq
+ * @author prabhatkrmishra
  * @since 1.4.0
  */
 @Component

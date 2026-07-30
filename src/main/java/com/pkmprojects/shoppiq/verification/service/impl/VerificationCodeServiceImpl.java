@@ -2,8 +2,8 @@ package com.pkmprojects.shoppiq.verification.service.impl;
 
 import com.pkmprojects.shoppiq.email.EmailType;
 import com.pkmprojects.shoppiq.entity.user.User;
-import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
+import com.pkmprojects.shoppiq.exception.general.verification.VerificationCodeException;
 import com.pkmprojects.shoppiq.verification.entity.VerificationCode;
 import com.pkmprojects.shoppiq.verification.repository.VerificationCodeRepository;
 import com.pkmprojects.shoppiq.verification.service.VerificationCodeService;
@@ -18,13 +18,17 @@ import java.time.Duration;
 import java.time.Instant;
 
 /**
- * <strong>Spring Boot Concept:</strong> Default implementation of {@link VerificationCodeService}.
+ * Default implementation of {@link VerificationCodeService} with cryptographic code generation.
  *
- * <p><b>How it fits:</b> Generates cryptographically random 6-digit
- * codes for email verification and password reset. Uses an atomic
- * mark-used query to prevent race conditions during verification.
- * Existing unused codes are invalidated when a new code is generated
- * for the same user and type.</p>
+ * <p>Uses atomic mark-used queries to prevent race conditions during verification validation.
+ * The implementation generates cryptographically secure 6-digit numeric codes using
+ * {@link SecureRandom} and enforces single-use semantics through atomic database operations.
+ * Code validation checks expiry, usage status, and attempt limits before marking the code
+ * as used.</p>
+ *
+ * <p>This service is used by the authentication and registration flows to verify user identity.
+ * When a new code is generated, any existing unused codes for the same user and email type
+ * are automatically invalidated to prevent code reuse attacks.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

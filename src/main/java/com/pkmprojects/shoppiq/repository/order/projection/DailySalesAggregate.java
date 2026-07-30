@@ -4,13 +4,24 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Projection for daily sales aggregation — returns the raw order timestamp
- * and grand total so the service can group by date in Java.
+ * Projection for daily sales aggregation within a date range.
  *
- * <p>Eliminates loading full {@code Order} entities (with their entire
- * entity-graph) just to extract two scalar values.</p>
+ * @author prabhatkrmishra
+ * @since 1.0.0
  */
 public interface DailySalesAggregate {
+
+    /**
+     * The order timestamp.
+     *
+     * @return order date
+     */
     Instant getOrderDate();
+
+    /**
+     * The total revenue for this day.
+     *
+     * @return revenue
+     */
     BigDecimal getRevenue();
 }

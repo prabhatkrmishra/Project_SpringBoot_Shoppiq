@@ -1,25 +1,18 @@
 package com.pkmprojects.shoppiq.enums;
 
 /**
- * <strong>Spring Boot Concept:</strong> Publishing states of a product in the marketplace.
+ * Publishing states of a product in the marketplace.
  *
- * <p>New products created by a seller start as {@code DRAFT} until
- * reviewed and published by an admin.
- * </p>
+ * <p>This enum models the product review and publication workflow. New
+ * products start as {@link #DRAFT} until reviewed and published by an
+ * admin. Only {@link #PUBLISHED} items are visible to customers in the
+ * catalog and search results. {@link #REJECTED} items are hidden from
+ * customers and cannot be purchased.</p>
  *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>Admin moderation workflow</strong> — {@code DRAFT → PUBLISHED
- *         (or REJECTED)} defines a content approval pipeline. The
- *         {@code Item} entity defaults to {@code DRAFT} for new products,
- *         and only {@code PUBLISHED} items are visible to customers.</li>
- *     <li><strong>Stored as STRING</strong> — Used with
- *         {@code @Enumerated(EnumType.STRING)} in the JPA entity for
- *         readable database values.</li>
- *     <li><strong>Three-state model</strong> — DRAFT (initial), PUBLISHED
- *         (live), REJECTED (blocked). This is sufficient for a simple
- *         moderation flow without requiring a full workflow engine.</li>
- * </ul>
+ * <p>The publishing status is independent of the product's stock level
+ * or pricing. A product can be in stock but not yet published, or
+ * published but out of stock. Both conditions affect customer
+ * visibility differently.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

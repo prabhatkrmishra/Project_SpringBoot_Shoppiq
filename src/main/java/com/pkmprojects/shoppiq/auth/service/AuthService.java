@@ -2,8 +2,6 @@ package com.pkmprojects.shoppiq.auth.service;
 
 import com.pkmprojects.shoppiq.auth.dto.JwtRequest;
 import com.pkmprojects.shoppiq.auth.dto.JwtResponse;
-import java.time.Clock;
-import java.time.Instant;
 import com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils;
 import com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory;
 import com.pkmprojects.shoppiq.entity.user.User;
@@ -20,79 +18,31 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Instant;
+
 /**
- * Service handling authentication logic and JWT cookie creation — the
- * orchestration layer for the username/password login flow.
+ * Handles authentication logic and JWT cookie creation.
  *
- * <h3>Spring Security concepts demonstrated</h3>
- * <ul>
- *   <li><strong>AuthenticationManager</strong> — the central authentication
- *       strategy. The service creates a {@link UsernamePasswordAuthenticationToken}
- *       and passes it to {@code AuthenticationManager.authenticate()}, which
- *       delegates to {@code DaoAuthenticationProvider} → {@link CustomUserDetailService}
- *       → {@code PasswordEncoder} for credential verification.</li>
- *   <li><strong>Account lockout pattern</strong> — tracks
- *       {@code failedLoginAttempts} and locks the account after 5 failed
- *       attempts by setting {@code lockoutTime}. This is a brute-force
- *       protection mechanism implemented at the application layer.</li>
- *   <li><strong>Remember-me via cookie Max-Age</strong> — instead of Spring
- *       Security's {@code RememberMeServices} (which stores a persistent token),
- *       this uses the JWT cookie's {@code Max-Age}: {@code -1} for session
- *       cookie (expires on browser close) or a positive value for persistent
- *       cookie (survives browser restart).</li>
- *   <li><strong>Stateless logout</strong> — since there is no server-side
- *       session, logout simply clears the JWT cookie. There is no session
- *       to invalidate, making logout an idempotent, stateless operation.</li>
- * </ul>
+ * <p>This service orchestrates the complete username/password login flow,
+ * including credential validation through the Spring Security
+ * {@link org.springframework.security.authentication.AuthenticationManager},
+ * account lockout after failed attempts, JWT token generation, and
+ * stateless logout. It is the central component for email-based
+ * authentication in the application.</p>
  *
- * <h3>Login flow</h3>
- * <pre>
- * POST /auth/login with username + password + rememberMe
- *       ↓
- * AuthService.login()
- *       ↓
- * authenticate() → AuthenticationManager validates credentials
- *       ↓
- * Load User from database
- *       ↓
- * JwtAuthenticationUtils.generateToken(user, expiryMs)
- *       ↓
- * Token contains: userId, username, roles, tokenVersion
- *       ↓
- * JwtCookieFactory.buildJwtCookie() → HttpOnly cookie
- *       ↓
- * Cookie added to HttpServletResponse
- * </pre>
+ * <p>The service also manages the logout flow by clearing the JWT cookie
+ * and invalidating the token version to force re-authentication. Account
+ * lockout is implemented by tracking failed login attempts and locking
+ * the account after a configurable threshold. The service uses
+ * {@link com.pkmprojects.shoppiq.auth.utils.JwtAuthenticationUtils}
+ * for token operations and {@link com.pkmprojects.shoppiq.auth.utils.JwtCookieFactory}
+ * for cookie management.</p>
  *
- * <h3>Logout flow</h3>
- * <pre>
- * POST /auth/logout
- *       ↓
- * AuthService.logout()
- *       ↓
- * Build cookie with empty value and Max-Age=0
- *       ↓
- * Browser deletes the JWT cookie immediately
- * </pre>
- *
- * <h3>Design patterns</h3>
- * <ul>
- *   <li><strong>Service layer pattern</strong> — encapsulates the complete login
- *       workflow (authentication + token generation + cookie creation) behind a
- *       single {@code login()} method called by the controller.</li>
- *   <li><strong>Defense in depth</strong> — the service checks account lockout
- *       <em>before</em> calling {@code AuthenticationManager.authenticate()},
- *       providing an early rejection path that avoids unnecessary password hashing.</li>
- *   <li><strong>Idempotent logout</strong> — clearing a cookie with {@code Max-Age=0}
- *       is idempotent; calling {@code logout()} multiple times has no additional
- *       effect.</li>
- * </ul>
- *
+ * @author prabhatkrmishra
  * @see JwtAuthenticationUtils
  * @see JwtCookieFactory
  * @see CustomUserDetailService
- *
- * @author prabhatkrmishra
  * @since 1.0.0
  */
 @Service
@@ -200,7 +150,7 @@ public class AuthService {
      * @param response servlet response to which the JWT cookie is attached
      * @return {@link JwtResponse} with status message
      * @throws InvalidCredentialException if credentials are invalid, or the
-     *                                     authenticated user cannot be re-loaded
+     *                                    authenticated user cannot be re-loaded
      */
     public JwtResponse login(JwtRequest request, HttpServletResponse response) {
         authenticate(request.username(), request.password());

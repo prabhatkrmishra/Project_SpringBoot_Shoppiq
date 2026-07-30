@@ -14,43 +14,12 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * <strong>Spring Boot Concept:</strong> Spring Data JPA repository for User entity operations.
+ * Persistence operations for the {@link User} aggregate.
  *
- * <p><strong>What Spring Data JPA demonstrates here:</strong></p>
- * <ul>
- *   <li><strong>Derived queries (explicit prefix)</strong> — {@code findUserByEmail} and
- *       {@code findUserByUsername} use the explicit {@code findUserBy} prefix (as opposed to
- *       the shorter {@code findBy}), demonstrating both naming styles are valid.</li>
- *   <li><strong>{@code Top} / limit</strong> — {@code findTop10ByOrderByCreatedAtDesc} generates
- *       {@code SELECT * FROM users ORDER BY created_at DESC LIMIT 10}.</li>
- *   <li><strong>Paginated boolean filter</strong> — {@code findByEnabled(boolean, Pageable)}
- *       demonstrates filtering by a boolean field with automatic pagination.</li>
- *   <li><strong>Derived count queries</strong> — {@code countByEnabled} and
- *       {@code countByCreatedAtAfter} generate aggregate queries:
- *       {@code SELECT COUNT(*) FROM users WHERE enabled = ?} and
- *       {@code SELECT COUNT(*) FROM users WHERE created_at > ?}.</li>
- *   <li><strong>{@code ContainingIgnoreCase}</strong> — {@code findByNameContainingIgnoreCase},
- *       {@code findByEmailContainingIgnoreCase}, and {@code findByUsernameContainingIgnoreCase}
- *       generate case-insensitive LIKE searches using the standard pattern.</li>
- * </ul>
- *
- * <p><strong>Method naming → SQL translation examples:</strong></p>
- * <pre>
- *   findUserByEmail(String)
- *       → SELECT * FROM users WHERE email = ?
- *   findUserByUsername(String)
- *       → SELECT * FROM users WHERE username = ?
- *   findTop10ByOrderByCreatedAtDesc
- *       → SELECT * FROM users ORDER BY created_at DESC LIMIT 10
- *   findByEnabled(boolean, Pageable)
- *       → SELECT * FROM users WHERE enabled = ? LIMIT ? OFFSET ?
- *   countByEnabled(boolean)
- *       → SELECT COUNT(*) FROM users WHERE enabled = ?
- *   countByCreatedAtAfter(Instant)
- *       → SELECT COUNT(*) FROM users WHERE created_at > ?
- *   findByNameContainingIgnoreCase(String)
- *       → SELECT * FROM users WHERE LOWER(name) LIKE LOWER(CONCAT('%', ?, '%'))
- * </pre>
+ * <p>Provides methods to query users by email, username, and various filters for authentication,
+ * registration, and admin management. The repository supports paginated queries for user listing,
+ * search by name/email/username, and atomic operations for account lockout management during
+ * failed login attempts.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -133,11 +102,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     Page<User> findByUsernameContainingIgnoreCase(String username, Pageable pageable);
 
-/**
+    /**
      * Atomically increments failed login attempts and locks the account if threshold is reached.
-     * This method prevents race conditions during concurrent login attempts.
      *
-     * @param userId the user ID
+     * @param userId      the user ID
+     * @param maxAttempts the maximum allowed failed attempts before lockout
+     * @param lockoutTime the timestamp to set as lockout time
      * @return number of rows updated (0 if already locked, 1 if successfully updated)
      */
     @Modifying

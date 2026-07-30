@@ -5,42 +5,10 @@ import com.pkmprojects.shoppiq.dto.common.PageResponse;
 import com.pkmprojects.shoppiq.enums.OrderStatus;
 
 /**
- * <strong>Spring Boot Concept:</strong> Business contract for admin order management.
+ * Business contract for admin order management and status transitions.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * This interface defines the <strong>Service layer</strong> contract for admin order operations.
- * The architecture follows: {@code AdminOrderController → AdminOrderService → OrderRepository}.
- * Controllers depend on this abstraction, not on the concrete implementation.
- * </p>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *     <li>Retrieve all orders with optional status filtering and pagination.</li>
- *     <li>Retrieve a single order by ID.</li>
- *     <li>Update order status with <strong>workflow validation</strong> — enforces valid state
- *         transitions (e.g., PLACED → CONFIRMED, not DELIVERED → PLACED).</li>
- *     <li>Publish domain events ({@code OrderStatusChangedEvent}) when status changes.</li>
- * </ul>
- *
- * <p>
- * Defines the operations for managing customer orders,
- * including retrieval and status transitions.
- * </p>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Retrieve all orders with pagination.</li>
- *     <li>Retrieve a single order by ID.</li>
- *     <li>Update order status with validation.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Works exclusively with DTOs.</li>
- *     <li>Enforces valid status transition flow.</li>
- *     <li>Implemented by {@code AdminOrderServiceImpl}.</li>
- * </ul>
+ * <p>Defines operations for retrieving orders with filtering and updating
+ * order status with workflow validation.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

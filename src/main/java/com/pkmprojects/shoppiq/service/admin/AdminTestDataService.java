@@ -2,59 +2,20 @@ package com.pkmprojects.shoppiq.service.admin;
 
 import com.pkmprojects.shoppiq.dto.address.AddressResponse;
 import com.pkmprojects.shoppiq.dto.admin.request.*;
-import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
-import com.pkmprojects.shoppiq.dto.item.ItemResponse;
-
 import com.pkmprojects.shoppiq.dto.cart.CartItemResponse;
+import com.pkmprojects.shoppiq.dto.item.ItemResponse;
+import com.pkmprojects.shoppiq.dto.order.CheckoutResponse;
 import com.pkmprojects.shoppiq.dto.review.ItemReviewResponse;
-import com.pkmprojects.shoppiq.dto.user.UserResponse;
 import com.pkmprojects.shoppiq.dto.seller.response.SellerResponse;
+import com.pkmprojects.shoppiq.dto.user.UserResponse;
 
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Admin service for populating test data via bulk endpoints.
+ * Business contract for generating and managing test data via bulk endpoints.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * This is a <strong>Service layer</strong> interface specifically designed for development/testing.
- * It orchestrates bulk creation across multiple entity types, calling repositories and
- * other services directly.
- * </p>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *     <li>Create users in bulk with encoded passwords and default CUSTOMER role.</li>
- *     <li>Create products with auto-approval (PUBLISHED status) and seller assignment.</li>
- *     <li>Create addresses in bulk for existing users.</li>
- *     <li>Create product reviews in bulk (avoids duplicates).</li>
- *     <li>Create seller profiles in bulk for existing users.</li>
- *     <li>Add items to user carts in bulk (supports quantity merging).</li>
- *     <li>Create orders from user carts in bulk (full checkout flow without payment).</li>
- * </ul>
- *
- * <p>
- * Provides transactional bulk-creation methods for all major entities.
- * Each method accepts a dedicated bulk request DTO and returns a list
- * of response DTOs for the created entities.
- * </p>
- *
- * <h2>Endpoint Design</h2>
- * <ul>
- *     <li>All endpoints are mapped under {@code /api/admin/test/}.</li>
- *     <li>User context is supplied inline (no AuthenticationPrincipal).</li>
- *     <li>Each item in the request specifies the target user by ID.</li>
- * </ul>
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Create users in bulk with encoded passwords and default roles.</li>
- *     <li>Create addresses in bulk for existing users.</li>
- *     <li>Create product reviews in bulk for existing users and items.</li>
- *     <li>Create seller profiles in bulk for existing users.</li>
- *     <li>Add items to user carts in bulk.</li>
- *     <li>Create orders from user carts in bulk.</li>
- * </ul>
+ * <p>Defines transactional bulk-creation methods for users, items, addresses,
+ * reviews, sellers, carts, and orders for development and testing.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

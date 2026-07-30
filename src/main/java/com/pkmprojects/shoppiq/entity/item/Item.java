@@ -1,9 +1,8 @@
 package com.pkmprojects.shoppiq.entity.item;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.pkmprojects.shoppiq.audit.AuditableEntity;
 import com.pkmprojects.shoppiq.aiservice.events.ItemEmbeddingEntityListener;
-import com.pkmprojects.shoppiq.entity.order.OrderItem;
+import com.pkmprojects.shoppiq.audit.AuditableEntity;
 import com.pkmprojects.shoppiq.entity.review.ItemReview;
 import com.pkmprojects.shoppiq.entity.seller.Seller;
 import com.pkmprojects.shoppiq.enums.ProductPublishingStatus;
@@ -17,69 +16,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * <strong>Spring Boot Concept:</strong> Represents a product available in the Shoppiq catalog.
+ * Represents a product available in the Shoppiq catalog.
  *
- * <p>
- * An {@code Item} contains the general catalog information displayed to
- * customers, while detailed commercial information such as pricing,
- * inventory, SKU and category is delegated to {@link ItemDetails}.
- * </p>
+ * <p>Contains general catalog information (name, description, slug) displayed
+ * to customers. Detailed commercial information such as pricing, inventory,
+ * SKU and category is delegated to {@link ItemDetails}. Each item belongs to
+ * a {@link Seller} and may collect customer reviews. The separation between
+ * {@code Item} and {@code ItemDetails} reflects a design decision to isolate
+ * frequently-read catalog data from commerce data that changes more often.</p>
  *
- * <h2>Responsibilities</h2>
- * <ul>
- *     <li>Stores product name and description.</li>
- *     <li>Owns the associated {@link ItemDetails}.</li>
- *     <li>Maintains product reviews.</li>
- *     <li>Participates in customer orders.</li>
- *     <li>Belongs to a {@link Seller} (marketplace ownership).</li>
- * </ul>
- *
- * <h2>Relationships</h2>
- * <ul>
- *     <li>One-to-One with {@link ItemDetails}.</li>
- *     <li>Many-to-One with {@link Seller}.</li>
- *     <li>One-to-Many with {@link ItemReview}.</li>
- *     <li>Referenced by {@link OrderItem} snapshots at purchase time.</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <ul>
- *     <li>Extends {@link AuditableEntity} to inherit persistence,
- *     optimistic locking and auditing support.</li>
- *     <li>Uses cascading for {@link ItemDetails} because it is owned
- *     exclusively by this entity.</li>
- *     <li>Reviews are orphan-removable to preserve referential integrity.</li>
- *     <li>Seller is nullable for backward compatibility with legacy items.</li>
- * </ul>
- *
- * <h3>Spring Boot Concepts</h3>
- * <ul>
- *     <li><strong>{@code @OneToOne(cascade = ALL, orphanRemoval = true)}</strong>
- *         — ItemDetails is a tightly-coupled child; its lifecycle is fully
- *         managed by Item. Deleting an Item also deletes its ItemDetails.</li>
- *     <li><strong>{@code @OneToMany(mappedBy = "item", cascade = ALL,
- *         orphanRemoval = true)}</strong> — Reviews are children; when a
- *         review is removed from the collection and the session is flushed,
- *         it is deleted from the database.</li>
- *     <li><strong>{@code @ManyToOne} with nullable seller</strong> — Optional
- *         relationship to Seller, supporting items without a marketplace
- *         seller (legacy or admin-created products).</li>
- *     <li><strong>{@code @EntityListeners(ItemEmbeddingEntityListener.class)}</strong>
- *         — Registers a custom JPA callback listener for AI embedding
- *         synchronization on lifecycle events (e.g., post-persist, post-update).</li>
- *     <li><strong>{@code @JsonManagedReference}</strong> — Jackson annotation
- *         on the reviews collection that works with {@code @JsonBackReference}
- *         on the owning side to prevent infinite serialization recursion.</li>
- *     <li><strong>{@code update()} method</strong> — A domain method that
- *         copies mutable fields from a source DTO while preserving identity,
- *         version, and audit metadata. Follows the "update pattern" common
- *         in Spring Boot services.</li>
- *     <li><strong>Bidirectional helper methods</strong> — {@code addReview()}
- *         and {@code removeReview()} maintain both sides of the relationship,
- *         keeping the in-memory graph consistent.</li>
- * </ul>
+ * <p>Product publishing status controls visibility: new products start as
+ * {@code DRAFT} and must be published by an admin before customers can
+ * see them. The {@code ItemEmbeddingEntityListener} triggers AI-based
+ * embedding generation for semantic search capabilities whenever the
+ * product is persisted or updated.</p>
  *
  * @author prabhatkrmishra
+ * @see ItemDetails
+ * @see Seller
+ * @see ItemReview
  * @since 1.0.0
  */
 @Entity
@@ -94,7 +49,12 @@ import java.util.List;
 public class Item extends AuditableEntity {
 
     /**
-     * Product name displayed throughout the catalog.
+     * Product name displayed throughout the catalog, search results,
+     * and product detail pages.
+     *
+     * <p>Required field with a maximum length of 150 characters. This
+     * is the primary human-readable identifier for the product and is
+     * used in product listings, cart views, and order summaries.</p>
      */
     @NotBlank(message = "Item name is required.")
     @Size(max = 150, message = "Item name cannot exceed 150 characters.")
@@ -102,7 +62,14 @@ public class Item extends AuditableEntity {
     private String name;
 
     /**
-     * URL-friendly slug derived from the product name.
+     * URL-friendly slug derived from the product name, used for
+     * SEO-optimized product detail page routing.
+     *
+     * <p>Required field with a maximum length of 200 characters. Must
+     * be globally unique across the entire catalog. The slug appears in
+     * URLs such as {@code /item/wireless-bluetooth-headphones}. Generated
+     * by the service layer to ensure consistency and collision-free
+     * naming.</p>
      */
     @NotBlank(message = "Item slug is required.")
     @Size(max = 200, message = "Item slug cannot exceed 200 characters.")
@@ -110,7 +77,13 @@ public class Item extends AuditableEntity {
     private String slug;
 
     /**
-     * Short product description.
+     * Short product description summarizing the key features and
+     * benefits for the customer.
+     *
+     * <p>Required field with a maximum length of 500 characters. Displayed
+     * on product listing cards and in search results. For longer,
+     * detailed descriptions, use the rich-text content in
+     * {@link ItemDetails}.</p>
      */
     @NotBlank(message = "Item description is required.")
     @Size(max = 500, message = "Description cannot exceed 500 characters.")
@@ -118,7 +91,13 @@ public class Item extends AuditableEntity {
     private String description;
 
     /**
-     * The seller who owns this product.
+     * The seller who owns and manages this product listing.
+     *
+     * <p>Required relationship. Each product belongs to exactly one seller.
+     * The seller reference is lazily loaded to avoid unnecessary joins
+     * when querying products without needing seller details. Used for
+     * seller-specific dashboards, commission calculations, and product
+     * management authorization.</p>
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -128,11 +107,14 @@ public class Item extends AuditableEntity {
     private Seller seller;
 
     /**
-     * Publishing status of this product.
+     * Publishing status controlling the product's visibility in the
+     * storefront and search results.
      *
-     * <p>New products created by a seller start as {@code DRAFT}.
-     * An admin must publish them before they become visible to
-     * customers.</p>
+     * <p>New products created by a seller start as {@code DRAFT} and
+     * are invisible to customers. An admin must review and publish
+     * them before they appear in listings. Stored as a string enum
+     * with a maximum length of 20 characters for readability in
+     * database queries and audit logs.</p>
      */
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -140,12 +122,15 @@ public class Item extends AuditableEntity {
     private ProductPublishingStatus publishingStatus = ProductPublishingStatus.DRAFT;
 
     /**
-     * Commercial and inventory information associated with this product.
+     * Commercial and inventory information associated with this product,
+     * including pricing, SKU, stock levels, and category classification.
      *
-     * <p>
-     * The lifecycle of {@link ItemDetails} is fully managed by the owning
-     * {@code Item}. Deleting an item automatically removes its details.
-     * </p>
+     * <p>The lifecycle of {@link ItemDetails} is fully managed by the
+     * owning {@code Item}. Deleting an item automatically removes its
+     * details via cascade orphan removal. This is the owning side of
+     * the one-to-one relationship. The details entity is validated
+     * using {@code @Valid} to ensure commercial data integrity at
+     * persist time.</p>
      */
     @Valid
     @OneToOne(
@@ -164,7 +149,14 @@ public class Item extends AuditableEntity {
     private ItemDetails itemDetails;
 
     /**
-     * Reviews submitted for this product.
+     * Customer reviews submitted for this product.
+     *
+     * <p>A product may receive many reviews from different customers.
+     * Reviews are cascade-deleted when the product is removed, and
+     * orphan removal ensures cleanup of disassociated review records.
+     * The collection is lazily loaded and excluded from default JSON
+     * serialization via {@code @JsonManagedReference} to prevent
+     * circular reference issues.</p>
      */
     @Builder.Default
     @OneToMany(
@@ -193,11 +185,15 @@ public class Item extends AuditableEntity {
     public void update(Item source) {
 
         if (source == null) {
-            return;
+            throw new IllegalArgumentException("Update source must not be null.");
         }
 
-        this.name = source.getName();
-        this.description = source.getDescription();
+        if (source.getName() != null) {
+            this.name = source.getName();
+        }
+        if (source.getDescription() != null) {
+            this.description = source.getDescription();
+        }
 
         if (source.getPublishingStatus() != null) {
             this.publishingStatus = source.getPublishingStatus();

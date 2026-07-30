@@ -5,23 +5,10 @@ import com.pkmprojects.shoppiq.dto.contact.ContactMessageRequest;
 import com.pkmprojects.shoppiq.dto.contact.ContactMessageResponse;
 
 /**
- * <strong>Spring Boot Concept:</strong> Service for contact message operations.
+ * Business contract for managing contact form submissions.
  *
- * <h2>Role in Layered Architecture</h2>
- * <p>
- * Defines the <strong>Service layer</strong> contract for managing contact form submissions.
- * Architecture: {@code ContactMessageController → ContactMessageService → ContactMessageRepository}.
- * </p>
- *
- * <h2>Business Logic Responsibilities</h2>
- * <ul>
- *   <li>Accept contact form submissions from visitors (public endpoint).</li>
- *   <li>Admin retrieval of all messages with pagination (sorted newest-first).</li>
- *   <li>View a single message (auto-marks as READ).</li>
- *   <li>Toggle read/unread status for tracking.</li>
- *   <li>Count unread messages for admin badge notifications.</li>
- *   <li>Delete messages.</li>
- * </ul>
+ * <p>Defines operations for accepting public submissions, admin retrieval
+ * with pagination, read/unread toggling, and unread message counting.</p>
  *
  * @author prabhatkrmishra
  * @since 1.0.0

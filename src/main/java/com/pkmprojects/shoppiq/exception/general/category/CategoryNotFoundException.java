@@ -4,15 +4,22 @@ import com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException;
 import com.pkmprojects.shoppiq.exception.codes.ErrorCode;
 
 /**
- * <strong>Spring Boot Concept:</strong> Exception thrown when a requested
- * category cannot be found.
+ * Thrown when a requested category cannot be found by ID, slug, or bulk identifier.
  *
- * <p>Leaf exception in the resource-not-found hierarchy. Extends
- * {@link com.pkmprojects.shoppiq.exception.business.ResourceNotFoundException}
- * (HTTP 404) for missing categories, with factory methods for lookup by
- * identifier, slug, and bulk operations.</p>
+ * <p>This exception is thrown by category service methods when a database
+ * lookup for a category fails. It uses the {@link ErrorCode#CATEGORY_NOT_FOUND}
+ * code and HTTP 404 Not Found status. The exception provides multiple
+ * static factory methods to create instances for different lookup
+ * scenarios, each with a descriptive detail message.</p>
+ *
+ * <p>The detail message includes the lookup identifier and type (e.g.,
+ * "Category with id '5' was not found.") to help clients understand which
+ * identifier was invalid. The client should verify the identifier and
+ * retry the request. For bulk operations, a generic message is returned
+ * indicating that one or more identifiers were invalid.</p>
  *
  * @author prabhatkrmishra
+ * @see ErrorCode#CATEGORY_NOT_FOUND
  * @since 1.0.0
  */
 public final class CategoryNotFoundException extends ResourceNotFoundException {
