@@ -92,7 +92,7 @@
                 tbody.innerHTML = '';
                 filtered.forEach(function (o) {
                     var itemCount = o.items ? o.items.length : 0;
-                    var actions = '<a href="/seller-panel/orders?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a>';
+                    var actions = '<a href="/seller-panel/order-detail?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a>';
                     if (o.status === 'PLACED') {
                         actions += ' <button class="btn btn-sm btn-primary status-btn" data-order-id="' + o.id + '" data-status="CONFIRMED">Process</button>';
                         actions += ' <button class="btn btn-sm btn-danger status-btn" data-order-id="' + o.id + '" data-status="CANCELLED">Cancel</button>';
@@ -125,7 +125,7 @@
                     }
                     var tr = document.createElement('tr');
                     tr.innerHTML =
-                        '<td><a href="/seller-panel/orders?id=' + o.id + '" class="btn-link">#' + o.id + '</a></td>' +
+                        '<td><a href="/seller-panel/order-detail?id=' + o.id + '" class="btn-link">#' + o.id + '</a></td>' +
                         '<td>' + itemCount + '</td>' +
                         '<td>' + formatCurrency(o.grandTotal) + '</td>' +
                         '<td class="text-sm text-muted">' + formatDate(o.placedAt) + '</td>' +

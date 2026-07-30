@@ -88,12 +88,12 @@
                         var itemCount = o.items ? o.items.length : 0;
                         var tr = document.createElement('tr');
                         tr.innerHTML =
-                            '<td><a href="/seller-panel/orders?id=' + o.id + '" class="btn-link">#' + o.id + '</a></td>' +
+                            '<td><a href="/seller-panel/order-detail?id=' + o.id + '" class="btn-link">#' + o.id + '</a></td>' +
                             '<td>' + itemCount + '</td>' +
                             '<td>' + formatCurrency(o.grandTotal) + '</td>' +
                             '<td class="text-sm text-muted">' + formatDate(o.placedAt) + '</td>' +
                             '<td><span class="status-badge ' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</span></td>' +
-                            '<td class="admin-table-actions"><a href="/seller-panel/orders?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a></td>';
+                            '<td class="admin-table-actions"><a href="/seller-panel/order-detail?id=' + o.id + '" class="btn btn-sm btn-secondary">View</a></td>';
                         tbody.appendChild(tr);
                     });
                 }).catch(function () {
