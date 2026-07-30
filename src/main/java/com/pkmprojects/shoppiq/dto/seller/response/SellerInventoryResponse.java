@@ -35,6 +35,7 @@ import java.math.BigDecimal;
  * @param publishingStatus current publishing lifecycle status
  *                         (DRAFT, PUBLISHED, REJECTED) controlling
  *                         storefront visibility
+ * @param slug             URL-friendly product slug for the product detail page link
  * @param imageUrl         URL of the product's primary image
  * @author prabhatkrmishra
  * @since 1.0.0
@@ -81,6 +82,11 @@ public record SellerInventoryResponse(
         ProductPublishingStatus publishingStatus,
 
         /**
+         * URL-friendly slug derived from the product name.
+         */
+        String slug,
+
+        /**
          * Product image URL.
          */
         String imageUrl
@@ -116,6 +122,7 @@ public record SellerInventoryResponse(
                 qty,
                 stockStatus,
                 item.getPublishingStatus(),
+                item.getSlug(),
                 details.getImageUrl()
         );
     }

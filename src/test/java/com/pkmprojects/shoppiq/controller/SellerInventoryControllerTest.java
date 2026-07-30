@@ -98,7 +98,8 @@ class SellerInventoryControllerTest {
         }
         return new SellerInventoryResponse(
                 id, "Product " + id, "SKU-" + id, "Brand",
-                BigDecimal.valueOf(99.99), stock, status, ProductPublishingStatus.DRAFT, null
+                BigDecimal.valueOf(99.99), stock, status,
+                ProductPublishingStatus.DRAFT, "product-" + id, null
         );
     }
 

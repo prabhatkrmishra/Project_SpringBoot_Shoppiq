@@ -93,7 +93,7 @@
                 items.forEach(function (item) {
                     var tr = document.createElement('tr');
                     tr.innerHTML =
-                        '<td><a href="/item/' + item.itemId + '" class="btn-link">' + escapeHtml(item.itemName || '') + '</a></td>' +
+                        '<td><a href="/item/' + item.slug + '" class="btn-link">' + escapeHtml(item.itemName || '') + '</a></td>' +
                         '<td>' + formatCurrency(item.basePrice) + '</td>' +
                         '<td>' +
                         '<div class="inline-edit">' +
@@ -103,7 +103,7 @@
                         '</td>' +
                         '<td>' + stockBadge(item.stockStatus) + '</td>' +
                         '<td class="admin-table-actions">' +
-                        '<a href="/item/' + item.itemId + '" class="btn btn-sm btn-secondary">Edit</a>' +
+                        '<a href="/item/' + item.slug + '" class="btn btn-sm btn-secondary">Edit</a>' +
                         '</td>';
                     tbody.appendChild(tr);
                 });
