@@ -146,6 +146,7 @@
             <input type="hidden" id="currentUsername" sec:authorize="isAuthenticated()"
                    th:value="${#authentication.name}">
             <input type="hidden" id="currentUserRole" sec:authorize="hasRole('ADMIN')" value="ADMIN">
+            <input type="hidden" id="currentUserRoleSeller" sec:authorize="hasRole('SELLER')" value="SELLER">
         </div>
     </main>
 
@@ -389,6 +390,7 @@
                 if (usernameEl) currentUsername = usernameEl.value || '';
                 var isAuthenticated = usernameEl !== null;
                 var isAdmin = document.getElementById('currentUserRole') !== null;
+                var isSeller = document.getElementById('currentUserRoleSeller') !== null;
 
                 var pathParts = window.location.pathname.split('/');
                 var slug = pathParts[pathParts.length - 1];
@@ -435,7 +437,7 @@
                         '<div class="item-detail-meta-row"><i data-lucide="package" class="icon-sm text-muted"></i><span class="text-muted">Stock:</span><span class="' + stockClass + '">' + stockText + '</span></div>' +
                         '</div>' +
                         (item.description ? '<div class="item-detail-description"><h3>Description</h3><p>' + escapeHtml(item.description) + '</p></div>' : '') +
-                        ((isAuthenticated && !isAdmin) ?
+                        ((isAuthenticated && !isAdmin && !isSeller) ?
                             '<div class="item-detail-actions">' +
                             '<form class="item-detail-form" id="add-to-cart-form">' +
                             '<div class="qty-controls">' +
@@ -447,6 +449,7 @@
                             '</form>' +
                             '</div>' :
                             isAdmin ? '' :
+                            isSeller ? '' :
                                 '<div class="item-detail-actions">' +
                                 '<a href="/login?returnUrl=' + encodeURIComponent(window.location.pathname) + '" class="btn btn-primary btn-lg btn-block"><i data-lucide="log-in" class="icon-sm"></i> Sign in to Purchase</a>' +
                                 '</div>') +
