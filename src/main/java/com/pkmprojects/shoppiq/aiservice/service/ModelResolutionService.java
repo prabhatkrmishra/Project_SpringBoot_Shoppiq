@@ -39,10 +39,19 @@ public class ModelResolutionService {
     /**
      * The default model ID used when no model is specified or an invalid model is requested.
      */
-    public static final String DEFAULT_MODEL_ID = "nvidia/nemotron-3-nano-30b-a3b";
+    public static final String DEFAULT_MODEL_ID = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning";
     private static final Logger log = LoggerFactory.getLogger(ModelResolutionService.class);
     private static final String NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
     private static final Duration MODEL_TIMEOUT = Duration.ofSeconds(300);
+    /**
+     * Maps assistant numbers sent by the frontend to actual model IDs.
+     * Frontend sends "1", "2", or "3" — this map resolves them to the real model.
+     */
+    private static final Map<String, String> ASSISTANT_MODEL_MAP = Map.of(
+            "1", "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "2", "nvidia/nemotron-3-nano-30b-a3b",
+            "3", "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+    );
     /**
      * Registry of allowed model IDs mapped to their display names.
      * Only models in this registry can be used by the frontend.
@@ -53,13 +62,13 @@ public class ModelResolutionService {
             "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "Nemotron Nano Omni 30B"
     );
 
-    /*
+    /**
      * Per-model thinking control:
      * - Nemotron 49B: disables thinking via "/no_think" in the system prompt.
      * - Nemotron Nano 30B / Omni 30B: disables thinking via "chat_template_kwargs"
-     *   in the request body (these models ignore the system-prompt directive).
-     *
-     * Reference: https://docs.nvidia.com/nim/large-language-models/1.8.0/reasoning-model.html
+     * in the request body (these models ignore the system-prompt directive).
+     * <p>
+     * Reference: <a href="https://docs.nvidia.com/nim/large-language-models/1.8.0/reasoning-model.html">Nvidia Docs</a>
      */
     public static final Set<String> CHAT_TEMPLATE_THINKING_MODELS = Set.of(
             "nvidia/nemotron-3-nano-30b-a3b",
@@ -219,12 +228,13 @@ public class ModelResolutionService {
     /**
      * Sanitizes and validates the model name.
      *
-     * <p>Returns the default model ID if the input is null or blank. Throws
-     * {@link AiModelNotSupportedException} if the model is explicitly provided
-     * but not found in the allowed registry. Trims whitespace from the input
-     * before validation.</p>
+     * <p>Resolves assistant numbers ("1", "2", "3") to their corresponding
+     * model IDs via {@link #ASSISTANT_MODEL_MAP}. Returns the default model
+     * ID if the input is null or blank. Throws {@link AiModelNotSupportedException}
+     * if the model is explicitly provided but not found in the allowed registry.
+     * Trims whitespace from the input before validation.</p>
      *
-     * @param modelName the raw model name from the request
+     * @param modelName the raw model name or assistant number from the request
      * @return a valid, allowed model ID
      * @throws AiModelNotSupportedException if the model is not null/blank but not in the registry
      */
@@ -235,8 +245,11 @@ public class ModelResolutionService {
 
         String trimmed = modelName.trim();
 
-        if (MODEL_REGISTRY.containsKey(trimmed)) {
-            return trimmed;
+        /* Resolve assistant numbers ("1", "2", "3") to actual model IDs. */
+        String resolved = ASSISTANT_MODEL_MAP.getOrDefault(trimmed, trimmed);
+
+        if (MODEL_REGISTRY.containsKey(resolved)) {
+            return resolved;
         }
 
         log.warn("[AI-MODEL] Unknown model requested: '{}'", trimmed);

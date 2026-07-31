@@ -5,16 +5,12 @@ window.AIChat = (function () {
     var isStreaming = false;
     var isResolved = false;
     var isLoggedIn = false;
-    var selectedModel = localStorage.getItem('ai-chat-model') || 'nvidia/nemotron-3-nano-30b-a3b';
+    var selectedModel = localStorage.getItem('ai-chat-model') || '1';
 
-var ALLOWED_MODELS = [
-        'nvidia/llama-3.3-nemotron-super-49b-v1.5',
-        'nvidia/nemotron-3-nano-30b-a3b',
-        'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning'
-    ];
+var ALLOWED_MODELS = ['1', '2', '3'];
 
     if (ALLOWED_MODELS.indexOf(selectedModel) === -1) {
-        selectedModel = 'nvidia/nemotron-3-nano-30b-a3b';
+        selectedModel = '1';
         localStorage.setItem('ai-chat-model', selectedModel);
     }
 
