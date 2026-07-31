@@ -655,14 +655,10 @@ small {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding-top: 4px;
 }
 
 .header-nav a span {
     line-height: 1;
-}
-
-.header-nav a span {
     padding-top: 4px;
 }
 
