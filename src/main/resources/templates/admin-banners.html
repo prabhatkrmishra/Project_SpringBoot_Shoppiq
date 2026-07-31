@@ -12,7 +12,7 @@
                 <p>Manage the Sales &amp; Offers banners displayed on the homepage</p>
             </div>
             <div class="flex gap-sm">
-                <button id="add-banner-btn" class="btn btn-primary btn-sm">+ Add Banner</button>
+                <button class="btn btn-primary btn-sm" id="add-banner-btn">+ Add Banner</button>
             </div>
         </div>
 
@@ -37,7 +37,7 @@
                     </thead>
                     <tbody id="banner-body">
                         <tr>
-                            <td colspan="9" class="text-center text-muted">Loading...</td>
+                            <td class="text-center text-muted" colspan="9">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -46,23 +46,23 @@
 
         <div id="banner-pagination"></div>
 
-        <div id="banner-modal" class="modal-overlay">
-            <div class="modal" role="dialog" aria-labelledby="banner-modal-title" style="max-width:560px;">
+        <div class="modal-overlay" id="banner-modal">
+            <div aria-labelledby="banner-modal-title" class="modal" role="dialog" style="max-width:560px;">
                 <div class="modal-header">
                     <h2 id="banner-modal-title">Add Banner</h2>
                     <button class="modal-close" id="banner-modal-close">&times;</button>
                 </div>
-                <form id="banner-form" class="modal-body">
-                    <input type="hidden" id="banner-id" value="">
+                <form class="modal-body" id="banner-form">
+                    <input id="banner-id" type="hidden" value="">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="banner-badge-text" class="form-label">Badge Text *</label>
-                            <input type="text" id="banner-badge-text" class="form-input" maxlength="50" required
-                                   placeholder="e.g. Limited Time">
+                            <label class="form-label" for="banner-badge-text">Badge Text *</label>
+                            <input class="form-input" id="banner-badge-text" maxlength="50" placeholder="e.g. Limited Time" required
+                                   type="text">
                         </div>
                         <div class="form-group">
-                            <label for="banner-badge-type" class="form-label">Banner Type *</label>
-                            <select id="banner-badge-type" class="form-input" required>
+                            <label class="form-label" for="banner-badge-type">Banner Type *</label>
+                            <select class="form-input" id="banner-badge-type" required>
                                 <option value="PRIMARY">Red</option>
                                 <option value="SECONDARY">Purple</option>
                                 <option value="ACCENT">Green</option>
@@ -73,61 +73,61 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="banner-heading" class="form-label">Heading *</label>
-                        <input type="text" id="banner-heading" class="form-input" maxlength="100" required
-                               placeholder="e.g. Up to 50% Off">
+                        <label class="form-label" for="banner-heading">Heading *</label>
+                        <input class="form-input" id="banner-heading" maxlength="100" placeholder="e.g. Up to 50% Off" required
+                               type="text">
                     </div>
                     <div class="form-group">
-                        <label for="banner-body-text" class="form-label">Body Text</label>
-                        <input type="text" id="banner-body-text" class="form-input" maxlength="255"
-                               placeholder="e.g. Grab today's hottest deals before they're gone.">
+                        <label class="form-label" for="banner-body-text">Body Text</label>
+                        <input class="form-input" id="banner-body-text" maxlength="255" placeholder="e.g. Grab today's hottest deals before they're gone."
+                               type="text">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="banner-button-text" class="form-label">Button Text</label>
-                            <input type="text" id="banner-button-text" class="form-input" maxlength="50"
-                                   placeholder="e.g. Shop Sale">
+                            <label class="form-label" for="banner-button-text">Button Text</label>
+                            <input class="form-input" id="banner-button-text" maxlength="50" placeholder="e.g. Shop Sale"
+                                   type="text">
                         </div>
                         <div class="form-group">
-                            <label for="banner-button-link" class="form-label">Button Link</label>
-                            <input type="text" id="banner-button-link" class="form-input" maxlength="500"
-                                   placeholder="e.g. /sale">
+                            <label class="form-label" for="banner-button-link">Button Link</label>
+                            <input class="form-input" id="banner-button-link" maxlength="500" placeholder="e.g. /sale"
+                                   type="text">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="banner-heading-color" class="form-label">Heading Color</label>
+                            <label class="form-label" for="banner-heading-color">Heading Color</label>
                             <div class="flex items-center gap-sm">
-                                <input type="color" id="banner-heading-color" value="#ffffff"
-                                       style="width:40px;height:36px;padding:2px;cursor:pointer;">
-                                <input type="text" id="banner-heading-color-text" class="form-input" value="#FFFFFF"
-                                       maxlength="7" style="flex:1;">
+                                <input id="banner-heading-color" style="width:40px;height:36px;padding:2px;cursor:pointer;" type="color"
+                                       value="#ffffff">
+                                <input class="form-input" id="banner-heading-color-text" maxlength="7" style="flex:1;"
+                                       type="text" value="#FFFFFF">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="banner-body-color" class="form-label">Body Color</label>
+                            <label class="form-label" for="banner-body-color">Body Color</label>
                             <div class="flex items-center gap-sm">
-                                <input type="color" id="banner-body-color" value="#ffffff"
-                                       style="width:40px;height:36px;padding:2px;cursor:pointer;">
-                                <input type="text" id="banner-body-color-text" class="form-input"
-                                       value="rgba(255,255,255,0.85)" maxlength="30" style="flex:1;">
+                                <input id="banner-body-color" style="width:40px;height:36px;padding:2px;cursor:pointer;" type="color"
+                                       value="#ffffff">
+                                <input class="form-input" id="banner-body-color-text" maxlength="30"
+                                       style="flex:1;" type="text" value="rgba(255,255,255,0.85)">
                             </div>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="banner-display-order" class="form-label">Display Order</label>
-                            <input type="number" id="banner-display-order" class="form-input" min="0" value="0">
+                            <label class="form-label" for="banner-display-order">Display Order</label>
+                            <input class="form-input" id="banner-display-order" min="0" type="number" value="0">
                         </div>
                         <div class="form-group">
                             <label class="form-label flex items-center gap-sm" style="margin-top:22px;">
-                                <input type="checkbox" id="banner-active" checked> Active
+                                <input checked id="banner-active" type="checkbox"> Active
                             </label>
                         </div>
                     </div>
                     <div class="flex gap-sm mt-md">
-                        <button type="submit" id="banner-save-btn" class="btn btn-primary">Save</button>
-                        <button type="button" id="banner-cancel-btn" class="btn btn-secondary">Cancel</button>
+                        <button class="btn btn-primary" id="banner-save-btn" type="submit">Save</button>
+                        <button class="btn btn-secondary" id="banner-cancel-btn" type="button">Cancel</button>
                     </div>
                 </form>
             </div>

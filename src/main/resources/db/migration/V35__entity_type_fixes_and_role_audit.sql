@@ -47,25 +47,28 @@ ALTER TABLE cart_items
 -- roles: add standard audit and optimistic-locking columns
 -- each column is created only if it does not already exist
 -- ────────────────────────────────────────────────────────────
-DELIMITER //
+DELIMITER
+//
 CREATE PROCEDURE IF NOT EXISTS add_col_if_missing(
     IN p_table VARCHAR(255),
     IN p_col   VARCHAR(255),
     IN p_def   VARCHAR(255)
 )
 BEGIN
-    IF NOT EXISTS (
+    IF
+NOT EXISTS (
         SELECT 1 FROM information_schema.COLUMNS
         WHERE TABLE_SCHEMA = DATABASE()
           AND TABLE_NAME   = p_table
           AND COLUMN_NAME  = p_col
     ) THEN
         SET @s = CONCAT('ALTER TABLE ', p_table, ' ADD COLUMN ', p_col, ' ', p_def);
-        PREPARE stmt FROM @s;
-        EXECUTE stmt;
-        DEALLOCATE PREPARE stmt;
-    END IF;
-END//
+PREPARE stmt FROM @s;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+END IF;
+END
+//
 DELIMITER ;
 
 CALL add_col_if_missing('roles', 'created_at', 'DATETIME(6) NULL');

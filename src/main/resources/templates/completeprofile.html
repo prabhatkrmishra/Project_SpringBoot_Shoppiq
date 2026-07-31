@@ -13,47 +13,47 @@
                     registration.</p>
             </div>
 
-            <div th:if="${param.error}" class="guest-banner" role="alert">
+            <div class="guest-banner" role="alert" th:if="${param.error}">
                 <p th:text="${param.error}">Error</p>
             </div>
 
             <div class="panel">
                 <form id="completeProfileForm" novalidate>
                     <div class="form-group">
-                        <label for="name" class="form-label">Full Name</label>
-                        <input type="text" id="name" class="form-input auth-readonly" readonly aria-readonly="true">
+                        <label class="form-label" for="name">Full Name</label>
+                        <input aria-readonly="true" class="form-input auth-readonly" id="name" readonly type="text">
                     </div>
                     <div class="form-group">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" id="email" class="form-input auth-readonly" readonly aria-readonly="true">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input aria-readonly="true" class="form-input auth-readonly" id="email" readonly type="email">
                     </div>
                     <div class="form-group">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" id="username" name="username" class="form-input"
-                               placeholder="Choose a username" required autocomplete="username"
-                               pattern="^[a-zA-Z0-9_]+$" minlength="3" maxlength="30">
+                        <label class="form-label" for="username">Username</label>
+                        <input autocomplete="username" class="form-input" id="username" maxlength="30"
+                               minlength="3" name="username" pattern="^[a-zA-Z0-9_]+$"
+                               placeholder="Choose a username" required type="text">
                     </div>
                     <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" id="password" name="password" class="form-input"
-                               placeholder="Choose a password" required autocomplete="new-password" minlength="8">
+                        <label class="form-label" for="password">Password</label>
+                        <input autocomplete="new-password" class="form-input" id="password" minlength="8"
+                               name="password" placeholder="Choose a password" required type="password">
                         <div class="form-error" id="password-error"></div>
                         <div class="password-requirements">
-                            <span class="req" id="req-length"><i data-lucide="check" class="icon-xs"></i> At least 8 characters</span>
-                            <span class="req" id="req-upper"><i data-lucide="check" class="icon-xs"></i> One uppercase letter</span>
-                            <span class="req" id="req-lower"><i data-lucide="check" class="icon-xs"></i> One lowercase letter</span>
-                            <span class="req" id="req-digit"><i data-lucide="check"
-                                                                class="icon-xs"></i> One number</span>
-                            <span class="req" id="req-special"><i data-lucide="check" class="icon-xs"></i> One special char (@$!%*?&)</span>
+                            <span class="req" id="req-length"><i class="icon-xs" data-lucide="check"></i> At least 8 characters</span>
+                            <span class="req" id="req-upper"><i class="icon-xs" data-lucide="check"></i> One uppercase letter</span>
+                            <span class="req" id="req-lower"><i class="icon-xs" data-lucide="check"></i> One lowercase letter</span>
+                            <span class="req" id="req-digit"><i class="icon-xs"
+                                                                data-lucide="check"></i> One number</span>
+                            <span class="req" id="req-special"><i class="icon-xs" data-lucide="check"></i> One special char (@$!%*?&)</span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="confirmPassword" class="form-label">Confirm Password</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
-                               placeholder="Confirm password" required autocomplete="new-password">
+                        <label class="form-label" for="confirmPassword">Confirm Password</label>
+                        <input autocomplete="new-password" class="form-input" id="confirmPassword" name="confirmPassword"
+                               placeholder="Confirm password" required type="password">
                         <div class="form-error" id="confirmPassword-error"></div>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Complete Registration</button>
+                    <button class="btn btn-primary btn-block" type="submit">Complete Registration</button>
                 </form>
             </div>
         </div>

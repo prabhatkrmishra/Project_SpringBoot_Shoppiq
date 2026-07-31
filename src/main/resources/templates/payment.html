@@ -11,62 +11,63 @@
                 <h1>Payment</h1>
             </div>
 
-            <div class="checkout-progress" role="progressbar" aria-valuenow="3" aria-valuemin="1" aria-valuemax="3">
-                <span class="step completed"><a href="/cart" class="step-link"><span class="step-dot"></span> Cart</a></span>
+            <div aria-valuemax="3" aria-valuemin="1" aria-valuenow="3" class="checkout-progress" role="progressbar">
+                <span class="step completed"><a class="step-link" href="/cart"><span
+                        class="step-dot"></span> Cart</a></span>
                 <span class="step-line"></span>
-                <span class="step completed"><a href="/checkout" class="step-link"><span class="step-dot"></span> Details</a></span>
+                <span class="step completed"><a class="step-link" href="/checkout"><span class="step-dot"></span> Details</a></span>
                 <span class="step-line"></span>
                 <span class="step active"><span class="step-dot"></span> Pay</span>
             </div>
 
-            <div id="payment-loading" class="flex-center" style="padding:3rem;">
+            <div class="flex-center" id="payment-loading" style="padding:3rem;">
                 <span class="spinner"></span>
             </div>
 
             <div id="payment-error" style="display:none;">
                 <div class="panel text-center">
                     <p id="payment-error-msg">Unable to load payment details.</p>
-                    <a href="/cart" class="btn btn-secondary mt-md">Back to Cart</a>
+                    <a class="btn btn-secondary mt-md" href="/cart">Back to Cart</a>
                 </div>
             </div>
 
-            <form id="payment-form" class="checkout-page" style="display:none;">
+            <form class="checkout-page" id="payment-form" style="display:none;">
                 <div class="checkout-main">
-                    <section class="checkout-section" aria-labelledby="payment-type-heading">
+                    <section aria-labelledby="payment-type-heading" class="checkout-section">
                         <div class="checkout-section-header">
                             <h2 id="payment-type-heading"><span class="checkout-step-number">1</span> Payment Type</h2>
                         </div>
                         <div class="payment-methods">
                             <label class="payment-method selected">
-                                <input type="radio" name="paymentMethod" value="CREDIT_CARD" checked>
+                                <input checked name="paymentMethod" type="radio" value="CREDIT_CARD">
                                 <div>
                                     <div class="method-label">Credit Card</div>
                                     <div class="method-desc">Visa, Mastercard, Amex</div>
                                 </div>
                             </label>
                             <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="PAYPAL">
+                                <input name="paymentMethod" type="radio" value="PAYPAL">
                                 <div>
                                     <div class="method-label">PayPal</div>
                                     <div class="method-desc">Pay with your PayPal account</div>
                                 </div>
                             </label>
                             <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="STRIPE">
+                                <input name="paymentMethod" type="radio" value="STRIPE">
                                 <div>
                                     <div class="method-label">Stripe</div>
                                     <div class="method-desc">Secure card payments via Stripe</div>
                                 </div>
                             </label>
                             <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="UPI">
+                                <input name="paymentMethod" type="radio" value="UPI">
                                 <div>
                                     <div class="method-label">UPI</div>
                                     <div class="method-desc">Google Pay, PhonePe, Paytm, BHIM</div>
                                 </div>
                             </label>
                             <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="COD">
+                                <input name="paymentMethod" type="radio" value="COD">
                                 <div>
                                     <div class="method-label">Cash on Delivery</div>
                                     <div class="method-desc">Pay when you receive your order (+ $5.00 COD charge)</div>
@@ -75,21 +76,21 @@
                         </div>
                     </section>
 
-                    <section class="checkout-section" aria-labelledby="delivery-type-heading">
+                    <section aria-labelledby="delivery-type-heading" class="checkout-section">
                         <div class="checkout-section-header">
                             <h2 id="delivery-type-heading"><span class="checkout-step-number">2</span> Delivery Type
                             </h2>
                         </div>
                         <div class="payment-methods">
                             <label class="payment-method selected">
-                                <input type="radio" name="deliveryType" value="NORMAL" checked>
+                                <input checked name="deliveryType" type="radio" value="NORMAL">
                                 <div>
                                     <div class="method-label">Normal Delivery</div>
                                     <div class="method-desc">Free shipping — delivered in 5-7 business days</div>
                                 </div>
                             </label>
                             <label class="payment-method">
-                                <input type="radio" name="deliveryType" value="EXPRESS_1DAY">
+                                <input name="deliveryType" type="radio" value="EXPRESS_1DAY">
                                 <div>
                                     <div class="method-label">1-Day Express Delivery</div>
                                     <div class="method-desc">Get it tomorrow — $7.50 delivery charge</div>
@@ -106,15 +107,15 @@
                             <span>Product Cost</span>
                             <span id="pay-subtotal">$0.00</span>
                         </div>
-                        <div id="pay-discount-row" class="cart-summary-row" style="display:none;">
+                        <div class="cart-summary-row" id="pay-discount-row" style="display:none;">
                             <span>Discount</span>
-                            <span id="pay-discount" class="text-success">-$0.00</span>
+                            <span class="text-success" id="pay-discount">-$0.00</span>
                         </div>
                         <div class="cart-summary-row">
                             <span>Delivery Charge</span>
                             <span id="pay-delivery">Free</span>
                         </div>
-                        <div id="pay-cod-row" class="cart-summary-row" style="display:none;">
+                        <div class="cart-summary-row" id="pay-cod-row" style="display:none;">
                             <span>COD Surcharge</span>
                             <span id="pay-cod-fee">$5.00</span>
                         </div>
@@ -122,13 +123,13 @@
                             <span>Total</span>
                             <span id="pay-total">$0.00</span>
                         </div>
-                        <div id="pay-promo-row" class="cart-promo" style="display:none;">
-                            <input type="text" id="pay-promo-input" class="form-input" value="" readonly
-                                   aria-label="Applied promo code" style="flex:1;">
-                            <button type="button" id="pay-promo-remove" class="btn btn-sm btn-danger">Remove</button>
+                        <div class="cart-promo" id="pay-promo-row" style="display:none;">
+                            <input aria-label="Applied promo code" class="form-input" id="pay-promo-input" readonly style="flex:1;"
+                                   type="text" value="">
+                            <button class="btn btn-sm btn-danger" id="pay-promo-remove" type="button">Remove</button>
                         </div>
                         <div class="cart-actions">
-                            <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg btn-block">Place
+                            <button class="btn btn-primary btn-lg btn-block" id="place-order-btn" type="submit">Place
                                 Order
                             </button>
                         </div>

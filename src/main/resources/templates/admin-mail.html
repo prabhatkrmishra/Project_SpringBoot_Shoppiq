@@ -18,18 +18,18 @@
                             <div class="form-group">
                                 <label class="form-label"
                                        style="display: flex; align-items: center; gap: var(--space-sm); cursor: pointer;">
-                                    <input type="checkbox" id="sendToAll" class="form-checkbox">
+                                    <input class="form-checkbox" id="sendToAll" type="checkbox">
                                     <span>Send to all users</span>
                                 </label>
                             </div>
                             <div id="userSearchSection">
                                 <div class="form-group">
-                                    <label for="searchInput" class="form-label">Search by ID, Name, Email, or
+                                    <label class="form-label" for="searchInput">Search by ID, Name, Email, or
                                         Username</label>
-                                    <input type="text" id="searchInput" class="form-input" placeholder="Search users..."
-                                           autocomplete="off">
+                                    <input autocomplete="off" class="form-input" id="searchInput" placeholder="Search users..."
+                                           type="text">
                                 </div>
-                                <div id="searchResults" class="search-results"></div>
+                                <div class="search-results" id="searchResults"></div>
                             </div>
                         </div>
 
@@ -54,8 +54,8 @@
                             <div class="panel-title">Compose Email</div>
                             <form id="mailForm" novalidate>
                                 <div class="form-group">
-                                    <label for="emailType" class="form-label">Email Type</label>
-                                    <select id="emailType" class="form-input">
+                                    <label class="form-label" for="emailType">Email Type</label>
+                                    <select class="form-input" id="emailType">
                                         <option value="ADMIN_MAIL">General Message</option>
                                         <option value="PROMOTION">Promotion/Offer</option>
                                         <option value="REVIEW_ENGAGEMENT">Review/Engagement</option>
@@ -65,9 +65,9 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="mailSubject" class="form-label">Subject</label>
-                                    <input type="text" id="mailSubject" class="form-input" placeholder="Email subject"
-                                           required maxlength="255">
+                                    <label class="form-label" for="mailSubject">Subject</label>
+                                    <input class="form-input" id="mailSubject" maxlength="255" placeholder="Email subject"
+                                           required type="text">
                                     <div class="form-error" id="mailSubject-error"></div>
                                 </div>
                                 <div class="form-group">
@@ -77,8 +77,8 @@
                                     <div class="form-error" id="mailBody-error"></div>
                                 </div>
                                 <div class="btn-row">
-                                    <button type="button" class="btn btn-ghost" id="preview-btn">Preview</button>
-                                    <button type="submit" class="btn btn-primary" id="send-btn">Send Email</button>
+                                    <button class="btn btn-ghost" id="preview-btn" type="button">Preview</button>
+                                    <button class="btn btn-primary" id="send-btn" type="submit">Send Email</button>
                                 </div>
                             </form>
                         </div>
@@ -93,14 +93,14 @@
         <div class="modal" style="max-width: 700px;">
             <div class="modal-header">
                 <h3>Email Preview</h3>
-                <button type="button" class="modal-close" id="close-preview-modal">&times;</button>
+                <button class="modal-close" id="close-preview-modal" type="button">&times;</button>
             </div>
             <div class="modal-body">
                 <div id="preview-content"
                      style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-md); background: #fff;"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-ghost" id="cancel-preview-modal">Close</button>
+                <button class="btn btn-ghost" id="cancel-preview-modal" type="button">Close</button>
             </div>
         </div>
     </div>

@@ -3,62 +3,64 @@
         <h1>Shoppiq Admin</h1>
         <nav class="admin-nav">
             <!-- Overview -->
-            <a th:href="@{/admin/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active' : ''">Dashboard</a>
+            <a th:classappend="${activePage == 'dashboard'} ? 'active' : ''" th:href="@{/admin/dashboard}">Dashboard</a>
 
             <!-- Products -->
-            <a th:href="@{/admin/inventory}" th:classappend="${activePage == 'inventory'} ? 'active' : ''">Inventory</a>
-            <a th:href="@{/admin/categories}" th:classappend="${activePage == 'categories'} ? 'active' : ''">Categories</a>
-            <a th:href="@{/admin/sale}" th:classappend="${activePage == 'sale'} ? 'active' : ''">Sale</a>
-            <a th:href="@{/admin/promo-codes}" th:classappend="${activePage == 'promo-codes'} ? 'active' : ''">Promo
+            <a th:classappend="${activePage == 'inventory'} ? 'active' : ''" th:href="@{/admin/inventory}">Inventory</a>
+            <a th:classappend="${activePage == 'categories'} ? 'active' : ''"
+               th:href="@{/admin/categories}">Categories</a>
+            <a th:classappend="${activePage == 'sale'} ? 'active' : ''" th:href="@{/admin/sale}">Sale</a>
+            <a th:classappend="${activePage == 'promo-codes'} ? 'active' : ''" th:href="@{/admin/promo-codes}">Promo
                 Codes</a>
 
             <!-- Orders & Payments -->
-            <a th:href="@{/admin/orders}" th:classappend="${activePage == 'orders'} ? 'active' : ''">Orders</a>
-            <a th:href="@{/admin/payments}" th:classappend="${activePage == 'payments'} ? 'active' : ''">Payments</a>
+            <a th:classappend="${activePage == 'orders'} ? 'active' : ''" th:href="@{/admin/orders}">Orders</a>
+            <a th:classappend="${activePage == 'payments'} ? 'active' : ''" th:href="@{/admin/payments}">Payments</a>
 
             <!-- People -->
-            <a th:href="@{/admin/users}" th:classappend="${activePage == 'users'} ? 'active' : ''">Customers</a>
-            <a th:href="@{/admin/sellers}" th:classappend="${activePage == 'sellers'} ? 'active' : ''">Sellers</a>
-            <a th:href="@{/admin/pending}" th:classappend="${activePage == 'pending'} ? 'active' : ''">Pending</a>
-            <a th:href="@{/admin/roles}" th:classappend="${activePage == 'roles'} ? 'active' : ''">Roles</a>
+            <a th:classappend="${activePage == 'users'} ? 'active' : ''" th:href="@{/admin/users}">Customers</a>
+            <a th:classappend="${activePage == 'sellers'} ? 'active' : ''" th:href="@{/admin/sellers}">Sellers</a>
+            <a th:classappend="${activePage == 'pending'} ? 'active' : ''" th:href="@{/admin/pending}">Pending</a>
+            <a th:classappend="${activePage == 'roles'} ? 'active' : ''" th:href="@{/admin/roles}">Roles</a>
 
             <!-- Content -->
-            <a th:href="@{/admin/banners}" th:classappend="${activePage == 'banners'} ? 'active' : ''">Banners</a>
-            <a th:href="@{/admin/reviews}" th:classappend="${activePage == 'reviews'} ? 'active' : ''">Reviews</a>
+            <a th:classappend="${activePage == 'banners'} ? 'active' : ''" th:href="@{/admin/banners}">Banners</a>
+            <a th:classappend="${activePage == 'reviews'} ? 'active' : ''" th:href="@{/admin/reviews}">Reviews</a>
 
             <!-- Communication -->
-            <a th:href="@{/admin/mail}" th:classappend="${activePage == 'mail'} ? 'active' : ''">Mail</a>
-            <a th:href="@{/admin/messages}" th:classappend="${activePage == 'messages'} ? 'active' : ''">Messages</a>
-            <a th:href="@{/admin/ai-chats}" th:classappend="${activePage == 'ai-chats'} ? 'active' : ''">AI Chats</a>
+            <a th:classappend="${activePage == 'mail'} ? 'active' : ''" th:href="@{/admin/mail}">Mail</a>
+            <a th:classappend="${activePage == 'messages'} ? 'active' : ''" th:href="@{/admin/messages}">Messages</a>
+            <a th:classappend="${activePage == 'ai-chats'} ? 'active' : ''" th:href="@{/admin/ai-chats}">AI Chats</a>
 
             <!-- Analytics -->
-            <a th:href="@{/admin/reports}" th:classappend="${activePage == 'reports'} ? 'active' : ''">Reports</a>
+            <a th:classappend="${activePage == 'reports'} ? 'active' : ''" th:href="@{/admin/reports}">Reports</a>
 
             <!-- External -->
-            <a th:href="@{/allitems}" class="admin-nav-muted">Store</a>
+            <a class="admin-nav-muted" th:href="@{/allitems}">Store</a>
         </nav>
-        <button class="admin-menu-toggle" aria-label="Toggle admin menu" aria-expanded="false">
+        <button aria-expanded="false" aria-label="Toggle admin menu" class="admin-menu-toggle">
             <span></span><span></span><span></span>
         </button>
     </header>
-    <nav class="admin-mobile-menu" aria-hidden="true" aria-label="Admin mobile menu">
-        <a th:href="@{/admin/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active' : ''">Dashboard</a>
-        <a th:href="@{/admin/inventory}" th:classappend="${activePage == 'inventory'} ? 'active' : ''">Inventory</a>
-        <a th:href="@{/admin/categories}" th:classappend="${activePage == 'categories'} ? 'active' : ''">Categories</a>
-        <a th:href="@{/admin/sale}" th:classappend="${activePage == 'sale'} ? 'active' : ''">Sale</a>
-        <a th:href="@{/admin/promo-codes}" th:classappend="${activePage == 'promo-codes'} ? 'active' : ''">Promo Codes</a>
-        <a th:href="@{/admin/orders}" th:classappend="${activePage == 'orders'} ? 'active' : ''">Orders</a>
-        <a th:href="@{/admin/payments}" th:classappend="${activePage == 'payments'} ? 'active' : ''">Payments</a>
-        <a th:href="@{/admin/users}" th:classappend="${activePage == 'users'} ? 'active' : ''">Customers</a>
-        <a th:href="@{/admin/sellers}" th:classappend="${activePage == 'sellers'} ? 'active' : ''">Sellers</a>
-        <a th:href="@{/admin/pending}" th:classappend="${activePage == 'pending'} ? 'active' : ''">Pending</a>
-        <a th:href="@{/admin/roles}" th:classappend="${activePage == 'roles'} ? 'active' : ''">Roles</a>
-        <a th:href="@{/admin/banners}" th:classappend="${activePage == 'banners'} ? 'active' : ''">Banners</a>
-        <a th:href="@{/admin/reviews}" th:classappend="${activePage == 'reviews'} ? 'active' : ''">Reviews</a>
-        <a th:href="@{/admin/mail}" th:classappend="${activePage == 'mail'} ? 'active' : ''">Mail</a>
-        <a th:href="@{/admin/messages}" th:classappend="${activePage == 'messages'} ? 'active' : ''">Messages</a>
-        <a th:href="@{/admin/ai-chats}" th:classappend="${activePage == 'ai-chats'} ? 'active' : ''">AI Chats</a>
-        <a th:href="@{/admin/reports}" th:classappend="${activePage == 'reports'} ? 'active' : ''">Reports</a>
-        <a th:href="@{/allitems}" class="admin-nav-muted">Store</a>
+    <nav aria-hidden="true" aria-label="Admin mobile menu" class="admin-mobile-menu">
+        <a th:classappend="${activePage == 'dashboard'} ? 'active' : ''" th:href="@{/admin/dashboard}">Dashboard</a>
+        <a th:classappend="${activePage == 'inventory'} ? 'active' : ''" th:href="@{/admin/inventory}">Inventory</a>
+        <a th:classappend="${activePage == 'categories'} ? 'active' : ''" th:href="@{/admin/categories}">Categories</a>
+        <a th:classappend="${activePage == 'sale'} ? 'active' : ''" th:href="@{/admin/sale}">Sale</a>
+        <a th:classappend="${activePage == 'promo-codes'} ? 'active' : ''" th:href="@{/admin/promo-codes}">Promo
+            Codes</a>
+        <a th:classappend="${activePage == 'orders'} ? 'active' : ''" th:href="@{/admin/orders}">Orders</a>
+        <a th:classappend="${activePage == 'payments'} ? 'active' : ''" th:href="@{/admin/payments}">Payments</a>
+        <a th:classappend="${activePage == 'users'} ? 'active' : ''" th:href="@{/admin/users}">Customers</a>
+        <a th:classappend="${activePage == 'sellers'} ? 'active' : ''" th:href="@{/admin/sellers}">Sellers</a>
+        <a th:classappend="${activePage == 'pending'} ? 'active' : ''" th:href="@{/admin/pending}">Pending</a>
+        <a th:classappend="${activePage == 'roles'} ? 'active' : ''" th:href="@{/admin/roles}">Roles</a>
+        <a th:classappend="${activePage == 'banners'} ? 'active' : ''" th:href="@{/admin/banners}">Banners</a>
+        <a th:classappend="${activePage == 'reviews'} ? 'active' : ''" th:href="@{/admin/reviews}">Reviews</a>
+        <a th:classappend="${activePage == 'mail'} ? 'active' : ''" th:href="@{/admin/mail}">Mail</a>
+        <a th:classappend="${activePage == 'messages'} ? 'active' : ''" th:href="@{/admin/messages}">Messages</a>
+        <a th:classappend="${activePage == 'ai-chats'} ? 'active' : ''" th:href="@{/admin/ai-chats}">AI Chats</a>
+        <a th:classappend="${activePage == 'reports'} ? 'active' : ''" th:href="@{/admin/reports}">Reports</a>
+        <a class="admin-nav-muted" th:href="@{/allitems}">Store</a>
     </nav>
 </th:block>

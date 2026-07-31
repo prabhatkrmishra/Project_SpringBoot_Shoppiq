@@ -7,7 +7,7 @@ window.AIChat = (function () {
     var isLoggedIn = false;
     var selectedModel = localStorage.getItem('ai-chat-model') || '1';
 
-var ALLOWED_MODELS = ['1', '2', '3'];
+    var ALLOWED_MODELS = ['1', '2', '3'];
 
     if (ALLOWED_MODELS.indexOf(selectedModel) === -1) {
         selectedModel = '1';

@@ -11,7 +11,7 @@
                 <h1>Inventory Management</h1>
                 <p>Manage product stock and availability</p>
             </div>
-            <a href="/admin/products" class="btn btn-primary btn-sm">Bulk Import</a>
+            <a class="btn btn-primary btn-sm" href="/admin/products">Bulk Import</a>
         </div>
 
         <div class="admin-summary-grid">
@@ -47,7 +47,7 @@
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th><input type="checkbox" id="selectAll" aria-label="Select all"></th>
+                            <th><input aria-label="Select all" id="selectAll" type="checkbox"></th>
                             <th>Product</th>
                             <th>SKU</th>
                             <th>Price</th>
@@ -58,7 +58,7 @@
                     </thead>
                     <tbody id="inventory-body">
                         <tr>
-                            <td colspan="7" class="text-center text-muted">Loading...</td>
+                            <td class="text-center text-muted" colspan="7">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -67,11 +67,11 @@
 
         <div id="inventory-pagination"></div>
 
-        <div id="bulkActionBar" class="bulk-action-bar" style="display:none;">
+        <div class="bulk-action-bar" id="bulkActionBar" style="display:none;">
             <span id="selectedCount">0</span> items selected
             <div class="bulk-action-bar-controls">
-                <input type="number" id="bulkStockQty" min="0" placeholder="New stock qty" style="width:120px;">
-                <input type="text" id="bulkReason" placeholder="Reason" style="width:200px;"
+                <input id="bulkStockQty" min="0" placeholder="New stock qty" style="width:120px;" type="number">
+                <input id="bulkReason" placeholder="Reason" style="width:200px;" type="text"
                        value="Admin bulk adjustment">
                 <button class="btn btn-sm btn-primary" id="bulkUpdateBtn">Update Selected</button>
                 <button class="btn btn-sm btn-ghost" id="bulkClearBtn">Clear</button>

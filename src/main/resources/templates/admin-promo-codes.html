@@ -12,7 +12,7 @@
                 <p>Manage promotional discount codes</p>
             </div>
             <div class="flex gap-sm">
-                <button id="add-promo-btn" class="btn btn-primary btn-sm">+ Add Promo Code</button>
+                <button class="btn btn-primary btn-sm" id="add-promo-btn">+ Add Promo Code</button>
             </div>
         </div>
 
@@ -41,7 +41,7 @@
                     </thead>
                     <tbody id="promo-body">
                         <tr>
-                            <td colspan="13" class="text-center text-muted">Loading...</td>
+                            <td class="text-center text-muted" colspan="13">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -50,95 +50,95 @@
 
         <div id="promo-pagination"></div>
 
-        <div id="promo-modal" class="modal-overlay">
-            <div class="modal" role="dialog" aria-labelledby="promo-modal-title" style="max-width:560px;">
+        <div class="modal-overlay" id="promo-modal">
+            <div aria-labelledby="promo-modal-title" class="modal" role="dialog" style="max-width:560px;">
                 <div class="modal-header">
                     <h2 id="promo-modal-title">Add Promo Code</h2>
                     <button class="modal-close" id="promo-modal-close">&times;</button>
                 </div>
-                <form id="promo-form" class="modal-body">
-                    <input type="hidden" id="promo-id" value="">
+                <form class="modal-body" id="promo-form">
+                    <input id="promo-id" type="hidden" value="">
                     <div class="form-group">
-                        <label for="promo-code" class="form-label">Code *</label>
-                        <input type="text" id="promo-code" class="form-input" maxlength="50" required
-                               placeholder="e.g. SAVE20">
+                        <label class="form-label" for="promo-code">Code *</label>
+                        <input class="form-input" id="promo-code" maxlength="50" placeholder="e.g. SAVE20" required
+                               type="text">
                     </div>
                     <div class="form-group">
-                        <label for="promo-description" class="form-label">Description</label>
-                        <input type="text" id="promo-description" class="form-input" maxlength="255"
-                               placeholder="Optional description">
+                        <label class="form-label" for="promo-description">Description</label>
+                        <input class="form-input" id="promo-description" maxlength="255" placeholder="Optional description"
+                               type="text">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="promo-discount-type" class="form-label">Discount Type *</label>
-                            <select id="promo-discount-type" class="form-input" required>
+                            <label class="form-label" for="promo-discount-type">Discount Type *</label>
+                            <select class="form-input" id="promo-discount-type" required>
                                 <option value="PERCENTAGE">Percentage (%)</option>
                                 <option value="FIXED_AMOUNT">Fixed Amount ($)</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="promo-discount-value" class="form-label">Discount Value *</label>
-                            <input type="number" id="promo-discount-value" class="form-input" min="0.01" step="0.01"
-                                   required placeholder="e.g. 20">
+                            <label class="form-label" for="promo-discount-value">Discount Value *</label>
+                            <input class="form-input" id="promo-discount-value" min="0.01" placeholder="e.g. 20" required
+                                   step="0.01" type="number">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="promo-coupon-type" class="form-label">Coupon Type</label>
-                            <select id="promo-coupon-type" class="form-input">
+                            <label class="form-label" for="promo-coupon-type">Coupon Type</label>
+                            <select class="form-input" id="promo-coupon-type">
                                 <option value="">None (no cart constraint)</option>
                                 <option value="SINGLE">Single — all items qty = 1</option>
                                 <option value="BULK">Bulk — at least one item qty &gt; 1</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="promo-min-item-qty" class="form-label">Min Item Quantity</label>
-                            <input type="number" id="promo-min-item-qty" class="form-input" min="0"
-                                   placeholder="None">
+                            <label class="form-label" for="promo-min-item-qty">Min Item Quantity</label>
+                            <input class="form-input" id="promo-min-item-qty" min="0" placeholder="None"
+                                   type="number">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="promo-min-order" class="form-label">Min Order Amount</label>
-                            <input type="number" id="promo-min-order" class="form-input" min="0" step="0.01"
-                                   placeholder="0.00">
+                            <label class="form-label" for="promo-min-order">Min Order Amount</label>
+                            <input class="form-input" id="promo-min-order" min="0" placeholder="0.00" step="0.01"
+                                   type="number">
                         </div>
                         <div class="form-group">
-                            <label for="promo-max-discount" class="form-label">Max Discount Amount</label>
-                            <input type="number" id="promo-max-discount" class="form-input" min="0" step="0.01"
-                                   placeholder="0.00">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="promo-usage-limit" class="form-label">Usage Limit</label>
-                            <input type="number" id="promo-usage-limit" class="form-input" min="0"
-                                   placeholder="Unlimited">
-                        </div>
-                        <div class="form-group">
-                            <label for="promo-user-limit" class="form-label">Per-User Limit</label>
-                            <input type="number" id="promo-user-limit" class="form-input" min="0"
-                                   placeholder="Unlimited">
+                            <label class="form-label" for="promo-max-discount">Max Discount Amount</label>
+                            <input class="form-input" id="promo-max-discount" min="0" placeholder="0.00" step="0.01"
+                                   type="number">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="promo-valid-from" class="form-label">Valid From *</label>
-                            <input type="datetime-local" id="promo-valid-from" class="form-input" required>
+                            <label class="form-label" for="promo-usage-limit">Usage Limit</label>
+                            <input class="form-input" id="promo-usage-limit" min="0" placeholder="Unlimited"
+                                   type="number">
                         </div>
                         <div class="form-group">
-                            <label for="promo-valid-until" class="form-label">Valid Until *</label>
-                            <input type="datetime-local" id="promo-valid-until" class="form-input" required>
+                            <label class="form-label" for="promo-user-limit">Per-User Limit</label>
+                            <input class="form-input" id="promo-user-limit" min="0" placeholder="Unlimited"
+                                   type="number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="promo-valid-from">Valid From *</label>
+                            <input class="form-input" id="promo-valid-from" required type="datetime-local">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="promo-valid-until">Valid Until *</label>
+                            <input class="form-input" id="promo-valid-until" required type="datetime-local">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label flex items-center gap-sm">
-                            <input type="checkbox" id="promo-active" checked> Active
+                            <input checked id="promo-active" type="checkbox"> Active
                         </label>
                     </div>
                     <div class="flex gap-sm mt-md">
-                        <button type="submit" id="promo-save-btn" class="btn btn-primary">Save</button>
-                        <button type="button" id="promo-cancel-btn" class="btn btn-secondary">Cancel</button>
+                        <button class="btn btn-primary" id="promo-save-btn" type="submit">Save</button>
+                        <button class="btn btn-secondary" id="promo-cancel-btn" type="button">Cancel</button>
                     </div>
                 </form>
             </div>

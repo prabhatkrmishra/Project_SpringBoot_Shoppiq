@@ -7,7 +7,7 @@
 
     <main class="page">
         <div class="container container-narrow">
-            <div id="order-loading" class="flex-center" style="padding:3rem;">
+            <div class="flex-center" id="order-loading" style="padding:3rem;">
                 <span class="spinner"></span>
             </div>
 
@@ -27,7 +27,8 @@
 
                 <div class="panel">
                     <div class="panel-title">Order Summary</div>
-                    <div class="cart-summary-row"><span>Product Subtotal</span><span id="order-subtotal">$0.00</span></div>
+                    <div class="cart-summary-row"><span>Product Subtotal</span><span id="order-subtotal">$0.00</span>
+                    </div>
                     <div class="cart-summary-row" id="order-delivery-row" style="display:none;">
                         <span>Delivery Charge</span><span id="order-delivery">$0.00</span>
                     </div>
@@ -50,9 +51,9 @@
                 </div>
 
                 <div class="mt-lg flex gap-sm">
-                    <a href="/seller-panel/orders" class="btn btn-secondary">&larr; Back to Orders</a>
-                    <select id="status-update" class="form-input" style="width:auto;display:none;"></select>
-                    <button id="update-status-btn" class="btn btn-primary" style="display:none;">Update Status</button>
+                    <a class="btn btn-secondary" href="/seller-panel/orders">&larr; Back to Orders</a>
+                    <select class="form-input" id="status-update" style="width:auto;display:none;"></select>
+                    <button class="btn btn-primary" id="update-status-btn" style="display:none;">Update Status</button>
                 </div>
             </div>
         </div>

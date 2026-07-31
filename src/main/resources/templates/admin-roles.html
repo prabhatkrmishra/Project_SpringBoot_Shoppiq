@@ -25,7 +25,7 @@
                     </thead>
                     <tbody id="roles-body">
                         <tr>
-                            <td colspan="2" class="text-center text-muted">Loading...</td>
+                            <td class="text-center text-muted" colspan="2">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -34,13 +34,13 @@
 
         <div class="admin-panel mt-lg">
             <div class="admin-panel-title">Create Role</div>
-            <form id="role-form" class="flex-between items-center gap-md" style="max-width:100%;">
+            <form class="flex-between items-center gap-md" id="role-form" style="max-width:100%;">
                 <div class="form-group" style="flex:1;">
-                    <label for="role-name" class="form-label">Role Name</label>
-                    <input type="text" id="role-name" class="form-input" placeholder="ROLE_NAME"
-                           pattern="^[A-Z][A-Z0-9_]*$" minlength="2" maxlength="50" required>
+                    <label class="form-label" for="role-name">Role Name</label>
+                    <input class="form-input" id="role-name" maxlength="50" minlength="2"
+                           pattern="^[A-Z][A-Z0-9_]*$" placeholder="ROLE_NAME" required type="text">
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm">Create</button>
+                <button class="btn btn-primary btn-sm" type="submit">Create</button>
             </form>
         </div>
     </main>

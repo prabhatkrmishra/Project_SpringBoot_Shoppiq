@@ -23,31 +23,31 @@
                 </p>
 
                 <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
-                    <a th:href="@{/static}" class="btn btn-primary">
-                        <i data-lucide="home" class="icon-sm"></i> Go Home
+                    <a class="btn btn-primary" th:href="@{/static}">
+                        <i class="icon-sm" data-lucide="home"></i> Go Home
                     </a>
-                    <button onclick="history.back()" class="btn btn-secondary">
-                        <i data-lucide="arrow-left" class="icon-sm"></i> Go Back
+                    <button class="btn btn-secondary" onclick="history.back()">
+                        <i class="icon-sm" data-lucide="arrow-left"></i> Go Back
                     </button>
                 </div>
 
-                <div th:if="${status != null && (status == 403 || status == 401)}"
-                     style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
+                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);"
+                     th:if="${status != null && (status == 403 || status == 401)}">
                     <p style="font-size: 0.85rem; color: var(--color-text-muted);">
-                        <span th:if="${status == 401}">Please <a th:href="@{/login}" class="btn-link">sign in</a> to access this page.</span>
+                        <span th:if="${status == 401}">Please <a class="btn-link" th:href="@{/login}">sign in</a> to access this page.</span>
                         <span th:if="${status == 403}">You don't have permission to access this page.</span>
                     </p>
                 </div>
 
-                <div th:if="${status != null && status == 404}"
-                     style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
+                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);"
+                     th:if="${status != null && status == 404}">
                     <p style="font-size: 0.85rem; color: var(--color-text-muted);">
                         The page you're looking for doesn't exist or has been moved.
                     </p>
                 </div>
 
-                <div th:if="${status != null && status >= 500}"
-                     style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
+                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);"
+                     th:if="${status != null && status >= 500}">
                     <p style="font-size: 0.85rem; color: var(--color-text-muted);">
                         Something went wrong on our end. Please try again later.
                     </p>

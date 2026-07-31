@@ -12,19 +12,19 @@
                 <p>Manage your seller account</p>
             </div>
 
-            <div id="seller-loading" class="flex-center" style="padding:3rem;">
+            <div class="flex-center" id="seller-loading" style="padding:3rem;">
                 <span class="spinner"></span>
             </div>
 
             <div id="pending-approval" style="display:none;">
                 <div class="panel" style="border-color:var(--color-warning,#f59e0b);">
                     <div class="flex items-center gap-sm mb-md">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                             stroke="var(--color-warning,#f59e0b)" stroke-width="2" stroke-linecap="round"
-                             stroke-linejoin="round">
+                        <svg fill="none" height="24" stroke="var(--color-warning,#f59e0b)" stroke-linecap="round"
+                             stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"
+                             width="24">
                             <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="8" x2="12" y2="12"/>
-                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            <line x1="12" x2="12" y1="8" y2="12"/>
+                            <line x1="12" x2="12.01" y1="16" y2="16"/>
                         </svg>
                         <div class="panel-title" style="color:var(--color-warning,#f59e0b);margin:0;">Seller Account
                             Pending Approval
@@ -41,11 +41,11 @@
             <div id="rejected-approval" style="display:none;">
                 <div class="panel" style="border-color:var(--color-danger,#ef4444);">
                     <div class="flex items-center gap-sm mb-md">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger,#ef4444)"
-                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg fill="none" height="24" stroke="var(--color-danger,#ef4444)" stroke-linecap="round" stroke-linejoin="round"
+                             stroke-width="2" viewBox="0 0 24 24" width="24">
                             <circle cx="12" cy="12" r="10"/>
-                            <line x1="15" y1="9" x2="9" y2="15"/>
-                            <line x1="9" y1="9" x2="15" y2="15"/>
+                            <line x1="15" x2="9" y1="9" y2="15"/>
+                            <line x1="9" x2="15" y1="9" y2="15"/>
                         </svg>
                         <div class="panel-title" style="color:var(--color-danger,#ef4444);margin:0;">Seller Account
                             Rejected
@@ -63,29 +63,29 @@
                     <p class="text-sm text-muted mb-md">Fill in your business details to start selling on Shoppiq.</p>
                     <form id="register-form">
                         <div class="form-group">
-                            <label for="reg-businessName" class="form-label">Business Name</label>
-                            <input type="text" id="reg-businessName" class="form-input" maxlength="255" required>
+                            <label class="form-label" for="reg-businessName">Business Name</label>
+                            <input class="form-input" id="reg-businessName" maxlength="255" required type="text">
                         </div>
                         <div class="form-group">
-                            <label for="reg-businessEmail" class="form-label">Business Email</label>
-                            <input type="email" id="reg-businessEmail" class="form-input" maxlength="255" required>
+                            <label class="form-label" for="reg-businessEmail">Business Email</label>
+                            <input class="form-input" id="reg-businessEmail" maxlength="255" required type="email">
                         </div>
                         <div class="form-group">
-                            <label for="reg-phone" class="form-label">Phone</label>
-                            <input type="text" id="reg-phone" class="form-input" maxlength="15" required>
+                            <label class="form-label" for="reg-phone">Phone</label>
+                            <input class="form-input" id="reg-phone" maxlength="15" required type="text">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="reg-gstNumber" class="form-label">GST Number <span class="text-muted">(optional)</span></label>
-                                <input type="text" id="reg-gstNumber" class="form-input" maxlength="20">
+                                <label class="form-label" for="reg-gstNumber">GST Number <span class="text-muted">(optional)</span></label>
+                                <input class="form-input" id="reg-gstNumber" maxlength="20" type="text">
                             </div>
                             <div class="form-group">
-                                <label for="reg-panNumber" class="form-label">PAN Number</label>
-                                <input type="text" id="reg-panNumber" class="form-input" maxlength="10" minlength="10"
-                                       required>
+                                <label class="form-label" for="reg-panNumber">PAN Number</label>
+                                <input class="form-input" id="reg-panNumber" maxlength="10" minlength="10" required
+                                       type="text">
                             </div>
                         </div>
-                        <button type="submit" id="reg-submit-btn" class="btn btn-primary">Register</button>
+                        <button class="btn btn-primary" id="reg-submit-btn" type="submit">Register</button>
                     </form>
                 </div>
             </div>
@@ -95,29 +95,29 @@
                     <div class="panel-title">Business Details</div>
                     <form id="profile-form">
                         <div class="form-group">
-                            <label for="prof-businessName" class="form-label">Business Name</label>
-                            <input type="text" id="prof-businessName" class="form-input" maxlength="255" required>
+                            <label class="form-label" for="prof-businessName">Business Name</label>
+                            <input class="form-input" id="prof-businessName" maxlength="255" required type="text">
                         </div>
                         <div class="form-group">
-                            <label for="prof-businessEmail" class="form-label">Business Email</label>
-                            <input type="email" id="prof-businessEmail" class="form-input" maxlength="255" required>
+                            <label class="form-label" for="prof-businessEmail">Business Email</label>
+                            <input class="form-input" id="prof-businessEmail" maxlength="255" required type="email">
                         </div>
                         <div class="form-group">
-                            <label for="prof-phone" class="form-label">Phone</label>
-                            <input type="text" id="prof-phone" class="form-input" maxlength="15" required>
+                            <label class="form-label" for="prof-phone">Phone</label>
+                            <input class="form-input" id="prof-phone" maxlength="15" required type="text">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="prof-gstNumber" class="form-label">GST Number</label>
-                                <input type="text" id="prof-gstNumber" class="form-input" maxlength="20">
+                                <label class="form-label" for="prof-gstNumber">GST Number</label>
+                                <input class="form-input" id="prof-gstNumber" maxlength="20" type="text">
                             </div>
                             <div class="form-group">
-                                <label for="prof-panNumber" class="form-label">PAN Number</label>
-                                <input type="text" id="prof-panNumber" class="form-input" maxlength="10" required>
+                                <label class="form-label" for="prof-panNumber">PAN Number</label>
+                                <input class="form-input" id="prof-panNumber" maxlength="10" required type="text">
                             </div>
                         </div>
                         <div class="flex gap-sm mt-md">
-                            <button type="submit" id="prof-save-btn" class="btn btn-primary">Save Changes</button>
+                            <button class="btn btn-primary" id="prof-save-btn" type="submit">Save Changes</button>
                         </div>
                     </form>
                 </div>
@@ -125,17 +125,17 @@
                 <div class="panel mt-lg">
                     <div class="panel-title">Account Status</div>
                     <div id="seller-status-info"></div>
-                    <div id="publish-store-section" style="display:none;" class="mt-md">
+                    <div class="mt-md" id="publish-store-section" style="display:none;">
                         <p class="text-sm text-muted">Your store is in draft mode. Publish it to make it visible to
                             customers.</p>
-                        <button id="publish-store-btn" class="btn btn-primary btn-sm">Publish Store</button>
+                        <button class="btn btn-primary btn-sm" id="publish-store-btn">Publish Store</button>
                     </div>
                 </div>
 
                 <div class="panel mt-lg" style="border-color:var(--color-danger);">
                     <div class="panel-title" style="color:var(--color-danger);">Danger Zone</div>
                     <p class="text-sm text-muted">Deleting your seller account cannot be undone.</p>
-                    <button id="delete-seller-btn" class="btn btn-danger btn-sm">Delete Seller Account</button>
+                    <button class="btn btn-danger btn-sm" id="delete-seller-btn">Delete Seller Account</button>
                 </div>
             </div>
         </div>

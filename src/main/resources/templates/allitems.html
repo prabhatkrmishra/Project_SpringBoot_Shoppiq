@@ -15,32 +15,32 @@
             <div class="flex flex-col gap-md" style="margin-bottom:24px;">
                 <form class="form-inline" id="filterForm" onsubmit="return false;">
                     <div class="form-group" style="flex:2;">
-                        <label for="search" class="sr-only">Search products</label>
-                        <input type="search" id="search" class="form-input" placeholder="Search products..."
-                               autocomplete="off">
+                        <label class="sr-only" for="search">Search products</label>
+                        <input autocomplete="off" class="form-input" id="search" placeholder="Search products..."
+                               type="search">
                     </div>
                     <div class="form-group">
-                        <label for="categoryFilter" class="sr-only">Category</label>
-                        <select id="categoryFilter" class="form-select">
+                        <label class="sr-only" for="categoryFilter">Category</label>
+                        <select class="form-select" id="categoryFilter">
                             <option value="">All Categories</option>
                         </select>
                     </div>
-                    <button type="button" class="btn btn-primary" onclick="loadItems(0)">Search</button>
+                    <button class="btn btn-primary" onclick="loadItems(0)" type="button">Search</button>
                 </form>
             </div>
 
-            <div id="emptyState" class="cart-empty" style="display:none;">
+            <div class="cart-empty" id="emptyState" style="display:none;">
                 <h2>No products found</h2>
                 <p>Try adjusting your search or filter criteria.</p>
                 <button class="btn btn-primary" onclick="resetFilters()">Clear Filters</button>
             </div>
 
-            <div id="loadingState" class="text-center" style="padding:48px 0;">
+            <div class="text-center" id="loadingState" style="padding:48px 0;">
                 <div class="spinner"></div>
                 <p class="text-muted mt-md">Loading products...</p>
             </div>
 
-            <div id="itemGrid" class="grid-4" style="display:none;"></div>
+            <div class="grid-4" id="itemGrid" style="display:none;"></div>
             <div id="items-pagination"></div>
         </div>
     </main>

@@ -7,34 +7,34 @@
 
     <main class="page">
         <div class="container">
-            <div id="loadingState" class="text-center" style="padding:48px 0;">
+            <div class="text-center" id="loadingState" style="padding:48px 0;">
                 <div class="spinner"></div>
                 <p class="text-muted mt-md">Loading products...</p>
             </div>
 
-            <div id="errorState" class="empty-state" style="display:none;">
-                <div class="empty-state-icon"><i data-lucide="layout-grid" class="icon-xl"></i></div>
+            <div class="empty-state" id="errorState" style="display:none;">
+                <div class="empty-state-icon"><i class="icon-xl" data-lucide="layout-grid"></i></div>
                 <h2>Category Not Found</h2>
                 <p>The category you're looking for doesn't exist.</p>
-                <a th:href="@{/categories}" class="btn btn-primary">Browse Categories</a>
+                <a class="btn btn-primary" th:href="@{/categories}">Browse Categories</a>
             </div>
 
             <div id="categoryContent" style="display:none;">
-                <nav class="breadcrumbs" aria-label="Breadcrumb" id="breadcrumbs"></nav>
+                <nav aria-label="Breadcrumb" class="breadcrumbs" id="breadcrumbs"></nav>
                 <div class="page-header">
                     <h1 id="categoryName"></h1>
                     <p id="categoryDesc"></p>
                     <p id="itemCount"></p>
                 </div>
 
-                <div id="emptyItems" class="empty-state" style="display:none;">
-                    <div class="empty-state-icon"><i data-lucide="package-x" class="icon-xl"></i></div>
+                <div class="empty-state" id="emptyItems" style="display:none;">
+                    <div class="empty-state-icon"><i class="icon-xl" data-lucide="package-x"></i></div>
                     <h2>No Products Found</h2>
                     <p>There are no products in this category yet.</p>
-                    <a th:href="@{/allitems}" class="btn btn-primary">Browse All Products</a>
+                    <a class="btn btn-primary" th:href="@{/allitems}">Browse All Products</a>
                 </div>
 
-                <div id="itemGrid" class="grid-4" style="display:none;"></div>
+                <div class="grid-4" id="itemGrid" style="display:none;"></div>
                 <div id="category-pagination"></div>
             </div>
         </div>

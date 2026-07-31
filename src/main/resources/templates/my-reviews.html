@@ -12,13 +12,13 @@
                 <p>Manage your product reviews</p>
             </div>
 
-            <div id="reviews-loading" class="spinner"></div>
+            <div class="spinner" id="reviews-loading"></div>
 
-            <div id="reviews-empty" class="empty-state" style="display:none;">
-                <i data-lucide="star" class="empty-state-icon"></i>
+            <div class="empty-state" id="reviews-empty" style="display:none;">
+                <i class="empty-state-icon" data-lucide="star"></i>
                 <h3>No Reviews Yet</h3>
                 <p>You haven't written any product reviews.</p>
-                <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse Products</a>
+                <a class="btn btn-primary mt-md" th:href="@{/allitems}">Browse Products</a>
             </div>
 
             <div id="reviews-list" style="display:none;"></div>
@@ -26,18 +26,18 @@
         </div>
     </main>
 
-    <div id="edit-review-modal" class="modal-overlay">
+    <div class="modal-overlay" id="edit-review-modal">
         <div class="modal" role="dialog">
             <div class="modal-header">
                 <h2>Edit Review</h2>
                 <button class="modal-close" id="edit-review-close">&times;</button>
             </div>
-            <form id="edit-review-form" class="modal-body">
-                <input type="hidden" id="edit-review-id">
-                <input type="hidden" id="edit-review-item-id">
+            <form class="modal-body" id="edit-review-form">
+                <input id="edit-review-id" type="hidden">
+                <input id="edit-review-item-id" type="hidden">
                 <div class="form-group">
-                    <label for="edit-review-rating" class="form-label">Rating</label>
-                    <select id="edit-review-rating" class="form-input" required>
+                    <label class="form-label" for="edit-review-rating">Rating</label>
+                    <select class="form-input" id="edit-review-rating" required>
                         <option value="1">1 Star</option>
                         <option value="2">2 Stars</option>
                         <option value="3">3 Stars</option>
@@ -46,12 +46,12 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="edit-review-text" class="form-label">Review</label>
-                    <textarea id="edit-review-text" class="form-input" rows="4" required></textarea>
+                    <label class="form-label" for="edit-review-text">Review</label>
+                    <textarea class="form-input" id="edit-review-text" required rows="4"></textarea>
                 </div>
                 <div class="flex gap-sm mt-md">
-                    <button type="submit" id="edit-review-save" class="btn btn-primary">Save</button>
-                    <button type="button" id="edit-review-cancel" class="btn btn-secondary">Cancel</button>
+                    <button class="btn btn-primary" id="edit-review-save" type="submit">Save</button>
+                    <button class="btn btn-secondary" id="edit-review-cancel" type="button">Cancel</button>
                 </div>
             </form>
         </div>

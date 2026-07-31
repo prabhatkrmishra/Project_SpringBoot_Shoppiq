@@ -2,15 +2,15 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title th:text="${title}">Special Offer</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f4f4;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+    <table cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;" width="100%">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0"
-                       style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+                <table cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;"
+                       width="600">
                     <!-- Header -->
                     <tr>
                         <td style="background-color: #2d7d46; padding: 30px; text-align: center;">
@@ -33,12 +33,12 @@
                             </div>
 
                             <!-- CTA Button -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;"
-                                   th:if="${ctaText}">
+                            <table cellpadding="0" cellspacing="0" style="margin: 30px 0;" th:if="${ctaText}"
+                                   width="100%">
                                 <tr>
                                     <td align="center">
-                                        <a th:href="${ctaUrl}"
-                                           style="background-color: #2d7d46; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;"
+                                        <a style="background-color: #2d7d46; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;"
+                                           th:href="${ctaUrl}"
                                            th:text="${ctaText}">Shop Now</a>
                                     </td>
                                 </tr>
@@ -46,7 +46,7 @@
 
                             <p style="color: #94a3b8; font-size: 12px; line-height: 1.6; margin: 20px 0 0 0;">
                                 You're receiving this email because you opted in to promotional emails.
-                                <a th:href="${unsubscribeUrl}" style="color: #4f46e5;">Unsubscribe</a>
+                                <a style="color: #4f46e5;" th:href="${unsubscribeUrl}">Unsubscribe</a>
                             </p>
                         </td>
                     </tr>

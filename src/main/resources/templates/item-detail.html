@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Product Detail')}"></head>
 <body>
     <th:block th:replace="~{fragments/header :: header}"></th:block>
@@ -7,146 +7,146 @@
 
     <main class="page">
         <div class="container">
-            <div id="loadingState" class="text-center" style="padding:48px 0;">
+            <div class="text-center" id="loadingState" style="padding:48px 0;">
                 <div class="spinner"></div>
                 <p class="text-muted mt-md">Loading product...</p>
             </div>
 
-            <div id="errorState" class="empty-state" style="display:none;">
-                <div class="empty-state-icon"><i data-lucide="package-x" class="icon-xl"></i></div>
+            <div class="empty-state" id="errorState" style="display:none;">
+                <div class="empty-state-icon"><i class="icon-xl" data-lucide="package-x"></i></div>
                 <h2>Product Not Found</h2>
                 <p>The product you're looking for doesn't exist or has been removed.</p>
-                <a th:href="@{/allitems}" class="btn btn-primary">Back to Shop</a>
+                <a class="btn btn-primary" th:href="@{/allitems}">Back to Shop</a>
             </div>
 
-            <div id="itemDetail" class="item-detail" style="display:none;"></div>
+            <div class="item-detail" id="itemDetail" style="display:none;"></div>
 
-            <div id="reviewsSection" style="display:none;" class="mt-xl">
+            <div class="mt-xl" id="reviewsSection" style="display:none;">
                 <div class="panel">
                     <div class="panel-title">Customer Reviews</div>
                     <div id="review-summary-container"></div>
-                    <div id="reviews-loading" class="flex-center" style="padding:1rem;">
+                    <div class="flex-center" id="reviews-loading" style="padding:1rem;">
                         <span class="spinner"></span>
                     </div>
                     <div id="reviews-list" style="display:none;"></div>
-                    <div id="reviews-empty" class="text-center text-muted text-sm"
+                    <div class="text-center text-muted text-sm" id="reviews-empty"
                          style="display:none;padding:1.5rem 1rem;">No reviews yet. Be the first to review this product!
                     </div>
                 </div>
 
-                <div sec:authorize="isAuthenticated() and !hasRole('SELLER') and !hasRole('ADMIN')" class="panel mt-lg">
+                <div class="panel mt-lg" sec:authorize="isAuthenticated() and !hasRole('SELLER') and !hasRole('ADMIN')">
                     <div class="panel-title">Write a Review</div>
                     <form id="review-form">
                         <div class="form-group">
                             <label class="form-label">Rating</label>
-                            <div id="star-rating" class="star-rating"
+                            <div class="star-rating" id="star-rating"
                                  style="display:flex;gap:6px;cursor:pointer;padding:4px 0;">
                                 <span class="star-input-item" data-star="1"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="1"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                                 <span class="star-input-item" data-star="2"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="2"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                                 <span class="star-input-item" data-star="3"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="3"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                                 <span class="star-input-item" data-star="4"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="4"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                                 <span class="star-input-item" data-star="5"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:28px;height:28px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="5"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                             </div>
-                            <input type="hidden" id="review-rating" value="0">
+                            <input id="review-rating" type="hidden" value="0">
                         </div>
                         <div class="form-group">
-                            <label for="review-text" class="form-label">Your Review <span
+                            <label class="form-label" for="review-text">Your Review <span
                                     class="text-muted">(optional)</span></label>
-                            <textarea id="review-text" class="form-input" rows="4" maxlength="1000"
-                                      placeholder="Tell others what you think about this product..."
+                            <textarea class="form-input" id="review-text" maxlength="1000" placeholder="Tell others what you think about this product..."
+                                      rows="4"
                                       style="resize:vertical;"></textarea>
                         </div>
-                        <button type="submit" id="review-submit-btn" class="btn btn-primary">Submit Review</button>
+                        <button class="btn btn-primary" id="review-submit-btn" type="submit">Submit Review</button>
                     </form>
                 </div>
             </div>
 
             <!-- Edit Review Modal -->
-            <div id="editReviewModal" class="modal-overlay">
+            <div class="modal-overlay" id="editReviewModal">
                 <div class="modal" style="max-width:480px;width:90%;">
                     <div class="modal-header">
                         <h3>Edit Review</h3>
-                        <button type="button" class="modal-close" id="editReviewClose">&times;</button>
+                        <button class="modal-close" id="editReviewClose" type="button">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
                             <label class="form-label">Rating</label>
-                            <div id="edit-star-rating" class="star-rating" style="display:flex;gap:4px;cursor:pointer;">
+                            <div class="star-rating" id="edit-star-rating" style="display:flex;gap:4px;cursor:pointer;">
                                 <span class="star-input-item" data-star="1"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="1"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                                 <span class="star-input-item" data-star="2"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="2"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                                 <span class="star-input-item" data-star="3"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="3"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                                 <span class="star-input-item" data-star="4"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="4"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                                 <span class="star-input-item" data-star="5"
                                       style="cursor:pointer;display:inline-flex;position:relative;width:24px;height:24px;"><i
-                                        data-lucide="star" class="icon star-icon"></i><i data-lucide="star"
-                                                                                         class="icon star-icon filled"
+                                        class="icon star-icon" data-lucide="star"></i><i class="icon star-icon filled"
+                                                                                         data-lucide="star"
                                                                                          data-star-fg="5"
                                                                                          style="position:absolute;top:0;left:0;clip-path:inset(0 100% 0 0);pointer-events:none;"></i></span>
                             </div>
-                            <input type="hidden" id="edit-review-rating" value="0">
+                            <input id="edit-review-rating" type="hidden" value="0">
                         </div>
                         <div class="form-group">
-                            <label for="edit-review-text" class="form-label">Your Review</label>
-                            <textarea id="edit-review-text" class="form-input" rows="4" maxlength="1000"
+                            <label class="form-label" for="edit-review-text">Your Review</label>
+                            <textarea class="form-input" id="edit-review-text" maxlength="1000" rows="4"
                                       style="resize:vertical;"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" id="editReviewCancel">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="editReviewSave">Save Changes</button>
+                        <button class="btn btn-secondary" id="editReviewCancel" type="button">Cancel</button>
+                        <button class="btn btn-primary" id="editReviewSave" type="button">Save Changes</button>
                     </div>
                 </div>
             </div>
 
-            <input type="hidden" id="currentUsername" sec:authorize="isAuthenticated()"
-                   th:value="${#authentication.name}">
-            <input type="hidden" id="currentUserRole" sec:authorize="hasRole('ADMIN')" value="ADMIN">
-            <input type="hidden" id="currentUserRoleSeller" sec:authorize="hasRole('SELLER')" value="SELLER">
+            <input id="currentUsername" sec:authorize="isAuthenticated()" th:value="${#authentication.name}"
+                   type="hidden">
+            <input id="currentUserRole" sec:authorize="hasRole('ADMIN')" type="hidden" value="ADMIN">
+            <input id="currentUserRoleSeller" sec:authorize="hasRole('SELLER')" type="hidden" value="SELLER">
         </div>
     </main>
 
@@ -449,10 +449,10 @@
                             '</form>' +
                             '</div>' :
                             isAdmin ? '' :
-                            isSeller ? '' :
-                                '<div class="item-detail-actions">' +
-                                '<a href="/login?returnUrl=' + encodeURIComponent(window.location.pathname) + '" class="btn btn-primary btn-lg btn-block"><i data-lucide="log-in" class="icon-sm"></i> Sign in to Purchase</a>' +
-                                '</div>') +
+                                isSeller ? '' :
+                                    '<div class="item-detail-actions">' +
+                                    '<a href="/login?returnUrl=' + encodeURIComponent(window.location.pathname) + '" class="btn btn-primary btn-lg btn-block"><i data-lucide="log-in" class="icon-sm"></i> Sign in to Purchase</a>' +
+                                    '</div>') +
                         '</div>' +
                         '</div>';
 

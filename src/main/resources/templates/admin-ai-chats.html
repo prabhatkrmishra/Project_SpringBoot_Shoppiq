@@ -12,8 +12,8 @@
         </div>
 
         <div class="admin-filters">
-            <input type="text" id="searchInput" placeholder="Search by chat ID, user, or title..."
-                   style="max-width: 300px;">
+            <input id="searchInput" placeholder="Search by chat ID, user, or title..." style="max-width: 300px;"
+                   type="text">
             <select id="statusFilter">
                 <option value="">All Status</option>
                 <option value="ACTIVE">Active</option>
@@ -38,7 +38,7 @@
                     </thead>
                     <tbody id="chats-body">
                         <tr>
-                            <td colspan="7" class="text-center text-muted">Loading...</td>
+                            <td class="text-center text-muted" colspan="7">Loading...</td>
                         </tr>
                     </tbody>
                 </table>

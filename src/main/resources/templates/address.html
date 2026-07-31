@@ -12,89 +12,90 @@
                 <p>Manage your shipping addresses</p>
             </div>
 
-            <div id="address-loading" class="flex-center" style="padding:3rem;">
+            <div class="flex-center" id="address-loading" style="padding:3rem;">
                 <span class="spinner"></span>
             </div>
 
-            <div id="address-empty" class="cart-empty" style="display:none;">
+            <div class="cart-empty" id="address-empty" style="display:none;">
                 <h2>No addresses yet</h2>
                 <p>Add an address to start shopping</p>
             </div>
 
-            <div id="address-grid" class="grid-2" style="display:none;"></div>
+            <div class="grid-2" id="address-grid" style="display:none;"></div>
 
             <div class="mt-lg">
-                <button id="add-address-btn" class="btn btn-primary">+ Add New Address</button>
+                <button class="btn btn-primary" id="add-address-btn">+ Add New Address</button>
             </div>
         </div>
 
-        <div id="address-modal" class="modal-overlay">
-            <div class="modal" role="dialog" aria-labelledby="modal-title">
+        <div class="modal-overlay" id="address-modal">
+            <div aria-labelledby="modal-title" class="modal" role="dialog">
                 <div class="modal-header">
                     <h2 id="modal-title">Add Address</h2>
-                    <a id="back-to-checkout" class="btn-link" style="display:none; margin-left:auto;" href="/checkout">← Back to Checkout</a>
-                    <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+                    <a class="btn-link" href="/checkout" id="back-to-checkout" style="display:none; margin-left:auto;">←
+                        Back to Checkout</a>
+                    <button aria-label="Close" class="modal-close" id="modal-close-btn">&times;</button>
                 </div>
-                <form id="address-form" class="modal-body">
-                    <input type="hidden" id="addr-id" value="">
+                <form class="modal-body" id="address-form">
+                    <input id="addr-id" type="hidden" value="">
                     <div class="form-group">
-                        <label for="addr-label" class="form-label">Label</label>
-                        <input type="text" id="addr-label" class="form-input" placeholder="e.g. Home, Office"
-                               maxlength="30" required>
+                        <label class="form-label" for="addr-label">Label</label>
+                        <input class="form-input" id="addr-label" maxlength="30" placeholder="e.g. Home, Office"
+                               required type="text">
                     </div>
                     <div class="form-group">
-                        <label for="addr-fullName" class="form-label">Full Name</label>
-                        <input type="text" id="addr-fullName" class="form-input" placeholder="John Doe" maxlength="100"
-                               required>
+                        <label class="form-label" for="addr-fullName">Full Name</label>
+                        <input class="form-input" id="addr-fullName" maxlength="100" placeholder="John Doe" required
+                               type="text">
                     </div>
                     <div class="form-group">
-                        <label for="addr-phone" class="form-label">Phone</label>
-                        <input type="text" id="addr-phone" class="form-input" placeholder="+1234567890"
-                               pattern="[+]?[0-9]{7,15}" required>
+                        <label class="form-label" for="addr-phone">Phone</label>
+                        <input class="form-input" id="addr-phone" pattern="[+]?[0-9]{7,15}" placeholder="+1234567890"
+                               required type="text">
                     </div>
                     <div class="form-group">
-                        <label for="addr-line1" class="form-label">Address Line 1</label>
-                        <input type="text" id="addr-line1" class="form-input" placeholder="123 Main St" maxlength="255"
-                               required>
+                        <label class="form-label" for="addr-line1">Address Line 1</label>
+                        <input class="form-input" id="addr-line1" maxlength="255" placeholder="123 Main St" required
+                               type="text">
                     </div>
                     <div class="form-group">
-                        <label for="addr-line2" class="form-label">Address Line 2 <span
+                        <label class="form-label" for="addr-line2">Address Line 2 <span
                                 class="text-muted">(optional)</span></label>
-                        <input type="text" id="addr-line2" class="form-input" placeholder="Apt, Suite, etc."
-                               maxlength="255">
+                        <input class="form-input" id="addr-line2" maxlength="255" placeholder="Apt, Suite, etc."
+                               type="text">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="addr-city" class="form-label">City</label>
-                            <input type="text" id="addr-city" class="form-input" placeholder="New York" maxlength="100"
-                                   required>
+                            <label class="form-label" for="addr-city">City</label>
+                            <input class="form-input" id="addr-city" maxlength="100" placeholder="New York" required
+                                   type="text">
                         </div>
                         <div class="form-group">
-                            <label for="addr-state" class="form-label">State</label>
-                            <input type="text" id="addr-state" class="form-input" placeholder="NY" maxlength="100"
-                                   required>
+                            <label class="form-label" for="addr-state">State</label>
+                            <input class="form-input" id="addr-state" maxlength="100" placeholder="NY" required
+                                   type="text">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="addr-postalCode" class="form-label">Postal Code</label>
-                            <input type="text" id="addr-postalCode" class="form-input" placeholder="10001"
-                                   maxlength="10" required>
+                            <label class="form-label" for="addr-postalCode">Postal Code</label>
+                            <input class="form-input" id="addr-postalCode" maxlength="10" placeholder="10001"
+                                   required type="text">
                         </div>
                         <div class="form-group">
-                            <label for="addr-country" class="form-label">Country</label>
-                            <input type="text" id="addr-country" class="form-input" placeholder="US" maxlength="100"
-                                   required>
+                            <label class="form-label" for="addr-country">Country</label>
+                            <input class="form-input" id="addr-country" maxlength="100" placeholder="US" required
+                                   type="text">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                            <input type="checkbox" id="addr-default"> Set as default address
+                            <input id="addr-default" type="checkbox"> Set as default address
                         </label>
                     </div>
                     <div class="flex gap-sm mt-md">
-                        <button type="submit" id="addr-save-btn" class="btn btn-primary">Save Address</button>
-                        <button type="button" id="addr-cancel-btn" class="btn btn-secondary">Cancel</button>
+                        <button class="btn btn-primary" id="addr-save-btn" type="submit">Save Address</button>
+                        <button class="btn btn-secondary" id="addr-cancel-btn" type="button">Cancel</button>
                     </div>
                 </form>
             </div>

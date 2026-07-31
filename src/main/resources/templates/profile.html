@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('My Profile')}"></head>
 <body>
     <th:block th:replace="~{fragments/header :: header}"></th:block>
@@ -16,7 +16,7 @@
                 <!-- Profile Header with Avatar -->
                 <header class="profile-header-card">
                     <div class="profile-header-inner">
-                         <div class="profile-avatar-large"
+                        <div class="profile-avatar-large"
                              id="profile-header-avatar"
                              th:text="${#strings.substring(#authentication.principal.user.name, 0, 2).toUpperCase()}">US
                         </div>
@@ -31,19 +31,19 @@
 
                 <!-- Tabs -->
                 <div class="tabs" role="tablist">
-                    <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-profile"
-                            data-tab="profile"><i data-lucide="user" class="icon-sm"></i> Profile
+                    <button aria-controls="tab-profile" aria-selected="true" class="tab active" data-tab="profile"
+                            role="tab"><i class="icon-sm" data-lucide="user"></i> Profile
                     </button>
-                    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-security"
-                            data-tab="security"><i data-lucide="shield" class="icon-sm"></i> Security
+                    <button aria-controls="tab-security" aria-selected="false" class="tab" data-tab="security"
+                            role="tab"><i class="icon-sm" data-lucide="shield"></i> Security
                     </button>
-                    <button sec:authorize="!hasRole('ADMIN') and !hasRole('SELLER')" class="tab" role="tab"
-                            aria-selected="false" aria-controls="tab-notifications" data-tab="notifications"><i
-                            data-lucide="bell" class="icon-sm"></i> Notifications
+                    <button aria-controls="tab-notifications" aria-selected="false" class="tab"
+                            data-tab="notifications" role="tab" sec:authorize="!hasRole('ADMIN') and !hasRole('SELLER')"><i
+                            class="icon-sm" data-lucide="bell"></i> Notifications
                     </button>
-                    <button sec:authorize="!hasRole('ADMIN')" class="tab" role="tab" aria-selected="false"
-                            aria-controls="tab-addresses" data-tab="addresses"><i data-lucide="map-pin"
-                                                                                  class="icon-sm"></i> Addresses
+                    <button aria-controls="tab-addresses" aria-selected="false" class="tab" data-tab="addresses"
+                            role="tab" sec:authorize="!hasRole('ADMIN')"><i class="icon-sm"
+                                                                                  data-lucide="map-pin"></i> Addresses
                     </button>
                 </div>
 
@@ -52,7 +52,7 @@
                     <div class="panel">
                         <div class="panel-header">
                             <div class="panel-title">Personal Information</div>
-                            <button type="button" class="btn btn-primary btn-sm" id="open-update-modal">Update</button>
+                            <button class="btn btn-primary btn-sm" id="open-update-modal" type="button">Update</button>
                         </div>
                         <div class="profile-details">
                             <div class="profile-detail-row">
@@ -83,23 +83,23 @@
                     <div class="modal">
                         <div class="modal-header">
                             <h3>Update Profile</h3>
-                            <button type="button" class="modal-close" id="close-update-modal">&times;</button>
+                            <button class="modal-close" id="close-update-modal" type="button">&times;</button>
                         </div>
                         <div class="modal-body">
                             <div class="form-group">
-                                <label for="modal-name" class="form-label">Name</label>
-                                <input type="text" id="modal-name" class="form-input" required maxlength="100"/>
+                                <label class="form-label" for="modal-name">Name</label>
+                                <input class="form-input" id="modal-name" maxlength="100" required type="text"/>
                                 <div class="form-error" id="modal-name-error"></div>
                             </div>
                             <div class="form-group">
-                                <label for="modal-email" class="form-label">Email</label>
-                                <input type="email" id="modal-email" class="form-input" readonly/>
+                                <label class="form-label" for="modal-email">Email</label>
+                                <input class="form-input" id="modal-email" readonly type="email"/>
                                 <div class="form-hint">Email cannot be changed</div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-ghost" id="cancel-update-modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="save-update-modal">Save</button>
+                            <button class="btn btn-ghost" id="cancel-update-modal" type="button">Cancel</button>
+                            <button class="btn btn-primary" id="save-update-modal" type="button">Save</button>
                         </div>
                     </div>
                 </div>
@@ -109,21 +109,21 @@
                     <div class="modal">
                         <div class="modal-header">
                             <h3>Verify Email</h3>
-                            <button type="button" class="modal-close" id="close-verify-modal">&times;</button>
+                            <button class="modal-close" id="close-verify-modal" type="button">&times;</button>
                         </div>
                         <div class="modal-body">
                             <p class="text-sm text-muted mb-md">Enter the 6-digit code sent to your email address.</p>
                             <div class="form-group">
-                                <label for="verifyCode" class="form-label">Verification Code</label>
-                                <input type="text" id="verifyCode" class="form-input text-center"
-                                       placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric"
-                                       pattern="[0-9]*">
+                                <label class="form-label" for="verifyCode">Verification Code</label>
+                                <input class="form-input text-center" id="verifyCode" inputmode="numeric"
+                                       maxlength="6" pattern="[0-9]*" placeholder="Enter 6-digit code"
+                                       type="text">
                                 <div class="form-error" id="verifyCode-error"></div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-ghost" id="cancel-verify-modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="submit-verify-btn">Verify</button>
+                            <button class="btn btn-ghost" id="cancel-verify-modal" type="button">Cancel</button>
+                            <button class="btn btn-primary" id="submit-verify-btn" type="button">Verify</button>
                         </div>
                     </div>
                 </div>
@@ -135,7 +135,7 @@
                         <p class="text-sm text-muted mb-lg">Verify your email address to secure your account.</p>
                         <div class="flex items-center gap-sm" id="email-verification-status">
                             <span class="status-badge" id="verification-badge">Loading...</span>
-                            <button type="button" class="btn btn-sm btn-primary hidden" id="verify-email-btn">Verify
+                            <button class="btn btn-sm btn-primary hidden" id="verify-email-btn" type="button">Verify
                                 Email
                             </button>
                         </div>
@@ -147,22 +147,22 @@
                             lowercase, number, and special character.</p>
                         <form id="password-form" novalidate>
                             <div class="form-group" id="current-password-group">
-                                <label for="currentPassword" class="form-label">Current Password</label>
-                                <input type="password" id="currentPassword" name="currentPassword" class="form-input"
-                                       autocomplete="current-password"/>
+                                <label class="form-label" for="currentPassword">Current Password</label>
+                                <input autocomplete="current-password" class="form-input" id="currentPassword" name="currentPassword"
+                                       type="password"/>
                                 <div class="form-error" id="currentPassword-error"></div>
                             </div>
                             <div class="form-group">
-                                <label for="newPassword" class="form-label">New Password</label>
-                                <input type="password" id="newPassword" name="newPassword" class="form-input" required
-                                       minlength="8" autocomplete="new-password"/>
+                                <label class="form-label" for="newPassword">New Password</label>
+                                <input autocomplete="new-password" class="form-input" id="newPassword" minlength="8" name="newPassword"
+                                       required type="password"/>
                                 <div class="form-error" id="newPassword-error"></div>
                                 <div class="password-requirements" id="password-requirements">
-                                    <span class="req" id="req-length"><i data-lucide="check" class="icon-xs"></i> At least 8 characters</span>
-                                    <span class="req" id="req-upper"><i data-lucide="check" class="icon-xs"></i> One uppercase letter</span>
-                                    <span class="req" id="req-lower"><i data-lucide="check" class="icon-xs"></i> One lowercase letter</span>
-                                    <span class="req" id="req-digit"><i data-lucide="check" class="icon-xs"></i> One number</span>
-                                    <span class="req" id="req-special"><i data-lucide="check" class="icon-xs"></i> One special char (@$!%*?&)</span>
+                                    <span class="req" id="req-length"><i class="icon-xs" data-lucide="check"></i> At least 8 characters</span>
+                                    <span class="req" id="req-upper"><i class="icon-xs" data-lucide="check"></i> One uppercase letter</span>
+                                    <span class="req" id="req-lower"><i class="icon-xs" data-lucide="check"></i> One lowercase letter</span>
+                                    <span class="req" id="req-digit"><i class="icon-xs" data-lucide="check"></i> One number</span>
+                                    <span class="req" id="req-special"><i class="icon-xs" data-lucide="check"></i> One special char (@$!%*?&)</span>
                                 </div>
                                 <div class="password-strength" id="password-strength">
                                     <div class="strength-bar">
@@ -172,21 +172,21 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="confirmPassword" class="form-label">Confirm New Password</label>
-                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
-                                       required autocomplete="new-password"/>
+                                <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                                <input autocomplete="new-password" class="form-input" id="confirmPassword" name="confirmPassword"
+                                       required type="password"/>
                                 <div class="form-error" id="confirmPassword-error"></div>
                             </div>
                             <div class="btn-row">
-                                <button type="submit" class="btn btn-primary">Update Password</button>
+                                <button class="btn btn-primary" type="submit">Update Password</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
                 <!-- Notifications Tab -->
-                <div sec:authorize="!hasRole('ADMIN') and !hasRole('SELLER')" class="tab-content" id="tab-notifications"
-                     role="tabpanel">
+                <div class="tab-content" id="tab-notifications" role="tabpanel"
+                     sec:authorize="!hasRole('ADMIN') and !hasRole('SELLER')">
                     <div class="panel">
                         <div class="panel-title">Notification Preferences</div>
                         <p class="text-sm text-muted mb-lg">Choose which notifications you'd like to receive via
@@ -200,7 +200,7 @@
                                     </div>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" name="orderUpdates">
+                                    <input name="orderUpdates" type="checkbox">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -210,7 +210,7 @@
                                     <div class="toggle-desc">Password changes, login alerts, and security updates</div>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" name="accountSecurity">
+                                    <input name="accountSecurity" type="checkbox">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -220,7 +220,7 @@
                                     <div class="toggle-desc">Special deals, discounts, and promotional emails</div>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" name="promotions">
+                                    <input name="promotions" type="checkbox">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -231,31 +231,31 @@
                                     </div>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" name="reviews">
+                                    <input name="reviews" type="checkbox">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
                         </div>
                         <div class="btn-row">
-                            <button id="save-notifications-btn" class="btn btn-primary">Save Preferences</button>
+                            <button class="btn btn-primary" id="save-notifications-btn">Save Preferences</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Addresses Tab -->
-                <div sec:authorize="!hasRole('ADMIN')" class="tab-content" id="tab-addresses" role="tabpanel">
+                <div class="tab-content" id="tab-addresses" role="tabpanel" sec:authorize="!hasRole('ADMIN')">
                     <div class="panel">
                         <div class="panel-title">Default Shipping Address</div>
                         <p class="text-sm text-muted mb-lg">Select your default address for faster checkout.</p>
                         <div class="address-select-row">
-                            <select id="default-address-select" class="form-input" disabled>
+                            <select class="form-input" disabled id="default-address-select">
                                 <option value="">Loading addresses...</option>
                             </select>
-                            <button id="save-address-btn" class="btn btn-primary btn-sm">Save</button>
+                            <button class="btn btn-primary btn-sm" id="save-address-btn">Save</button>
                         </div>
                         <div class="address-manage-link mt-md">
-                            <a th:href="@{/address}" class="btn-link"><i data-lucide="external-link"
-                                                                         class="icon-sm"></i> Manage all addresses</a>
+                            <a class="btn-link" th:href="@{/address}"><i class="icon-sm"
+                                                                         data-lucide="external-link"></i> Manage all addresses</a>
                         </div>
                     </div>
                 </div>
@@ -263,7 +263,7 @@
 
             <div sec:authorize="!isAuthenticated()">
                 <div class="panel">
-                    <p class="text-center">Please <a th:href="@{/login}" class="btn-link">sign in</a> to view your
+                    <p class="text-center">Please <a class="btn-link" th:href="@{/login}">sign in</a> to view your
                         profile.</p>
                 </div>
             </div>
@@ -273,34 +273,34 @@
             <div sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('SELLER')">
                 <div class="section-label">Quick Actions</div>
                 <div class="grid-2">
-                    <a th:href="@{/orders}" class="card-link">
+                    <a class="card-link" th:href="@{/orders}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="package" class="icon-sm"></i> My Orders</h3>
+                                <h3><i class="icon-sm" data-lucide="package"></i> My Orders</h3>
                                 <p class="card-text">View order history and track shipments</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/address}" class="card-link">
+                    <a class="card-link" th:href="@{/address}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="map-pin" class="icon-sm"></i> Addresses</h3>
+                                <h3><i class="icon-sm" data-lucide="map-pin"></i> Addresses</h3>
                                 <p class="card-text">Manage your shipping addresses</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/cart}" class="card-link">
+                    <a class="card-link" th:href="@{/cart}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="shopping-cart" class="icon-sm"></i> Shopping Cart</h3>
+                                <h3><i class="icon-sm" data-lucide="shopping-cart"></i> Shopping Cart</h3>
                                 <p class="card-text">View and edit your cart</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/my-reviews}" class="card-link">
+                    <a class="card-link" th:href="@{/my-reviews}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="star" class="icon-sm"></i> My Reviews</h3>
+                                <h3><i class="icon-sm" data-lucide="star"></i> My Reviews</h3>
                                 <p class="card-text">View and manage your product reviews</p>
                             </div>
                         </div>
@@ -312,10 +312,10 @@
             <div sec:authorize="hasRole('SELLER') and !hasRole('ADMIN')">
                 <div class="section-label">Quick Actions</div>
                 <div class="grid-2">
-                    <a th:href="@{/address}" class="card-link">
+                    <a class="card-link" th:href="@{/address}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="map-pin" class="icon-sm"></i> Addresses</h3>
+                                <h3><i class="icon-sm" data-lucide="map-pin"></i> Addresses</h3>
                                 <p class="card-text">Manage your shipping addresses</p>
                             </div>
                         </div>
@@ -324,45 +324,45 @@
             </div>
 
             <!-- Seller Section -->
-            <div sec:authorize="hasRole('SELLER')" class="mt-lg">
+            <div class="mt-lg" sec:authorize="hasRole('SELLER')">
                 <div class="section-label">Seller Tools</div>
                 <div class="grid-2">
-                    <a th:href="@{/seller-panel/profile}" class="card-link">
+                    <a class="card-link" th:href="@{/seller-panel/profile}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="user" class="icon-sm"></i> Seller Profile</h3>
+                                <h3><i class="icon-sm" data-lucide="user"></i> Seller Profile</h3>
                                 <p class="card-text">Manage your seller account</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/seller-panel/dashboard}" class="card-link">
+                    <a class="card-link" th:href="@{/seller-panel/dashboard}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="bar-chart-2" class="icon-sm"></i> Seller Dashboard</h3>
+                                <h3><i class="icon-sm" data-lucide="bar-chart-2"></i> Seller Dashboard</h3>
                                 <p class="card-text">Overview of your store performance</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/seller-panel/products}" class="card-link">
+                    <a class="card-link" th:href="@{/seller-panel/products}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="box" class="icon-sm"></i> My Products</h3>
+                                <h3><i class="icon-sm" data-lucide="box"></i> My Products</h3>
                                 <p class="card-text">Manage your product listings</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/seller-panel/inventory}" class="card-link">
+                    <a class="card-link" th:href="@{/seller-panel/inventory}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="clipboard-list" class="icon-sm"></i> Inventory</h3>
+                                <h3><i class="icon-sm" data-lucide="clipboard-list"></i> Inventory</h3>
                                 <p class="card-text">Track and adjust stock levels</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/seller-panel/orders}" class="card-link">
+                    <a class="card-link" th:href="@{/seller-panel/orders}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="truck" class="icon-sm"></i> Seller Orders</h3>
+                                <h3><i class="icon-sm" data-lucide="truck"></i> Seller Orders</h3>
                                 <p class="card-text">View and fulfill customer orders</p>
                             </div>
                         </div>
@@ -371,85 +371,85 @@
             </div>
 
             <!-- Admin Section -->
-            <div sec:authorize="hasRole('ADMIN')" class="mt-lg">
+            <div class="mt-lg" sec:authorize="hasRole('ADMIN')">
                 <div class="section-label">Administration</div>
                 <div class="grid-2">
-                    <a th:href="@{/admin/dashboard}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/dashboard}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="layout-dashboard" class="icon-sm"></i> Admin Dashboard</h3>
+                                <h3><i class="icon-sm" data-lucide="layout-dashboard"></i> Admin Dashboard</h3>
                                 <p class="card-text">System overview and analytics</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/admin/users}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/users}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="users" class="icon-sm"></i> Manage Users</h3>
+                                <h3><i class="icon-sm" data-lucide="users"></i> Manage Users</h3>
                                 <p class="card-text">View and manage user accounts</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/admin/inventory}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/inventory}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="package" class="icon-sm"></i> Inventory</h3>
+                                <h3><i class="icon-sm" data-lucide="package"></i> Inventory</h3>
                                 <p class="card-text">Manage all products and stock</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/admin/orders}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/orders}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="shopping-bag" class="icon-sm"></i> All Orders</h3>
+                                <h3><i class="icon-sm" data-lucide="shopping-bag"></i> All Orders</h3>
                                 <p class="card-text">View and manage all orders</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/admin/reports}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/reports}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="file-text" class="icon-sm"></i> Reports</h3>
+                                <h3><i class="icon-sm" data-lucide="file-text"></i> Reports</h3>
                                 <p class="card-text">Sales data and analytics reports</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/admin/reviews}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/reviews}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="star" class="icon-sm"></i> Reviews</h3>
+                                <h3><i class="icon-sm" data-lucide="star"></i> Reviews</h3>
                                 <p class="card-text">Moderate product reviews</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/admin/categories}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/categories}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="layers" class="icon-sm"></i> Categories</h3>
+                                <h3><i class="icon-sm" data-lucide="layers"></i> Categories</h3>
                                 <p class="card-text">Manage product categories</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/admin/sellers}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/sellers}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="store" class="icon-sm"></i> Sellers</h3>
+                                <h3><i class="icon-sm" data-lucide="store"></i> Sellers</h3>
                                 <p class="card-text">Review and approve sellers</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/admin/pending}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/pending}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="clock" class="icon-sm"></i> Pending Products</h3>
+                                <h3><i class="icon-sm" data-lucide="clock"></i> Pending Products</h3>
                                 <p class="card-text">Approve new product listings</p>
                             </div>
                         </div>
                     </a>
-                    <a th:href="@{/admin/roles}" class="card-link">
+                    <a class="card-link" th:href="@{/admin/roles}">
                         <div class="card">
                             <div class="card-body">
-                                <h3><i data-lucide="shield" class="icon-sm"></i> Roles</h3>
+                                <h3><i class="icon-sm" data-lucide="shield"></i> Roles</h3>
                                 <p class="card-text">Manage system roles</p>
                             </div>
                         </div>
@@ -458,8 +458,8 @@
             </div>
 
             <!-- Logout -->
-            <div sec:authorize="isAuthenticated()" class="mt-xl text-center">
-                <a th:href="@{/logout}" class="btn btn-secondary"><i data-lucide="log-out" class="icon-sm"></i> Sign Out</a>
+            <div class="mt-xl text-center" sec:authorize="isAuthenticated()">
+                <a class="btn btn-secondary" th:href="@{/logout}"><i class="icon-sm" data-lucide="log-out"></i> Sign Out</a>
             </div>
         </div>
     </main>

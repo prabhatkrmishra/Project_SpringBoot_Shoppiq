@@ -9,10 +9,10 @@
         <div class="container container-narrow auth-card">
             <div class="auth-brand">
                 <div class="auth-brand-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                         stroke-linejoin="round">
+                    <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                         viewBox="0 0 24 24">
                         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" x2="21" y1="6" y2="6"/>
                         <path d="M16 10a4 4 0 01-8 0"/>
                     </svg>
                 </div>
@@ -23,40 +23,40 @@
                 <p>Sign in to your account to continue shopping</p>
             </div>
 
-            <div th:if="${param.error}" class="guest-banner" role="alert">
+            <div class="guest-banner" role="alert" th:if="${param.error}">
                 <p>Invalid username or password. Please try again.</p>
             </div>
-            <div th:if="${param.logout}" class="toast toast-info" role="alert">
+            <div class="toast toast-info" role="alert" th:if="${param.logout}">
                 <span class="toast-message">You have been signed out.</span>
             </div>
 
             <div class="panel">
                 <form id="loginForm" novalidate>
                     <div class="form-group">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" id="username" name="username" class="form-input"
-                               placeholder="Enter your username" required autocomplete="username">
+                        <label class="form-label" for="username">Username</label>
+                        <input autocomplete="username" class="form-input" id="username" name="username"
+                               placeholder="Enter your username" required type="text">
                     </div>
                     <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" id="password" name="password" class="form-input"
-                               placeholder="Enter your password" required autocomplete="current-password">
+                        <label class="form-label" for="password">Password</label>
+                        <input autocomplete="current-password" class="form-input" id="password" name="password"
+                               placeholder="Enter your password" required type="password">
                     </div>
                     <div class="flex items-center justify-between mb-md">
                         <label class="form-checkbox">
-                            <input type="checkbox" id="rememberMe">
+                            <input id="rememberMe" type="checkbox">
                             <span class="text-sm">Remember me</span>
                         </label>
-                        <a th:href="@{/forgot-password}" class="text-sm btn-link">Forgot password?</a>
+                        <a class="text-sm btn-link" th:href="@{/forgot-password}">Forgot password?</a>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                    <button class="btn btn-primary btn-block" type="submit">Sign In</button>
                 </form>
 
                 <div class="auth-divider"><span>or</span></div>
 
-                <button type="button" id="googleLoginBtn"
-                        class="btn btn-google btn-block">
-                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <button class="btn btn-google btn-block" id="googleLoginBtn"
+                        type="button">
+                    <svg aria-hidden="true" height="18" viewBox="0 0 24 24" width="18">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                               fill="#4285F4"/>
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
@@ -70,11 +70,11 @@
                 </button>
 
                 <div class="text-center mt-lg">
-                    <p class="text-sm">Don't have an account? <a id="registerLink" th:href="@{/register}"
-                                                                 class="btn-link">Create one</a></p>
-                    <p class="text-sm mt-sm">Want to sell on Shoppiq? <a id="sellerRegisterLink"
-                                                                         th:href="@{/register(seller=true)}"
-                                                                         class="btn-link">Register as a seller</a></p>
+                    <p class="text-sm">Don't have an account? <a class="btn-link" id="registerLink"
+                                                                 th:href="@{/register}">Create one</a></p>
+                    <p class="text-sm mt-sm">Want to sell on Shoppiq? <a class="btn-link"
+                                                                         id="sellerRegisterLink"
+                                                                         th:href="@{/register(seller=true)}">Register as a seller</a></p>
                 </div>
             </div>
         </div>

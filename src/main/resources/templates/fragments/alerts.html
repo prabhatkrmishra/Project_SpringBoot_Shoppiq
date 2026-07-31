@@ -1,13 +1,13 @@
-<div th:fragment="toast-container" class="toast-container" id="toast-container" aria-live="polite"></div>
+<div aria-live="polite" class="toast-container" id="toast-container" th:fragment="toast-container"></div>
 
 <div th:fragment="alerts">
-    <div th:if="${param.success}" class="toast toast-success" role="alert">
+    <div class="toast toast-success" role="alert" th:if="${param.success}">
         <span class="toast-message" th:text="${param.success}"></span>
-        <button class="toast-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+        <button aria-label="Dismiss" class="toast-close" onclick="this.parentElement.remove()">&times;</button>
     </div>
-    <div th:if="${param.error}" class="toast toast-error" role="alert">
+    <div class="toast toast-error" role="alert" th:if="${param.error}">
         <span class="toast-message" th:text="${param.error}"></span>
-        <button class="toast-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+        <button aria-label="Dismiss" class="toast-close" onclick="this.parentElement.remove()">&times;</button>
     </div>
 </div>
 

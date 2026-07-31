@@ -11,7 +11,7 @@
                 <h1>Inventory</h1>
                 <p>Manage your product stock levels</p>
             </div>
-            <a href="/seller-panel/products" class="btn btn-primary">+ Add Product</a>
+            <a class="btn btn-primary" href="/seller-panel/products">+ Add Product</a>
         </div>
 
         <div class="seller-summary-grid">
@@ -37,7 +37,7 @@
             <div class="admin-panel-header">
                 <div class="admin-panel-title">Your Products</div>
                 <div class="flex gap-sm">
-                    <select id="stock-filter" class="form-input" style="width:auto;">
+                    <select class="form-input" id="stock-filter" style="width:auto;">
                         <option value="all">All Stock</option>
                         <option value="low">Low Stock</option>
                         <option value="out">Out of Stock</option>
@@ -57,7 +57,7 @@
                     </thead>
                     <tbody id="inventory-body">
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Loading...</td>
+                            <td class="text-center text-muted" colspan="5">Loading...</td>
                         </tr>
                     </tbody>
                 </table>

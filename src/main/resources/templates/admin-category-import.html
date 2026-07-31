@@ -11,7 +11,7 @@
                 <h1>Category Import</h1>
                 <p>Bulk import categories via CSV or Excel (.xlsx)</p>
             </div>
-            <a href="/admin/categories" class="btn btn-secondary btn-sm">Back to Categories</a>
+            <a class="btn btn-secondary btn-sm" href="/admin/categories">Back to Categories</a>
         </div>
 
         <div class="admin-panel">
@@ -23,24 +23,24 @@
                     must be: <code>name, description</code></p>
 
                 <div class="flex gap-sm items-center mb-md">
-                    <input type="file" id="file-input" accept=".csv,.xlsx" class="form-input" style="flex:1">
-                    <button id="preview-btn" class="btn btn-primary btn-sm" disabled>Preview</button>
-                    <button id="clear-btn" class="btn btn-secondary btn-sm" disabled>Clear</button>
+                    <input accept=".csv,.xlsx" class="form-input" id="file-input" style="flex:1" type="file">
+                    <button class="btn btn-primary btn-sm" disabled id="preview-btn">Preview</button>
+                    <button class="btn btn-secondary btn-sm" disabled id="clear-btn">Clear</button>
                 </div>
 
-                <div id="file-info" class="text-muted text-sm mb-sm" style="display:none">
+                <div class="text-muted text-sm mb-sm" id="file-info" style="display:none">
                     <span id="file-info-text"></span>
                 </div>
             </div>
         </div>
 
-        <div id="preview-panel" class="admin-panel" style="display:none">
+        <div class="admin-panel" id="preview-panel" style="display:none">
             <div class="admin-panel-header">
                 <div class="admin-panel-title">Preview (<span id="row-count">0</span> items)</div>
                 <div class="flex gap-sm">
-                    <span id="valid-count" class="badge badge-success" style="display:none">0 valid</span>
-                    <span id="error-count" class="badge badge-danger" style="display:none">0 errors</span>
-                    <button id="upload-btn" class="btn btn-primary btn-sm">Upload All</button>
+                    <span class="badge badge-success" id="valid-count" style="display:none">0 valid</span>
+                    <span class="badge badge-danger" id="error-count" style="display:none">0 errors</span>
+                    <button class="btn btn-primary btn-sm" id="upload-btn">Upload All</button>
                 </div>
             </div>
             <div class="table-responsive">
@@ -58,7 +58,7 @@
             </div>
         </div>
 
-        <div id="results-panel" class="admin-panel" style="display:none">
+        <div class="admin-panel" id="results-panel" style="display:none">
             <div class="admin-panel-header">
                 <div class="admin-panel-title">Upload Results</div>
             </div>

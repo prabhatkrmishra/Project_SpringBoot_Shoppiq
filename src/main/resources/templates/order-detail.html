@@ -7,7 +7,7 @@
 
     <main class="page">
         <div class="container container-narrow">
-            <div id="order-loading" class="flex-center" style="padding:3rem;">
+            <div class="flex-center" id="order-loading" style="padding:3rem;">
                 <span class="spinner"></span>
             </div>
 
@@ -21,7 +21,7 @@
                             <span class="text-muted text-sm" id="order-date"></span>
                         </div>
                     </div>
-                    <select id="order-actions-dropdown" class="form-select" style="display:none;width:auto;"></select>
+                    <select class="form-select" id="order-actions-dropdown" style="display:none;width:auto;"></select>
                 </div>
 
                 <div class="panel">
@@ -31,7 +31,8 @@
 
                 <div class="panel">
                     <div class="panel-title">Order Summary</div>
-                    <div class="cart-summary-row"><span>Product Subtotal</span><span id="order-subtotal">$0.00</span></div>
+                    <div class="cart-summary-row"><span>Product Subtotal</span><span id="order-subtotal">$0.00</span>
+                    </div>
                     <div class="cart-summary-row" id="order-delivery-row" style="display:none;">
                         <span>Delivery Charge</span><span id="order-delivery">$0.00</span>
                     </div>
@@ -55,14 +56,14 @@
 
                 <div class="panel" id="order-address-panel" style="display:none;">
                     <div class="panel-title">Shipping Address</div>
-                    <p class="text-sm" style="margin:0;" id="order-address"></p>
+                    <p class="text-sm" id="order-address" style="margin:0;"></p>
                 </div>
 
                 <div class="mt-lg flex gap-sm" style="flex-wrap:wrap;">
-                    <a id="admin-back-link" href="/admin/orders" class="btn btn-secondary" style="display:none;">&larr;
+                    <a class="btn btn-secondary" href="/admin/orders" id="admin-back-link" style="display:none;">&larr;
                         Back to Order Management</a>
-                    <a id="back-link" href="/orders" class="btn btn-secondary">&larr; Back to Orders</a>
-                    <button id="cancel-order-btn" class="btn btn-danger" style="display:none;">Request Cancellation
+                    <a class="btn btn-secondary" href="/orders" id="back-link">&larr; Back to Orders</a>
+                    <button class="btn btn-danger" id="cancel-order-btn" style="display:none;">Request Cancellation
                     </button>
                 </div>
             </div>

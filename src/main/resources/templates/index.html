@@ -13,13 +13,13 @@
                     <p>Discover quality products with transparent pricing, fast delivery, and a seamless shopping
                         experience.</p>
                     <div class="btn-group">
-                        <a th:href="@{/allitems}" class="btn btn-lg btn-primary">Start Shopping</a>
-                        <a th:href="@{/categories}" class="btn btn-lg btn-secondary">Explore Categories</a>
+                        <a class="btn btn-lg btn-primary" th:href="@{/allitems}">Start Shopping</a>
+                        <a class="btn btn-lg btn-secondary" th:href="@{/categories}">Explore Categories</a>
                     </div>
                 </div>
                 <div class="hero-image">
-                    <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop"
-                         alt="Shopping experience" loading="eager" width="600" height="400">
+                    <img alt="Shopping experience"
+                         height="400" loading="eager" src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop" width="600">
                 </div>
             </div>
         </section>
@@ -30,10 +30,10 @@
                     <h2>Most Bought</h2>
                     <p>What everyone's been buying this month</p>
                 </div>
-                <div id="topSellingGrid" class="grid-4"></div>
-                <div id="topSellingEmpty" class="text-center mt-xl" style="display:none;">
+                <div class="grid-4" id="topSellingGrid"></div>
+                <div class="text-center mt-xl" id="topSellingEmpty" style="display:none;">
                     <p class="text-muted">No sales data yet. Be the first to shop!</p>
-                    <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse All Products</a>
+                    <a class="btn btn-primary mt-md" th:href="@{/allitems}">Browse All Products</a>
                 </div>
             </div>
         </div>
@@ -44,10 +44,10 @@
                     <h2>Featured Products</h2>
                     <p>Handpicked deals just for you</p>
                 </div>
-                <div id="featuredGrid" class="grid-4"></div>
-                <div id="featuredEmpty" class="text-center mt-xl" style="display:none;">
+                <div class="grid-4" id="featuredGrid"></div>
+                <div class="text-center mt-xl" id="featuredEmpty" style="display:none;">
                     <p class="text-muted">Featured products coming soon.</p>
-                    <a th:href="@{/allitems}" class="btn btn-primary mt-md">Browse All Products</a>
+                    <a class="btn btn-primary mt-md" th:href="@{/allitems}">Browse All Products</a>
                 </div>
             </div>
         </div>
@@ -60,25 +60,25 @@
                 </div>
                 <div class="offers-grid" th:if="${banners != null and !banners.isEmpty()}">
                     <th:block th:each="banner : ${banners}">
-                        <a th:if="${banner.buttonLink != null}"
+                        <a th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}"
                            th:href="@{${banner.buttonLink}}"
-                           th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}">
+                           th:if="${banner.buttonLink != null}">
                             <div class="offer-content">
                                 <span class="offer-tag" th:text="${banner.badgeText}"></span>
-                                <h3 th:text="${banner.heading}" th:style="'color:' + ${banner.headingColor}"></h3>
-                                <p th:if="${banner.bodyText != null}" th:text="${banner.bodyText}"
-                                   th:style="'color:' + ${banner.bodyColor}"></p>
-                                <span th:if="${banner.buttonText != null}" class="btn btn-sm btn-white"
+                                <h3 th:style="'color:' + ${banner.headingColor}" th:text="${banner.heading}"></h3>
+                                <p th:if="${banner.bodyText != null}" th:style="'color:' + ${banner.bodyColor}"
+                                   th:text="${banner.bodyText}"></p>
+                                <span class="btn btn-sm btn-white" th:if="${banner.buttonText != null}"
                                       th:text="${banner.buttonText}"></span>
                             </div>
                         </a>
-                        <div th:unless="${banner.buttonLink != null}"
-                             th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}">
+                        <div th:class="'offer-banner offer-banner-' + ${banner.badgeType.name().toLowerCase()}"
+                             th:unless="${banner.buttonLink != null}">
                             <div class="offer-content">
                                 <span class="offer-tag" th:text="${banner.badgeText}"></span>
-                                <h3 th:text="${banner.heading}" th:style="'color:' + ${banner.headingColor}"></h3>
-                                <p th:if="${banner.bodyText != null}" th:text="${banner.bodyText}"
-                                   th:style="'color:' + ${banner.bodyColor}"></p>
+                                <h3 th:style="'color:' + ${banner.headingColor}" th:text="${banner.heading}"></h3>
+                                <p th:if="${banner.bodyText != null}" th:style="'color:' + ${banner.bodyColor}"
+                                   th:text="${banner.bodyText}"></p>
                             </div>
                         </div>
                     </th:block>
@@ -101,7 +101,7 @@
                     <h2>Most Bought Category</h2>
                     <p>Top categories our customers love</p>
                 </div>
-                <div id="categoryGrid" class="categories-grid"></div>
+                <div class="categories-grid" id="categoryGrid"></div>
             </div>
         </div>
 
@@ -109,16 +109,16 @@
             <div class="container">
                 <div class="features-grid">
                     <div class="feature-item">
-                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="1.5">
+                        <svg class="feature-icon" fill="none" stroke="currentColor" stroke-width="1.5"
+                             viewBox="0 0 24 24">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                         </svg>
                         <h3>Secure Checkout</h3>
                         <p>Your data is encrypted and protected</p>
                     </div>
                     <div class="feature-item">
-                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="1.5">
+                        <svg class="feature-icon" fill="none" stroke="currentColor" stroke-width="1.5"
+                             viewBox="0 0 24 24">
                             <path d="M5 12h14"/>
                             <path d="M12 5l7 7-7 7"/>
                         </svg>
@@ -126,8 +126,8 @@
                         <p>Free shipping on orders over $50</p>
                     </div>
                     <div class="feature-item">
-                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="1.5">
+                        <svg class="feature-icon" fill="none" stroke="currentColor" stroke-width="1.5"
+                             viewBox="0 0 24 24">
                             <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
@@ -143,13 +143,13 @@
                 <h2>Stay in the Loop</h2>
                 <p>Get updates on new arrivals, exclusive deals, and more.</p>
                 <form class="newsletter-form" id="newsletterForm">
-                    <label for="newsletter-email" class="sr-only">Email address</label>
-                    <input type="email" id="newsletter-email" class="form-input" placeholder="your@email.com" required>
-                    <button type="submit" class="btn btn-primary">Subscribe</button>
+                    <label class="sr-only" for="newsletter-email">Email address</label>
+                    <input class="form-input" id="newsletter-email" placeholder="your@email.com" required type="email">
+                    <button class="btn btn-primary" type="submit">Subscribe</button>
                 </form>
-                <div id="newsletter-success" class="newsletter-success" style="display:none;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                         stroke-linejoin="round" width="20" height="20">
+                <div class="newsletter-success" id="newsletter-success" style="display:none;">
+                    <svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                         stroke-width="2.5" viewBox="0 0 24 24" width="20">
                         <path d="M20 6L9 17l-5-5"/>
                     </svg>
                     <span>Subscribed!</span>
