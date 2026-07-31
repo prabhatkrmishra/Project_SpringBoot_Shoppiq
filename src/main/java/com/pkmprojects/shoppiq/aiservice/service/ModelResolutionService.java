@@ -49,19 +49,23 @@ public class ModelResolutionService {
      */
     private static final Map<String, String> MODEL_REGISTRY = Map.of(
             "nvidia/llama-3.3-nemotron-super-49b-v1.5", "Nemotron 49B",
-            "nvidia/nemotron-3-nano-30b-a3b", "Nemotron Nano 30B"
+            "nvidia/nemotron-3-nano-30b-a3b", "Nemotron Nano 30B",
+            "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "Nemotron Nano Omni 30B"
     );
 
     /*
      * Per-model thinking control:
      * - Nemotron 49B: disables thinking via "/no_think" in the system prompt.
-     * - Nemotron Nano 30B: disables thinking via "chat_template_kwargs" in the
-     *   request body (the Nano model ignores the system-prompt directive).
+     * - Nemotron Nano 30B / Omni 30B: disables thinking via "chat_template_kwargs"
+     *   in the request body (these models ignore the system-prompt directive).
      *
      * Reference: https://docs.nvidia.com/nim/large-language-models/1.8.0/reasoning-model.html
      */
-    private static final String NANO_MODEL_ID = "nvidia/nemotron-3-nano-30b-a3b";
-    private static final Map<String, Object> NANO_DISABLE_THINKING = Map.of(
+    private static final Set<String> CHAT_TEMPLATE_THINKING_MODELS = Set.of(
+            "nvidia/nemotron-3-nano-30b-a3b",
+            "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    );
+    private static final Map<String, Object> CHAT_TEMPLATE_DISABLE_THINKING = Map.of(
             "chat_template_kwargs", Map.of("enable_thinking", false)
     );
     private final ChatModel defaultChatModel;
@@ -92,11 +96,11 @@ public class ModelResolutionService {
      * from cache) for the requested model name. All non-default models are
      * configured with the same generation parameters as the default model.</p>
      *
-     * <p>The Nemotron Nano 30B model is additionally configured with
-     * {@code chat_template_kwargs: {"enable_thinking": false}} in the request
-     * body, which is the Nano model's supported mechanism for disabling
-     * reasoning content. The default 49B model uses {@code /no_think} in the
-     * system prompt instead.</p>
+     * <p>The Nemotron Nano 30B and Omni 30B models are additionally configured
+     * with {@code chat_template_kwargs: {"enable_thinking": false}} in the
+     * request body, which is the supported mechanism for disabling reasoning
+     * content on these models. The default 49B model uses {@code /no_think}
+     * in the system prompt instead.</p>
      *
      * @param modelName the model identifier from the frontend (e.g., "nvidia/llama-3.3-nemotron-super-49b-v1.5")
      * @return the resolved ChatModel instance
@@ -121,8 +125,8 @@ public class ModelResolutionService {
                     .logRequests(true)
                     .logResponses(true)
                     .timeout(MODEL_TIMEOUT);
-            if (NANO_MODEL_ID.equals(name)) {
-                builder.customParameters(NANO_DISABLE_THINKING);
+            if (CHAT_TEMPLATE_THINKING_MODELS.contains(name)) {
+                builder.customParameters(CHAT_TEMPLATE_DISABLE_THINKING);
             }
             return builder.build();
         });
@@ -136,11 +140,11 @@ public class ModelResolutionService {
      * created (or retrieved from cache) for the requested model name. All
      * non-default models are configured with the same generation parameters.</p>
      *
-     * <p>The Nemotron Nano 30B model is additionally configured with
-     * {@code chat_template_kwargs: {"enable_thinking": false}} in the request
-     * body, which is the Nano model's supported mechanism for disabling
-     * reasoning content. The default 49B model uses {@code /no_think} in the
-     * system prompt instead.</p>
+     * <p>The Nemotron Nano 30B and Omni 30B models are additionally configured
+     * with {@code chat_template_kwargs: {"enable_thinking": false}} in the
+     * request body, which is the supported mechanism for disabling reasoning
+     * content on these models. The default 49B model uses {@code /no_think}
+     * in the system prompt instead.</p>
      *
      * @param modelName the model identifier from the frontend
      * @return the resolved StreamingChatModel instance
@@ -165,8 +169,8 @@ public class ModelResolutionService {
                     .logRequests(true)
                     .logResponses(true)
                     .timeout(MODEL_TIMEOUT);
-            if (NANO_MODEL_ID.equals(name)) {
-                builder.customParameters(NANO_DISABLE_THINKING);
+            if (CHAT_TEMPLATE_THINKING_MODELS.contains(name)) {
+                builder.customParameters(CHAT_TEMPLATE_DISABLE_THINKING);
             }
             return builder.build();
         });
