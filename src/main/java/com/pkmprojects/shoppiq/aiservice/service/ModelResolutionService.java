@@ -51,6 +51,19 @@ public class ModelResolutionService {
             "nvidia/llama-3.3-nemotron-super-49b-v1.5", "Nemotron 49B",
             "nvidia/nemotron-3-nano-30b-a3b", "Nemotron Nano 30B"
     );
+
+    /*
+     * Per-model thinking control:
+     * - Nemotron 49B: disables thinking via "/no_think" in the system prompt.
+     * - Nemotron Nano 30B: disables thinking via "chat_template_kwargs" in the
+     *   request body (the Nano model ignores the system-prompt directive).
+     *
+     * Reference: https://docs.nvidia.com/nim/large-language-models/1.8.0/reasoning-model.html
+     */
+    private static final String NANO_MODEL_ID = "nvidia/nemotron-3-nano-30b-a3b";
+    private static final Map<String, Object> NANO_DISABLE_THINKING = Map.of(
+            "chat_template_kwargs", Map.of("enable_thinking", false)
+    );
     private final ChatModel defaultChatModel;
     private final StreamingChatModel defaultStreamingChatModel;
     private final String nvidiaApiKey;
@@ -79,6 +92,12 @@ public class ModelResolutionService {
      * from cache) for the requested model name. All non-default models are
      * configured with the same generation parameters as the default model.</p>
      *
+     * <p>The Nemotron Nano 30B model is additionally configured with
+     * {@code chat_template_kwargs: {"enable_thinking": false}} in the request
+     * body, which is the Nano model's supported mechanism for disabling
+     * reasoning content. The default 49B model uses {@code /no_think} in the
+     * system prompt instead.</p>
+     *
      * @param modelName the model identifier from the frontend (e.g., "nvidia/llama-3.3-nemotron-super-49b-v1.5")
      * @return the resolved ChatModel instance
      */
@@ -92,7 +111,7 @@ public class ModelResolutionService {
 
         return chatModelCache.computeIfAbsent(resolvedName, name -> {
             log.info("[AI-MODEL] Creating new ChatModel for: {}", name);
-            return OpenAiChatModel.builder()
+            var builder = OpenAiChatModel.builder()
                     .apiKey(nvidiaApiKey)
                     .baseUrl(NVIDIA_BASE_URL)
                     .modelName(name)
@@ -101,8 +120,11 @@ public class ModelResolutionService {
                     .topP(0.95)
                     .logRequests(true)
                     .logResponses(true)
-                    .timeout(MODEL_TIMEOUT)
-                    .build();
+                    .timeout(MODEL_TIMEOUT);
+            if (NANO_MODEL_ID.equals(name)) {
+                builder.customParameters(NANO_DISABLE_THINKING);
+            }
+            return builder.build();
         });
     }
 
@@ -113,6 +135,12 @@ public class ModelResolutionService {
      * streaming model is returned. Otherwise, a new streaming model instance is
      * created (or retrieved from cache) for the requested model name. All
      * non-default models are configured with the same generation parameters.</p>
+     *
+     * <p>The Nemotron Nano 30B model is additionally configured with
+     * {@code chat_template_kwargs: {"enable_thinking": false}} in the request
+     * body, which is the Nano model's supported mechanism for disabling
+     * reasoning content. The default 49B model uses {@code /no_think} in the
+     * system prompt instead.</p>
      *
      * @param modelName the model identifier from the frontend
      * @return the resolved StreamingChatModel instance
@@ -127,7 +155,7 @@ public class ModelResolutionService {
 
         return streamingModelCache.computeIfAbsent(resolvedName, name -> {
             log.info("[AI-MODEL] Creating new StreamingChatModel for: {}", name);
-            return OpenAiStreamingChatModel.builder()
+            var builder = OpenAiStreamingChatModel.builder()
                     .apiKey(nvidiaApiKey)
                     .baseUrl(NVIDIA_BASE_URL)
                     .modelName(name)
@@ -136,8 +164,11 @@ public class ModelResolutionService {
                     .topP(0.95)
                     .logRequests(true)
                     .logResponses(true)
-                    .timeout(MODEL_TIMEOUT)
-                    .build();
+                    .timeout(MODEL_TIMEOUT);
+            if (NANO_MODEL_ID.equals(name)) {
+                builder.customParameters(NANO_DISABLE_THINKING);
+            }
+            return builder.build();
         });
     }
 

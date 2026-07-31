@@ -88,7 +88,7 @@ public class ChatServiceImpl implements ChatService {
      * orchestrate AI chat conversations: memory providers for context windows,
      * tool methods for data access, RAG retrievers for product context,
      * persistence repositories for conversation and message storage, model
-     * resolution for multi-model support, and context-specific system prompt
+     * resolution for multimodel support, and context-specific system prompt
      * providers for authenticated and guest users.</p>
      *
      * @param chatMemoryProvider     provides per-conversation memory windows
@@ -149,7 +149,7 @@ public class ChatServiceImpl implements ChatService {
         ShoppiqAssistant proxy = AiServices.builder(ShoppiqAssistant.class)
                 .chatModel(resolvedModel)
                 .chatMemoryProvider(chatMemoryProvider)
-                .systemMessageProvider(memoryId -> systemPrompt)
+                .systemMessageProvider(memoryId -> prependNoThink(systemPrompt, model))
                 .tools(shoppiqTools)
                 .contentRetriever(contentRetriever)
                 .build();
@@ -165,6 +165,7 @@ public class ChatServiceImpl implements ChatService {
             throw AiAssistantException.apiError("AI assistant is temporarily unavailable. Please try again.");
         }
 
+        response = postProcessResponse(response);
         saveMessage(conv, ChatMessageRole.ASSISTANT, response);
 
         if (shouldAutoResolve(userMessage, conv, userMessageEntity.getId())) {
@@ -198,7 +199,7 @@ public class ChatServiceImpl implements ChatService {
         ShoppiqStreamingAssistant proxy = AiServices.builder(ShoppiqStreamingAssistant.class)
                 .streamingChatModel(resolvedStreamingModel)
                 .chatMemoryProvider(chatMemoryProvider)
-                .systemMessageProvider(memoryId -> systemPrompt)
+                .systemMessageProvider(memoryId -> prependNoThink(systemPrompt, model))
                 .tools(shoppiqTools)
                 .contentRetriever(contentRetriever)
                 .build();
@@ -206,7 +207,7 @@ public class ChatServiceImpl implements ChatService {
         return proxy.chat(userMessage, chatId)
                 .doOnNext(fullResponse::append)
                 .doOnComplete(() -> {
-                    String response = fullResponse.toString();
+                    String response = postProcessResponse(fullResponse.toString());
                     saveMessage(conv, ChatMessageRole.ASSISTANT, response);
                     log.debug("Streaming completed for conversation {}, {} chars", chatId, response.length());
 
@@ -344,7 +345,7 @@ public class ChatServiceImpl implements ChatService {
         ShoppiqAssistant proxy = AiServices.builder(ShoppiqAssistant.class)
                 .chatModel(resolvedModel)
                 .chatMemoryProvider(chatMemoryProvider)
-                .systemMessageProvider(memoryId -> systemPrompt)
+                .systemMessageProvider(memoryId -> prependNoThink(systemPrompt, model))
                 .contentRetriever(contentRetriever)
                 .build();
 
@@ -360,6 +361,7 @@ public class ChatServiceImpl implements ChatService {
             throw AiAssistantException.apiError("AI assistant is temporarily unavailable. Please try again.");
         }
 
+        response = postProcessResponse(response);
         saveGuestMessage(sessionId, "ASSISTANT", response);
 
         return response;
@@ -386,14 +388,14 @@ public class ChatServiceImpl implements ChatService {
         ShoppiqStreamingAssistant proxy = AiServices.builder(ShoppiqStreamingAssistant.class)
                 .streamingChatModel(resolvedStreamingModel)
                 .chatMemoryProvider(chatMemoryProvider)
-                .systemMessageProvider(memoryId -> systemPrompt)
+                .systemMessageProvider(memoryId -> prependNoThink(systemPrompt, model))
                 .contentRetriever(contentRetriever)
                 .build();
 
         return proxy.chat(userMessage, chatId)
                 .doOnNext(fullResponse::append)
                 .doOnComplete(() -> {
-                    String response = fullResponse.toString();
+                    String response = postProcessResponse(fullResponse.toString());
                     saveGuestMessage(sessionId, "ASSISTANT", response);
                     log.debug("Guest streaming completed for session {}, {} chars", sessionId, response.length());
                 })
@@ -442,6 +444,45 @@ public class ChatServiceImpl implements ChatService {
         if (conv.getStatus() == ConversationStatus.RESOLVED) {
             throw AiAssistantException.conversationResolved();
         }
+    }
+
+    /**
+     * Post-processes the AI model's response.
+     *
+     * <p>Trims whitespace and returns a user-friendly fallback for null or
+     * blank responses. Thinking control is handled at the API level:
+     * <ul>
+     *   <li>49B: {@code /no_think} prepended to the system prompt externally</li>
+     *   <li>Nano 30B: {@code chat_template_kwargs} in the request body (via {@link ModelResolutionService})</li>
+     * </ul></p>
+     *
+     * @param response the raw response from the AI model
+     * @return the trimmed response, or a fallback message if the response is unusable
+     */
+    private String postProcessResponse(String response) {
+        if (response == null || response.isBlank()) {
+            log.warn("[AI-RESPONSE] Empty response from model — returning fallback");
+            return "I'm sorry, I wasn't able to generate a response. Could you try again?";
+        }
+        return response.trim();
+    }
+
+    /**
+     * Prepends {@code /no_think} to the system prompt for the default 49B model.
+     *
+     * <p>The Nemotron 49B model disables thinking via {@code /no_think} in the
+     * system prompt. The Nano 30B model uses {@code chat_template_kwargs} in the
+     * request body instead (configured in {@link ModelResolutionService}).</p>
+     *
+     * @param systemPrompt the base system prompt
+     * @param model        the resolved model identifier
+     * @return the system prompt, with {@code /no_think} prepended for the 49B model
+     */
+    private String prependNoThink(String systemPrompt, String model) {
+        if (ModelResolutionService.DEFAULT_MODEL_ID.equals(model)) {
+            return "/no_think\n" + systemPrompt;
+        }
+        return systemPrompt;
     }
 
     /**
