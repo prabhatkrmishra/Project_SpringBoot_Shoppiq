@@ -226,14 +226,14 @@ langchain4j:
     chat-model:
       api-key: ${AI_NVIDIA_API_KEY}
       base-url: https://integrate.api.nvidia.com/v1
-      model-name: nvidia/llama-3.3-nemotron-super-49b-v1.5
+      model-name: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
       max-tokens: 4096
       log-requests: true
       log-responses: true
     streaming-chat-model:
       api-key: ${AI_NVIDIA_API_KEY}
       base-url: https://integrate.api.nvidia.com/v1
-      model-name: nvidia/llama-3.3-nemotron-super-49b-v1.5
+      model-name: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
       max-tokens: 4096
       log-requests: true
       log-responses: true

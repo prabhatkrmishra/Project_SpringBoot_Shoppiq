@@ -310,14 +310,14 @@ langchain4j:
     chat-model:
       api-key: ${NVIDIA_API_KEY}
       base-url: https://integrate.api.nvidia.com/v1
-      model-name: nvidia/llama-3.3-nemotron-super-49b-v1.5
+      model-name: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
       max-tokens: 4096
       log-requests: true
       log-responses: true
     streaming-chat-model:
       api-key: ${NVIDIA_API_KEY}
       base-url: https://integrate.api.nvidia.com/v1
-      model-name: nvidia/llama-3.3-nemotron-super-49b-v1.5
+      model-name: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
       max-tokens: 4096
       log-requests: true
       log-responses: true
@@ -365,7 +365,7 @@ When the `shoppiq.ai.enabled=true` property is set, Spring Boot creates the foll
    ► Config: maxResults=5, minScore=0.75, filter=inStock:"true"
 
 6. ChatServiceConfig.chatModel()
-   ► Creates OpenAiChatModel (NVIDIA NIM, nvidia/llama-3.3-nemotron-super-49b-v1.5)
+   ► Creates OpenAiChatModel (NVIDIA NIM, nvidia/nemotron-3-nano-omni-30b-a3b-reasoning)
 
 7. ChatServiceConfig.streamingChatModel()
    ► Creates OpenAiStreamingChatModel (same model, streaming variant)
@@ -1116,11 +1116,13 @@ public class ModelResolutionService {
             return DEFAULT_MODEL_ID;
         }
         String trimmed = modelName.trim();
-        if (!MODEL_REGISTRY.containsKey(trimmed)) {
+        // Resolve assistant numbers ("1", "2", "3") to actual model IDs
+        String resolved = ASSISTANT_MODEL_MAP.getOrDefault(trimmed, trimmed);
+        if (!MODEL_REGISTRY.containsKey(resolved)) {
             log.warn("[MODEL-RESOLUTION] Model '{}' not in allowlist. Allowed: {}", trimmed, MODEL_REGISTRY.keySet());
             throw AiModelNotSupportedException.forModel(trimmed);
         }
-        return trimmed;
+        return resolved;
     }
 
     private ChatModel createChatModel(String modelName) {
@@ -1171,7 +1173,7 @@ ChatServiceImpl.chat(message, chatId, user, model)
   │
   ▼
 ModelResolutionService.resolveChatModel(model)
-  ├── null/blank?  ──► return default (nvidia/llama-3.3-nemotron-super-49b-v1.5)
+  ├── null/blank?  ──► return default (nvidia/nemotron-3-nano-omni-30b-a3b-reasoning)
   ├── in allowlist? ──► computeIfAbsent on chatModelCache
   │                      ├── cached? ──► return cached instance
   │                      └── new?    ──► createChatModel() ──► cache + return
@@ -1653,7 +1655,7 @@ IIFE module exposing `init()` and `toggle()`. All other functions are private cl
 | `isStreaming` | `boolean` | `false` | — | Prevents double-sends during API call |
 | `isResolved` | `boolean` | `false` | — | Resolved state flag |
 | `isLoggedIn` | `boolean` | `false` | — | Detected from meta tag |
-| `selectedModel` | `string` | `'nvidia/llama-3.3-nemotron-super-49b-v1.5'` | `localStorage('ai-chat-model')` | LLM model selection (validated against `ALLOWED_MODELS`) |
+| `selectedModel` | `string` | `'1'` | `localStorage('ai-chat-model')` | Assistant selection (validated against `ALLOWED_MODELS`) |
 
 **Public methods:**
 
@@ -1796,7 +1798,7 @@ Only rendered when AI is enabled via property:
 | `ai-chat-toggle` | Floating button | Opens/closes the panel |
 | `ai-chat-panel` | Main panel | Contains header, sidebar, messages, input |
 | `ai-chat-close` | Close button | Closes the panel |
-| `ai-model-select` | `<select>` | LLM model dropdown (2 options) |
+| `ai-model-select` | `<select>` | LLM model dropdown (3 options) |
 | `ai-chat-history-btn` | History button | Toggles conversation sidebar |
 | `ai-chat-sidebar` | Sidebar | Shows conversation list (authenticated only) |
 | `ai-chat-sidebar-list` | Sidebar list | Populated dynamically by `loadConversationList()` |
@@ -1978,7 +1980,7 @@ Base path: `/api/ai/chat` — Requires `ROLE_CUSTOMER` or `ROLE_ADMIN`
 **POST `/api/ai/chat`** — Create new conversation + first message
 ```json
 // Request
-{ "message": "Find running shoes", "model": "meta/llama-3.1-8b-instruct" }
+{ "message": "Find running shoes", "model": "1" }
 
 // Response 200
 {
@@ -2397,7 +2399,7 @@ This section catalogs every AI/ML and software engineering term found in the cod
 | **Model allowlist** | Only valid NVIDIA NIM models permitted | `ModelResolutionService.java:18-23` |
 | **Request/response logging** | `logRequests(true)` / `logResponses(true)` | `ChatServiceConfig.java:61-62, 75-76` |
 | **Timeout** | 120s for LLM calls | `ChatServiceConfig.java:67, 83` |
-| **LLaMA-family model** | `nvidia/llama-3.3-nemotron-super-49b-v1.5` | `ChatServiceConfig.java:59, 73` |
+| **Nemotron Omni 30B (default)** | `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | `ChatServiceConfig.java:84, 111` |
 | **System prompt guidelines** | Behavioral rules in system prompt | `ChatServiceImpl.java:575-580` |
 
 ### 26.5 Agent / Tool Calling

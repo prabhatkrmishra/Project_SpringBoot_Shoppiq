@@ -47,7 +47,7 @@ A sophisticated, multi-vendor e-commerce marketplace built with Spring Boot 4.1,
 - **RAG-Based Product Search** — Semantic product search using vector embeddings (Qdrant + BGE-small-en-v1.5)
 - **Agentic Tool Calling** — AI autonomously calls 6 tools (product lookup, cart, orders, reviews, search, resolve)
 - **Streaming Responses** — Token-by-token streaming via Server-Sent Events (SSE)
-- **Multi-Model Selection** — Switch between Nemotron 49B, Llama 3.1 8B, Llama 4 Maverick
+- **Multi-Model Selection** — Switch between Nemotron Nano Omni 30B, Nemotron Nano 30B, and Nemotron 49B
 - **Guest & Authenticated Chat** — Full support for both modes with role-based tool access
 - **Auto-Resolve Detection** — AI detects closing intent and resolves conversations automatically
 - **Conversation Memory** — Sliding-window memory (20 messages) with per-conversation isolation
@@ -152,7 +152,7 @@ Store (1:1) ──── Seller
 |---|---|---|
 | AI Framework | LangChain4j | 1.17.2-beta27 |
 | LLM Provider | NVIDIA NIM | — |
-| LLM Model | Nemotron 49B / Llama 3.x | — |
+| LLM Model | Nemotron Omni 30B / Nano 30B / 49B | — |
 | Embeddings | BGE-small-en-v1.5 | 1.12.0-beta20 |
 | Vector Store | Qdrant | v1.13.0 |
 | Embedding Runtime | ONNX Runtime | 1.26.0 |
@@ -388,9 +388,9 @@ User Query → Embedding (384-dim) → Vector Search (Qdrant) → Top-5 Results 
 
 | Model | Label | Use Case |
 |---|---|---|
-| `nvidia/llama-3.3-nemotron-super-49b-v1.5` | Nemotron 49B | Default, most capable |
-| `meta/llama-3.1-8b-instruct` | Llama 3.1 8B | Fast, lightweight |
-| `meta/llama-4-maverick-17b-128e-instruct` | Llama 4 Maverick | Balanced |
+| `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | Nemotron Nano Omni 30B | Default, reasoning-capable |
+| `nvidia/nemotron-3-nano-30b-a3b` | Nemotron Nano 30B | Fast, lightweight |
+| `nvidia/llama-3.3-nemotron-super-49b-v1.5` | Nemotron 49B | Best quality |
 
 ---
 
