@@ -378,9 +378,9 @@ When the `shoppiq.ai.enabled=true` property is set, Spring Boot creates the foll
 9. ModelResolutionService (auto-detected @Service)
    ► Creates ModelResolutionService(defaultChatModel, defaultStreamingChatModel, nvidiaApiKey)
    ► Centralized model resolution with allowlist validation + ConcurrentHashMap caching
-   ► Allowlisted models: nvidia/llama-3.3-nemotron-super-49b-v1.5,
-     nvidia/nemotron-3-nano-30b-a3b, meta/llama-4-maverick-17b-128e-instruct,
-     nvidia/llama-3.1-nemotron-nano-8b-v1
+   ► Frontend sends assistant numbers ("1", "2", "3") resolved via ASSISTANT_MODEL_MAP
+   ► Allowlisted models: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning,
+     nvidia/nemotron-3-nano-30b-a3b, nvidia/llama-3.3-nemotron-super-49b-v1.5
 
 10. ChatServiceConfig.aiService()
     ► Creates ChatServiceImpl (manual constructor injection)
@@ -1053,13 +1053,21 @@ Centralized service that resolves LLM model names to LangChain4j `ChatModel` / `
 ```java
 @Service
 public class ModelResolutionService {
+    // Frontend sends assistant numbers ("1", "2", "3") — resolved via ASSISTANT_MODEL_MAP
+    private static final Map<String, String> ASSISTANT_MODEL_MAP = Map.of(
+        "1", "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "2", "nvidia/nemotron-3-nano-30b-a3b",
+        "3", "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+    );
+
     // Allowlisted NVIDIA NIM models — Map of modelId -> displayName
     private static final Map<String, String> MODEL_REGISTRY = Map.of(
         "nvidia/llama-3.3-nemotron-super-49b-v1.5", "Nemotron 49B",
-        "nvidia/nemotron-3-nano-30b-a3b", "Nemotron Nano 30B"
+        "nvidia/nemotron-3-nano-30b-a3b", "Nemotron Nano 30B",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "Nemotron Nano Omni 30B"
     );
 
-    private static final String DEFAULT_MODEL_ID = "nvidia/llama-3.3-nemotron-super-49b-v1.5";
+    public static final String DEFAULT_MODEL_ID = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning";
 
     // Lazy caches — models created on first use, then reused
     private final ConcurrentHashMap<String, ChatModel> chatModelCache = new ConcurrentHashMap<>();
@@ -1170,12 +1178,15 @@ ModelResolutionService.resolveChatModel(model)
   └── not in allowlist? ──► throw AiModelNotSupportedException
 ```
 
-### Allowlisted Models
+### Assistant Number Mapping
 
-| Model ID | Label | Notes |
-|----------|-------|-------|
-| `nvidia/llama-3.3-nemotron-super-49b-v1.5` | Nemotron 49B (default) | Primary model, best quality |
-| `nvidia/nemotron-3-nano-30b-a3b` | Nemotron Nano 30B | Smaller, faster |
+The frontend sends assistant numbers ("1", "2", "3") instead of full model IDs. These are resolved server-side:
+
+| Assistant | Model ID | Label | Notes |
+|-----------|----------|-------|-------|
+| 1 | `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | Nemotron Nano Omni 30B (default) | Reasoning model, thinking disabled via `chat_template_kwargs` |
+| 2 | `nvidia/nemotron-3-nano-30b-a3b` | Nemotron Nano 30B | Smaller, faster, thinking disabled via `chat_template_kwargs` |
+| 3 | `nvidia/llama-3.3-nemotron-super-49b-v1.5` | Nemotron 49B | Best quality, thinking disabled via `/no_think` in system prompt |
 
 ### Validation Behavior
 
@@ -1183,7 +1194,8 @@ ModelResolutionService.resolveChatModel(model)
 - **Unknown model**: Throws `AiModelNotSupportedException.forModel()` (400 Bad Request) with list of allowed models
 - **Whitespace handling**: Model names are trimmed before validation
 - **Caching**: Each non-default model is created once and reused for all subsequent requests
-- **Default model**: The default model (`nvidia/llama-3.3-nemotron-super-49b-v1.5`) uses the pre-configured Spring bean directly (bypasses cache)
+- **Default model**: The default model (`nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`) uses the pre-configured Spring bean directly (bypasses cache)
+- **Thinking control**: 49B uses `/no_think` in the system prompt; Nano 30B and Omni 30B use `chat_template_kwargs: {"enable_thinking": false}` in the request body
 
 ---
 
@@ -1419,7 +1431,7 @@ public class ChatMessage extends AuditableEntity {
 public record ChatRequest(
     @NotBlank @Size(max = 2000) String message,  // User's message text
     String chatId,                                 // Target conversation (null = create new)
-    String model                                   // LLM model name (null = default)
+    String model                                   // Assistant number: "1" (default), "2", or "3"
 ) {}
 ```
 
@@ -1731,10 +1743,11 @@ Only rendered when AI is enabled via property:
         <span class="ai-chat-user-id" id="ai-chat-user-id"></span>
       </div>
       <div class="ai-chat-header-actions">
-        <!-- Model dropdown: 2 allowlisted options -->
+        <!-- Model dropdown: 3 assistants mapped to backend models -->
         <select id="ai-model-select" class="ai-model-select">
-          <option value="nvidia/llama-3.3-nemotron-super-49b-v1.5">Nemotron 49B (default)</option>
-          <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron Nano 30B</option>
+          <option value="1">Assistant 1 (default)</option>
+          <option value="2">Assistant 2</option>
+          <option value="3">Assistant 3</option>
         </select>
         <button id="ai-chat-history-btn"><i data-lucide="history"></i></button>
         <button id="ai-chat-close"><i data-lucide="x"></i></button>
@@ -1797,14 +1810,15 @@ Only rendered when AI is enabled via property:
 | `ai-chat-id` | `<span>` | Displays current chatId |
 | `ai-chat-user-id` | `<span>` | Displays user ID (from meta tag) |
 
-**Model dropdown options (2 allowlisted NVIDIA NIM models):**
+**Model dropdown options (3 assistants mapped to backend models):**
 
-| Value | Label |
-|-------|-------|
-| `nvidia/llama-3.3-nemotron-super-49b-v1.5` | Nemotron 49B (default) |
-| `nvidia/nemotron-3-nano-30b-a3b` | Nemotron Nano 30B |
+| Value | Label | Backend Model |
+|-------|-------|---------------|
+| `1` | Assistant 1 (default) | Nemotron Nano Omni 30B |
+| `2` | Assistant 2 | Nemotron Nano 30B |
+| `3` | Assistant 3 | Nemotron 49B |
 
-**Frontend validation:** `chat.js` includes `ALLOWED_MODELS` array that mirrors the backend `MODEL_REGISTRY`. Invalid models are rejected client-side before the API call.
+**Frontend validation:** `chat.js` includes `ALLOWED_MODELS` array (`['1', '2', '3']`). Invalid models are rejected client-side before the API call. The backend resolves assistant numbers to full model IDs via `ASSISTANT_MODEL_MAP`.
 
 ---
 

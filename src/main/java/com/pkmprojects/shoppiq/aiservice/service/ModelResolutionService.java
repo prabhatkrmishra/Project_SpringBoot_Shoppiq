@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * with an {@link AiModelNotSupportedException}.</p>
  *
  * <p>Model instances are cached in thread-safe maps to avoid recreating
- * them for repeated requests. The default model (Nemotron 49B) is provided
+ * them for repeated requests. The default model (Nemotron Nano Omni 30B) is provided
  * as a pre-configured bean and is returned directly without caching overhead
  * when no model selection is specified.</p>
  *
@@ -74,7 +74,7 @@ public class ModelResolutionService {
             "nvidia/nemotron-3-nano-30b-a3b",
             "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
     );
-    private static final Map<String, Object> CHAT_TEMPLATE_DISABLE_THINKING = Map.of(
+    public static final Map<String, Object> CHAT_TEMPLATE_DISABLE_THINKING = Map.of(
             "chat_template_kwargs", Map.of("enable_thinking", false)
     );
     private final ChatModel defaultChatModel;
@@ -108,10 +108,10 @@ public class ModelResolutionService {
      * <p>The Nemotron Nano 30B and Omni 30B models are additionally configured
      * with {@code chat_template_kwargs: {"enable_thinking": false}} in the
      * request body, which is the supported mechanism for disabling reasoning
-     * content on these models. The default 49B model uses {@code /no_think}
+     * content on these models. The 49B model uses {@code /no_think}
      * in the system prompt instead.</p>
      *
-     * @param modelName the model identifier from the frontend (e.g., "nvidia/llama-3.3-nemotron-super-49b-v1.5")
+     * @param modelName the model identifier from the frontend (e.g., "1" for Omni, "3" for 49B)
      * @return the resolved ChatModel instance
      */
     public ChatModel resolveChatModel(String modelName) {
@@ -152,10 +152,10 @@ public class ModelResolutionService {
      * <p>The Nemotron Nano 30B and Omni 30B models are additionally configured
      * with {@code chat_template_kwargs: {"enable_thinking": false}} in the
      * request body, which is the supported mechanism for disabling reasoning
-     * content on these models. The default 49B model uses {@code /no_think}
+     * content on these models. The 49B model uses {@code /no_think}
      * in the system prompt instead.</p>
      *
-     * @param modelName the model identifier from the frontend
+     * @param modelName the model identifier from the frontend (e.g., "1" for Omni, "3" for 49B)
      * @return the resolved StreamingChatModel instance
      */
     public StreamingChatModel resolveStreamingChatModel(String modelName) {

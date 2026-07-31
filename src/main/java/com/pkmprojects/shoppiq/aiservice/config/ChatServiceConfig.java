@@ -25,6 +25,7 @@ import reactor.core.publisher.Flux;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * Configures NVIDIA NIM-backed chat models and assembles the top-level
@@ -32,7 +33,7 @@ import java.time.Duration;
  *
  * <p>This configuration class creates the primary synchronous and streaming
  * chat model beans using the NVIDIA NIM API with the default model
- * (Nemotron 49B). Both models are configured with identical generation
+ * (Nemotron Nano Omni 30B). Both models are configured with identical generation
  * parameters (temperature 0.6, top-p 0.95, max tokens 4096) and a 120-second
  * timeout to ensure consistent behavior across streaming and non-streaming
  * conversation paths.</p>
@@ -66,7 +67,7 @@ public class ChatServiceConfig {
     /**
      * Creates the primary synchronous chat model bean backed by NVIDIA NIM.
      *
-     * <p>Configures the OpenAI-compatible chat model with the default Nemotron 49B
+     * <p>Configures the OpenAI-compatible chat model with the default Nemotron Nano Omni 30B
      * model, a 4096-token output limit, and a 120-second timeout. Request and
      * response logging is enabled for debugging. This bean is marked as
      * {@code @Primary} so that it is injected wherever a {@link ChatModel} is
@@ -88,6 +89,7 @@ public class ChatServiceConfig {
                 .logRequests(true)
                 .logResponses(true)
                 .timeout(Duration.ofSeconds(120))
+                .customParameters(ModelResolutionService.CHAT_TEMPLATE_DISABLE_THINKING)
                 .build();
     }
 
@@ -115,6 +117,7 @@ public class ChatServiceConfig {
                 .logRequests(true)
                 .logResponses(true)
                 .timeout(Duration.ofSeconds(120))
+                .customParameters(ModelResolutionService.CHAT_TEMPLATE_DISABLE_THINKING)
                 .build();
     }
 

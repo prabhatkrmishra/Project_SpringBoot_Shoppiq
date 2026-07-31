@@ -453,7 +453,7 @@ public class ChatServiceImpl implements ChatService {
      * blank responses. Thinking control is handled at the API level:
      * <ul>
      *   <li>49B: {@code /no_think} prepended to the system prompt externally</li>
-     *   <li>Nano 30B: {@code chat_template_kwargs} in the request body (via {@link ModelResolutionService})</li>
+     *   <li>Nano 30B / Omni 30B: {@code chat_template_kwargs} in the request body (via {@link ModelResolutionService})</li>
      * </ul></p>
      *
      * @param response the raw response from the AI model
