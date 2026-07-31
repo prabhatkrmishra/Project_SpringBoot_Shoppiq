@@ -39,7 +39,7 @@ public class ModelResolutionService {
     /**
      * The default model ID used when no model is specified or an invalid model is requested.
      */
-    public static final String DEFAULT_MODEL_ID = "nvidia/llama-3.3-nemotron-super-49b-v1.5";
+    public static final String DEFAULT_MODEL_ID = "nvidia/nemotron-3-nano-30b-a3b";
     private static final Logger log = LoggerFactory.getLogger(ModelResolutionService.class);
     private static final String NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
     private static final Duration MODEL_TIMEOUT = Duration.ofSeconds(300);
@@ -61,7 +61,7 @@ public class ModelResolutionService {
      *
      * Reference: https://docs.nvidia.com/nim/large-language-models/1.8.0/reasoning-model.html
      */
-    private static final Set<String> CHAT_TEMPLATE_THINKING_MODELS = Set.of(
+    public static final Set<String> CHAT_TEMPLATE_THINKING_MODELS = Set.of(
             "nvidia/nemotron-3-nano-30b-a3b",
             "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
     );

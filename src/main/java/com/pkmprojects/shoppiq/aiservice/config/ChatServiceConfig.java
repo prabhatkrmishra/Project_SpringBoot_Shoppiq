@@ -77,11 +77,11 @@ public class ChatServiceConfig {
     @Bean
     @Primary
     public ChatModel chatModel() {
-        log.debug("[AI-INIT] Creating ChatModel bean — model={}", "nvidia/llama-3.3-nemotron-super-49b-v1.5");
+        log.debug("[AI-INIT] Creating ChatModel bean — model={}", "nvidia/nemotron-3-nano-30b-a3b");
         return OpenAiChatModel.builder()
                 .apiKey(nvidiaApiKey)
                 .baseUrl("https://integrate.api.nvidia.com/v1")
-                .modelName("nvidia/llama-3.3-nemotron-super-49b-v1.5")
+                .modelName("nvidia/nemotron-3-nano-30b-a3b")
                 .maxTokens(4096)
                 .temperature(0.6)
                 .topP(0.95)
@@ -104,11 +104,11 @@ public class ChatServiceConfig {
     @Bean
     @Primary
     public StreamingChatModel streamingChatModel() {
-        log.debug("[AI-INIT] Creating StreamingChatModel bean — model={}", "nvidia/llama-3.3-nemotron-super-49b-v1.5");
+        log.debug("[AI-INIT] Creating StreamingChatModel bean — model={}", "nvidia/nemotron-3-nano-30b-a3b");
         return OpenAiStreamingChatModel.builder()
                 .apiKey(nvidiaApiKey)
                 .baseUrl("https://integrate.api.nvidia.com/v1")
-                .modelName("nvidia/llama-3.3-nemotron-super-49b-v1.5")
+                .modelName("nvidia/nemotron-3-nano-30b-a3b")
                 .maxTokens(4096)
                 .temperature(0.6)
                 .topP(0.95)

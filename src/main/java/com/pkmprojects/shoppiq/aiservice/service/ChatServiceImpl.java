@@ -468,18 +468,18 @@ public class ChatServiceImpl implements ChatService {
     }
 
     /**
-     * Prepends {@code /no_think} to the system prompt for the default 49B model.
+     * Prepends {@code /no_think} to the system prompt for models that support it.
      *
      * <p>The Nemotron 49B model disables thinking via {@code /no_think} in the
-     * system prompt. The Nano 30B model uses {@code chat_template_kwargs} in the
-     * request body instead (configured in {@link ModelResolutionService}).</p>
+     * system prompt. The Nano 30B and Omni 30B models use {@code chat_template_kwargs}
+     * in the request body instead (configured in {@link ModelResolutionService}).</p>
      *
      * @param systemPrompt the base system prompt
      * @param model        the resolved model identifier
-     * @return the system prompt, with {@code /no_think} prepended for the 49B model
+     * @return the system prompt, with {@code /no_think} prepended if the model supports it
      */
     private String prependNoThink(String systemPrompt, String model) {
-        if (ModelResolutionService.DEFAULT_MODEL_ID.equals(model)) {
+        if (!ModelResolutionService.CHAT_TEMPLATE_THINKING_MODELS.contains(model)) {
             return "/no_think\n" + systemPrompt;
         }
         return systemPrompt;
