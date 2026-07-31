@@ -33,13 +33,21 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
      * Returns all messages for a conversation in chronological order.
      *
      * <p>Used by the message history endpoint and the admin conversation
-     * detail view. Messages are ordered by {@code createdAt} ascending
-     * to reconstruct the full conversation thread.</p>
+     * detail view. Messages are ordered by {@code id} (monotonic
+     * auto-increment) ascending to reconstruct the full conversation thread.</p>
+     *
+     * <p>Ordering by {@code id} is deliberate: the {@code created_at} column is
+     * a second-precision {@code TIMESTAMP}, so messages persisted within the
+     * same second share a timestamp. A filesort over equal keys is not
+     * guaranteed to be stable in MySQL, which can reorder messages (e.g., a
+     * SYSTEM "resolved" message ending up before the assistant reply it follows).
+     * The auto-incrementing {@code id} is a deterministic, strictly monotonic
+     * proxy for insertion order.</p>
      *
      * @param conversationId the parent conversation's ID
-     * @return list of messages ordered by {@code createdAt} ascending
+     * @return list of messages ordered by {@code id} ascending
      */
-    List<ChatMessage> findByConversationIdOrderByCreatedAtAsc(Long conversationId);
+    List<ChatMessage> findByConversationIdOrderByIdAsc(Long conversationId);
 
     /**
      * Counts messages of a specific role within a conversation.
@@ -74,19 +82,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
                                                       @Param("role") ChatMessageRole role);
 
     /**
-     * Returns the most recent message of a specific role within a conversation.
-     *
-     * <p>Used for various lookup operations including retrieving the last
-     * assistant message for auto-resolution heuristics. Returns null if
-     * no message of the specified role exists in the conversation.</p>
-     *
-     * @param conversationId the parent conversation's ID
-     * @param role           the desired message role
-     * @return the latest message, or {@code null} if none exists
-     */
-    ChatMessage findFirstByConversationIdAndRoleOrderByCreatedAtDesc(Long conversationId, ChatMessageRole role);
-
-    /**
      * Deletes all messages belonging to a conversation.
      *
      * <p>Used by the admin conversation deletion operation to perform a
@@ -98,17 +93,22 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     void deleteByConversationId(Long conversationId);
 
     /**
-     * Finds the most recently created message with the given role for a conversation.
+     * Finds the most recent message with the given role that was persisted
+     * strictly before the given message id.
      *
      * <p>Used by the auto-resolution heuristic in {@link ChatServiceImpl} to
-     * check whether the assistant's last message was a closing prompt (e.g.,
-     * "Is there anything else I can help you with?"). This check prevents
-     * false auto-resolves when the user's short reply was answering some other
-     * assistant question rather than confirming they're finished.</p>
+     * check whether the assistant message that immediately preceded the user's
+     * closing reply was a closing prompt (e.g., "Is there anything else I can
+     * help you with?"). Ordering by {@code id} (monotonic auto-increment) is
+     * deterministic, unlike {@code created_at} which is stored at second
+     * precision and can tie within the same second.</p>
      *
      * @param conversationId the conversation's internal ID
      * @param role           the message role to filter by (typically ASSISTANT)
-     * @return the most recent matching message, if any
+     * @param beforeId       the id of the user message that follows the target message
+     * @return the most recent matching message persisted before {@code beforeId}, if any
      */
-    Optional<ChatMessage> findTopByConversationIdAndRoleOrderByCreatedAtDesc(Long conversationId, ChatMessageRole role);
+    Optional<ChatMessage> findFirstByConversationIdAndRoleAndIdLessThanOrderByIdDesc(Long conversationId,
+                                                                                     ChatMessageRole role,
+                                                                                     Long beforeId);
 }

@@ -50,8 +50,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>The implementation includes an auto-resolution heuristic that detects
  * when a user indicates they are done (e.g., "thanks", "bye", "done") and
  * automatically resolves the conversation. This heuristic requires a minimum
- * number of user messages and verifies that the assistant's most recent
- * message was a closing prompt to avoid false positives.</p>
+ * number of user messages and verifies that the assistant's message immediately
+ * preceding the user's closing reply was a closing prompt to avoid false positives.</p>
  *
  * <p>A scheduled task runs every 5 minutes to resolve conversations that have
  * been inactive for 30 or more minutes, preventing resource leakage from
@@ -80,6 +80,7 @@ public class ChatServiceImpl implements ChatService {
     private final Map<String, List<GuestMessage>> guestMessageStore = new ConcurrentHashMap<>();
     private final int resolveThreshold;
     private final Clock clock;
+
     /**
      * Constructs a new {@code ChatServiceImpl} with all required dependencies.
      *
@@ -139,7 +140,7 @@ public class ChatServiceImpl implements ChatService {
         ChatConversation conv = resolveConversationEntity(chatId, user);
         checkResolved(conv);
 
-        saveMessage(conv, ChatMessageRole.USER, userMessage);
+        ChatMessage userMessageEntity = saveMessage(conv, ChatMessageRole.USER, userMessage);
         updateTitleFromFirstMessage(conv, userMessage);
 
         String systemPrompt = authenticatedPrompt.buildPrompt(conv.getChatId(), user);
@@ -166,7 +167,7 @@ public class ChatServiceImpl implements ChatService {
 
         saveMessage(conv, ChatMessageRole.ASSISTANT, response);
 
-        if (shouldAutoResolve(userMessage, conv)) {
+        if (shouldAutoResolve(userMessage, conv, userMessageEntity.getId())) {
             resolveConversation(conv.getChatId(), user);
         }
 
@@ -187,7 +188,7 @@ public class ChatServiceImpl implements ChatService {
         ChatConversation conv = resolveConversationEntity(chatId, user);
         checkResolved(conv);
 
-        saveMessage(conv, ChatMessageRole.USER, userMessage);
+        ChatMessage userMessageEntity = saveMessage(conv, ChatMessageRole.USER, userMessage);
         updateTitleFromFirstMessage(conv, userMessage);
 
         String systemPrompt = authenticatedPrompt.buildPrompt(conv.getChatId(), user);
@@ -209,7 +210,7 @@ public class ChatServiceImpl implements ChatService {
                     saveMessage(conv, ChatMessageRole.ASSISTANT, response);
                     log.debug("Streaming completed for conversation {}, {} chars", chatId, response.length());
 
-                    if (shouldAutoResolve(userMessage, conv)) {
+                    if (shouldAutoResolve(userMessage, conv, userMessageEntity.getId())) {
                         resolveConversation(conv.getChatId(), user);
                     }
                 })
@@ -286,7 +287,7 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public List<ChatMessageDto> getMessages(String chatId, User user) {
         ChatConversation conv = resolveConversationEntity(chatId, user);
-        return messageRepository.findByConversationIdOrderByCreatedAtAsc(conv.getId())
+        return messageRepository.findByConversationIdOrderByIdAsc(conv.getId())
                 .stream()
                 .map(msg -> new ChatMessageDto(
                         msg.getId(),
@@ -453,14 +454,15 @@ public class ChatServiceImpl implements ChatService {
      * @param conversation the parent conversation entity
      * @param role         the message role (USER, ASSISTANT, or SYSTEM)
      * @param content      the message text
+     * @return the persisted message (with its generated id and timestamps)
      */
-    private void saveMessage(ChatConversation conversation, ChatMessageRole role, String content) {
+    private ChatMessage saveMessage(ChatConversation conversation, ChatMessageRole role, String content) {
         ChatMessage msg = ChatMessage.builder()
                 .conversation(conversation)
                 .role(role)
                 .content(content)
                 .build();
-        messageRepository.save(msg);
+        return messageRepository.save(msg);
     }
 
     /**
@@ -492,8 +494,9 @@ public class ChatServiceImpl implements ChatService {
      *
      * <ul>
      *   <li>The conversation has at least {@code resolveThreshold} user messages</li>
-     *   <li>The immediately preceding ASSISTANT message was itself a closing
-     *       prompt (e.g., ended with "Is there anything else I can help you with?")</li>
+     *   <li>The ASSISTANT message immediately preceding the user's message was
+     *       itself a closing prompt (e.g., ended with "Is there anything else I
+     *       can help you with?")</li>
      *   <li>The user's entire message (after trimming, lowercasing, and stripping
      *       trailing punctuation) exactly matches one of the known closing phrases</li>
      * </ul>
@@ -503,16 +506,23 @@ public class ChatServiceImpl implements ChatService {
      * (e.g., "Do you want me to filter by size too?" - "no") rather than
      * confirming the user is finished.</p>
      *
-     * @param userMessage  the user's latest message
-     * @param conversation the current conversation
+     * <p>The check targets the assistant message persisted <em>before</em> the
+     * current user message (identified by {@code userMessageId}), not the most
+     * recent one. The current turn's assistant reply — typically a friendly
+     * closing like "You're welcome!" — is persisted before this method runs and
+     * would otherwise mask the closing prompt that preceded the user's reply.</p>
+     *
+     * @param userMessage   the user's latest message
+     * @param conversation  the current conversation
+     * @param userMessageId the id of the persisted user message being evaluated
      * @return {@code true} if the conversation should be auto-resolved
      */
-    private boolean shouldAutoResolve(String userMessage, ChatConversation conversation) {
+    private boolean shouldAutoResolve(String userMessage, ChatConversation conversation, long userMessageId) {
         long userMessageCount = messageRepository
                 .countByConversationIdAndRole(conversation.getId(), ChatMessageRole.USER);
         if (userMessageCount < resolveThreshold) return false;
 
-        if (!lastAssistantMessageWasClosingPrompt(conversation)) {
+        if (!lastAssistantMessageWasClosingPrompt(conversation, userMessageId)) {
             return false;
         }
 
@@ -532,8 +542,8 @@ public class ChatServiceImpl implements ChatService {
     }
 
     /**
-     * Checks whether the most recent ASSISTANT message in the conversation
-     * ended with the standard closing prompt.
+     * Checks whether the ASSISTANT message that immediately preceded the given
+     * user message ended with the standard closing prompt.
      *
      * <p>This is the guard that prevents false auto-resolves when the user's
      * short reply ("no", "done", "thanks") was actually answering some other
@@ -542,16 +552,19 @@ public class ChatServiceImpl implements ChatService {
      * text for known closing prompt patterns.</p>
      *
      * @param conversation the conversation to check
-     * @return {@code true} if the last assistant message was a closing prompt
+     * @param beforeId     the id of the user message that follows the target assistant message
+     * @return {@code true} if the assistant message preceding {@code beforeId} was a closing prompt
      */
-    private boolean lastAssistantMessageWasClosingPrompt(ChatConversation conversation) {
+    private boolean lastAssistantMessageWasClosingPrompt(ChatConversation conversation, long beforeId) {
         return messageRepository
-                .findTopByConversationIdAndRoleOrderByCreatedAtDesc(conversation.getId(), ChatMessageRole.ASSISTANT)
+                .findFirstByConversationIdAndRoleAndIdLessThanOrderByIdDesc(conversation.getId(), ChatMessageRole.ASSISTANT, beforeId)
                 .map(msg -> {
                     String normalized = msg.getContent().trim().toLowerCase();
                     return normalized.endsWith("is there anything else i can help you with?")
                             || normalized.endsWith("anything else i can help you with?")
-                            || normalized.endsWith("anything else you need help with?");
+                            || normalized.endsWith("anything else you need help with?")
+                            || normalized.endsWith("anything else i can do for you?")
+                            || normalized.endsWith("is there anything else you need?");
                 })
                 .orElse(false);
     }

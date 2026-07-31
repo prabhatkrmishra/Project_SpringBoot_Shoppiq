@@ -226,7 +226,7 @@ public class AdminAiChatController {
         ChatConversation conv = conversationRepository.findByChatId(chatId)
                 .orElseThrow(() -> AiConversationNotFoundException.chatId(chatId));
 
-        var messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(conv.getId())
+        var messages = messageRepository.findByConversationIdOrderByIdAsc(conv.getId())
                 .stream()
                 .map(msg -> new ChatMessageDto(
                         msg.getId(),

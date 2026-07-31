@@ -268,8 +268,15 @@ var ALLOWED_MODELS = [
             renderServerMessages(data);
             updateChatIdDisplay();
 
-            var lastMsg = data[data.length - 1];
-            if (lastMsg && lastMsg.role === 'SYSTEM' && lastMsg.content && lastMsg.content.toLowerCase().includes('resolved')) {
+            // Resolution is terminal (the server rejects new messages once the
+            // conversation is RESOLVED), so if any SYSTEM "resolved" message is
+            // present in the history, the conversation is resolved. Scanning the
+            // whole history instead of only the last message makes the widget
+            // immune to message-ordering regressions.
+            var hasResolvedMessage = data.some(function (msg) {
+                return msg.role === 'SYSTEM' && msg.content && msg.content.toLowerCase().includes('resolved');
+            });
+            if (hasResolvedMessage) {
                 isResolved = true;
                 document.getElementById('ai-chat-resolved-banner').setAttribute('aria-hidden', 'false');
                 document.getElementById('ai-chat-input-area').setAttribute('aria-hidden', 'true');

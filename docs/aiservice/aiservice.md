@@ -472,13 +472,13 @@ public ChatServiceImpl(
    │
    ├── i. saveMessage(conv, ASSISTANT, response)
    │
-   └── j. shouldAutoResolve(userMessage, conv)
+   └── j. shouldAutoResolve(userMessage, conv, userMessageId)
        ├── countByConversationIdAndRole(conv.getId(), USER) < resolveThreshold(3) ➡️ false
        └── match closing phrases ("thanks", "bye", "done", etc.) ➡️ resolveConversation()
            ➡️ Sets RESOLVED, saves SYSTEM message, clears chat memory
 
 4. chatService.getMessages(conv.getChatId(), user)
-   └── messageRepository.findByConversationIdOrderByCreatedAtAsc(conv.getId())
+   └── messageRepository.findByConversationIdOrderByIdAsc(conv.getId())
        ➡️ map to ChatMessageDto(id, role, content, toolName, createdAt)
 
 5. Return ResponseEntity.ok(ChatResponse(conv.getChatId(), messages))
@@ -1192,7 +1192,7 @@ ModelResolutionService.resolveChatModel(model)
 ### `shouldAutoResolve()` in `ChatServiceImpl`
 
 ```java
-private boolean shouldAutoResolve(String userMessage, ChatConversation conversation) {
+private boolean shouldAutoResolve(String userMessage, ChatConversation conversation, long userMessageId) {
     // 1. Count user messages (threshold: 3 by default)
     long userMessageCount = messageRepository
         .countByConversationIdAndRole(conversation.getId(), ChatMessageRole.USER);
@@ -1216,12 +1216,14 @@ private boolean shouldAutoResolve(String userMessage, ChatConversation conversat
 }
 ```
 
-**When triggered:** After the 3rd user message, if the message contains a closing phrase, the conversation is automatically resolved:
+**When triggered:** After the 3rd user message, if the message contains a closing phrase **and** the assistant message immediately preceding it was itself a closing prompt (e.g. "Anything else?"), the conversation is automatically resolved:
 1. Status set to `RESOLVED`
 2. `resolvedAt` timestamp set
 3. SYSTEM message "Conversation resolved." saved
 4. In-memory chat memory cleared via `chatMemoryConfig.clearMemory(chatId)`
 5. User cannot send further messages (410 Gone)
+
+The closing-prompt check runs against the message history *before* the current user message (`findFirstByConversationIdAndRoleAndIdLessThanOrderByIdDesc(..., userMessageId)`, ordered by monotonic `id`), so the assistant's own reply to the closing phrase is never mistaken for the prompt.
 
 ### Scheduled Task — Inactivity-Based Auto-Resolve
 
@@ -1334,7 +1336,7 @@ Query params: query (search), status (ACTIVE/RESOLVED), page, size
 
 ```
 1. conversationRepository.findByChatId(chatId) ➡️ throw if not found
-2. messageRepository.findByConversationIdOrderByCreatedAtAsc(conv.getId())
+2. messageRepository.findByConversationIdOrderByIdAsc(conv.getId())
 3. Map to ChatMessageDto(id, role, content, toolName, createdAt)
 4. Build AiChatLogDetailDto with user info, status, messages
 5. Return ResponseEntity<AiChatLogDetailDto>
@@ -1530,10 +1532,10 @@ public record AiChatLogDetailDto(
 
 | Method | Query |
 |--------|-------|
-| `findByConversationIdOrderByCreatedAtAsc(Long)` | All messages for a conversation |
+| `findByConversationIdOrderByIdAsc(Long)` | All messages for a conversation (ordered by id, deterministic) |
 | `countByConversationIdAndRole(Long, Role)` | Count messages by role (for summary) |
 | `countByConversationIdsAndRoleBatch(List<Long>, Role)` | Batch count (avoids N+1) |
-| `findFirstByConversationIdAndRoleOrderByCreatedAtDesc(Long, Role)` | Latest message of role |
+| `findFirstByConversationIdAndRoleAndIdLessThanOrderByIdDesc(Long, Role, Long)` | Latest message of role before a given message ID |
 | `deleteByConversationId(Long)` | Delete all messages for a conversation |
 
 ---
